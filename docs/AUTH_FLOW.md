@@ -306,13 +306,13 @@ Lectura por actor:
 
 #### Errores posibles — Paso 1
 
-| Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` (prod) |
+| Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` |
 |---|---|---|---|---|---|
-| `TenantNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "La organización que buscas no existe o no está disponible." |
-| `TenantSuspendedException` | `403` | `BUSINESS_RULE_VIOLATION` | `BUSINESS_RULE` | — | "Esta organización está temporalmente suspendida. Contacta al soporte." |
-| `ClientAppNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "La aplicación solicitada no está registrada en este tenant." |
-| `InvalidRedirectUriException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "La URL de redirección no está autorizada para esta aplicación." |
-| `IllegalArgumentException` (`response_type != code`) | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "El tipo de respuesta solicitado no está soportado." |
+| `TenantNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No encontramos el recurso solicitado." |
+| `TenantSuspendedException` | `403` | `BUSINESS_RULE_VIOLATION` | `BUSINESS_RULE` | — | "No se puede completar la operación con el estado actual." |
+| `ClientAppNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No encontramos el recurso solicitado." |
+| `InvalidRedirectUriException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "Revisa los datos enviados e intenta otra vez." |
+| `IllegalArgumentException` (`response_type != code`) | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "Revisa los datos enviados e intenta otra vez." |
 
 Ejemplo de respuesta NOK — tenant no encontrado (`CLIENT_REQUEST / CLIENT_TECHNICAL`):
 
@@ -327,7 +327,7 @@ Ejemplo de respuesta NOK — tenant no encontrado (`CLIENT_REQUEST / CLIENT_TECH
     "code": "RESOURCE_NOT_FOUND",
     "origin": "CLIENT_REQUEST",
     "clientRequestCause": "CLIENT_TECHNICAL",
-    "clientMessage": "La organización que buscas no existe o no está disponible."
+    "clientMessage": "No encontramos el recurso solicitado."
   }
 }
 ```
@@ -344,7 +344,7 @@ Ejemplo de respuesta NOK — tenant suspendido (`BUSINESS_RULE`):
   "data": {
     "code": "BUSINESS_RULE_VIOLATION",
     "origin": "BUSINESS_RULE",
-    "clientMessage": "Esta organización está temporalmente suspendida. Contacta al soporte."
+    "clientMessage": "No se puede completar la operación con el estado actual."
   }
 }
 ```
@@ -390,14 +390,14 @@ Lectura por actor:
 
 #### Errores posibles — Paso 2
 
-| Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` (prod) |
+| Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` |
 |---|---|---|---|---|---|
-| `IllegalArgumentException` (sin sesion previa) | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "La sesión expiró. Recarga la página e inicia el proceso nuevamente." |
-| `UserNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No encontramos una cuenta con ese email o usuario." |
-| `InvalidCredentialsException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `USER_INPUT` | "Email o contraseña incorrectos. Verifica tus datos e inténtalo de nuevo." |
-| `UnauthorizedException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No tienes autorización para acceder a esta aplicación." |
-| `MembershipInactiveException` | `403` | `BUSINESS_RULE_VIOLATION` | `BUSINESS_RULE` | — | "Tu acceso a esta aplicación está desactivado. Contacta al administrador de tu organización." |
-| `UserPendingVerificationException` | `403` | `EMAIL_NOT_VERIFIED` | `BUSINESS_RULE` | — | "Debes verificar tu correo electrónico antes de iniciar sesión." |
+| `IllegalArgumentException` (sin sesion previa) | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "Revisa los datos enviados e intenta otra vez." |
+| `UserNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No encontramos el recurso solicitado." |
+| `InvalidCredentialsException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `USER_INPUT` | "No pudimos validar tu sesión. Inicia sesión nuevamente." |
+| `UnauthorizedException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No pudimos validar tu sesión. Inicia sesión nuevamente." |
+| `MembershipInactiveException` | `403` | `BUSINESS_RULE_VIOLATION` | `BUSINESS_RULE` | — | "No se puede completar la operación con el estado actual." |
+| `UserPendingVerificationException` | `403` | `EMAIL_NOT_VERIFIED` | `BUSINESS_RULE` | — | "Debes verificar tu correo antes de iniciar sesión." |
 
 > (*) La excepcion "sin sesion previa" (`IllegalArgumentException`) actualmente mapea a `USER_INPUT` porque usa `INVALID_INPUT` — semanticamente es `CLIENT_TECHNICAL` (falta la cookie `JSESSIONID` del Paso 1). Esto sera corregido en `T-066`.
 
@@ -414,7 +414,7 @@ Ejemplo NOK — credenciales incorrectas (`CLIENT_REQUEST / USER_INPUT`):
     "code": "AUTHENTICATION_REQUIRED",
     "origin": "CLIENT_REQUEST",
     "clientRequestCause": "USER_INPUT",
-    "clientMessage": "Email o contraseña incorrectos. Verifica tus datos e inténtalo de nuevo."
+    "clientMessage": "No pudimos validar tu sesión. Inicia sesión nuevamente."
   }
 }
 ```
@@ -432,7 +432,7 @@ Ejemplo NOK — sin sesion previa (`CLIENT_REQUEST / USER_INPUT` — ver nota (*
     "code": "INVALID_INPUT",
     "origin": "CLIENT_REQUEST",
     "clientRequestCause": "USER_INPUT",
-    "clientMessage": "La sesión expiró. Recarga la página e inicia el proceso nuevamente."
+    "clientMessage": "Revisa los datos enviados e intenta otra vez."
   }
 }
 ```
@@ -449,7 +449,7 @@ Ejemplo NOK — usuario sin membership activo (`BUSINESS_RULE`):
   "data": {
     "code": "BUSINESS_RULE_VIOLATION",
     "origin": "BUSINESS_RULE",
-    "clientMessage": "Tu acceso a esta aplicación está desactivado. Contacta al administrador de tu organización."
+    "clientMessage": "No se puede completar la operación con el estado actual."
   }
 }
 ```
@@ -466,7 +466,7 @@ Ejemplo NOK — email no verificado (`BUSINESS_RULE`):
   "data": {
     "code": "EMAIL_NOT_VERIFIED",
     "origin": "BUSINESS_RULE",
-    "clientMessage": "Debes verificar tu correo electrónico antes de iniciar sesión."
+    "clientMessage": "Debes verificar tu correo antes de iniciar sesión."
   }
 }
 ```
@@ -508,12 +508,12 @@ Lectura por actor:
 
 #### Errores posibles — Paso 3
 
-| Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` (prod) |
+| Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` |
 |---|---|---|---|---|---|
-| `InvalidAuthorizationCodeException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "El código de autorización no es válido o ya fue utilizado." |
-| `AuthorizationCodeExpiredException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "El código de autorización expiró. Inicia el proceso de login nuevamente." |
-| `InvalidPkceVerificationException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "La verificación de seguridad falló. Inicia el proceso de login nuevamente." |
-| `ScopeNotGrantedException` | `403` | `INSUFFICIENT_PERMISSIONS` | `BUSINESS_RULE` | — | "No tienes permisos para acceder a los recursos solicitados." |
+| `InvalidAuthorizationCodeException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "Revisa los datos enviados e intenta otra vez." |
+| `AuthorizationCodeExpiredException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "Revisa los datos enviados e intenta otra vez." |
+| `InvalidPkceVerificationException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "Revisa los datos enviados e intenta otra vez." |
+| `ScopeNotGrantedException` | `403` | `INSUFFICIENT_PERMISSIONS` | `BUSINESS_RULE` | — | "No tienes permisos para realizar esta acción." |
 | `NoActiveSigningKeyException` | `503` | `OPERATION_FAILED` | `SERVER_PROCESSING` | — | "No pudimos completar la solicitud. Intenta de nuevo en unos minutos." |
 
 > (*) Los errores de code invalido, code expirado y PKCE fallido actualmente mapean a `USER_INPUT` (via `INVALID_INPUT`) aunque semanticamente son errores de integracion tecnica. Seran reclasificados a `CLIENT_TECHNICAL` en `T-066`.
@@ -531,7 +531,7 @@ Ejemplo NOK — code PKCE invalido (`CLIENT_REQUEST / USER_INPUT`):
     "code": "INVALID_INPUT",
     "origin": "CLIENT_REQUEST",
     "clientRequestCause": "USER_INPUT",
-    "clientMessage": "La verificación de seguridad falló. Inicia el proceso de login nuevamente."
+    "clientMessage": "Revisa los datos enviados e intenta otra vez."
   }
 }
 ```
@@ -644,20 +644,9 @@ El campo `data` contiene `ErrorData` — la estructura enriquecida para que el c
 | `code` | `string` | ✅ | Mismo `ResponseCode` que `failure.code`. Util para switch en el cliente. |
 | `origin` | enum | ✅ | Origen del error: `CLIENT_REQUEST`, `BUSINESS_RULE` o `SERVER_PROCESSING` |
 | `clientRequestCause` | enum | Solo si `origin=CLIENT_REQUEST` | Sub-clasificacion: `USER_INPUT` o `CLIENT_TECHNICAL` |
-| `clientMessage` | `string` | ✅ | Mensaje listo para mostrar al usuario. Especifico por tipo de excepcion. Su contenido se adapta al perfil del backend: mas tecnico en `dev`/`local`, siempre amigable en `prod`. El cliente debe mostrarlo directamente, sin reescribirlo. |
+| `clientMessage` | `string` | ✅ | Mensaje amigable en espanol listo para mostrar al usuario. |
 | `detail` | `string` | Solo en perfil `dev`/`local` | Detalle tecnico (mensaje de la excepcion) para diagnostico. |
 | `exception` | `string` | Solo en perfil `dev`/`local` | Nombre de la clase de excepcion para diagnostico. |
-
-### Adaptacion de `clientMessage` al perfil del backend
-
-El contenido de `clientMessage` varia segun el perfil de Spring Boot activo en el backend:
-
-| Perfil | Comportamiento de `clientMessage` | Ejemplo para `InvalidCredentialsException` |
-|---|---|---|
-| `dev` / `local` | Puede incluir texto tecnico: nombre de excepcion, causa, contexto de debug | `"InvalidCredentialsException: Credentials do not match for user 'ana@acme.com'"` |
-| `prod` / `staging` | Siempre amigable para el usuario final | `"Email o contraseña incorrectos. Verifica tus datos e inténtalo de nuevo."` |
-
-> **Regla de oro para el cliente:** mostrar `data.clientMessage` directamente — el backend ya realiza la adaptacion al ambiente. No sustituir ni reescribir el mensaje en el frontend.
 
 ### Valores de `origin`
 
@@ -688,42 +677,40 @@ flowchart TD
 
 ### Tabla completa de errores del flujo OAuth2
 
-> La columna `clientMessage` muestra el valor en perfil `prod`. En perfiles `dev`/`local` el backend puede enviar un mensaje mas tecnico para facilitar el diagnostico.
-
-| Paso | Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` (prod) |
+| Paso | Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` |
 |---|---|---|---|---|---|---|
-| 1 (`/authorize`) | `TenantNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "La organización que buscas no existe o no está disponible." |
-| 1 (`/authorize`) | `TenantSuspendedException` | `403` | `BUSINESS_RULE_VIOLATION` | `BUSINESS_RULE` | — | "Esta organización está temporalmente suspendida. Contacta al soporte." |
-| 1 (`/authorize`) | `ClientAppNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "La aplicación solicitada no está registrada en este tenant." |
-| 1 (`/authorize`) | `InvalidRedirectUriException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "La URL de redirección no está autorizada para esta aplicación." |
-| 1 (`/authorize`) | `IllegalArgumentException` (`response_type`) | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "El tipo de respuesta solicitado no está soportado." |
-| 2 (`/account/login`) | `IllegalArgumentException` (sin sesion previa) | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "La sesión expiró. Recarga la página e inicia el proceso nuevamente." |
-| 2 (`/account/login`) | `UserNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No encontramos una cuenta con ese email o usuario." |
-| 2 (`/account/login`) | `InvalidCredentialsException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `USER_INPUT` | "Email o contraseña incorrectos. Verifica tus datos e inténtalo de nuevo." |
-| 2 (`/account/login`) | `UnauthorizedException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No tienes autorización para acceder a esta aplicación." |
-| 2 (`/account/login`) | `MembershipInactiveException` | `403` | `BUSINESS_RULE_VIOLATION` | `BUSINESS_RULE` | — | "Tu acceso a esta aplicación está desactivado. Contacta al administrador de tu organización." |
-| 2 (`/account/login`) | `UserPendingVerificationException` | `403` | `EMAIL_NOT_VERIFIED` | `BUSINESS_RULE` | — | "Debes verificar tu correo electrónico antes de iniciar sesión." |
-| 3 (`/oauth2/token`) | `InvalidAuthorizationCodeException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "El código de autorización no es válido o ya fue utilizado." |
-| 3 (`/oauth2/token`) | `AuthorizationCodeExpiredException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "El código de autorización expiró. Inicia el proceso de login nuevamente." |
-| 3 (`/oauth2/token`) | `InvalidPkceVerificationException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "La verificación de seguridad falló. Inicia el proceso de login nuevamente." |
-| 3 (`/oauth2/token`) | `ScopeNotGrantedException` | `403` | `INSUFFICIENT_PERMISSIONS` | `BUSINESS_RULE` | — | "No tienes permisos para acceder a los recursos solicitados." |
+| 1 (`/authorize`) | `TenantNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No encontramos el recurso solicitado." |
+| 1 (`/authorize`) | `TenantSuspendedException` | `403` | `BUSINESS_RULE_VIOLATION` | `BUSINESS_RULE` | — | "No se puede completar la operación con el estado actual." |
+| 1 (`/authorize`) | `ClientAppNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No encontramos el recurso solicitado." |
+| 1 (`/authorize`) | `InvalidRedirectUriException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "Revisa los datos enviados e intenta otra vez." |
+| 1 (`/authorize`) | `IllegalArgumentException` (`response_type`) | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "Revisa los datos enviados e intenta otra vez." |
+| 2 (`/account/login`) | `IllegalArgumentException` (sin sesion previa) | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "Revisa los datos enviados e intenta otra vez." |
+| 2 (`/account/login`) | `UserNotFoundException` | `404` | `RESOURCE_NOT_FOUND` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No encontramos el recurso solicitado." |
+| 2 (`/account/login`) | `InvalidCredentialsException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `USER_INPUT` | "No pudimos validar tu sesión. Inicia sesión nuevamente." |
+| 2 (`/account/login`) | `UnauthorizedException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No pudimos validar tu sesión. Inicia sesión nuevamente." |
+| 2 (`/account/login`) | `MembershipInactiveException` | `403` | `BUSINESS_RULE_VIOLATION` | `BUSINESS_RULE` | — | "No se puede completar la operación con el estado actual." |
+| 2 (`/account/login`) | `UserPendingVerificationException` | `403` | `EMAIL_NOT_VERIFIED` | `BUSINESS_RULE` | — | "Debes verificar tu correo antes de iniciar sesión." |
+| 3 (`/oauth2/token`) | `InvalidAuthorizationCodeException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "Revisa los datos enviados e intenta otra vez." |
+| 3 (`/oauth2/token`) | `AuthorizationCodeExpiredException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "Revisa los datos enviados e intenta otra vez." |
+| 3 (`/oauth2/token`) | `InvalidPkceVerificationException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT`* | "Revisa los datos enviados e intenta otra vez." |
+| 3 (`/oauth2/token`) | `ScopeNotGrantedException` | `403` | `INSUFFICIENT_PERMISSIONS` | `BUSINESS_RULE` | — | "No tienes permisos para realizar esta acción." |
 | 3 (`/oauth2/token`) | `NoActiveSigningKeyException` | `503` | `OPERATION_FAILED` | `SERVER_PROCESSING` | — | "No pudimos completar la solicitud. Intenta de nuevo en unos minutos." |
-| token (`refresh_token`) | `InvalidRefreshTokenException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "Tu sesión expiró o no es válida. Inicia sesión nuevamente." |
-| token (`refresh_token`) | `RefreshTokenExpiredException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "Tu sesión ha expirado. Inicia sesión nuevamente para continuar." |
-| token (grant invalido) | `UnsupportedGrantTypeException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "El tipo de autorización solicitado no está soportado." |
-| M2M | `ClientAuthenticationException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "Error de autenticación del cliente. Contacta al administrador." |
-| cualquiera | `Exception` (generico) | `500` | `OPERATION_FAILED` | `SERVER_PROCESSING` | — | "Se produjo un error inesperado. Intenta de nuevo en unos minutos." |
+| token (`refresh_token`) | `InvalidRefreshTokenException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No pudimos validar tu sesión. Inicia sesión nuevamente." |
+| token (`refresh_token`) | `RefreshTokenExpiredException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No pudimos validar tu sesión. Inicia sesión nuevamente." |
+| token (grant invalido) | `UnsupportedGrantTypeException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "Revisa los datos enviados e intenta otra vez." |
+| M2M | `ClientAuthenticationException` | `401` | `AUTHENTICATION_REQUIRED` | `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | "No pudimos validar tu sesión. Inicia sesión nuevamente." |
+| cualquiera | `Exception` (generico) | `500` | `OPERATION_FAILED` | `SERVER_PROCESSING` | — | "No pudimos completar la solicitud. Intenta de nuevo en unos minutos." |
 
 > (*) Estas excepciones mapean a `USER_INPUT` via `INVALID_INPUT` aunque semanticamente son problemas tecnicos de integracion (code expirado, PKCE mal calculado, cookie de sesion faltante). Seran reclasificadas a `CLIENT_TECHNICAL` en la propuesta `T-066`.
 
 ### Errores de verificacion de email (endpoints publicos de registro)
 
-| Endpoint | Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` (prod) |
+| Endpoint | Excepcion | HTTP | ResponseCode | `origin` | `clientRequestCause` | `clientMessage` |
 |---|---|---|---|---|---|---|
-| `POST /register` | `DuplicateUserException` | `409` | `DUPLICATE_RESOURCE` | `BUSINESS_RULE` | — | "Ya existe una cuenta con ese email o usuario." |
-| `POST /verify-email` | `EmailVerificationInvalidException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "El código de verificación no es válido. Revisa el código e inténtalo de nuevo." |
-| `POST /verify-email` | `EmailVerificationExpiredException` | `422` | `EMAIL_VERIFICATION_EXPIRED` | `BUSINESS_RULE` | — | "El código de verificación expiró. Solicita uno nuevo." |
-| `POST /resend-verification` | `EmailVerificationStillActiveException` | `409` | `EMAIL_VERIFICATION_STILL_ACTIVE` | `BUSINESS_RULE` | — | "Ya tienes un código de verificación vigente. Revisa tu correo." |
+| `POST /register` | `DuplicateUserException` | `409` | `DUPLICATE_RESOURCE` | `BUSINESS_RULE` | — | "El recurso ya existe." |
+| `POST /verify-email` | `EmailVerificationInvalidException` | `400` | `INVALID_INPUT` | `CLIENT_REQUEST` | `USER_INPUT` | "Revisa los datos enviados e intenta otra vez." |
+| `POST /verify-email` | `EmailVerificationExpiredException` | `422` | `EMAIL_VERIFICATION_EXPIRED` | `BUSINESS_RULE` | — | "El código de verificación expiro. Solicita uno nuevo." |
+| `POST /resend-verification` | `EmailVerificationStillActiveException` | `409` | `EMAIL_VERIFICATION_STILL_ACTIVE` | `BUSINESS_RULE` | — | "Ya tienes un código vigente. Espera antes de solicitar otro." |
 
 
 
@@ -760,4 +747,4 @@ flowchart TD
 
 **Ultima actualizacion:** 2026-03-26  
 **Responsable:** AI Agent  
-**Alcance:** Flujo OAuth2/OIDC alineado con backend actual — `clientMessage` adaptado al perfil del backend (dev/local tecnico, prod amigable); mensajes mas especificos por tipo de excepcion.
+**Alcance:** Flujo OAuth2/OIDC alineado con backend actual (auth code + PKCE, refresh rotation, client credentials, JWKS/OIDC)
