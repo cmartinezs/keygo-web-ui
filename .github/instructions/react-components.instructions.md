@@ -203,6 +203,59 @@ const mutation = useMutation({
 })
 ```
 
+### Notificaciones y toasts — `sonner`
+
+Usar **`sonner`** (`import { toast } from 'sonner'`) para notificar resultados de acciones. El `<Toaster />` está montado globalmente en `src/App.tsx`.
+
+#### Cuándo usar toast
+
+| Situación | Tipo de toast | Ejemplo |
+|-----------|---------------|---------|
+| Acción en segundo plano iniciada | `toast.loading(...)` | "Intentando reconectar…" |
+| Acción en segundo plano completada | `toast.success(...)` | "Conexión restablecida" |
+| Acción en segundo plano fallida (silenciosa) | `toast.dismiss(id)` | Descartar sin molestar |
+| Mutación iniciada por el usuario completada | `toast.success(...)` | "Tenant creado correctamente" |
+| Mutación iniciada por el usuario fallida | `toast.error(...)` | "No se pudo guardar" |
+| Acción destructiva completada | `toast.success(...)` | "Usuario eliminado" |
+
+#### Regla clave: acciones en segundo plano DEBEN notificarse
+
+> Si el sistema hace algo que el usuario no inició explícitamente (polling, retry automático, refresco silencioso de token, invalidación de caché) **y el resultado afecta el estado visible de la UI**, se debe mostrar un toast.
+
+#### Patrón tipico — acción de fondo con ciclo loading → resolve/dismiss
+
+```ts
+// Guardar el id del toast para resolverlo después
+const toastIdRef = useRef<string | number | null>(null)
+
+// Al iniciar la acción en segundo plano:
+toastIdRef.current = toast.loading('Sincronizando…')
+// Pequeño pre-delay (600 ms) si la request puede ser instantánea,
+// para que el toast sea siempre perceptible:
+setTimeout(() => mutation.mutate(), 600)
+
+// En onSuccess:
+if (toastIdRef.current !== null) {
+  toast.success('Sincronizado', { id: toastIdRef.current })
+  toastIdRef.current = null
+}
+
+// En onError (fallo silencioso — no molestar con error):
+if (toastIdRef.current !== null) {
+  setTimeout(() => {
+    toast.dismiss(toastIdRef.current!)
+    toastIdRef.current = null
+  }, 800) // post-delay para que la transición sea perceptible
+}
+```
+
+#### Reglas adicionales
+
+- **No** usar `toast.error` para fallos silenciosos de background (como un ping fallido) — solo cuando el usuario necesita actuar.
+- Los toasts de acción de usuario sí pueden usar `toast.error` directamente en `onError`.
+- No duplicar feedback: si la UI ya muestra el error en pantalla (banner, etc.), no añadir también un toast.
+- No crear wrappers alrededor de `toast` — importar directamente de `'sonner'`.
+
 ### Keys de query consistentes
 
 Definir las query keys como constantes para evitar typos:

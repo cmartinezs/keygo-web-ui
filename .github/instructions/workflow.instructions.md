@@ -43,6 +43,7 @@ Después de cada cambio, verificar los siguientes puntos en orden:
 - [ ] No se usa `React.FC<Props>` — props tipadas directamente en el parámetro.
 - [ ] No hay `useState` + `fetch` directo — los datos van por `useQuery` / `src/api/`.
 - [ ] Ningún token o dato sensible se guarda en `localStorage` / `sessionStorage`.
+- [ ] Toda acción en segundo plano que afecte la UI visible notifica al usuario con `toast` de `sonner` (ver `react-components.instructions.md` → "Notificaciones y toasts").
 
 ### Reutilización y patrones
 - [ ] Antes de crear un componente, se verificó que no existe uno equivalente en `src/components/` o shadcn/ui.

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -388,10 +389,27 @@ export default function LoginPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // While in error state, retry every 10 s — backend may have come back up
+  // While in error state, retry every 10 s — backend may have come back up.
+  // Toast callbacks are passed directly to mutate() so the closure captures the
+  // correct toastId regardless of re-renders (per-call callbacks are reliable in TQ v5).
   useEffect(() => {
     if (!initMutation.isError) return
-    const id = setInterval(() => initMutation.mutate(), 10_000)
+    const id = setInterval(() => {
+      const toastId = toast.loading('Intentando reconectar…')
+      setTimeout(() => {
+        initMutation.mutate(undefined, {
+          onSuccess: () => {
+            toast.success('Conexión restablecida', { id: toastId })
+          },
+          onError: () => {
+            // Brief pause so the loading toast is always perceptible before turning into an error.
+            setTimeout(() => {
+              toast.error('Sin conexión. Reintentando en 10 s…', { id: toastId })
+            }, 800)
+          },
+        })
+      }, 600)
+    }, 10_000)
     return () => clearInterval(id)
   }, [initMutation.isError, initMutation.mutate])
 
