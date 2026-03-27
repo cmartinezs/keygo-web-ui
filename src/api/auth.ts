@@ -2,6 +2,21 @@ import type { BaseResponse } from '@/types/base'
 import type { AuthorizeData, LoginData, TokenData } from '@/types/auth'
 import { authClient, API_V1, CLIENT_ID, REDIRECT_URI } from './client'
 
+export async function refreshToken(params: {
+  tenantSlug: string
+  refreshToken: string
+}): Promise<TokenData> {
+  const url = `${API_V1}/tenants/${params.tenantSlug}/oauth2/token`
+  const response = await authClient.post<BaseResponse<TokenData>>(url, {
+    grant_type: 'refresh_token',
+    client_id: CLIENT_ID,
+    refresh_token: params.refreshToken,
+  })
+  const body = response.data
+  if (!body.data) throw new Error(body.failure?.message ?? 'Token refresh failed')
+  return body.data
+}
+
 export async function authorize(params: {
   tenantSlug: string
   codeChallenge: string
@@ -31,7 +46,7 @@ export async function login(params: {
 }): Promise<LoginData> {
   const url = `${API_V1}/tenants/${params.tenantSlug}/account/login`
   const response = await authClient.post<BaseResponse<LoginData>>(url, {
-    emailOrUsername: params.emailOrUsername,
+    email_or_username: params.emailOrUsername,
     password: params.password,
   })
   const body = response.data

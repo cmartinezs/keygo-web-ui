@@ -7,10 +7,10 @@ export type PlanId = 'starter' | 'business' | 'on-premise'
 
 export interface ContractRequest {
   plan: PlanId
-  organizationName: string
-  ownerFirstName: string
-  ownerLastName: string
-  ownerEmail: string
+  organization_name: string
+  owner_first_name: string
+  owner_last_name: string
+  owner_email: string
   phone?: string
   country: string
 }

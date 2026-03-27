@@ -91,10 +91,10 @@ export default function NewContractPage() {
     try {
       await submitContract({
         plan: selectedPlan,
-        organizationName: contractor.organizationName,
-        ownerFirstName: contractor.firstName,
-        ownerLastName: contractor.lastName,
-        ownerEmail: contractor.email,
+        organization_name: contractor.organizationName,
+        owner_first_name: contractor.firstName,
+        owner_last_name: contractor.lastName,
+        owner_email: contractor.email,
         phone: contractor.phone ?? undefined,
         country: contractor.country,
       })

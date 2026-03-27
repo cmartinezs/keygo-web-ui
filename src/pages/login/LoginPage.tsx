@@ -10,7 +10,8 @@ import { authorize, login, exchangeToken } from '@/api/auth'
 import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/auth/pkce'
 import { verifyIdToken, extractRoles } from '@/auth/jwksVerify'
 import { useTokenStore } from '@/auth/tokenStore'
-import { TENANT, KEYGO_BASE, authClient } from '@/api/client'
+import { persistRefreshToken } from '@/auth/refresh'
+import { TENANT } from '@/api/client'
 import type { BaseResponse } from '@/types/base'
 import type { AppRole } from '@/types/roles'
 import type { AuthorizeData } from '@/types/auth'
@@ -27,9 +28,9 @@ type LoginFormValues = z.infer<typeof loginSchema>
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveRedirectPath(roles: AppRole[]): string {
-  if (roles.includes('ADMIN')) return '/admin'
-  if (roles.includes('ADMIN_TENANT')) return '/tenant-admin'
-  if (roles.includes('USER_TENANT')) return '/user'
+  if (roles.includes('ADMIN')) return '/admin/dashboard'
+  if (roles.includes('ADMIN_TENANT')) return '/tenant-admin/dashboard'
+  if (roles.includes('USER_TENANT')) return '/dashboard'
   return '/'
 }
 
@@ -326,13 +327,22 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit }: Logi
  */
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { accessToken, setTokens } = useTokenStore()
+  const { accessToken, roles, setTokens } = useTokenStore()
   const codeVerifierRef = useRef<string | null>(null)
+  // True while an interval-triggered auto-retry is in flight.
+  // Suppresses the InitLoadingState spinner — the toast provides feedback instead.
+  const isAutoRetryingRef = useRef(false)
+  // Snapshot of the last auth error, kept across the pending state (when .error resets to null).
+  const lastAuthErrorRef = useRef<{ message: string; retryable: boolean } | null>(null)
+  // Tracks which step of the login mutationFn was reached when an error occurred.
+  // 'login' = error came from POST /account/login (code not yet obtained).
+  // 'post-login' = code was obtained; error is from exchangeToken or verifyIdToken.
+  const loginPhaseRef = useRef<'login' | 'post-login'>('login')
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (accessToken) navigate('/', { replace: true })
-  }, [accessToken, navigate])
+    if (accessToken) navigate(resolveRedirectPath(roles), { replace: true })
+  }, [accessToken, roles, navigate])
 
   // ── Paso 0-1: generate PKCE + call /oauth2/authorize ──────────────────────
   const initMutation = useMutation<AuthorizeData>({
@@ -345,8 +355,13 @@ export default function LoginPage() {
     },
     retry: 0, // Config errors (tenant not found, suspended) must not be auto-retried
     onSuccess: () => {
+      isAutoRetryingRef.current = false
+      lastAuthErrorRef.current = null // reset so a future disconnect shows the full spinner
       // Clear any previous login error once the session is fresh
       loginMutation.reset()
+    },
+    onError: () => {
+      isAutoRetryingRef.current = false
     },
   })
 
@@ -356,11 +371,16 @@ export default function LoginPage() {
       const codeVerifier = codeVerifierRef.current
       if (!codeVerifier) throw new Error('PKCE verifier missing')
 
+      loginPhaseRef.current = 'login'
       const { code } = await login({
         tenantSlug: TENANT,
         emailOrUsername: values.emailOrUsername,
         password: values.password,
       })
+
+      // Authorization code obtained — any error from here on must trigger re-init
+      // because the code is single-use and the session state is now uncertain.
+      loginPhaseRef.current = 'post-login'
       const tokens = await exchangeToken({ tenantSlug: TENANT, code, codeVerifier })
       const claims = await verifyIdToken(tokens.id_token, TENANT)
       const roles = extractRoles(claims)
@@ -373,13 +393,37 @@ export default function LoginPage() {
         refreshToken: tokens.refresh_token,
         roles,
       })
+      persistRefreshToken(tokens.refresh_token)
       navigate(resolveRedirectPath(roles), { replace: true })
     },
     onError: (error) => {
-      // Session expired or connection lost → re-run Pasos 0-1 so the user can retry
+      const phase = loginPhaseRef.current
+      loginPhaseRef.current = 'login' // reset for next attempt
+
+      if (phase === 'post-login') {
+        // Authorization code was already consumed — re-init is mandatory.
+        // Show a toast because the form will silently reset after re-init.
+        const isNetwork = axios.isAxiosError(error) && !error.response
+        toast.error(
+          isNetwork
+            ? 'Error de conexión al procesar el acceso. Por favor, intenta de nuevo.'
+            : 'No se pudo completar el acceso. Por favor, intenta de nuevo.',
+        )
+        initMutation.mutate()
+        return
+      }
+
+      // phase === 'login': error from POST /account/login
       const { sessionExpired } = extractLoginError(error)
       const networkError = axios.isAxiosError(error) && !error.response
-      if (sessionExpired || networkError) initMutation.mutate()
+      if (sessionExpired) {
+        toast.warning('Tu sesión expiró. Reconectando…')
+        initMutation.mutate()
+      } else if (networkError) {
+        toast.warning('Error de conexión. Reconectando…')
+        initMutation.mutate()
+      }
+      // Otherwise (wrong credentials, account suspended, etc.): error shows in the form.
     },
   })
 
@@ -390,11 +434,14 @@ export default function LoginPage() {
   }, [])
 
   // While in error state, retry every 10 s — backend may have come back up.
-  // Toast callbacks are passed directly to mutate() so the closure captures the
-  // correct toastId regardless of re-renders (per-call callbacks are reliable in TQ v5).
+  // Once initMutation succeeds the interval stops (isError becomes false).
+  // If a login attempt later fails with a network error, loginMutation.onError
+  // calls initMutation.mutate() again → transitions back to isError → interval restarts.
+  // isAutoRetryingRef suppresses the spinner; the toast provides all visual feedback.
   useEffect(() => {
     if (!initMutation.isError) return
     const id = setInterval(() => {
+      isAutoRetryingRef.current = true
       const toastId = toast.loading('Intentando reconectar…')
       setTimeout(() => {
         initMutation.mutate(undefined, {
@@ -402,7 +449,6 @@ export default function LoginPage() {
             toast.success('Conexión restablecida', { id: toastId })
           },
           onError: () => {
-            // Brief pause so the loading toast is always perceptible before turning into an error.
             setTimeout(() => {
               toast.error('Sin conexión. Reintentando en 10 s…', { id: toastId })
             }, 800)
@@ -413,20 +459,6 @@ export default function LoginPage() {
     return () => clearInterval(id)
   }, [initMutation.isError, initMutation.mutate])
 
-  // While the form is visible, silently ping the backend every 30 s.
-  // If the server stops responding (no HTTP response) → re-run init → error state.
-  useEffect(() => {
-    if (!initMutation.isSuccess) return
-    const id = setInterval(async () => {
-      try {
-        await authClient.get(KEYGO_BASE, { timeout: 3_000 })
-      } catch (err) {
-        if (axios.isAxiosError(err) && !err.response) initMutation.mutate()
-      }
-    }, 30_000)
-    return () => clearInterval(id)
-  }, [initMutation.isSuccess, initMutation.mutate])
-
   // Derived state
   const loginError = loginMutation.error ? extractLoginError(loginMutation.error) : null
   const isReiniting = (loginError?.sessionExpired ?? false) && initMutation.isPending
@@ -435,9 +467,26 @@ export default function LoginPage() {
     ? extractAuthorizeError(initMutation.error)
     : null
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // Keep a snapshot while authError is defined (resets to null while mutation is pending).
+  if (authError) lastAuthErrorRef.current = authError
+
+  // ── Render ──────────────────────────────────────────────────────────────────────────────
 
   function renderCardContent() {
+    // Auto-retry in flight: keep error card static — toast provides feedback.
+    // Manual retry (onRetry button) and first mount do NOT set isAutoRetryingRef,
+    // so they fall through to the InitLoadingState below.
+    if (initMutation.isPending && isAutoRetryingRef.current && lastAuthErrorRef.current) {
+      return (
+        <InitErrorState
+          message={lastAuthErrorRef.current.message}
+          retryable={lastAuthErrorRef.current.retryable}
+          onRetry={() => initMutation.mutate()}
+          onGoHome={() => navigate('/')}
+        />
+      )
+    }
+
     if (initMutation.isPending) return <InitLoadingState />
 
     if (initMutation.isError && authError) {

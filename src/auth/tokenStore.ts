@@ -1,6 +1,9 @@
 import { create } from 'zustand'
 import type { AppRole } from '@/types/roles'
 
+// Imported lazily at call time to avoid circular dependency with refresh.ts
+const SESSION_KEY = 'kg_rt'
+
 interface TokenState {
   accessToken: string | null
   idToken: string | null
@@ -31,5 +34,8 @@ export const useTokenStore = create<TokenStore>()((set) => ({
   ...initialState,
   setTokens: ({ accessToken, idToken, refreshToken, roles }) =>
     set({ accessToken, idToken, refreshToken, roles }),
-  clearTokens: () => set(initialState),
+  clearTokens: () => {
+    sessionStorage.removeItem(SESSION_KEY)
+    set(initialState)
+  },
 }))

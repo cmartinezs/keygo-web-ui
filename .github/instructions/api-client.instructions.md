@@ -95,6 +95,17 @@ export async function getTenants(): Promise<TenantData[]> {
 - No mezclar lógica de UI (toasts, navigate) dentro de `src/api/` — eso va en el hook o componente.
 - Prefijos de verbo: `get*`, `create*`, `update*`, `delete*`.
 
+## Convención de naming — wire format vs. TypeScript
+
+| Contexto | Convención | Ejemplo |
+|----------|------------|---------|
+| Parámetros TypeScript internos (interfaces, props, form fields) | camelCase | `emailOrUsername`, `organizationName` |
+| **Claves de query params enviadas al backend** | **snake_case** | `code_challenge`, `client_id` |
+| **Claves del JSON body enviado al backend** | **snake_case** | `email_or_username`, `grant_type` |
+| Claves de respuesta recibidas del backend (`BaseResponse<T>`) | snake_case (respetar tal como vienen) | `access_token`, `id_token` |
+
+> **Regla:** los DTOs de request (`*Request` interfaces) deben usar snake_case porque son el contrato wire directo con el backend. Los tipos de datos internos de la UI (form schemas, props) son camelCase.
+
 ```ts
 export async function createTenant(payload: CreateTenantRequest): Promise<TenantData> {
   const res = await apiClient.post<BaseResponse<TenantData>>('/tenants', payload)
