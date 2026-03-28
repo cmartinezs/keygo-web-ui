@@ -15,6 +15,16 @@ export interface BaseResponse<T> {
   data?: T
 }
 
+/** Envelope de paginación devuelto por endpoints con soporte de página. */
+export interface PagedData<T> {
+  content: T[]
+  page: number
+  size: number
+  total_elements: number
+  total_pages: number
+  last: boolean
+}
+
 // ---------------------------------------------------------------------------
 // Error handling — ErrorData
 // ---------------------------------------------------------------------------

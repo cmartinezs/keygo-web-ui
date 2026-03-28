@@ -51,6 +51,12 @@ export function LandingNav() {
 
           <div className="flex items-center gap-3">
             <Link
+              to="/register"
+              className="text-slate-300 hover:text-white text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
+            >
+              Regístrate
+            </Link>
+            <Link
               to="/subscribe"
               className="text-slate-300 hover:text-white text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
             >

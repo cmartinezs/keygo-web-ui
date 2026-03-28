@@ -1,11 +1,54 @@
 import { useState, useRef, useEffect } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useTokenStore } from '@/auth/tokenStore'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemePreference } from '@/hooks/useTheme'
 
 // ── Icons (inline SVG) ───────────────────────────────────────────────────────
+
+function IconKey() {
+  return (
+    <svg
+      className="w-6 h-6 text-indigo-400 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"
+      />
+    </svg>
+  )
+}
+
+function IconChevronLeft() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  )
+}
+
+function IconChevronRight() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
+function IconHamburger() {
+  return (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  )
+}
 
 function IconDashboard() {
   return (
@@ -179,14 +222,20 @@ interface NavItemProps {
   to: string
   icon: React.ReactNode
   label: string
+  collapsed?: boolean
+  onClick?: () => void
 }
 
-function NavItem({ to, icon, label }: NavItemProps) {
+function NavItem({ to, icon, label, collapsed, onClick }: NavItemProps) {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
+      title={collapsed ? label : undefined}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+        `flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 ${
+          collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'
+        } ${
           isActive
             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
             : 'text-slate-400 hover:bg-white/5 hover:text-white'
@@ -194,7 +243,7 @@ function NavItem({ to, icon, label }: NavItemProps) {
       }
     >
       {icon}
-      <span>{label}</span>
+      {!collapsed && <span>{label}</span>}
     </NavLink>
   )
 }
@@ -224,8 +273,14 @@ export default function AdminLayout() {
   const user = useCurrentUser()
   const { preference, setPreference } = useTheme()
 
+  const location = useLocation()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // Close mobile drawer on route change
+  useEffect(() => { setMobileOpen(false) }, [location.pathname])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -252,36 +307,65 @@ export default function AdminLayout() {
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
 
-      {/* ── Sidebar ── */}
-      <aside className="w-64 shrink-0 bg-slate-900 border-r border-white/10 flex flex-col h-full">
+      {/* ── Mobile backdrop ── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/60 md:hidden"
+          aria-hidden="true"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
 
-        {/* Logo */}
-        <div className="h-16 flex items-center gap-2.5 px-5 border-b border-white/10">
-          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M21 2H3a1 1 0 00-1 1v18a1 1 0 001 1h9v-8h-2v-3h2V9.5C12 7 13.5 5 16 5h3v3h-2c-1.1 0-1 .9-1 1.5V11h3l-1 3h-2v8h5a1 1 0 001-1V3a1 1 0 00-1-1z" />
-            </svg>
+      {/* ── Sidebar ── */}
+      <aside
+        className={[
+          'flex flex-col bg-slate-900 border-r border-white/10 h-full overflow-hidden',
+          'fixed inset-y-0 left-0 z-40 w-64',
+          'transition-[transform,width] duration-200',
+          mobileOpen ? 'translate-x-0' : '-translate-x-full',
+          'md:static md:inset-auto md:z-auto md:translate-x-0 md:shrink-0',
+          collapsed ? 'md:w-16' : 'md:w-64',
+        ].join(' ')}
+      >
+
+        {/* Logo + collapse toggle */}
+        <div className="h-16 flex items-center border-b border-white/10 shrink-0">
+          {/* Logo: always visible in drawer, hidden when collapsed on desktop */}
+          <div className={`flex items-center gap-2.5 flex-1 min-w-0 px-5 ${collapsed ? 'md:hidden' : ''}`}>
+            <IconKey />
+            <span className="text-white font-bold text-lg tracking-tight whitespace-nowrap">KeyGo</span>
           </div>
-          <span className="text-white font-bold text-lg tracking-tight">KeyGo</span>
+          {/* Collapse toggle: desktop only */}
+          <button
+            onClick={() => setCollapsed((c) => !c)}
+            aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+            className={`hidden md:flex shrink-0 w-8 h-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 ${collapsed ? 'mx-auto' : 'mr-2'}`}
+          >
+            {collapsed ? <IconChevronRight /> : <IconChevronLeft />}
+          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-1">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 mb-3">
-            Plataforma
-          </p>
-          <NavItem to="/admin/dashboard" icon={<IconDashboard />} label="Dashboard" />
-          <NavItem to="/admin/tenants" icon={<IconBuilding />} label="Tenants" />
+        <nav className="flex-1 overflow-y-auto px-2 py-5 space-y-1">
+          {!collapsed && (
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 mb-3">
+              Plataforma
+            </p>
+          )}
+          <NavItem to="/admin/dashboard" icon={<IconDashboard />} label="Dashboard" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
+          <NavItem to="/admin/tenants" icon={<IconBuilding />} label="Tenants" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
         </nav>
 
         {/* Sidebar user strip */}
-        <div className="px-3 py-4 border-t border-white/10">
-          <div className="flex items-center gap-3 px-2">
+        <div className="px-2 py-4 border-t border-white/10">
+          <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : 'px-2'}`}>
             <UserAvatar name={displayName} />
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate">{displayName}</p>
-              <p className="text-xs text-indigo-400 truncate">{roleLabel}</p>
-            </div>
+            {!collapsed && (
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-white truncate">{displayName}</p>
+                <p className="text-xs text-indigo-400 truncate">{roleLabel}</p>
+              </div>
+            )}
           </div>
         </div>
       </aside>
@@ -290,10 +374,19 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Top header */}
-        <header className="h-16 bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 flex items-center px-6 gap-4 shrink-0">
+        <header className="h-16 bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-white/10 flex items-center px-4 gap-3 shrink-0">
 
-          {/* Search */}
-          <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 w-64">
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={() => setMobileOpen((o) => !o)}
+            aria-label="Abrir menú"
+            className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 shrink-0"
+          >
+            <IconHamburger />
+          </button>
+
+          {/* Search — hidden on mobile */}
+          <div className="hidden min-[550px]:flex items-center gap-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 w-64">
             <IconSearch />
             <span className="text-sm text-slate-400 select-none">Buscar…</span>
             <kbd className="ml-auto text-[10px] text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-white/20 rounded px-1">⌘K</kbd>
@@ -322,11 +415,11 @@ export default function AdminLayout() {
               aria-expanded={dropdownOpen}
             >
               <UserAvatar name={displayName} />
-              <div className="text-left hidden sm:block">
+              <div className="text-left hidden min-[550px]:block">
                 <p className="text-sm font-semibold text-slate-800 dark:text-white leading-tight">{displayName}</p>
                 <p className="text-xs text-indigo-500 dark:text-indigo-400 leading-tight">{roleLabel}</p>
               </div>
-              <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 hidden min-[550px]:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>

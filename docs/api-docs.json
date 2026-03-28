@@ -1,2974 +1,3048 @@
 {
-  "openapi": "3.1.0",
-  "info": {
-    "title": "KeyGo Server API",
-    "description": "Enterprise authentication service — open source alternative for centralized identity, user and access management.\n\n🔒 Protected endpoints require `Authorization: Bearer \u003Cjwt\u003E`.",
-    "contact": {
-      "name": "KeyGo Server",
-      "url": "https://github.com/cmartinezs/keygo-server"
+    "openapi": "3.1.0",
+    "info": {
+        "title": "KeyGo Server API",
+        "description": "Enterprise authentication service — open source alternative for centralized identity, user and access management.\n\n⚠️ Bootstrap security is disabled — all endpoints are public.",
+        "contact": {
+            "name": "KeyGo Server",
+            "url": "https://github.com/cmartinezs/keygo-server"
+        },
+        "license": {
+            "name": "AGPL-3.0",
+            "url": "https://www.gnu.org/licenses/agpl-3.0.txt"
+        },
+        "version": "1.0"
     },
-    "license": {
-      "name": "AGPL-3.0",
-      "url": "https://www.gnu.org/licenses/agpl-3.0.txt"
+    "servers": [
+        {
+            "url": "http://localhost:8080/keygo-server",
+            "description": "Generated server url"
+        }
+    ],
+    "tags": [
+        {
+            "name": "OIDC Discovery",
+            "description": "Public OIDC discovery and JWKS endpoints — no authentication required. Returns raw JSON (not BaseResponse) for compatibility with third-party OAuth2/OIDC libraries."
+        },
+        {
+            "name": "App Roles",
+            "description": "Application-scoped roles — requires Bearer JWT"
+        },
+        {
+            "name": "Client Apps",
+            "description": "OAuth2 client application management per tenant — requires Bearer JWT"
+        },
+        {
+            "name": "OAuth2 / Authorization",
+            "description": "OAuth2 Authorization Code + PKCE flow, token exchange, refresh token rotation and client_credentials grant — all public endpoints (no X-KEYGO-ADMIN)"
+        },
+        {
+            "name": "Registration",
+            "description": "Public user self-registration and email verification endpoints"
+        },
+        {
+            "name": "Platform",
+            "description": "Public platform endpoints — no authentication required"
+        },
+        {
+            "name": "Tenants",
+            "description": "Tenant lifecycle management — requires Bearer JWT"
+        },
+        {
+            "name": "Memberships",
+            "description": "User access to applications — requires Bearer JWT"
+        },
+        {
+            "name": "Account Profile",
+            "description": "Self-service profile management — requires Bearer token (no X-KEYGO-ADMIN)"
+        },
+        {
+            "name": "Users",
+            "description": "User identity management per tenant — requires Bearer JWT"
+        }
+    ],
+    "paths": {
+        "/api/v1/tenants/{tenantSlug}/users/{userId}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get a user",
+                "description": "Retrieves details of a specific user by its UUID within the tenant.",
+                "operationId": "getUser",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "User UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "a1b2c3d4-e5f6-..."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update a user",
+                "description": "Updates the firstName and lastName of an existing user.",
+                "operationId": "updateUser",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "User UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "a1b2c3d4-e5f6-..."
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/apps/{clientId}": {
+            "get": {
+                "tags": [
+                    "Client Apps"
+                ],
+                "summary": "Get client application",
+                "description": "Retrieves details of a specific OAuth2 client application by its `clientId`.",
+                "operationId": "getClientApp",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "clientId",
+                        "in": "path",
+                        "description": "OAuth2 client_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "a1b2c3d4-e5f6-..."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client app retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client app or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Client Apps"
+                ],
+                "summary": "Update client application",
+                "description": "Updates name, description, redirect URIs, grants or scopes of an existing client app.",
+                "operationId": "updateClientApp",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "clientId",
+                        "in": "path",
+                        "description": "OAuth2 client_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "a1b2c3d4-e5f6-..."
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateClientAppRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Client app updated successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client app or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{slug}/suspend": {
+            "put": {
+                "tags": [
+                    "Tenants"
+                ],
+                "summary": "Suspend a tenant",
+                "description": "Suspends an active tenant. A suspended tenant cannot be used for authentication.",
+                "operationId": "suspendTenant",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "description": "Unique slug identifier of the tenant",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tenant suspended successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Tenant is already suspended",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants": {
+            "get": {
+                "tags": [
+                    "Tenants"
+                ],
+                "summary": "List all tenants",
+                "description": "Returns a paginated list of all tenants. Supports optional filtering by status and partial name match. Requires ADMIN role.",
+                "operationId": "listTenants",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by tenant status (ACTIVE, SUSPENDED, PENDING)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ACTIVE",
+                                "SUSPENDED",
+                                "PENDING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "nameLike",
+                        "in": "query",
+                        "description": "Partial match on tenant name (case-insensitive)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Zero-based page number",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 0
+                        },
+                        "example": 0
+                    },
+                    {
+                        "name": "size",
+                        "in": "query",
+                        "description": "Page size (1–200)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32",
+                            "default": 20
+                        },
+                        "example": 20
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tenant list retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tenants"
+                ],
+                "summary": "Create a new tenant",
+                "description": "Creates a new tenant with the given name and owner email. A URL-friendly slug is automatically generated from the name.",
+                "operationId": "createTenant",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateTenantRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tenant created successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List users",
+                "description": "Returns all user accounts registered under the specified tenant.",
+                "operationId": "listUsers",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User list retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create a user",
+                "description": "Creates a new user account scoped to the specified tenant. Username and email must be unique within the tenant.",
+                "operationId": "createUser",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUserRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Email or username already exists in this tenant",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/users/{userId}/reset-password": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Reset user password",
+                "description": "Administratively resets the password of a user within the tenant.",
+                "operationId": "resetPassword",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "User UUID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "a1b2c3d4-e5f6-..."
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResetPasswordRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/users/validate-credentials": {
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Validate credentials",
+                "description": "Validates a user's credentials (email or username + password) within the tenant. Returns user data on success.",
+                "operationId": "validateCredentials",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ValidateCredentialsRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Credentials valid",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials or admin key missing",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "User account is suspended",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/oauth2/token": {
+            "post": {
+                "tags": [
+                    "OAuth2 / Authorization"
+                ],
+                "summary": "Issue or rotate tokens (multi-grant)",
+                "description": "Multi-grant token endpoint. The `grant_type` field selects the behaviour:\n\n| `grant_type` | Required fields | Returns |\n|---|---|---|\n| `authorization_code` | `client_id`, `code`, `redirect_uri`, `code_verifier` | `access_token` + `id_token` + `refresh_token` |\n| `refresh_token` | `client_id`, `refresh_token` | new `access_token` + `id_token` + rotated `refresh_token` |\n| `client_credentials` | `client_id`, `client_secret`, `scope` | `access_token` only (M2M) |",
+                "operationId": "token",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TokenRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token(s) issued successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request — missing required fields for the selected grant_type",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid code, credentials or token",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant or client app not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/oauth2/revoke": {
+            "post": {
+                "tags": [
+                    "OAuth2 / Authorization"
+                ],
+                "summary": "Revoke a token (RFC 7009)",
+                "description": "Revokes a refresh token per RFC 7009. The endpoint is **idempotent** — if the token does not exist or has already been revoked, 200 OK is returned anyway to prevent token existence enumeration. No authentication header required.",
+                "operationId": "revoke",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RevokeTokenRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token revoked (or silently ignored if unknown)",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/memberships": {
+            "get": {
+                "tags": [
+                    "Memberships"
+                ],
+                "summary": "List memberships",
+                "description": "List all memberships for a user or app (query params determine filter)",
+                "operationId": "listMemberships",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "userId",
+                        "in": "query",
+                        "description": "Filter by user ID",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "clientAppId",
+                        "in": "query",
+                        "description": "Filter by client app ID",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Memberships retrieved",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseListMembershipData"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Memberships"
+                ],
+                "summary": "Create a membership",
+                "description": "Grant user access to an application with specified roles",
+                "operationId": "createMembership",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateMembershipRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Membership created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseMembershipData"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User, app, or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseMembershipData"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/apps": {
+            "get": {
+                "tags": [
+                    "Client Apps"
+                ],
+                "summary": "List client applications",
+                "description": "Returns all OAuth2 client applications registered under the specified tenant.",
+                "operationId": "listClientApps",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client apps retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Client Apps"
+                ],
+                "summary": "Create a client application",
+                "description": "Registers a new OAuth2 client application under the specified tenant. Returns the `clientId` and a one-time visible `clientSecret` — store it securely.",
+                "operationId": "createClientApp",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateClientAppRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Client app created successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/apps/{clientId}/verify-email": {
+            "post": {
+                "tags": [
+                    "Registration"
+                ],
+                "summary": "Verify email address",
+                "description": "Validates the 6-digit code received by email. If valid, the user is activated (status → ACTIVE). If expired, a new code must be requested.",
+                "operationId": "verifyEmail",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "clientId",
+                        "in": "path",
+                        "description": "Client app ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyEmailRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email verified — user is now active",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseVoid"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or already-used verification code",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseVoid"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Verification code has expired — request a new one",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseVoid"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/apps/{clientId}/rotate-secret": {
+            "post": {
+                "tags": [
+                    "Client Apps"
+                ],
+                "summary": "Rotate client secret",
+                "description": "Generates a new `clientSecret` for a confidential client app, invalidating the previous one. The new secret is returned once — store it securely.",
+                "operationId": "rotateClientSecret",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "clientId",
+                        "in": "path",
+                        "description": "OAuth2 client_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "a1b2c3d4-e5f6-..."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Client secret rotated successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Client app or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/apps/{clientId}/resend-verification": {
+            "post": {
+                "tags": [
+                    "Registration"
+                ],
+                "summary": "Resend verification email",
+                "description": "Generates and sends a new verification code. Only allowed once the previous code has expired (30-minute window).",
+                "operationId": "resendVerification",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "clientId",
+                        "in": "path",
+                        "description": "Client app ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResendVerificationRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "New verification email sent",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseVoid"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Current code is still active — wait until it expires",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseVoid"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseVoid"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/apps/{clientId}/register": {
+            "post": {
+                "tags": [
+                    "Registration"
+                ],
+                "summary": "Register a new user",
+                "description": "Creates a new user with PENDING status and sends a 6-digit verification code to the provided email. The code is valid for 30 minutes.",
+                "operationId": "register",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "clientId",
+                        "in": "path",
+                        "description": "Client app ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered — verification email sent",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body or duplicate email/username",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseRegistrationData"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant or client app not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseRegistrationData"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/apps/{clientAppId}/roles": {
+            "get": {
+                "tags": [
+                    "App Roles"
+                ],
+                "summary": "List app roles",
+                "description": "List all roles defined for a client application",
+                "operationId": "listAppRoles",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "clientAppId",
+                        "in": "path",
+                        "description": "Client app ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Roles retrieved",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "App or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseListAppRoleData"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "App Roles"
+                ],
+                "summary": "Create an app role",
+                "description": "Create a new role within a client application",
+                "operationId": "createAppRole",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "clientAppId",
+                        "in": "path",
+                        "description": "Client app ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateAppRoleRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Role created",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input or duplicate role code",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseAppRoleData"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "App or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseAppRoleData"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/account/login": {
+            "post": {
+                "tags": [
+                    "OAuth2 / Authorization"
+                ],
+                "summary": "Submit credentials and issue authorization code",
+                "description": "Authenticates the user within the tenant and issues a one-time authorization code. Requires an active authorization session established by `GET /oauth2/authorize`.\n\nThe returned `code` must be exchanged for tokens via `POST /oauth2/token` (`grant_type=authorization_code`) using the original PKCE `code_verifier`.",
+                "operationId": "login",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful — authorization code issued",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "No authorization state in session — call GET /oauth2/authorize first",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/account/profile": {
+            "get": {
+                "tags": [
+                    "Account Profile"
+                ],
+                "summary": "Get own profile",
+                "description": "Returns the complete profile of the authenticated user (all OIDC extended fields). Requires Authorization: Bearer <access_token>.",
+                "operationId": "getProfile",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Profile retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Account Profile"
+                ],
+                "summary": "Update own profile",
+                "description": "Partially updates the profile of the authenticated user. Only non-null fields are updated (PATCH semantics). Requires Authorization: Bearer <access_token>.",
+                "operationId": "updateProfile",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserProfileRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/userinfo": {
+            "get": {
+                "tags": [
+                    "OIDC Discovery"
+                ],
+                "summary": "Get authenticated user info (OIDC §5.3)",
+                "description": "Returns identity claims of the authenticated user per OIDC Core 1.0 §5.3. Requires `Authorization: Bearer <access_token>` — the token must have been issued by the `POST /oauth2/token` endpoint with `openid` scope.",
+                "operationId": "userInfo",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "description": "Bearer access token",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "Bearer eyJhbGci..."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User info claims retrieved",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User or tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/oauth2/authorize": {
+            "get": {
+                "tags": [
+                    "OAuth2 / Authorization"
+                ],
+                "summary": "Initiate OAuth2 authorization (PKCE)",
+                "description": "Starts the OAuth2 Authorization Code + PKCE flow. Validates that the tenant is active, the client app exists and the redirect URI is registered. Stores the authorization state in the HTTP session so that `POST /account/login` can retrieve it.\n\n**Flow:** `GET /authorize` → `POST /account/login` → `POST /oauth2/token`",
+                "operationId": "authorize",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    },
+                    {
+                        "name": "client_id",
+                        "in": "query",
+                        "description": "OAuth2 client_id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "redirect_uri",
+                        "in": "query",
+                        "description": "Registered redirect URI",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "scope",
+                        "in": "query",
+                        "description": "Requested scopes (space-separated)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "openid profile email"
+                    },
+                    {
+                        "name": "response_type",
+                        "in": "query",
+                        "description": "Must be `code`",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "description": "Optional opaque value to maintain state",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "code_challenge_method",
+                        "in": "query",
+                        "description": "PKCE method — must be `S256`",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "code_challenge",
+                        "in": "query",
+                        "description": "PKCE code challenge (BASE64URL of SHA-256 of verifier)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Authorization initiated — client app metadata returned",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid or missing query parameters",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant or client app not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/.well-known/openid-configuration": {
+            "get": {
+                "tags": [
+                    "OIDC Discovery"
+                ],
+                "summary": "Get OIDC discovery document",
+                "description": "Returns the OpenID Connect Discovery 1.0 document for the specified tenant. This document contains all endpoints (authorization, token, userinfo, jwks_uri) and supported capabilities required for automatic client configuration.",
+                "operationId": "getOidcConfiguration",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OIDC discovery document — raw JSON per OIDC Discovery 1.0 spec",
+                        "content": {
+                            "application/json": {}
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/.well-known/jwks.json": {
+            "get": {
+                "tags": [
+                    "OIDC Discovery"
+                ],
+                "summary": "Get JWK Set",
+                "description": "Returns the JSON Web Key Set (RFC 7517) containing the active and retired RSA public keys used to sign JWT tokens for the specified tenant. Used by relying parties to verify token signatures.",
+                "operationId": "getJwks",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "JWK Set retrieved — raw JSON `{\"keys\": [...]}`",
+                        "content": {
+                            "application/json": {}
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{slug}": {
+            "get": {
+                "tags": [
+                    "Tenants"
+                ],
+                "summary": "Get tenant by slug",
+                "description": "Retrieves tenant details by its unique slug identifier.",
+                "operationId": "getTenantBySlug",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "description": "Unique slug identifier of the tenant",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "example": "my-company"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tenant retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin key",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tenant not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/service/info": {
+            "get": {
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "Get service information",
+                "description": "Returns public metadata about the running service: title, name, and version. This endpoint does not require authentication.",
+                "operationId": "getServiceInfo",
+                "responses": {
+                    "200": {
+                        "description": "Service information retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/response-codes": {
+            "get": {
+                "tags": [
+                    "Platform"
+                ],
+                "summary": "List all response codes",
+                "description": "Returns the full catalog of KeyGo response codes, separated into success codes and failure codes. This endpoint does not require authentication.",
+                "operationId": "getResponseCodeCatalog",
+                "responses": {
+                    "200": {
+                        "description": "Response code catalog retrieved successfully",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenantSlug}/memberships/{membershipId}": {
+            "delete": {
+                "tags": [
+                    "Memberships"
+                ],
+                "summary": "Revoke membership",
+                "description": "Remove user access to an application",
+                "operationId": "revokeMembership",
+                "parameters": [
+                    {
+                        "name": "tenantSlug",
+                        "in": "path",
+                        "description": "Tenant slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "membershipId",
+                        "in": "path",
+                        "description": "Membership ID",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Membership revoked",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseVoid"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Membership not found",
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BaseResponseVoid"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ]
+            }
+        }
     },
-    "version": "1.0"
-  },
-  "servers": [
-    {
-      "url": "http://localhost:8080/keygo-server",
-      "description": "Generated server url"
+    "components": {
+        "schemas": {
+            "UpdateUserRequest": {
+                "type": "object",
+                "properties": {
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "phoneNumber": {
+                        "type": "string"
+                    },
+                    "locale": {
+                        "type": "string"
+                    },
+                    "zoneinfo": {
+                        "type": "string"
+                    },
+                    "profilePictureUrl": {
+                        "type": "string"
+                    },
+                    "birthdate": {
+                        "type": "string"
+                    },
+                    "website": {
+                        "type": "string"
+                    }
+                }
+            },
+            "BaseResponse": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "success": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "failure": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "data": {},
+                    "debug": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "throwable": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MessageResponse": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UpdateClientAppRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "redirectUris": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "uniqueItems": true
+                    },
+                    "grants": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "AUTHORIZATION_CODE",
+                                "CLIENT_CREDENTIALS",
+                                "REFRESH_TOKEN",
+                                "IMPLICIT"
+                            ]
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                    },
+                    "scopes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "grants",
+                    "name"
+                ]
+            },
+            "CreateTenantRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "minLength": 0
+                    },
+                    "ownerEmail": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "name",
+                    "ownerEmail"
+                ]
+            },
+            "CreateUserRequest": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 3
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 2147483647,
+                        "minLength": 8
+                    },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password",
+                    "username"
+                ]
+            },
+            "ResetPasswordRequest": {
+                "type": "object",
+                "properties": {
+                    "newPassword": {
+                        "type": "string",
+                        "maxLength": 2147483647,
+                        "minLength": 8
+                    }
+                },
+                "required": [
+                    "newPassword"
+                ]
+            },
+            "ValidateCredentialsRequest": {
+                "type": "object",
+                "properties": {
+                    "credential": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "credential",
+                    "password"
+                ]
+            },
+            "TokenRequest": {
+                "type": "object",
+                "properties": {
+                    "grantType": {
+                        "type": "string"
+                    },
+                    "clientId": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "clientSecret": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "codeVerifier": {
+                        "type": "string"
+                    },
+                    "redirectUri": {
+                        "type": "string"
+                    },
+                    "refreshToken": {
+                        "type": "string"
+                    },
+                    "scope": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "clientId"
+                ]
+            },
+            "RevokeTokenRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "tokenTypeHint": {
+                        "type": "string"
+                    },
+                    "clientId": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "clientId",
+                    "token"
+                ]
+            },
+            "CreateMembershipRequest": {
+                "type": "object",
+                "properties": {
+                    "userId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "clientAppId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "roleCodes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "clientAppId",
+                    "roleCodes",
+                    "userId"
+                ]
+            },
+            "BaseResponseMembershipData": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "success": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "failure": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/MembershipData"
+                    },
+                    "debug": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "throwable": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MembershipData": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "userId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "clientAppId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "SUSPENDED",
+                            "PENDING"
+                        ]
+                    },
+                    "roleIds": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "uniqueItems": true
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "CreateClientAppRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "PUBLIC",
+                            "CONFIDENTIAL"
+                        ]
+                    },
+                    "redirectUris": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "uniqueItems": true
+                    },
+                    "grants": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "AUTHORIZATION_CODE",
+                                "CLIENT_CREDENTIALS",
+                                "REFRESH_TOKEN",
+                                "IMPLICIT"
+                            ]
+                        },
+                        "minItems": 1,
+                        "uniqueItems": true
+                    },
+                    "scopes": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "grants",
+                    "name",
+                    "type"
+                ]
+            },
+            "VerifyEmailRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "code": {
+                        "type": "string",
+                        "maxLength": 6,
+                        "minLength": 6
+                    }
+                },
+                "required": [
+                    "code",
+                    "email"
+                ]
+            },
+            "BaseResponseVoid": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "success": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "failure": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "data": {},
+                    "debug": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "throwable": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ResendVerificationRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "RegisterRequest": {
+                "type": "object",
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 2147483647,
+                        "minLength": 8
+                    },
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "email",
+                    "password",
+                    "username"
+                ]
+            },
+            "BaseResponseRegistrationData": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "success": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "failure": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/RegistrationData"
+                    },
+                    "debug": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "throwable": {
+                        "type": "string"
+                    }
+                }
+            },
+            "RegistrationData": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ACTIVE",
+                            "SUSPENDED",
+                            "PENDING"
+                        ]
+                    }
+                }
+            },
+            "CreateAppRoleRequest": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code"
+                ]
+            },
+            "AppRoleData": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "clientAppId": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "displayName": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                }
+            },
+            "BaseResponseAppRoleData": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "success": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "failure": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/AppRoleData"
+                    },
+                    "debug": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "throwable": {
+                        "type": "string"
+                    }
+                }
+            },
+            "LoginRequest": {
+                "type": "object",
+                "properties": {
+                    "emailOrUsername": {
+                        "type": "string",
+                        "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "emailOrUsername",
+                    "password"
+                ]
+            },
+            "UpdateUserProfileRequest": {
+                "type": "object",
+                "properties": {
+                    "firstName": {
+                        "type": "string"
+                    },
+                    "lastName": {
+                        "type": "string"
+                    },
+                    "phoneNumber": {
+                        "type": "string"
+                    },
+                    "locale": {
+                        "type": "string"
+                    },
+                    "zoneinfo": {
+                        "type": "string"
+                    },
+                    "profilePictureUrl": {
+                        "type": "string"
+                    },
+                    "birthdate": {
+                        "type": "string"
+                    },
+                    "website": {
+                        "type": "string"
+                    }
+                }
+            },
+            "BaseResponseListMembershipData": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "success": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "failure": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MembershipData"
+                        }
+                    },
+                    "debug": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "throwable": {
+                        "type": "string"
+                    }
+                }
+            },
+            "BaseResponseListAppRoleData": {
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "success": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "failure": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AppRoleData"
+                        }
+                    },
+                    "debug": {
+                        "$ref": "#/components/schemas/MessageResponse"
+                    },
+                    "throwable": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "description": "Bearer JWT token issued by KeyGo OAuth2/OIDC endpoints.",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
     }
-  ],
-  "tags": [
-    {
-      "name": "Client Apps",
-      "description": "OAuth2 client application management per tenant — requires Bearer JWT"
-    },
-    {
-      "name": "Registration",
-      "description": "Public user self-registration and email verification endpoints"
-    },
-    {
-      "name": "5-memberships",
-      "description": "User access to applications"
-    },
-    {
-      "name": "Platform",
-      "description": "Public platform endpoints — no authentication required"
-    },
-    {
-      "name": "Tenants",
-      "description": "Tenant lifecycle management — requires Bearer JWT"
-    },
-    {
-      "name": "6-roles",
-      "description": "Application-scoped roles"
-    },
-    {
-      "name": "Account Profile",
-      "description": "Self-service profile management — requires Bearer token (no X-KEYGO-ADMIN)"
-    },
-    {
-      "name": "Users",
-      "description": "User identity management per tenant — requires Bearer JWT"
-    }
-  ],
-  "paths": {
-    "/api/v1/tenants/{tenantSlug}/users/{userId}": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Get a user",
-        "description": "Retrieves details of a specific user by its UUID within the tenant.",
-        "operationId": "getUser",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          },
-          {
-            "name": "userId",
-            "in": "path",
-            "description": "User UUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "a1b2c3d4-e5f6-..."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "put": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update a user",
-        "description": "Updates the firstName and lastName of an existing user.",
-        "operationId": "updateUser",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          },
-          {
-            "name": "userId",
-            "in": "path",
-            "description": "User UUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "a1b2c3d4-e5f6-..."
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "User updated successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}": {
-      "get": {
-        "tags": [
-          "Client Apps"
-        ],
-        "summary": "Get client application",
-        "description": "Retrieves details of a specific OAuth2 client application by its `clientId`.",
-        "operationId": "getClientApp",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "OAuth2 client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "a1b2c3d4-e5f6-..."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Client app retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Client app or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "put": {
-        "tags": [
-          "Client Apps"
-        ],
-        "summary": "Update client application",
-        "description": "Updates name, description, redirect URIs, grants or scopes of an existing client app.",
-        "operationId": "updateClientApp",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "OAuth2 client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "a1b2c3d4-e5f6-..."
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateClientAppRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Client app updated successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Client app or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{slug}/suspend": {
-      "put": {
-        "tags": [
-          "Tenants"
-        ],
-        "summary": "Suspend a tenant",
-        "description": "Suspends an active tenant. A suspended tenant cannot be used for authentication.",
-        "operationId": "suspendTenant",
-        "parameters": [
-          {
-            "name": "slug",
-            "in": "path",
-            "description": "Unique slug identifier of the tenant",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tenant suspended successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Tenant is already suspended",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants": {
-      "post": {
-        "tags": [
-          "Tenants"
-        ],
-        "summary": "Create a new tenant",
-        "description": "Creates a new tenant with the given name and owner email. A URL-friendly slug is automatically generated from the name.",
-        "operationId": "createTenant",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTenantRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Tenant created successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/users": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "List users",
-        "description": "Returns all user accounts registered under the specified tenant.",
-        "operationId": "listUsers",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "User list retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Create a user",
-        "description": "Creates a new user account scoped to the specified tenant. Username and email must be unique within the tenant.",
-        "operationId": "createUser",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateUserRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "User created successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Email or username already exists in this tenant",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/users/{userId}/reset-password": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Reset user password",
-        "description": "Administratively resets the password of a user within the tenant.",
-        "operationId": "resetPassword",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          },
-          {
-            "name": "userId",
-            "in": "path",
-            "description": "User UUID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "a1b2c3d4-e5f6-..."
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetPasswordRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Password reset successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/users/validate-credentials": {
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Validate credentials",
-        "description": "Validates a user's credentials (email or username + password) within the tenant. Returns user data on success.",
-        "operationId": "validateCredentials",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ValidateCredentialsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Credentials valid",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Invalid credentials or admin key missing",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "User account is suspended",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/oauth2/token": {
-      "post": {
-        "tags": [
-          "authorization-controller"
-        ],
-        "operationId": "token",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseTokenData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/oauth2/revoke": {
-      "post": {
-        "tags": [
-          "revocation-controller"
-        ],
-        "operationId": "revoke",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RevokeTokenRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/memberships": {
-      "get": {
-        "tags": [
-          "5-memberships"
-        ],
-        "summary": "List memberships",
-        "description": "List all memberships for a user or app (query params determine filter)",
-        "operationId": "listMemberships",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "userId",
-            "in": "query",
-            "description": "Filter by user ID",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "clientAppId",
-            "in": "query",
-            "description": "Filter by client app ID",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Memberships retrieved",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid query parameters",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListMembershipData"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "5-memberships"
-        ],
-        "summary": "Create a membership",
-        "description": "Grant user access to an application with specified roles",
-        "operationId": "createMembership",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateMembershipRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Membership created",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseMembershipData"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User, app, or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseMembershipData"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps": {
-      "get": {
-        "tags": [
-          "Client Apps"
-        ],
-        "summary": "List client applications",
-        "description": "Returns all OAuth2 client applications registered under the specified tenant.",
-        "operationId": "listClientApps",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Client apps retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "Client Apps"
-        ],
-        "summary": "Create a client application",
-        "description": "Registers a new OAuth2 client application under the specified tenant. Returns the `clientId` and a one-time visible `clientSecret` — store it securely.",
-        "operationId": "createClientApp",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateClientAppRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Client app created successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/verify-email": {
-      "post": {
-        "tags": [
-          "Registration"
-        ],
-        "summary": "Verify email address",
-        "description": "Validates the 6-digit code received by email. If valid, the user is activated (status → ACTIVE). If expired, a new code must be requested.",
-        "operationId": "verifyEmail",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyEmailRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Email verified — user is now active",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid or already-used verification code",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Verification code has expired — request a new one",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/rotate-secret": {
-      "post": {
-        "tags": [
-          "Client Apps"
-        ],
-        "summary": "Rotate client secret",
-        "description": "Generates a new `clientSecret` for a confidential client app, invalidating the previous one. The new secret is returned once — store it securely.",
-        "operationId": "rotateClientSecret",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "OAuth2 client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "a1b2c3d4-e5f6-..."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Client secret rotated successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Client app or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/resend-verification": {
-      "post": {
-        "tags": [
-          "Registration"
-        ],
-        "summary": "Resend verification email",
-        "description": "Generates and sends a new verification code. Only allowed once the previous code has expired (30-minute window).",
-        "operationId": "resendVerification",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResendVerificationRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "New verification email sent",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Current code is still active — wait until it expires",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/register": {
-      "post": {
-        "tags": [
-          "Registration"
-        ],
-        "summary": "Register a new user",
-        "description": "Creates a new user with PENDING status and sends a 6-digit verification code to the provided email. The code is valid for 30 minutes.",
-        "operationId": "register",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "User registered — verification email sent",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request body or duplicate email/username",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseRegistrationData"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tenant or client app not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseRegistrationData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientAppId}/roles": {
-      "get": {
-        "tags": [
-          "6-roles"
-        ],
-        "summary": "List app roles",
-        "description": "List all roles defined for a client application",
-        "operationId": "listAppRoles",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientAppId",
-            "in": "path",
-            "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Roles retrieved",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "App or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListAppRoleData"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "6-roles"
-        ],
-        "summary": "Create an app role",
-        "description": "Create a new role within a client application",
-        "operationId": "createAppRole",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientAppId",
-            "in": "path",
-            "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAppRoleRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Role created",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or duplicate role code",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppRoleData"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "App or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppRoleData"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/account/login": {
-      "post": {
-        "tags": [
-          "authorization-controller"
-        ],
-        "operationId": "login",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseLoginData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/account/profile": {
-      "get": {
-        "tags": [
-          "Account Profile"
-        ],
-        "summary": "Get own profile",
-        "description": "Returns the complete profile of the authenticated user (all OIDC extended fields). Requires Authorization: Bearer \u003Caccess_token\u003E.",
-        "operationId": "getProfile",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Profile retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid Bearer token",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "Account Profile"
-        ],
-        "summary": "Update own profile",
-        "description": "Partially updates the profile of the authenticated user. Only non-null fields are updated (PATCH semantics). Requires Authorization: Bearer \u003Caccess_token\u003E.",
-        "operationId": "updateProfile",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserProfileRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Profile updated successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid Bearer token",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "User or tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/userinfo": {
-      "get": {
-        "tags": [
-          "user-info-controller"
-        ],
-        "operationId": "userInfo",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserInfoResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/oauth2/authorize": {
-      "get": {
-        "tags": [
-          "authorization-controller"
-        ],
-        "operationId": "authorize",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "request",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/AuthorizationRequest"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAuthorizationInitiatedData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/.well-known/openid-configuration": {
-      "get": {
-        "tags": [
-          "oidc-metadata-controller"
-        ],
-        "operationId": "getOidcConfiguration",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/.well-known/jwks.json": {
-      "get": {
-        "tags": [
-          "jwks-controller"
-        ],
-        "operationId": "getJwks",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{slug}": {
-      "get": {
-        "tags": [
-          "Tenants"
-        ],
-        "summary": "Get tenant by slug",
-        "description": "Retrieves tenant details by its unique slug identifier.",
-        "operationId": "getTenantBySlug",
-        "parameters": [
-          {
-            "name": "slug",
-            "in": "path",
-            "description": "Unique slug identifier of the tenant",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "example": "my-company"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tenant retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid admin key",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tenant not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v1/service/info": {
-      "get": {
-        "tags": [
-          "Platform"
-        ],
-        "summary": "Get service information",
-        "description": "Returns public metadata about the running service: title, name, and version. This endpoint does not require authentication.",
-        "operationId": "getServiceInfo",
-        "responses": {
-          "200": {
-            "description": "Service information retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/response-codes": {
-      "get": {
-        "tags": [
-          "Platform"
-        ],
-        "summary": "List all response codes",
-        "description": "Returns the full catalog of KeyGo response codes, separated into success codes and failure codes. This endpoint does not require authentication.",
-        "operationId": "getResponseCodeCatalog",
-        "responses": {
-          "200": {
-            "description": "Response code catalog retrieved successfully",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/memberships/{membershipId}": {
-      "delete": {
-        "tags": [
-          "5-memberships"
-        ],
-        "summary": "Revoke membership",
-        "description": "Remove user access to an application",
-        "operationId": "revokeMembership",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "membershipId",
-            "in": "path",
-            "description": "Membership ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Membership revoked",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Membership not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "BearerAuth": []
-          }
-        ]
-      }
-    }
-  },
-  "components": {
-    "schemas": {
-      "UpdateUserRequest": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "zoneinfo": {
-            "type": "string"
-          },
-          "profilePictureUrl": {
-            "type": "string"
-          },
-          "birthdate": {
-            "type": "string"
-          },
-          "website": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponse": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "MessageResponse": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      },
-      "UpdateClientAppRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": {
-            "type": "string"
-          },
-          "redirectUris": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
-          },
-          "grants": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "AUTHORIZATION_CODE",
-                "CLIENT_CREDENTIALS",
-                "REFRESH_TOKEN",
-                "IMPLICIT"
-              ]
-            },
-            "minItems": 1,
-            "uniqueItems": true
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
-          }
-        },
-        "required": [
-          "grants",
-          "name"
-        ]
-      },
-      "CreateTenantRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 0
-          },
-          "ownerEmail": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "name",
-          "ownerEmail"
-        ]
-      },
-      "CreateUserRequest": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 3
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 2147483647,
-            "minLength": 8
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password",
-          "username"
-        ]
-      },
-      "ResetPasswordRequest": {
-        "type": "object",
-        "properties": {
-          "newPassword": {
-            "type": "string",
-            "maxLength": 2147483647,
-            "minLength": 8
-          }
-        },
-        "required": [
-          "newPassword"
-        ]
-      },
-      "ValidateCredentialsRequest": {
-        "type": "object",
-        "properties": {
-          "credential": {
-            "type": "string",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "credential",
-          "password"
-        ]
-      },
-      "TokenRequest": {
-        "type": "object",
-        "properties": {
-          "grantType": {
-            "type": "string"
-          },
-          "clientId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "clientSecret": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "codeVerifier": {
-            "type": "string"
-          },
-          "redirectUri": {
-            "type": "string"
-          },
-          "refreshToken": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "clientId"
-        ]
-      },
-      "BaseResponseTokenData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/TokenData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "TokenData": {
-        "type": "object",
-        "properties": {
-          "access_token": {
-            "type": "string"
-          },
-          "id_token": {
-            "type": "string"
-          },
-          "refresh_token": {
-            "type": "string"
-          },
-          "token_type": {
-            "type": "string"
-          },
-          "expires_in": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "scope": {
-            "type": "string"
-          },
-          "authorization_code_id": {
-            "type": "string"
-          }
-        }
-      },
-      "RevokeTokenRequest": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "minLength": 1
-          },
-          "tokenTypeHint": {
-            "type": "string"
-          },
-          "clientId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "clientId",
-          "token"
-        ]
-      },
-      "BaseResponseVoid": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateMembershipRequest": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "roleCodes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "minItems": 1,
-            "uniqueItems": true
-          }
-        },
-        "required": [
-          "clientAppId",
-          "roleCodes",
-          "userId"
-        ]
-      },
-      "BaseResponseMembershipData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/MembershipData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "MembershipData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "PENDING"
-            ]
-          },
-          "roleIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "uniqueItems": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "CreateClientAppRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "PUBLIC",
-              "CONFIDENTIAL"
-            ]
-          },
-          "redirectUris": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
-          },
-          "grants": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "AUTHORIZATION_CODE",
-                "CLIENT_CREDENTIALS",
-                "REFRESH_TOKEN",
-                "IMPLICIT"
-              ]
-            },
-            "minItems": 1,
-            "uniqueItems": true
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
-          }
-        },
-        "required": [
-          "grants",
-          "name",
-          "type"
-        ]
-      },
-      "VerifyEmailRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          },
-          "code": {
-            "type": "string",
-            "maxLength": 6,
-            "minLength": 6
-          }
-        },
-        "required": [
-          "code",
-          "email"
-        ]
-      },
-      "ResendVerificationRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "email"
-        ]
-      },
-      "RegisterRequest": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "minLength": 1
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 2147483647,
-            "minLength": 8
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password",
-          "username"
-        ]
-      },
-      "BaseResponseRegistrationData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/RegistrationData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "RegistrationData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "PENDING"
-            ]
-          }
-        }
-      },
-      "CreateAppRoleRequest": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "code"
-        ]
-      },
-      "AppRoleData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BaseResponseAppRoleData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AppRoleData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "LoginRequest": {
-        "type": "object",
-        "properties": {
-          "emailOrUsername": {
-            "type": "string",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "emailOrUsername",
-          "password"
-        ]
-      },
-      "BaseResponseLoginData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/LoginData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "LoginData": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "redirect_uri": {
-            "type": "string"
-          }
-        }
-      },
-      "UpdateUserProfileRequest": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "zoneinfo": {
-            "type": "string"
-          },
-          "profilePictureUrl": {
-            "type": "string"
-          },
-          "birthdate": {
-            "type": "string"
-          },
-          "website": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseUserInfoResult": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/UserInfoResult"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "UserInfoResult": {
-        "type": "object",
-        "properties": {
-          "sub": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "preferredUsername": {
-            "type": "string"
-          },
-          "givenName": {
-            "type": "string"
-          },
-          "familyName": {
-            "type": "string"
-          },
-          "picture": {
-            "type": "string"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "zoneinfo": {
-            "type": "string"
-          },
-          "birthdate": {
-            "type": "string"
-          },
-          "website": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          }
-        }
-      },
-      "AuthorizationRequest": {
-        "type": "object",
-        "properties": {
-          "clientId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "redirectUri": {
-            "type": "string",
-            "minLength": 1
-          },
-          "scope": {
-            "type": "string",
-            "minLength": 1
-          },
-          "responseType": {
-            "type": "string",
-            "minLength": 1
-          },
-          "state": {
-            "type": "string"
-          },
-          "codeChallengeMethod": {
-            "type": "string"
-          },
-          "codeChallenge": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "clientId",
-          "redirectUri",
-          "responseType",
-          "scope"
-        ]
-      },
-      "AuthorizationInitiatedData": {
-        "type": "object",
-        "properties": {
-          "client_id": {
-            "type": "string"
-          },
-          "client_name": {
-            "type": "string"
-          },
-          "redirect_uri": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseAuthorizationInitiatedData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AuthorizationInitiatedData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseListMembershipData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MembershipData"
-            }
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseListAppRoleData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppRoleData"
-            }
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "securitySchemes": {
-      "BearerAuth": {
-        "type": "http",
-        "description": "Bearer JWT token issued by KeyGo OAuth2/OIDC endpoints.",
-        "scheme": "bearer",
-        "bearerFormat": "JWT"
-      }
-    }
-  }
 }
