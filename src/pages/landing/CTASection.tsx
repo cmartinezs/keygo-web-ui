@@ -23,16 +23,22 @@ export function CTASection() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  to="/subscribe"
+                  to="/login"
                   className="inline-block bg-white text-indigo-700 font-bold px-10 py-4 rounded-xl hover:bg-indigo-50 transition-colors text-lg focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-600"
                 >
-                  Contratar ahora →
+                  Iniciar sesión
                 </Link>
                 <Link
-                  to="/login"
+                  to="/subscribe"
                   className="inline-block border-2 border-white/60 hover:border-white text-white font-semibold px-8 py-4 rounded-xl transition-colors text-lg focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-600"
                 >
-                  Iniciar sesión
+                  Contratar
+                </Link>
+                <Link
+                  to="/register"
+                  className="inline-block border-2 border-white/60 hover:border-white text-white font-semibold px-8 py-4 rounded-xl transition-colors text-lg focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-600"
+                >
+                  Súmate a tu equipo
                 </Link>
               </div>
             </div>
