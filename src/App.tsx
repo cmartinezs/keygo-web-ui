@@ -36,7 +36,7 @@ export default function App() {
           </Route>
 
           {/* Unimplemented admin routes → redirect to dashboard */}
-          <Route path="*" element={<Navigate to="dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
         </Route>
 
         {/* Fallback */}
