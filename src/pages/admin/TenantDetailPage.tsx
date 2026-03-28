@@ -85,11 +85,10 @@ export default function TenantDetailPage() {
     onError: () => toast.error('No se pudo suspender el tenant. Intenta de nuevo.'),
   })
 
-  // ⏳ pendiente — PUT /api/v1/tenants/{slug}/activate (T-033)
   const activateMutation = useMutation({
     mutationFn: () => activateTenant(slug!),
     onSuccess: () => {
-      toast.success('Tenant activado correctamente. (mock)')
+      toast.success('Tenant activado correctamente.')
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.detail(slug!) })
     },
@@ -187,34 +186,22 @@ export default function TenantDetailPage() {
             </button>
           )}
 
-          {/* Activate — only when SUSPENDED — ⏳ pendiente */}
+          {/* Activate — only when SUSPENDED */}
           {tenant.status === 'SUSPENDED' && (
-            <div className="relative">
-              <button
-                onClick={() => activateMutation.mutate()}
-                disabled={isBusy}
-                className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium px-4 py-2 rounded-lg transition-colors border border-emerald-200 dark:border-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {activateMutation.isPending ? 'Activando…' : 'Reactivar tenant'}
-              </button>
-              <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
-                mock
-              </span>
-            </div>
+            <button
+              onClick={() => activateMutation.mutate()}
+              disabled={isBusy}
+              className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium px-4 py-2 rounded-lg transition-colors border border-emerald-200 dark:border-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {activateMutation.isPending ? 'Activando…' : 'Reactivar tenant'}
+            </button>
           )}
         </div>
 
-        {tenant.status === 'SUSPENDED' && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-            </svg>
-            La reactivación es un mock — T-033 pendiente en el backend.
-          </p>
-        )}
+
       </div>
     </div>
   )

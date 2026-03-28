@@ -40,10 +40,7 @@ export async function suspendTenant(slug: string): Promise<void> {
   await apiClient.put(`${API_V1}/tenants/${slug}/suspend`)
 }
 
-/**
- * ⏳ pendiente — PUT /api/v1/tenants/{slug}/activate (T-033).
- * Mock temporal hasta que el backend implemente el endpoint.
- */
-export async function activateTenant(_slug: string): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, 500))
+/** PUT /api/v1/tenants/{slug}/activate ✅ */
+export async function activateTenant(slug: string): Promise<void> {
+  await apiClient.put(`${API_V1}/tenants/${slug}/activate`)
 }
