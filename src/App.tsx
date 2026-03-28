@@ -34,6 +34,9 @@ export default function App() {
             <Route path="new" element={<TenantCreatePage />} />
             <Route path=":slug" element={<TenantDetailPage />} />
           </Route>
+
+          {/* Unimplemented admin routes → redirect to dashboard */}
+          <Route path="*" element={<Navigate to="dashboard" replace />} />
         </Route>
 
         {/* Fallback */}

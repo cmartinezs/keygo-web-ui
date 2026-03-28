@@ -535,19 +535,32 @@ export async function registerUser(tenantSlug, clientId, data): Promise<void>
 
 ### `serviceInfo.ts`
 
-**Propósito:** Información del estado del servicio backend para el dashboard de admin.
+**Propósito:** Información del estado del servicio backend (endpoints legacy usados previamente en el dashboard).
+
+> **Nota:** Mantenido por compatibilidad. El nuevo dashboard usa `api/dashboard.ts`.
+
+---
+
+### `dashboard.ts`
+
+**Propósito:** Endpoint único agregado del panel de control de la plataforma.
 
 **Construcción:**
 ```ts
-export interface ServiceInfoData {
-  title: string; name: string; version: string;
-  environment?: string; status?: string;
+export const DASHBOARD_QUERY_KEYS = {
+  platformDashboard: ['platform-dashboard'] as const,
 }
-export async function getServiceInfo(): Promise<ServiceInfoData>
-// GET /api/v1/service/info
+
+// GET /api/v1/admin/platform/dashboard — requiere rol ADMIN
+export async function getPlatformDashboard(): Promise<PlatformDashboardData>
 ```
 
-Usa `apiClient` — requiere Bearer token (solo disponible para admins autenticados).
+**Integración:**
+- Usa `apiClient` con Bearer token.
+- Los tipos están definidos en `src/types/dashboard.ts`.
+- Consumido por `AdminDashboardPage` vía `useQuery`.
+
+**Decisión de diseño:** Endpoint único para reducir waterfalls de red — todo el estado inicial del dashboard en una sola request.
 
 ---
 
@@ -635,6 +648,45 @@ interface ListTenantsParams {
 ---
 
 ### `roles.ts`
+
+**Propósito:** Fuente única de verdad para los roles de la aplicación.
+
+**Construcción:**
+```ts
+export const APP_ROLES = ['ADMIN', 'ADMIN_TENANT', 'USER_TENANT'] as const
+export type AppRole = (typeof APP_ROLES)[number]
+// → 'ADMIN' | 'ADMIN_TENANT' | 'USER_TENANT'
+```
+
+**Decisión de diseño:** `as const` + `typeof` genera el tipo union desde el array — añadir un rol nuevo es un cambio en un único lugar. `APP_ROLES` también se usa en `extractRoles` de `jwksVerify.ts` como lista de roles válidos para filtrar los claims del JWT.
+
+---
+
+### `dashboard.ts`
+
+**Propósito:** Tipos del endpoint agregado del panel de control de la plataforma.
+
+**Tipos clave:**
+```ts
+export interface CountBreakdown { total, active, pending, suspended: number }
+export interface SecurityMetric  { total, active: number }
+export interface AlertMetric     { total, critical: number }
+
+export interface PlatformDashboardData {
+  service:  { name, environment, version, activeKey }
+  iam:      { tenants, users, apps, memberships: CountBreakdown }
+  security: { sessions, refreshTokens, authorizationCodes: SecurityMetric; alerts: AlertMetric }
+  pendingActions:    PendingAction[]
+  recentActivity:    ActivityItem[]
+  topTenantsByUsers: RankedTenant[]
+  topAppsByAccesses: RankedApp[]
+  onboarding:        { pendingVerification, expiredVerifications, recentRegistrations, successfulVerifications: number }
+}
+```
+
+**Consumido por:** `src/api/dashboard.ts`, `src/pages/admin/dashboard/` (sub-componentes).
+
+---
 
 **Propósito:** Fuente única de verdad para los roles de la aplicación.
 
@@ -856,10 +908,20 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 **Construcción:**
 
 **Componentes privados internos:**
-- Iconos SVG inline (`IconKey`, `IconDashboard`, `IconBuilding`, etc.) — sin dependencia de librería de iconos.
+- Iconos SVG inline (`IconKey`, `IconDashboard`, `IconBuilding`, `IconApps`, `IconUsers`, `IconShield`, `IconClipboard`, `IconKeySmall`, `IconClock`, `IconTicket`, `IconCloud`, etc.) — sin dependencia de librería de iconos.
 - `ThemeToggle` — dropdown de tema con cierre por click exterior y `role="listbox"`.
+- `NavSection` — título de grupo en el sidebar (separador visual cuando colapsado).
 - `NavItem` — wrapper de `NavLink` con estilos de ítem activo y soporte de modo colapsado (solo icono).
 - `UserAvatar` — genera iniciales desde `displayName` para el avatar circular.
+
+**Grupos de navegación actuales:**
+
+| Grupo | Items |
+|-------|-------|
+| Plataforma | Dashboard, Tenants, Apps, Usuarios |
+| Accesos & Registro | Accesos, Registro |
+| Seguridad | Claves de firma, Sesiones, Tokens |
+| Sistema | API, Configuración, Mi cuenta |
 
 **Estado local:**
 | Estado | Tipo | Propósito |
@@ -1009,24 +1071,39 @@ initMutation.isSuccess                                  → LoginForm
 
 ### 10.5 Admin — Dashboard
 
-**`src/pages/admin/DashboardPage.tsx`**
+**`src/pages/admin/DashboardPage.tsx`** — container
+**`src/pages/admin/dashboard/`** — sub-componentes
 
-**Propósito:** Panel de información del servicio backend.
+**Propósito:** Panel de control completo de la plataforma. Orquesta datos y renderizado por filas temáticas.
 
-**Construcción:**
+**Construcción (container):**
 ```tsx
-const { data, isLoading, isError } = useQuery({
-  queryKey: ['service-info'],
-  queryFn: getServiceInfo,
+const { data, isLoading, isError, refetch, isFetching } = useQuery({
+  queryKey: DASHBOARD_QUERY_KEYS.platformDashboard,
+  queryFn: getPlatformDashboard,   // GET /api/v1/admin/platform/dashboard
 })
 ```
 
-- Maneja los 3 estados async: skeleton (loading), alerta roja (error), cards de datos (success).
-- Cards: Versión, Entorno, Estado + panel de Título y Nombre interno.
+- Header con selector de rango (Hoy / 7 días / 30 días, estado local) + botón Actualizar + Acciones rápidas.
+- 6 filas semánticas, cada una en un `<section aria-labelledby>` con su skeleton y componente de datos.
 
-**Integración:** `getServiceInfo` (api/serviceInfo.ts).
+**Sub-componentes (`src/pages/admin/dashboard/`):**
 
-**Deuda técnica:** Query key `['service-info']` es un string literal suelto — debería estar en una constante exportada (patrón de `TENANT_QUERY_KEYS`).
+| Archivo | Responsabilidad |
+|---------|----------------|
+| `DashboardPrimitives.tsx` | StatCard, BreakdownCard, SecurityCard, SectionTitle, CardSkeleton, ErrorAlert |
+| `ServiceStatusRow.tsx` | Fila 1: Servicio, Entorno, Versión, Clave activa |
+| `IamCoreRow.tsx` | Fila 2: Tenants/Usuarios/Apps/Memberships con breakdown |
+| `SecurityRow.tsx` | Fila 3: Sesiones/Refresh Tokens/Auth Codes/Alertas |
+| `PendingAndActivityRow.tsx` | Fila 4: Pendientes de gestión + Actividad reciente |
+| `RankingsRow.tsx` | Fila 5: Top tenants por usuarios / Top apps por accesos |
+| `OnboardingHealthRow.tsx` | Fila 6: 4 métricas de salud de onboarding |
+
+**Integración:** `getPlatformDashboard`, `DASHBOARD_QUERY_KEYS` (api/dashboard.ts) · tipos en `types/dashboard.ts`.
+
+**Decisión de diseño:** Un único endpoint agrega todos los datos para evitar waterfalls. El selector de rango es local hasta que el backend soporte parámetros de filtro temporal.
+
+**Deuda técnica:** El rango seleccionado (Hoy / 7d / 30d) no se envía al backend (el endpoint no define query params de rango). Se activa como filtro cuando el backend lo soporte.
 
 ---
 
@@ -1181,7 +1258,7 @@ Crear `src/mocks/handlers.ts` con `http.get/post(...)` de MSW respetando el shap
 | 12 | `src/main.tsx` | `QueryClient` sin configuración global (staleTime, retry) | Baja |
 | 13 | `src/App.tsx` | Sin rutas para `ADMIN_TENANT` y `USER_TENANT` | Media |
 | 14 | `src/App.tsx` | Sin página 404 (catch-all va a `/login`) | Baja |
-| 15 | `src/pages/admin/DashboardPage.tsx` | Query key `['service-info']` como string suelto | Baja |
+| 15 | `src/pages/admin/DashboardPage.tsx` | Selector de rango (Hoy/7d/30d) es solo estado visual — no se envía al backend | Baja |
 | 16 | `src/pages/landing/LandingNav.tsx` | Sin menú de navegación en móvil | Baja |
 | 17 | `src/layouts/AdminLayout.tsx` | Buscador, notificaciones, Mi perfil y Configuración son decorativos | Media |
 | 18 | Proyecto general | Sin infraestructura de tests (Vitest, Testing Library, MSW) | **Alta** |

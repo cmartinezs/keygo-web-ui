@@ -14,7 +14,7 @@
    - 1.3 [Contratar un plan (Nuevo contrato)](#13-contratar-un-plan-nuevo-contrato)
    - 1.4 [Registrarse como usuario de una organización](#14-registrarse-como-usuario-de-una-organización)
 2. [Panel de Administrador Global (ADMIN)](#2-panel-de-administrador-global-admin)
-   - 2.1 [Dashboard — información de la plataforma](#21-dashboard--información-de-la-plataforma)
+   - 2.1 [Dashboard — Panel de control](#21-dashboard--panel-de-control)
    - 2.2 [Gestión de Tenants](#22-gestión-de-tenants)
    - 2.3 [Detalle de un Tenant](#23-detalle-de-un-tenant)
    - 2.4 [Crear un Tenant](#24-crear-un-tenant)
@@ -228,10 +228,12 @@ El panel de administrador incluye una **barra lateral de navegación** y una **c
 #### Barra lateral (sidebar)
 
 - **Logo KeyGo** en la parte superior. En escritorio: botón para colapsar/expandir la barra (modo solo iconos o con etiquetas).
-- **Navegación principal:**
-  - "Dashboard" → `/admin/dashboard`
-  - "Tenants" → `/admin/tenants`
-  - El ítem activo se resalta con fondo índigo.
+- **Navegación principal organizada en grupos:**
+  - **Plataforma:** Dashboard, Tenants, Apps, Usuarios
+  - **Accesos & Registro:** Accesos, Registro
+  - **Seguridad:** Claves de firma, Sesiones, Tokens
+  - **Sistema:** API, Configuración, Mi cuenta
+  - El ítem activo se resalta con fondo índigo. En modo colapsado, los grupos se separan con un divisor horizontal.
 - **Perfil de usuario** en la parte inferior: avatar con iniciales, nombre completo y rol.
 
 #### Cabecera superior
@@ -252,19 +254,36 @@ En pantallas pequeñas, la barra lateral se convierte en un cajón desplegable q
 
 ---
 
-### 2.1 Dashboard — información de la plataforma
+### 2.1 Dashboard — Panel de control
 
 **Ruta:** `/admin/dashboard`
 
-Muestra información en tiempo real sobre el estado del servicio backend.
+Vista agregada en tiempo real de toda la plataforma, obtenida en una única llamada al endpoint `GET /api/v1/admin/platform/dashboard`.
 
-#### Qué ve el usuario
+#### Encabezado
 
-- **Cargando:** tres tarjetas animadas con efecto skeleton.
-- **Error:** alerta roja indicando que no se pudo cargar la información.
-- **Datos cargados:**
-  - Tres tarjetas con: **Versión**, **Entorno** y **Estado** de la plataforma.
-  - Panel de detalle con el **título** y **nombre interno** del servicio.
+- **Título:** "Panel de control"
+- **Subtítulo:** "Vista global de la plataforma KeyGo · datos en tiempo real"
+- **Selector de rango:** Hoy | 7 días | 30 días (estado visual, pendiente de integración con backend)
+- **Botón Actualizar:** re-ejecuta la query; durante la carga muestra un icono giratorio.
+- **Botón Acciones rápidas:** (pendiente de contenido)
+
+#### Filas de datos
+
+| Fila | Sección | Descripción |
+|------|---------|-------------|
+| 1 | Estado operativo | 4 tarjetas: Servicio, Entorno, Versión, Clave activa |
+| 2 | Núcleo IAM | 4 tarjetas: Tenants, Usuarios, Apps, Memberships — cada una con desglose active / pending / suspended |
+| 3 | Seguridad | 4 tarjetas: Sesiones, Refresh Tokens, Auth Codes, Alertas |
+| 4 | Gestión y actividad | Dos columnas: Pendientes de gestión (izquierda), Actividad reciente (derecha) |
+| 5 | Rankings | Top tenants por usuarios (izquierda), Top apps por accesos (derecha) |
+| 6 | Salud de onboarding | 4 tarjetas: Pendientes de verificación, Verificaciones expiradas, Registros recientes, Verificaciones exitosas |
+
+#### Estados de carga
+
+- **Cargando:** skeleton animado en cada fila.
+- **Error:** alerta roja describiendo el problema.
+- **Vacío en listas/rankings:** mensaje en cursiva "Sin datos" o "Sin pendientes".
 
 ---
 
