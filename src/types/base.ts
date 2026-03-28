@@ -13,6 +13,10 @@ export interface BaseResponse<T> {
   success?: SuccessInfo
   failure?: FailureInfo
   data?: T
+  /** Información de debug — solo en perfiles dev/local */
+  debug?: SuccessInfo
+  /** Nombre de la excepción — solo en perfiles dev/local */
+  throwable?: string
 }
 
 /** Envelope de paginación devuelto por endpoints con soporte de página. */

@@ -102,7 +102,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -179,7 +179,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -248,7 +248,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -325,7 +325,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -394,7 +394,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -463,7 +463,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -559,7 +559,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/PagedResponse"
                 }
               }
             }
@@ -614,7 +614,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -673,7 +673,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/ListResponse"
                 }
               }
             }
@@ -740,7 +740,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -839,7 +839,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -918,7 +918,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1007,7 +1007,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1144,7 +1144,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/ListResponse"
                 }
               }
             }
@@ -1200,7 +1200,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1259,7 +1259,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/ListResponse"
                 }
               }
             }
@@ -1326,7 +1326,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1477,7 +1477,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1626,7 +1626,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1689,7 +1689,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/ListResponse"
                 }
               }
             }
@@ -1755,7 +1755,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1824,7 +1824,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1896,7 +1896,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -1966,7 +1966,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -2148,7 +2148,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -2292,7 +2292,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -2339,7 +2339,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -2383,7 +2383,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -2420,7 +2420,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
+                  "$ref": "#/components/schemas/Response"
                 }
               }
             }
@@ -2533,6 +2533,41 @@
           }
         }
       },
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "Response": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PlatformDashboardData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
       "BaseResponse": {
         "type": "object",
         "properties": {
@@ -2553,17 +2588,6 @@
             "$ref": "#/components/schemas/MessageResponse"
           },
           "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "MessageResponse": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
             "type": "string"
           }
         }
@@ -2611,6 +2635,26 @@
           "grants",
           "name"
         ]
+      },
+      "TenantData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "ownerEmail": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
       },
       "CreateTenantRequest": {
         "type": "object",
@@ -2771,30 +2815,6 @@
           "userId"
         ]
       },
-      "BaseResponseMembershipData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/MembershipData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
       "MembershipData": {
         "type": "object",
         "properties": {
@@ -2829,6 +2849,30 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "BaseResponseMembershipData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/MembershipData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
           }
         }
       },
@@ -2970,6 +3014,29 @@
           "username"
         ]
       },
+      "RegistrationData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "SUSPENDED",
+              "PENDING"
+            ]
+          }
+        }
+      },
       "BaseResponseRegistrationData": {
         "type": "object",
         "properties": {
@@ -2991,29 +3058,6 @@
           },
           "throwable": {
             "type": "string"
-          }
-        }
-      },
-      "RegistrationData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "PENDING"
-            ]
           }
         }
       },
@@ -3130,6 +3174,87 @@
           }
         }
       },
+      "PagedDataTenantData": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantData"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PagedResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PagedDataTenantData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "ListResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppRoleData"
+            }
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
       "BaseResponseListMembershipData": {
         "type": "object",
         "properties": {
@@ -3181,6 +3306,398 @@
           },
           "throwable": {
             "type": "string"
+          }
+        }
+      },
+      "ActivityItem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "route": {
+            "type": "string"
+          }
+        }
+      },
+      "AlertItem": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AppSummary": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "active": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "suspended": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "publicCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "confidentialCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "withoutRedirectUris": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "CountSummary": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "active": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "suspended": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recentlyCreated": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "MembershipSummary": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "active": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pending": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "suspended": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "usersWithoutMembership": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PendingActionItem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "route": {
+            "type": "string"
+          }
+        }
+      },
+      "PlatformDashboardData": {
+        "type": "object",
+        "properties": {
+          "service": {
+            "$ref": "#/components/schemas/ServiceSummary"
+          },
+          "security": {
+            "$ref": "#/components/schemas/SecuritySummary"
+          },
+          "tenants": {
+            "$ref": "#/components/schemas/CountSummary"
+          },
+          "users": {
+            "$ref": "#/components/schemas/CountSummary"
+          },
+          "apps": {
+            "$ref": "#/components/schemas/AppSummary"
+          },
+          "memberships": {
+            "$ref": "#/components/schemas/MembershipSummary"
+          },
+          "registration": {
+            "$ref": "#/components/schemas/RegistrationSummary"
+          },
+          "topology": {
+            "$ref": "#/components/schemas/TopologySummary"
+          },
+          "rankings": {
+            "$ref": "#/components/schemas/RankingSummary"
+          },
+          "pendingActions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PendingActionItem"
+            }
+          },
+          "recentActivity": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivityItem"
+            }
+          },
+          "quickActions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuickActionItem"
+            }
+          }
+        }
+      },
+      "QuickActionItem": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "route": {
+            "type": "string"
+          }
+        }
+      },
+      "RankEntry": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "tenantSlug": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RankingSummary": {
+        "type": "object",
+        "properties": {
+          "topTenantsByUsers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RankEntry"
+            }
+          },
+          "topAppsByMemberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RankEntry"
+            }
+          }
+        }
+      },
+      "RegistrationSummary": {
+        "type": "object",
+        "properties": {
+          "pendingEmailVerifications": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "expiredPendingVerifications": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recentRegistrations": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "recentVerifications": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SecurityCounts": {
+        "type": "object",
+        "properties": {
+          "activeSigningKeys": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "retiredSigningKeys": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revokedSigningKeys": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeSessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "expiredSessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "terminatedSessions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "activeRefreshTokens": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "usedRefreshTokens": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "expiredRefreshTokens": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revokedRefreshTokens": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingAuthorizationCodes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "usedAuthorizationCodes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "expiredAuthorizationCodes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "revokedAuthorizationCodes": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "SecuritySummary": {
+        "type": "object",
+        "properties": {
+          "activeSigningKey": {
+            "$ref": "#/components/schemas/SigningKeySummary"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/SecurityCounts"
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertItem"
+            }
+          }
+        }
+      },
+      "ServiceSummary": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "environment": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "SigningKeySummary": {
+        "type": "object",
+        "properties": {
+          "kid": {
+            "type": "string"
+          },
+          "algorithm": {
+            "type": "string"
+          },
+          "activatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ageDays": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "TopologySummary": {
+        "type": "object",
+        "properties": {
+          "avgUsersPerTenant": {
+            "type": "number",
+            "format": "double"
+          },
+          "avgAppsPerTenant": {
+            "type": "number",
+            "format": "double"
+          },
+          "avgMembershipsPerApp": {
+            "type": "number",
+            "format": "double"
+          },
+          "tenantsWithoutApps": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tenantsWithoutUsers": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       }
