@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,9 +12,15 @@ import { verifyIdToken, extractRoles } from '@/auth/jwksVerify'
 import { useTokenStore } from '@/auth/tokenStore'
 import { persistRefreshToken } from '@/auth/refresh'
 import { TENANT } from '@/api/client'
+import { useRateLimit } from '@/hooks/useRateLimit'
+import { useHoneypot } from '@/hooks/useHoneypot'
+import { HoneypotField } from '@/components/HoneypotField'
+import { TurnstileWidget } from '@/components/TurnstileWidget'
 import type { BaseResponse } from '@/types/base'
 import type { AppRole } from '@/types/roles'
 import type { AuthorizeData } from '@/types/auth'
+
+const TURNSTILE_ENABLED = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY)
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -175,23 +181,34 @@ interface LoginFormProps {
   isPending: boolean
   error: unknown
   onSubmit: (values: LoginFormValues) => void
+  isLocked: boolean
+  remainingSeconds: number
 }
 
 /**
  * Paso 2: Credential capture. Only rendered once Paso 1 has completed.
  * `isReiniting` is true while Pasos 0-1 are re-running after a session expiry.
  */
-function LoginForm({ clientName, isReiniting, isPending, error, onSubmit }: LoginFormProps) {
+function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLocked, remainingSeconds }: LoginFormProps) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) })
 
+  const honeypot = useHoneypot()
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+
   const loginError = error ? extractLoginError(error) : null
   // Suppress the error banner while we are automatically re-initializing
   const showError = loginError && !loginError.sessionExpired
-  const isDisabled = isPending || isReiniting
+  const isDisabled = isPending || isReiniting || isLocked || (TURNSTILE_ENABLED && !captchaToken)
+
+  function handleFormSubmit(values: LoginFormValues) {
+    const { blocked } = honeypot.validate()
+    if (blocked) return // silently discard automated submissions
+    onSubmit(values)
+  }
 
   return (
     <>
@@ -210,6 +227,31 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit }: Logi
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
           Reiniciando sesión…
+        </div>
+      )}
+
+      {/* Rate-limit lockout banner */}
+      {isLocked && (
+        <div
+          role="alert"
+          className="mb-5 flex items-start gap-3 bg-amber-950/60 border border-amber-500/30 text-amber-300 text-sm rounded-lg px-4 py-3"
+        >
+          <svg
+            className="w-4 h-4 mt-0.5 shrink-0"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <span>
+            Demasiados intentos fallidos. Espera{' '}
+            <strong>{remainingSeconds} s</strong> antes de volver a intentarlo.
+          </span>
         </div>
       )}
 
@@ -235,7 +277,10 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit }: Logi
         </div>
       )}
 
-      <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form className="space-y-5" onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+        {/* Honeypot trap — bots fill this; real users never see it */}
+        <HoneypotField name="website" {...honeypot.fieldProps} />
+
         <div className="flex flex-col gap-1.5">
           <label htmlFor="emailOrUsername" className="text-sm font-medium text-slate-300">
             Correo electrónico o usuario
@@ -271,6 +316,9 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit }: Logi
             <p className="text-xs text-red-400">{errors.password.message}</p>
           )}
         </div>
+
+        {/* Cloudflare Turnstile CAPTCHA (only when VITE_TURNSTILE_SITE_KEY is set) */}
+        <TurnstileWidget onTokenChange={setCaptchaToken} className="mt-1" />
 
         <button
           type="submit"
@@ -329,15 +377,12 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const { accessToken, roles, setTokens } = useTokenStore()
   const codeVerifierRef = useRef<string | null>(null)
-  // True while an interval-triggered auto-retry is in flight.
-  // Suppresses the InitLoadingState spinner — the toast provides feedback instead.
   const isAutoRetryingRef = useRef(false)
-  // Snapshot of the last auth error, kept across the pending state (when .error resets to null).
   const lastAuthErrorRef = useRef<{ message: string; retryable: boolean } | null>(null)
-  // Tracks which step of the login mutationFn was reached when an error occurred.
-  // 'login' = error came from POST /account/login (code not yet obtained).
-  // 'post-login' = code was obtained; error is from exchangeToken or verifyIdToken.
   const loginPhaseRef = useRef<'login' | 'post-login'>('login')
+
+  // Client-side rate limiting — progressive lockout on repeated credential failures
+  const rateLimit = useRateLimit('login')
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -387,6 +432,7 @@ export default function LoginPage() {
       return { tokens, roles }
     },
     onSuccess: ({ tokens, roles }) => {
+      rateLimit.recordSuccess()
       setTokens({
         accessToken: tokens.access_token,
         idToken: tokens.id_token,
@@ -401,8 +447,6 @@ export default function LoginPage() {
       loginPhaseRef.current = 'login' // reset for next attempt
 
       if (phase === 'post-login') {
-        // Authorization code was already consumed — re-init is mandatory.
-        // Show a toast because the form will silently reset after re-init.
         const isNetwork = axios.isAxiosError(error) && !error.response
         toast.error(
           isNetwork
@@ -422,8 +466,10 @@ export default function LoginPage() {
       } else if (networkError) {
         toast.warning('Error de conexión. Reconectando…')
         initMutation.mutate()
+      } else {
+        // Credential error (wrong password, account suspended, etc.) — count against rate limit
+        rateLimit.recordFailure()
       }
-      // Otherwise (wrong credentials, account suspended, etc.): error shows in the form.
     },
   })
 
@@ -508,6 +554,8 @@ export default function LoginPage() {
           isPending={loginMutation.isPending}
           error={loginMutation.error}
           onSubmit={(values) => loginMutation.mutate(values)}
+          isLocked={rateLimit.isLocked}
+          remainingSeconds={rateLimit.remainingSeconds}
         />
       )
     }

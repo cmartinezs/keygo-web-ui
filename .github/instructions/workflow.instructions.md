@@ -77,6 +77,11 @@ Después de cada cambio, verificar los siguientes puntos en orden:
 - [ ] Si se crea un componente nuevo, existe al menos un test básico de render.
 - [ ] Los mocks MSW usan el shape correcto de `BaseResponse<T>`.
 
+### Documentación
+- [ ] Si se añadió, modificó o eliminó alguna funcionalidad visible para el usuario final → actualizar `docs/FUNCTIONAL_GUIDE.md`.
+- [ ] Si se creó o modificó un archivo, módulo, hook, layout o patrón de arquitectura → actualizar `docs/TECHNICAL_GUIDE.md`.
+- [ ] La documentación técnica de cada archivo afectado refleja: propósito, integración con otros módulos, decisiones de diseño, estrategia utilizada y deuda técnica conocida.
+
 ---
 
 ## 2. Auto-corrección
@@ -139,7 +144,62 @@ Tipos válidos: `[FEATURE]`, `[MEJORA]`, `[BUG]`, `[SEGURIDAD]`, `[REFACTOR]`, `
 
 ---
 
-## 5. Resumen post-implementación
+## 5. Actualización de documentación (obligatoria)
+
+Toda implementación que cambie, añada o elimine comportamiento **debe actualizar la documentación** antes de considerarse finalizada.
+Existen dos documentos vivos que deben mantenerse sincronizados con el código:
+
+---
+
+### 5.1 Documentación funcional — `docs/FUNCTIONAL_GUIDE.md`
+
+**Audiencia:** usuario final o product owner. No asume conocimiento técnico.
+
+Actualizar cuando:
+- Se añade, modifica o elimina una pantalla, flujo o acción disponible para el usuario.
+- Cambia el comportamiento visible de una feature existente.
+- Se restringe o amplía el acceso según rol.
+
+Contenido por feature/sección:
+- **Qué puede hacer el usuario** en esa pantalla o flujo (lenguaje funcional, no técnico).
+- **Quién puede acceder** (rol: `ADMIN`, `ADMIN_TENANT`, `USER_TENANT`, o público).
+- **Pasos del flujo** si hay una secuencia relevante.
+- **Resultado esperado** al completar la acción.
+
+---
+
+### 5.2 Documentación técnica — `docs/TECHNICAL_GUIDE.md`
+
+**Audiencia:** desarrollador que hereda el proyecto o quiere extenderlo.
+
+Actualizar cuando:
+- Se crea o modifica un archivo (componente, hook, módulo de API, layout, tipo, etc.).
+- Se introduce un patrón de arquitectura nuevo.
+- Se identifica deuda técnica en el archivo afectado.
+
+Por cada archivo creado o modificado, documentar las siguientes secciones:
+
+```markdown
+## `src/ruta/al/archivo.ts`
+
+**Propósito:** qué hace y por qué existe este archivo.
+
+**Construcción:** cómo está estructurado internamente (funciones clave, estado, efectos).
+
+**Integración:** con qué otros módulos se conecta y cómo (imports, eventos, props, query keys…).
+
+**Decisión de diseño:** por qué se estructuró de esta forma; qué alternativas se descartaron y por qué.
+
+**Estrategia:** patrón principal aplicado (container/presenter, custom hook, singleton, etc.).
+
+**Puntos de mejora / deuda técnica conocida:** limitaciones actuales, simplificaciones asumidas, qué cambiaría en una siguiente iteración.
+```
+
+> Si el archivo ya estaba documentado, actualizar únicamente las secciones afectadas por el cambio.
+
+---
+
+## 6. Resumen post-implementación
 
 Al terminar cada tarea, entregar un resumen breve con esta estructura:
 
@@ -150,7 +210,11 @@ Al terminar cada tarea, entregar un resumen breve con esta estructura:
 ### 🔍 Revisión de consistencia
 - <resultado del checklist — qué estaba bien, qué se corrigió>
 
-### 📝 Backlog actualizado (si aplica)
+### � Documentación actualizada
+- **Funcional** (`docs/FUNCTIONAL_GUIDE.md`): <qué sección se actualizó o "sin cambios funcionales visibles">
+- **Técnica** (`docs/TECHNICAL_GUIDE.md`): <qué archivos se documentaron o actualizaron>
+
+### �📝 Backlog actualizado (si aplica)
 - [TIPO] Título del ítem añadido
 
 ### 🧠 Patrón aprendido (si aplica)

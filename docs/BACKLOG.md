@@ -317,6 +317,13 @@ Actualizado automáticamente por el agente al final de cada implementación.
 
 <!-- Mover aquí los ítems cuando sean implementados, con fecha de cierre. -->
 
+### [FEATURE] Defensa anti-bot en formularios públicos
+- **Cerrado:** 2026-03-28
+- **Archivos:** `src/hooks/useRateLimit.ts`, `src/hooks/useHoneypot.ts`, `src/hooks/useTurnstile.ts`, `src/components/HoneypotField.tsx`, `src/components/TurnstileWidget.tsx`
+- **Integrado en:** `src/pages/login/LoginPage.tsx`, `src/pages/register/UserRegisterPage.tsx`, `src/pages/register/steps/TermsStep.tsx`, `src/pages/register/NewContractPage.tsx`
+- **Mecanismos implementados:** honeypot trap, timing check (< 1.5s), rate limiting progresivo (3→30s / 5→5min / 10→30min), Cloudflare Turnstile CAPTCHA opcional (`VITE_TURNSTILE_SITE_KEY`)
+- **Pendiente de producción:** Verificar el token Turnstile server-side en el backend
+
 ### [FEATURE] LoginPage con flujo OAuth2/PKCE completo
 - **Cerrado:** 2026-03-25
 - **Archivos:** `src/pages/login/LoginPage.tsx`, `src/api/auth.ts`, `src/auth/pkce.ts`, `src/auth/jwksVerify.ts`, `src/auth/tokenStore.ts`

@@ -519,7 +519,6 @@ export function LoginPage() {
         credentials: 'include', // cookie JSESSIONID
       });
       const body = await res.json();
-
       if (body.success) {
         setClientName(body.data?.client_name ?? 'KeyGo');
         return;
@@ -686,10 +685,8 @@ export function CallbackPage() {
 ```
 
 Nota de UX para callback:
-- Si falla `/oauth2/token`, reiniciar el flujo desde login (`/authorize` → `/account/login` → `/oauth2/token`).
 - No intentar reutilizar un `authorization_code` previo: puede estar expirado o consumido.
 
----
 
 ## 7. Gestión de roles y routing condicional
 
@@ -710,7 +707,6 @@ export function useHasRole(...roles: AppRole[]): boolean {
 
 ```typescript
 // src/hooks/useManagedTenant.ts
-import { decodeJwt } from 'jose';
 import { useTokenStore } from '@/auth/tokenStore';
 import { TENANT } from '@/api/client';
 
@@ -886,7 +882,7 @@ export function RoleAwareNav() {
 
 El `ADMIN` tiene acceso completo: puede gestionar cualquier tenant (accediendo a las vistas de
 `tenant-admin` con cualquier slug), y tiene además las vistas de control de plataforma.
-
+> `POST /api/v1/tenants/keygo/account/change-password` — No implementado (**F-030**)  
 ### 8.1. Dashboard Global — `GET /service/info` ✅
 
 ```typescript
@@ -914,7 +910,10 @@ export function AdminDashboard() {
 
 ---
 
-### 8.2. Listar tenants ⏳ PENDIENTE BACKEND
+### 8.2. Listar tenants ✅ — `GET /keygo-server/api/v1/tenants`
+
+> **Auth requerida:** `Authorization: Bearer <jwt>` con rol `ADMIN`.
+> **Query params:** todos en snake_case (`name_like`, no `nameLike`).
 
 ```typescript
 interface TenantData {
@@ -933,7 +932,7 @@ interface PagedData<T> {
 
 interface ListTenantsParams {
   status?: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
-  nameLike?: string;
+  name_like?: string;
   page?: number;
   size?: number;
 }
@@ -1124,7 +1123,7 @@ export const listRoles = (slug: string, clientAppId: string) =>
   apiClient.get(`/tenants/${slug}/apps/${clientAppId}/roles`);
 ```
 
-**Disponibles ✅:** `GET/POST/DELETE memberships` · `POST/GET roles`  
+**Disponibles ✅:** `GET/POST/DELETE memberships` · `POST/GET roles`
 **Pendientes ⏳:** `PUT/DELETE roles/{id}` · `POST memberships/{id}/roles`
 
 ---
@@ -1667,472 +1666,6 @@ export function resolveAuthError(stage: AuthStage, response: BaseResponse<ErrorD
 - Loguear siempre: `failure.code`, `data.origin`, `data.clientRequestCause`, `tenantSlug`, `client_id`.
 - Mantener esta seccion alineada con `docs/api/AUTH_FLOW.md` (seccion "Manejo de errores") y con `§13.2` de esta guia.
 
----
-
-## 14.2. Control de plataforma — rol `ADMIN`
-
-### 14.2.1. Listar tenants — `GET /api/v1/tenants`
-
-```typescript
-// src/api/tenants.ts
-export interface TenantData {
-  id: string; slug: string; name: string;
-  status: 'ACTIVE' | 'SUSPENDED' | 'PENDING'; createdAt: string;
-}
-
-export const listTenants = () =>
-  apiClient.get<BaseResponse<TenantData[]>>('/tenants').then(r => r.data.data ?? []);
-```
-
-**Endpoint:**
-
-- `GET /api/v1/tenants` — ✅ Listar tenants (F-033)
-
----
-
-### 14.2.2. Crear tenant — `POST /api/v1/tenants`
-
-```typescript
-interface CreateTenantRequest { name: string; ownerEmail: string; }
-
-export const createTenant = (data: CreateTenantRequest) =>
-  apiClient.post<BaseResponse<TenantData>>('/tenants', data).then(r => r.data);
-```
-
-**Endpoint:**
-
-- `POST /api/v1/tenants` — ✅ Crear tenant (F-033)
-
----
-
-### 14.2.3. Ver / Suspender tenant — `GET` / `PUT` /api/v1/tenants/{slug}
-
-```typescript
-const getTenant     = (slug: string) =>
-  apiClient.get<BaseResponse<TenantData>>(`/tenants/${slug}`).then(r => r.data.data);
-
-const suspendTenant = (slug: string) =>
-  apiClient.put<BaseResponse<TenantData>>(`/tenants/${slug}/suspend`);
-```
-
-**Endpoints:**
-
-- `GET /api/v1/tenants/{slug}` — ✅ Ver tenant
-- `PUT /api/v1/tenants/{slug}/suspend` — ✅ Suspender tenant
-- `PUT /api/v1/tenants/{slug}/activate` — ⏳ Reactivar tenant (no implementado)
-
----
-
-### 14.2.4. Listar roles de app — `GET /api/v1/tenants/{slug}/apps/{clientId}/roles`
-
-```typescript
-export const listRoles = (slug: string, clientAppId: string) =>
-  apiClient.get(`/tenants/${slug}/apps/${clientAppId}/roles`);
-```
-
-**Endpoint:**
-
-- `GET /api/v1/tenants/{slug}/apps/{clientId}/roles` — ✅ Listar roles de app
-
----
-
-### 14.2.5. Crear rol — `POST /api/v1/tenants/{slug}/apps/{clientId}/roles`
-
-```typescript
-export const createRole = (slug: string, clientAppId: string, payload: {
-  code: string;
-  displayName?: string;
-  description?: string;
-}) => apiClient.post(`/tenants/${slug}/apps/${clientAppId}/roles`, payload);
-```
-
-**Endpoint:**
-
-- `POST /api/v1/tenants/{slug}/apps/{clientId}/roles` — ✅ Crear rol
-
----
-
-### 14.2.6. Usuarios
-
-```typescript
-// src/api/users.ts
-export interface TenantUserData {
-  id: string; email: string; username: string;
-  displayName?: string; status: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
-  emailVerified: boolean; createdAt: string;
-}
-
-export const listUsers     = (slug: string) =>
-  apiClient.get<BaseResponse<TenantUserData[]>>(`/tenants/${slug}/users`);
-export const getUser       = (slug: string, userId: string) =>
-  apiClient.get<BaseResponse<TenantUserData>>(`/tenants/${slug}/users/${userId}`);
-export const createUser    = (slug: string, data: Omit<TenantUserData, 'id'|'createdAt'|'emailVerified'> & { password: string }) =>
-  apiClient.post<BaseResponse<TenantUserData>>(`/tenants/${slug}/users`, data);
-export const updateUser    = (slug: string, userId: string, data: { displayName?: string; username?: string }) =>
-  apiClient.put<BaseResponse<TenantUserData>>(`/tenants/${slug}/users/${userId}`, data);
-export const resetPassword = (slug: string, userId: string, newPassword: string) =>
-  apiClient.post<BaseResponse<void>>(`/tenants/${slug}/users/${userId}/reset-password`, { newPassword });
-```
-
-**Disponibles ✅:** `GET`, `POST`, `GET/{userId}`, `PUT/{userId}`, `POST/{userId}/reset-password`  
-**Pendientes ⏳:** `PUT/{userId}/suspend` (T-033) · `PUT/{userId}/activate` (T-033) · `GET/{userId}/sessions` (T-037)
-
----
-
-### 14.2.7. Memberships y roles
-
-```typescript
-// src/api/memberships.ts
-export const listMembershipsByApp = (slug: string, clientAppId: string) =>
-  apiClient.get(`/tenants/${slug}/memberships`, { params: { clientAppId } });
-
-export const listMembershipsByUser = (slug: string, userId: string) =>
-  apiClient.get(`/tenants/${slug}/memberships`, { params: { userId } });
-
-export const createMembership = (slug: string, payload: {
-  userId: string;
-  clientAppId: string;
-  roleCodes: string[];
-}) => apiClient.post(`/tenants/${slug}/memberships`, payload);
-
-export const revokeMembership = (slug: string, membershipId: string) =>
-  apiClient.delete(`/tenants/${slug}/memberships/${membershipId}`);
-
-export const createRole = (slug: string, clientAppId: string, payload: {
-  code: string;
-  displayName?: string;
-  description?: string;
-}) => apiClient.post(`/tenants/${slug}/apps/${clientAppId}/roles`, payload);
-
-export const listRoles = (slug: string, clientAppId: string) =>
-  apiClient.get(`/tenants/${slug}/apps/${clientAppId}/roles`);
-```
-
-**Disponibles ✅:** `GET/POST/DELETE memberships` · `POST/GET roles`  
-**Pendientes ⏳:** `PUT/DELETE roles/{id}` · `POST memberships/{id}/roles`
-
----
-
-## 10. Vistas del rol `USER_TENANT` — Usuario del sistema
-
-### 10.1. Dashboard de usuario (`/dashboard`) ✅
-
-```typescript
-// src/pages/user/DashboardPage.tsx
-import { useCurrentUser } from '@/hooks/useCurrentUser';
-
-export function UserDashboard() {
-  const { user } = useCurrentUser();
-  return (
-    <div>
-      <h1>Bienvenido, {user?.name ?? user?.preferred_username}</h1>
-      <QuickLinks items={[
-        { href: '/profile',         label: 'Mi Perfil',          icon: '👤' },
-        { href: '/change-password', label: 'Cambiar contraseña', icon: '🔑', disabled: true },
-        { href: '/sessions',        label: 'Mis sesiones',       icon: '🖥️', disabled: true },
-      ]} />
-    </div>
-  );
-}
-```
-
----
-
-### 10.2. Auto-registro (`/register`) ✅
-
-```typescript
-// El auto-registro crea un usuario en tenant=keygo, app=keygo-ui
-const register = (data: { email: string; username: string; password: string; displayName?: string }) =>
-  fetch(`${API_V1}/tenants/${TENANT}/apps/${CLIENT_ID}/register`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  }).then(r => r.json() as Promise<BaseResponse<void>>);
-```
-
-**Endpoint:** `POST /api/v1/tenants/keygo/apps/keygo-ui/register` — ✅ Disponible (público)
-
-**Flujo:**
-
-```mermaid
-stateDiagram-v2
-    [*] --> Registro: /register
-    Registro --> Verificación: POST /register ✅<br/>usuario PENDING — email enviado
-    Verificación --> Login: POST /verify-email ✅<br/>usuario ACTIVE
-    Verificación --> Verificación: POST /resend-verification ✅<br/>(si código expiró)
-    Login --> Dashboard: OAuth2 + PKCE ✅
-```
-
----
-
-### 10.3. Verificación de email ✅
-
-```typescript
-const verifyEmail = (email: string, code: string) =>
-  fetch(`${API_V1}/tenants/${TENANT}/apps/${CLIENT_ID}/verify-email`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, code }),
-  }).then(r => r.json());
-
-const resendVerification = (email: string) =>
-  fetch(`${API_V1}/tenants/${TENANT}/apps/${CLIENT_ID}/resend-verification`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  }).then(r => r.json());
-```
-
-> **Regla de negocio:** El reenvío solo funciona si el código anterior expiró (TTL: 30 min).
-
----
-
-### 10.4. Olvidé mi contraseña ⏳ PENDIENTE BACKEND
-
-> **Endpoints esperados:**
-> - `POST /api/v1/tenants/keygo/account/forgot-password` (**F-030**)
-> - `POST /api/v1/tenants/keygo/account/reset-password` (**F-030**)
->
-> Mostrar link en `/login` pero redirigir a una página con mensaje "Disponible próximamente".
-
----
-
-## 11. Perfil de usuario — compartido por todos los roles
-
-### 11.1. Hook `useCurrentUser`
-
-```typescript
-// src/hooks/useCurrentUser.ts
-import { useQuery } from '@tanstack/react-query';
-import { useTokenStore } from '@/auth/tokenStore';
-import { decodeIdToken } from '@/auth/jwksVerify';
-import { apiClient, TENANT } from '@/api/client';
-import type { BaseResponse } from '@/types/base';
-
-export interface UserInfoData {
-  sub: string; email: string; name?: string;
-  preferred_username?: string; tenant_id: string;
-  client_id: string; roles: string[]; scope: string;
-}
-
-export function useCurrentUser() {
-  const { idToken, isAuthenticated } = useTokenStore();
-  const localClaims = idToken ? decodeIdToken(idToken) : null;
-
-  const { data: userInfo } = useQuery({
-    queryKey: ['userinfo', TENANT],
-    enabled:  isAuthenticated,
-    staleTime: 5 * 60 * 1000,
-    queryFn:  () => apiClient
-      .get<BaseResponse<UserInfoData>>(`/tenants/${TENANT}/userinfo`)
-      .then(r => r.data.data),
-  });
-
-  return {
-    user:  userInfo ?? localClaims,
-    roles: userInfo?.roles ?? (localClaims?.roles as string[] ?? []),
-  };
-}
-```
-
-**Endpoint:** `GET /api/v1/tenants/keygo/userinfo` — ✅ Disponible
-
----
-
-### 11.2. Página de perfil (`/profile`) ✅
-
-```typescript
-// src/pages/shared/ProfilePage.tsx
-export function ProfilePage() {
-  const { user, roles } = useCurrentUser();
-  const isAdmin         = useHasRole(AppRole.ADMIN);
-  const isTenantAdmin   = useHasRole(AppRole.ADMIN_TENANT);
-
-  return (
-    <div className="max-w-xl mx-auto space-y-6">
-      <h1>Mi Perfil</h1>
-      <section className="card">
-        <dl>
-          <dt>Nombre</dt>  <dd>{user?.name ?? '—'}</dd>
-          <dt>Email</dt>   <dd>{user?.email}</dd>
-          <dt>Usuario</dt> <dd>{user?.preferred_username}</dd>
-          <dt>Roles</dt>
-          <dd>
-            {roles.map(r => (
-              <span key={r} className="badge">
-                {r === AppRole.ADMIN        && '👑 Administrador Global'}
-                {r === AppRole.ADMIN_TENANT && '🏢 Admin de Tenant'}
-                {r === AppRole.USER_TENANT  && '👤 Usuario'}
-              </span>
-            ))}
-          </dd>
-        </dl>
-      </section>
-      <section className="card space-y-2">
-        <a href="/change-password" className="btn btn-secondary" aria-disabled>
-          Cambiar contraseña <PendingFeatureBadge />
-        </a>
-        <a href="/sessions" className="btn btn-secondary" aria-disabled>
-          Mis sesiones <PendingFeatureBadge />
-        </a>
-        {isTenantAdmin && <a href="/tenant-admin/dashboard" className="btn btn-outline">Ir a administración →</a>}
-        {isAdmin       && <a href="/admin/dashboard"        className="btn btn-outline">Ir al panel global →</a>}
-      </section>
-    </div>
-  );
-}
-```
-
----
-
-### 11.3. Cambiar contraseña ⏳ / Mis sesiones ⏳
-
-> `POST /api/v1/tenants/keygo/account/change-password` — No implementado (**F-030**)  
-> `GET /api/v1/tenants/keygo/account/sessions` — No implementado (**T-037**)
-
----
-
-## 12. Gestión segura de tokens
-
-| Dato | Almacenamiento | Razón |
-|---|---|---|
-| `access_token` | Memoria (Zustand) | Nunca `localStorage` — riesgo XSS |
-| `id_token` | Memoria (Zustand) | Ídem |
-| `refresh_token` | Memoria (Zustand) o `sessionStorage` | Memoria es más seguro; `sessionStorage` sobrevive recarga |
-| `pkce_code_verifier` | `sessionStorage` — eliminar tras el canje | Solo vive segundos |
-| `oauth_state` | `sessionStorage` — eliminar tras callback | Anti-CSRF |
-| `VITE_KEYGO_BASE` y `VITE_CLIENT_ID` | Variable de build (`.env.local`) | Evita hardcodear URLs/clientes por ambiente |
-
-> **Nota para hosted login central:** si `keygo-ui` solo presta la pantalla de login a otra app, no debe guardar los tokens finales de esa app. En ese patron, `keygo-ui` solo reenvia `code` + `state`; la app origen es quien hace el canje, almacena tokens, programa refresh y ejecuta logout.
-
-### 12.1. Silent refresh
-
-```typescript
-// src/auth/refresh.ts
-import { useTokenStore } from './tokenStore';
-import { decodeIdToken } from './jwksVerify';
-import { API_V1, TENANT, CLIENT_ID } from '@/api/client';
-
-let timer: ReturnType<typeof setTimeout> | null = null;
-
-export function scheduleRefresh(tenant: string, clientId: string, expiresIn: number) {
-  if (timer) clearTimeout(timer);
-  timer = setTimeout(async () => {
-    const { refreshToken, setTokens, clearTokens } = useTokenStore.getState();
-    if (!refreshToken) return;
-    try {
-      const res  = await fetch(`${API_V1}/tenants/${tenant}/oauth2/token`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: refreshToken, client_id: clientId }),
-      });
-      const body = await res.json();
-      if (body.failure) throw new Error();
-      const { access_token, id_token, refresh_token: newRT, expires_in } = body.data;
-      const roles = (decodeIdToken(id_token).roles as string[]) ?? [];
-      setTokens({ accessToken: access_token, idToken: id_token, refreshToken: newRT, expiresIn: expires_in, roles });
-      scheduleRefresh(tenant, clientId, expires_in);
-    } catch {
-      clearTokens();
-      window.location.href = '/login';
-    }
-  }, expiresIn * 0.8 * 1000);
-}
-```
-
-### 12.2. Logout
-
-```typescript
-// src/auth/logout.ts
-export async function logout() {
-  const { refreshToken, clearTokens } = useTokenStore.getState();
-  if (refreshToken) {
-    await fetch(`${API_V1}/tenants/${TENANT}/oauth2/revoke`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: refreshToken, client_id: CLIENT_ID }),
-    }).catch(() => {});
-  }
-  clearTokens();
-  window.location.href = '/login';
-}
-```
-
-**Endpoint:** `POST /api/v1/tenants/keygo/oauth2/revoke` — ✅ Disponible
-
----
-
-## 13. Interceptores HTTP y manejo de errores
-
-### 13.1. Cliente Axios unificado
-
-```typescript
-// src/api/client.ts
-import axios from 'axios';
-import { useTokenStore } from '@/auth/tokenStore';
-
-export const KEYGO_BASE = import.meta.env.VITE_KEYGO_BASE;
-export const API_V1     = `${KEYGO_BASE}/api/v1`;
-export const TENANT     = import.meta.env.VITE_TENANT_SLUG ?? 'keygo';
-export const CLIENT_ID  = import.meta.env.VITE_CLIENT_ID  ?? 'keygo-ui';
-
-export const apiClient = axios.create({ baseURL: API_V1 });
-
-apiClient.interceptors.request.use((config) => {
-  const { accessToken } = useTokenStore.getState();
-
-  // Bearer token para rutas protegidas
-  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
-
-  config.headers['Content-Type'] = 'application/json';
-  return config;
-});
-
-apiClient.interceptors.response.use(
-  (res) => res,
-  (err) => {
-    if (err.response?.status === 401) {
-      useTokenStore.getState().clearTokens();
-      window.location.href = '/login';
-    }
-    return Promise.reject(err);
-  }
-);
-```
-
-### 13.2. Manejo centralizado de `BaseResponse<T>`
-
-```typescript
-// src/components/BaseResponseHandler.tsx
-import type { BaseResponse, ErrorData } from '@/types/base';
-
-function formatUiError(errorData?: ErrorData, fallback?: string): string {
-  if (!errorData) return fallback ?? 'No pudimos completar la solicitud.';
-
-  // Mensaje canónico para UI, provisto por backend
-  return errorData.clientMessage;
-}
-
-export function BaseResponseHandler<T>({ response, isLoading, children }:
-  { response?: BaseResponse<T | ErrorData>; isLoading: boolean; children: (d: T) => React.ReactNode }) {
-  if (isLoading) return <div className="animate-pulse">Cargando...</div>;
-  if (!response) return null;
-
-  if (response.failure) {
-    const errorData = response.data as ErrorData | undefined;
-    const uiMessage = formatUiError(errorData, response.failure.message);
-
-    return (
-      <div className="alert-error">
-        <p>{uiMessage}</p>
-        {/* Ayuda al equipo dev sin exponer detalles técnicos en producción */}
-        {errorData?.origin === 'CLIENT_REQUEST' && errorData?.clientRequestCause === 'CLIENT_TECHNICAL' && (
-          <p className="text-xs opacity-80">Error de integración del cliente. Revisa sesión/cookies/parámetros.</p>
-        )}
-      </div>
-    );
-  }
-
-  if (!response.data) return null;
-  return <>{children(response.data as T)}</>;
-}
-```
-
 Reglas rápidas de interpretación en frontend:
 - `origin=CLIENT_REQUEST` + `clientRequestCause=USER_INPUT` → error del dato ingresado por el usuario.
 - `origin=CLIENT_REQUEST` + `clientRequestCause=CLIENT_TECHNICAL` → error técnico de integración UI/API.
@@ -2141,217 +1674,83 @@ Reglas rápidas de interpretación en frontend:
 
 ---
 
-## 14. Inventario de endpoints — disponibles vs. pendientes
 
-### 14.1. Autenticación (tenant: `keygo`, todos los roles)
+## 14.2. Administración de tenant — `ADMIN` / `ADMIN_TENANT`
 
-| Caso de uso | Método | Endpoint | Estado |
-|---|---|---|---|
-| OIDC Discovery | GET | `/api/v1/tenants/keygo/.well-known/openid-configuration` | ✅ |
-| JWKS | GET | `/api/v1/tenants/keygo/.well-known/jwks.json` | ✅ |
-| Iniciar autorización | GET | `/api/v1/tenants/keygo/oauth2/authorize` | ✅ |
-| Login (credenciales) | POST | `/api/v1/tenants/keygo/account/login` | ✅ |
-| Obtener tokens (auth_code) | POST | `/api/v1/tenants/keygo/oauth2/token` | ✅ |
-| Renovar token (refresh) | POST | `/api/v1/tenants/keygo/oauth2/token` | ✅ |
-| Revocar / Logout | POST | `/api/v1/tenants/keygo/oauth2/revoke` | ✅ |
-| UserInfo | GET | `/api/v1/tenants/keygo/userinfo` | ✅ |
-| Auto-registro | POST | `/api/v1/tenants/keygo/apps/keygo-ui/register` | ✅ |
-| Verificar email | POST | `/api/v1/tenants/keygo/apps/keygo-ui/verify-email` | ✅ |
-| Reenviar código | POST | `/api/v1/tenants/keygo/apps/keygo-ui/resend-verification` | ✅ |
-| Ver mi perfil | GET | `/api/v1/tenants/keygo/account/profile` | ✅ — Bearer token, NO X-KEYGO-ADMIN |
-| Editar mi perfil | PATCH | `/api/v1/tenants/keygo/account/profile` | ✅ — Bearer token, PATCH semántica, NO X-KEYGO-ADMIN |
-| Olvidé contraseña | POST | `/api/v1/tenants/keygo/account/forgot-password` | ⏳ F-030 |
-| Reset contraseña | POST | `/api/v1/tenants/keygo/account/reset-password` | ⏳ F-030 |
-| Cambiar contraseña | POST | `/api/v1/tenants/keygo/account/change-password` | ⏳ F-030 |
-| Mis sesiones | GET | `/api/v1/tenants/keygo/account/sessions` | ⏳ T-037 |
-| Cerrar sesión remota | DELETE | `/api/v1/tenants/keygo/account/sessions/{id}` | ⏳ T-037 |
+> Auth requerida: `Authorization: Bearer <jwt>` con rol `ADMIN` o `ADMIN_TENANT` (scope validado por `tenant_slug` en claims).
 
-### 14.1.1. Patron recomendado: login central de `keygo-ui` para apps de otros tenants
+#### 14.2.1. Tenants (solo `ADMIN`)
 
-Cuando otra UI (por ejemplo, una SPA de tenant `acme-corp`) quiere reutilizar el login de `keygo-ui`, el flujo recomendado es **hosted login**:
-
-1. La app origen genera `state` + PKCE (`code_verifier`/`code_challenge`).
-2. Redirige al login central de `keygo-ui` enviando el contexto OAuth2.
-3. `keygo-ui` ejecuta `/oauth2/authorize` y luego `/account/login` para el `tenantSlug` recibido.
-4. `keygo-ui` redirige al callback de la app origen con `code` + `state`.
-5. La app origen canjea el code en `/oauth2/token` con `code_verifier`.
-
-**No son endpoints nuevos**: se reutilizan los mismos endpoints OAuth2/OIDC ya existentes, pero parametrizados por tenant/app.
-
-#### Que si se comparte
-
-- El formulario de login y sus validaciones UX.
-- La llamada `GET /oauth2/authorize` con el contexto recibido.
-- La llamada `POST /account/login` reutilizando la `JSESSIONID` del paso anterior.
-
-#### Que no se debe compartir ni "fijar" a `keygo`
-
-- El `tenantSlug` efectivo del flujo.
-- El `client_id` que recibira tokens.
-- La `redirect_uri` de callback.
-- El `code_verifier`, el `state` y el almacenamiento final de tokens.
-
-**Regla de implementacion:** si la app destino es `acme-storefront`, el token final debe salir para `tenantSlug=acme-corp` y `client_id=acme-storefront`, aunque la pantalla visual sea la de `keygo-ui`.
-
-| Etapa | Método | Endpoint (con `context-path`) | Auth requerida | Ejemplo minimo |
+| Caso de uso | Método | Endpoint | Auth | Estado |
 |---|---|---|---|---|
-| Inicio de autorización | GET | `/keygo-server/api/v1/tenants/{tenantSlug}/oauth2/authorize` | Público (sin Bearer de borde) | `?client_id=...&redirect_uri=...&scope=openid%20profile&response_type=code&code_challenge=...&code_challenge_method=S256&state=...` |
-| Login credenciales | POST | `/keygo-server/api/v1/tenants/{tenantSlug}/account/login` | Público (usa sesión HTTP previa) | body `{ "emailOrUsername": "...", "password": "..." }` + cookie `JSESSIONID` |
-| Canje de código | POST | `/keygo-server/api/v1/tenants/{tenantSlug}/oauth2/token` | Público (valida grant interno) | body `{ "grant_type":"authorization_code", "client_id":"...", "code":"...", "code_verifier":"...", "redirect_uri":"..." }` |
+| Listar tenants (paginado) | GET | `/api/v1/tenants?status=&name_like=&page=0&size=20` | Bearer ADMIN | ✅ |
+| Crear tenant | POST | `/api/v1/tenants` | Bearer ADMIN | ✅ |
+| Ver tenant | GET | `/api/v1/tenants/{slug}` | Bearer ADMIN | ✅ |
+| Suspender tenant | PUT | `/api/v1/tenants/{slug}/suspend` | Bearer ADMIN | ✅ |
+| Reactivar tenant | PUT | `/api/v1/tenants/{slug}/activate` | Bearer ADMIN | ⏳ F-034 |
 
-Respuesta esperada en cada etapa:
-- Envelope `BaseResponse<T>`.
-- `success.code` esperado: `AUTHORIZATION_INITIATED` -> `LOGIN_SUCCESSFUL` -> `TOKEN_ISSUED`.
-- En `GET /oauth2/authorize`, usar nombres OAuth2 en query params (`response_type`, no `responseType`).
+**Query params de listado (todos snake_case):**
 
-#### Respuestas OK/NOK por etapa (contrato mínimo para frontend)
-
-| Etapa | OK (`success.code`) | NOK (`failure.code`) más comunes | Campos `ErrorData` a inspeccionar |
+| Param | Tipo | Por defecto | Descripción |
 |---|---|---|---|
-| `/oauth2/authorize` | `AUTHORIZATION_INITIATED` | `RESOURCE_NOT_FOUND`, `INVALID_INPUT`, `BUSINESS_RULE_VIOLATION` | `origin`, `clientRequestCause`, `clientMessage` |
-| `/account/login` | `LOGIN_SUCCESSFUL` | `AUTHENTICATION_REQUIRED`, `EMAIL_NOT_VERIFIED`, `BUSINESS_RULE_VIOLATION`, `INVALID_INPUT` | `origin`, `clientRequestCause`, `clientMessage` |
-| `/oauth2/token` | `TOKEN_ISSUED` | `INVALID_INPUT`, `INSUFFICIENT_PERMISSIONS`, `OPERATION_FAILED`, `AUTHENTICATION_REQUIRED` | `origin`, `clientRequestCause`, `clientMessage` |
-
-Ejemplo OK — `GET /oauth2/authorize`:
-
-```json
-{
-  "date": "2026-03-26T10:00:00.000Z",
-  "success": {
-    "code": "AUTHORIZATION_INITIATED",
-    "message": "Authorization flow initiated successfully"
-  },
-  "data": {
-    "client_id": "keygo-ui",
-    "client_name": "KeyGo UI",
-    "redirect_uri": "http://localhost:5173/callback"
-  }
-}
-```
-
-Ejemplo NOK — `POST /account/login` por error de entrada de usuario:
-
-```json
-{
-  "date": "2026-03-26T10:00:00.000Z",
-  "failure": {
-    "code": "AUTHENTICATION_REQUIRED",
-    "message": "Authentication is required"
-  },
-  "data": {
-    "code": "AUTHENTICATION_REQUIRED",
-    "origin": "CLIENT_REQUEST",
-    "clientRequestCause": "USER_INPUT",
-    "clientMessage": "No pudimos validar tu sesión. Inicia sesión nuevamente."
-  }
-}
-```
-
-Ejemplo NOK — `POST /oauth2/token` por falla de servidor:
-
-```json
-{
-  "date": "2026-03-26T10:00:00.000Z",
-  "failure": {
-    "code": "OPERATION_FAILED",
-    "message": "Operation failed"
-  },
-  "data": {
-    "code": "OPERATION_FAILED",
-    "origin": "SERVER_PROCESSING",
-    "clientMessage": "No pudimos completar la solicitud. Intenta de nuevo en unos minutos."
-  }
-}
-```
+| `status` | `ACTIVE\|SUSPENDED\|PENDING` | — | Filtro por estado |
+| `name_like` | string | — | Búsqueda parcial en nombre (case-insensitive) |
+| `page` | int | `0` | Página (base 0) |
+| `size` | int | `20` | Tamaño (1–200) |
 
 ---
 
-### 14.1.2. Playbook operativo: errores OAuth2 con `ErrorData`
+#### 14.2.2. Aplicaciones (ClientApps)
 
-Este playbook define una regla unica para interpretar respuestas NOK en `/oauth2/authorize`, `/account/login` y `/oauth2/token`.
-
-Regla madre:
-- Si existe `data.clientMessage`, ese es el mensaje principal para UI.
-- `failure.code` se usa para telemetria y branching tecnico.
-- `origin` + `clientRequestCause` define quien debe corregir el problema.
-
-#### Matriz de decision UI
-
-| `origin` | `clientRequestCause` | Responsable | Accion UX recomendada |
-|---|---|---|---|
-| `CLIENT_REQUEST` | `USER_INPUT` | Usuario final | Mostrar error inline en formulario/campo y permitir reintento inmediato |
-| `CLIENT_REQUEST` | `CLIENT_TECHNICAL` | Frontend/Integracion | Mostrar mensaje neutro, loguear metadata tecnica y corregir integracion |
-| `BUSINESS_RULE` | — | Dominio/negocio | Mostrar `clientMessage` + CTA contextual (ej. verificar email, contactar admin) |
-| `SERVER_PROCESSING` | — | Backend/infra | Mostrar mensaje de reintento, no culpar al usuario, reportar incidente |
-
-#### Accion por etapa del flujo
-
-| Endpoint | `failure.code` frecuentes | Lectura de `ErrorData` | Accion inmediata en UI | Accion tecnica |
+| Caso de uso | Método | Endpoint | Auth | Estado |
 |---|---|---|---|---|
-| `GET /oauth2/authorize` | `RESOURCE_NOT_FOUND`, `INVALID_INPUT`, `BUSINESS_RULE_VIOLATION` | `CLIENT_REQUEST/CLIENT_TECHNICAL` = problema de integracion o parametros; `BUSINESS_RULE` = bloqueo de negocio | Mostrar `clientMessage`; bloquear submit de login hasta resolver | Revisar `tenantSlug`, `client_id`, `redirect_uri`, query params OAuth |
-| `POST /account/login` | `AUTHENTICATION_REQUIRED`, `INVALID_INPUT`, `EMAIL_NOT_VERIFIED`, `BUSINESS_RULE_VIOLATION` | `USER_INPUT` = credenciales/datos de usuario; `CLIENT_TECHNICAL` = sesion/cookies; `BUSINESS_RULE` = regla de dominio | `USER_INPUT`: inline en formulario; `BUSINESS_RULE`: mensaje + CTA | Verificar `credentials: 'include'`, presencia de `JSESSIONID`, secuencia correcta `/authorize` -> `/account/login` |
-| `POST /oauth2/token` | `INVALID_INPUT`, `INSUFFICIENT_PERMISSIONS`, `OPERATION_FAILED` | `CLIENT_REQUEST` suele indicar code/PKCE/redirect_uri invalidos; `SERVER_PROCESSING` indica falla interna | Reiniciar flujo completo desde login | No reusar `authorization_code`; regenerar PKCE y repetir flujo |
-
-#### Snippet recomendado (clasificador de errores)
-
-```typescript
-import type { BaseResponse, ErrorData } from '@/types/base';
-
-type AuthStage = 'AUTHORIZE' | 'LOGIN' | 'TOKEN';
-
-type UiDecision = {
-  userMessage: string;
-  uiAction:
-    | 'INLINE_FORM'
-    | 'TOAST'
-    | 'BUSINESS_BLOCK'
-    | 'RESTART_OAUTH_FLOW'
-    | 'RETRY_LATER';
-  technicalAction?: string;
-};
-
-export function resolveAuthError(stage: AuthStage, response: BaseResponse<ErrorData>): UiDecision {
-  const error = response.data;
-  const fallback = response.failure?.message ?? 'No pudimos completar la solicitud.';
-  const userMessage = error?.clientMessage ?? fallback;
-
-  if (!error) {
-    return { userMessage, uiAction: 'TOAST' };
-  }
-
-  if (error.origin === 'CLIENT_REQUEST' && error.clientRequestCause === 'USER_INPUT') {
-    return { userMessage, uiAction: stage === 'LOGIN' ? 'INLINE_FORM' : 'TOAST' };
-  }
-
-  if (error.origin === 'CLIENT_REQUEST' && error.clientRequestCause === 'CLIENT_TECHNICAL') {
-    return {
-      userMessage,
-      uiAction: stage === 'TOKEN' ? 'RESTART_OAUTH_FLOW' : 'TOAST',
-      technicalAction: 'Revisar cookies/sesion, parametros OAuth y orden de llamadas',
-    };
-  }
-
-  if (error.origin === 'BUSINESS_RULE') {
-    return { userMessage, uiAction: 'BUSINESS_BLOCK' };
-  }
-
-  return {
-    userMessage,
-    uiAction: stage === 'TOKEN' ? 'RESTART_OAUTH_FLOW' : 'RETRY_LATER',
-    technicalAction: 'Monitorear backend y reintentar segun politica de la UI',
-  };
-}
-```
-
-#### Runbook corto para incidentes en autenticacion
-
-- Si falla `TOKEN`, reiniciar flujo completo (`/authorize` -> `/account/login` -> `/oauth2/token`).
-- Si `origin=CLIENT_REQUEST` y `clientRequestCause=CLIENT_TECHNICAL`, no culpar al usuario: revisar integracion.
-- Si `origin=BUSINESS_RULE`, mostrar CTA contextual y no ocultar el error con mensaje generico.
-- Loguear siempre: `failure.code`, `data.origin`, `data.clientRequestCause`, `tenantSlug`, `client_id`.
-- Mantener esta seccion alineada con `docs/api/AUTH_FLOW.md` (seccion "Manejo de errores") y con `§13.2` de esta guia.
+| Listar apps | GET | `/api/v1/tenants/{slug}/apps` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Crear app | POST | `/api/v1/tenants/{slug}/apps` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Ver app | GET | `/api/v1/tenants/{slug}/apps/{clientId}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Actualizar app | PUT | `/api/v1/tenants/{slug}/apps/{clientId}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Rotar secret | POST | `/api/v1/tenants/{slug}/apps/{clientId}/rotate-secret` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 
 ---
+
+#### 14.2.3. Roles de app
+
+| Caso de uso | Método | Endpoint | Auth | Estado |
+|---|---|---|---|---|
+| Listar roles | GET | `/api/v1/tenants/{slug}/apps/{clientId}/roles` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Crear rol | POST | `/api/v1/tenants/{slug}/apps/{clientId}/roles` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+
+---
+
+#### 14.2.4. Usuarios
+
+| Caso de uso | Método | Endpoint | Auth | Estado |
+|---|---|---|---|---|
+| Listar usuarios | GET | `/api/v1/tenants/{slug}/users` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Crear usuario | POST | `/api/v1/tenants/{slug}/users` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Ver usuario | GET | `/api/v1/tenants/{slug}/users/{userId}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Actualizar usuario | PUT | `/api/v1/tenants/{slug}/users/{userId}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Reset contraseña | POST | `/api/v1/tenants/{slug}/users/{userId}/reset-password` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Suspender usuario | PUT | `/api/v1/tenants/{slug}/users/{userId}/suspend` | Bearer ADMIN/ADMIN_TENANT | ⏳ T-033 |
+| Activar usuario | PUT | `/api/v1/tenants/{slug}/users/{userId}/activate` | Bearer ADMIN/ADMIN_TENANT | ⏳ T-033 |
+| Ver sesiones del usuario | GET | `/api/v1/tenants/{slug}/users/{userId}/sessions` | Bearer ADMIN/ADMIN_TENANT | ⏳ T-037 |
+
+---
+
+#### 14.2.5. Memberships
+
+| Caso de uso | Método | Endpoint | Auth | Estado |
+|---|---|---|---|---|
+| Listar por app (`client_app_id`) | GET | `/api/v1/tenants/{slug}/memberships?client_app_id={uuid}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Listar por usuario (`user_id`) | GET | `/api/v1/tenants/{slug}/memberships?user_id={uuid}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Crear membership | POST | `/api/v1/tenants/{slug}/memberships` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Revocar membership | DELETE | `/api/v1/tenants/{slug}/memberships/{id}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+
+**Query params (snake_case obligatorio):**
+
+| Param HTTP | Tipo | Descripción |
+|---|---|---|
+| `user_id` | UUID string | Filtrar memberships por ID de usuario |
+| `client_app_id` | UUID string | Filtrar memberships por ID de app |
 
 ## 15. Guía de mocking para features pendientes
 

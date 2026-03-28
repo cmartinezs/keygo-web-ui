@@ -69,9 +69,12 @@ Al finalizar **cada implementación**, ejecutar sin excepción:
 
 1. **Checklist de consistencia** — ver `.github/instructions/workflow.instructions.md`.
 2. **Auto-corrección** — corregir cualquier violación detectada antes de reportar la tarea como lista.
-3. **Registro en backlog** — si se detecta una mejora, feature o bug fuera de scope, añadirlo a `docs/BACKLOG.md`.
-4. **Auto-aprendizaje** — si se descubre un patrón nuevo no documentado, añadirlo al archivo de instructions correspondiente.
-5. **Resumen post-implementación** — entregar el resumen estructurado definido en `workflow.instructions.md`.
+3. **Actualizar documentación** — obligatorio en cada cambio que afecte comportamiento o estructura:
+   - **`docs/FUNCTIONAL_GUIDE.md`** — si cambia algo visible para el usuario final (pantallas, flujos, acciones, roles).
+   - **`docs/TECHNICAL_GUIDE.md`** — si se crea o modifica un archivo, módulo o patrón. Documentar propósito, construcción, integración con otros módulos, decisión de diseño, estrategia empleada y deuda técnica conocida.
+4. **Registro en backlog** — si se detecta una mejora, feature o bug fuera de scope, añadirlo a `docs/BACKLOG.md`.
+5. **Auto-aprendizaje** — si se descubre un patrón nuevo no documentado, añadirlo al archivo de instructions correspondiente.
+6. **Resumen post-implementación** — entregar el resumen estructurado definido en `workflow.instructions.md`.
 
 ## Contrato backend — documentos vivos
 
@@ -85,7 +88,9 @@ Ambos documentos se actualizan cada vez que el backend introduce cambios.
 
 ## Referencia completa
 
+- [docs/FUNCTIONAL_GUIDE.md](../docs/FUNCTIONAL_GUIDE.md) — **Documentación funcional**: qué puede hacer el usuario final en cada pantalla y flujo, organizado por rol.
+- [docs/TECHNICAL_GUIDE.md](../docs/TECHNICAL_GUIDE.md) — **Documentación técnica**: arquitectura del proyecto, descripción por archivo (propósito, integración, decisiones de diseño, estrategia, deuda técnica), y guía de extensión.
 - [docs/FRONTEND_DEVELOPER_GUIDE.md](../docs/FRONTEND_DEVELOPER_GUIDE.md) — Endpoints, flujo PKCE, convenciones de rol, checklist de seguridad.
 - [docs/api-docs.json](../docs/api-docs.json) — Especificación OpenAPI v3 del backend (fuente de verdad técnica).
 - [docs/BACKLOG.md](../docs/BACKLOG.md) — Features, mejoras y deuda técnica pendientes.
-- [.github/instructions/workflow.instructions.md](./instructions/workflow.instructions.md) — Reglas de auto-aprendizaje, auto-corrección y revisión de consistencia.
+- [.github/instructions/workflow.instructions.md](./instructions/workflow.instructions.md) — Reglas de auto-aprendizaje, auto-corrección, revisión de consistencia y actualización de documentación.

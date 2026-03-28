@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import type { PlanId } from '@/api/contracts'
 import type { ContractorFormValues } from './ContractorStep'
+import { TurnstileWidget } from '@/components/TurnstileWidget'
+
+const TURNSTILE_ENABLED = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY)
 
 const PLAN_LABELS: Record<PlanId, string> = {
   starter: 'Starter — Gratis',
@@ -20,8 +23,9 @@ interface TermsStepProps {
 export function TermsStep({ plan, contractor, onBack, onSubmit, isSubmitting, error }: TermsStepProps) {
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [acceptPrivacy, setAcceptPrivacy] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
 
-  const canSubmit = acceptTerms && acceptPrivacy && !isSubmitting
+  const canSubmit = acceptTerms && acceptPrivacy && !isSubmitting && (!TURNSTILE_ENABLED || !!captchaToken)
 
   return (
     <div className="flex flex-col gap-6">
@@ -115,6 +119,9 @@ export function TermsStep({ plan, contractor, onBack, onSubmit, isSubmitting, er
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
+
+      {/* Cloudflare Turnstile CAPTCHA (only when VITE_TURNSTILE_SITE_KEY is set) */}
+      <TurnstileWidget onTokenChange={setCaptchaToken} />
 
       <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-2">
         <button

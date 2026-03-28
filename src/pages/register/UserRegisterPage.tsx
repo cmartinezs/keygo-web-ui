@@ -4,6 +4,11 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { registerUser } from '@/api/users'
+import { useHoneypot } from '@/hooks/useHoneypot'
+import { HoneypotField } from '@/components/HoneypotField'
+import { TurnstileWidget } from '@/components/TurnstileWidget'
+
+const TURNSTILE_ENABLED = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY)
 
 // ── Steps ─────────────────────────────────────────────────────────────────────
 
@@ -207,6 +212,16 @@ function PersonalStep({
     formState: { errors },
   } = useForm<PersonalValues>({ resolver: zodResolver(personalSchema) })
 
+  const honeypot = useHoneypot()
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const isSubmitDisabled = isSubmitting || (TURNSTILE_ENABLED && !captchaToken)
+
+  function handleFormSubmit(data: PersonalValues) {
+    const { blocked } = honeypot.validate()
+    if (blocked) return // silently discard automated submissions
+    onSubmit(data)
+  }
+
   const field = (
     id: keyof PersonalValues,
     label: string,
@@ -236,7 +251,10 @@ function PersonalStep({
   )
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+      {/* Honeypot trap — bots fill this; real users never see it */}
+      <HoneypotField name="website" {...honeypot.fieldProps} />
+
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-slate-900 mb-2">Tus datos personales</h2>
         <p className="text-slate-500 text-sm max-w-md mx-auto">
@@ -273,23 +291,29 @@ function PersonalStep({
           >
             Atrás
           </button>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-indigo-500"
-          >
-            {isSubmitting ? (
-              <>
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Registrando…
-              </>
-            ) : (
-              'Crear cuenta'
-            )}
-          </button>
+
+          <div className="flex-1 flex flex-col gap-2">
+            {/* Cloudflare Turnstile CAPTCHA (only when VITE_TURNSTILE_SITE_KEY is set) */}
+            <TurnstileWidget onTokenChange={setCaptchaToken} />
+
+            <button
+              type="submit"
+              disabled={isSubmitDisabled}
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              {isSubmitting ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Registrando…
+                </>
+              ) : (
+                'Crear cuenta'
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </form>

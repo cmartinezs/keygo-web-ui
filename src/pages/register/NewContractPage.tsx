@@ -8,6 +8,8 @@ import { ContractorStep } from './steps/ContractorStep'
 import type { ContractorFormValues } from './steps/ContractorStep'
 import { TermsStep } from './steps/TermsStep'
 import { SuccessStep } from './steps/SuccessStep'
+import { useHoneypot } from '@/hooks/useHoneypot'
+import { HoneypotField } from '@/components/HoneypotField'
 
 // ── Step config ──────────────────────────────────────────────────────────────
 
@@ -84,8 +86,12 @@ export default function NewContractPage() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
 
+  const honeypot = useHoneypot()
+
   async function handleSubmit() {
     if (!selectedPlan || !contractor) return
+    const { blocked } = honeypot.validate()
+    if (blocked) return // silently discard automated submissions
     setIsSubmitting(true)
     setSubmitError(null)
     try {
@@ -108,6 +114,9 @@ export default function NewContractPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
+      {/* Honeypot trap — bots fill this; real users never see it */}
+      <HoneypotField name="website" {...honeypot.fieldProps} />
+
       {/* Top bar */}
       <header className="py-4 px-6 border-b border-white/60 bg-white/70 backdrop-blur-sm">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
