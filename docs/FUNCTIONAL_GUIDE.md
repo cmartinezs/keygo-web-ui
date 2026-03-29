@@ -153,50 +153,67 @@ Permite autenticarse mediante el flujo OAuth2 Authorization Code + PKCE. El proc
 
 ### 1.3 Contratar un plan (Nuevo contrato)
 
-**Ruta:** `/subscribe` o `/subscribe?plan=starter|business|on-premise`
+**Ruta:** `/subscribe`
 
-Asistente de contratación en tres pasos para organizaciones que quieren activar KeyGo. Si se accede desde el botón "Contratar" de un plan específico, ese plan queda preseleccionado y el asistente comienza en el paso 2 (datos del contratante).
+Asistente de auto-contratación en **5 pasos** conectado al backend de billing. Soporta dos flujos diferenciados según el tipo de suscriptor devuelto por el catálogo de planes:
 
-> **Nota:** La contratación automática está actualmente en desarrollo. Los datos del formulario se reciben pero la activación del servicio se gestiona manualmente. Se muestra un aviso informativo al inicio.
+- **Empresa (B2B)** — `subscriberType = TENANT`: requiere datos de empresa (nombre, identificador, CIF/NIF opcional, dirección).
+- **Personal (B2C)** — `subscriberType = TENANT_USER`: solo datos personales.
+
+El indicador de pasos muestra en todo momento la posición dentro del flujo.
 
 #### Paso 1 — Selección de plan
 
-Tres tarjetas de plan (igual que en la landing). Al seleccionar una se resalta con borde índigo y una marca de verificación.
+Las tarjetas se cargan dinámicamente desde la API (`GET /billing/catalog`). Cada tarjeta muestra:
+- Badge de tipo: **Empresa** o **Personal**.
+- Toggle de periodicidad: **Mensual / Anual** (si el plan tiene las dos versiones).
+- Precio formateado con divisa, días de prueba y lista de beneficios (entitlements).
 
-Acción disponible: "Continuar →" (deshabilitado hasta que se seleccione un plan).
+Acción: "Continuar →" habilitado al seleccionar una tarjeta.
 
-#### Paso 2 — Datos del contratante
+#### Paso 2 — Datos del suscriptor
 
-Formulario con validación en tiempo real:
+**B2C (Personal):** nombre, apellidos y email.
+
+**B2B (Empresa):** además de los datos personales del responsable:
 
 | Campo | Obligatorio | Notas |
 |---|---|---|
-| Nombre de la organización | Sí | Mínimo 2 caracteres |
-| Nombre | Sí | — |
-| Apellidos | Sí | — |
-| Email | Sí | Formato de email válido |
-| Teléfono | No | — |
-| País | Sí | Lista de 16 países + "Otro" |
+| Nombre de empresa | Sí | Mín. 2 caracteres |
+| Identificador de empresa | Sí | Auto-generado desde el nombre; solo `[a-z0-9-]` |
+| CIF / NIF | No | — |
+| Dirección fiscal | No | — |
 
-Acciones: "← Atrás" para volver al paso anterior, "Continuar →" para avanzar (deshabilitado si hay errores de validación).
+El identificador de empresa se genera automáticamente al escribir el nombre (kebab-case), pero puede editarse manualmente. Se muestra con el prefijo `keygo.io/`.
 
-#### Paso 3 — Revisión, términos y envío
+Acciones: "← Atrás", "Continuar →".
 
-- Panel de resumen con todos los datos ingresados (plan, organización, responsable, email, teléfono, país).
-- Para el plan On-Premise: nota especial indicando que el equipo contactará en 24–48 horas hábiles.
-- Dos checkboxes obligatorios:
-  - Aceptación de los **Términos de Servicio** (enlace que abre en nueva pestaña).
-  - Aceptación de la **Política de Privacidad** (enlace que abre en nueva pestaña).
-- Si está configurado: widget **Turnstile** de verificación.
-- Botón "Enviar solicitud" (deshabilitado hasta que ambos checkboxes estén marcados y el CAPTCHA resuelto, si aplica).
+#### Paso 3 — Revisión y condiciones
+
+- Panel de resumen (plan, precio, periodicidad, días de prueba, datos del contratante y empresa si B2B).
+- Dos checkboxes obligatorios: **Términos de Servicio** y **Política de Privacidad**.
+- Widget Turnstile (si `VITE_TURNSTILE_SITE_KEY` configurado).
+- Botón "Confirmar y continuar →" — llama a `POST /billing/contracts` en el backend. Un honeypot invisible filtra envíos automáticos.
+
+#### Paso 4 — Verificación de email
+
+- Se envía un código OTP de 6 dígitos al email introducido.
+- Interface de 6 cajas con auto-foco, soporte de pegado y navegación con Retroceso.
+- Al confirmar: llama a `POST /billing/contracts/{id}/verify-email`.
+
+#### Paso 5 — Pago
+
+- Resumen del pedido (plan, precio, periodicidad, días de prueba).
+- **Modo desarrollo** (`import.meta.env.DEV`): botón "Confirmar pago (simulado) →" que llama a `POST /billing/contracts/{id}/mock-approve-payment` y después a `POST /billing/contracts/{id}/activate`.
+- **Modo producción**: aviso informativo de integración PSP pendiente.
 
 #### Resultado exitoso
 
 Pantalla de confirmación con:
-- Nombre del plan contratado.
-- Instrucción de revisar el email de confirmación (incluyendo carpeta de spam).
-- Email de contacto de soporte: `soporte@keygo.io`.
-- Botón "← Volver al inicio".
+- Plan activado.
+- Email de acceso.
+- **B2B:** identificador de empresa (slug). 
+- Enlace "Ir a iniciar sesión →" (`/login`).
 
 ---
 
@@ -411,7 +428,6 @@ Las siguientes funcionalidades están planificadas pero aún no están disponibl
 
 | Funcionalidad | Área | Estado |
 |---|---|---|
-| Envío real de solicitud de contrato | Nuevo contrato | API pendiente de implementación backend |
 | Reactivación de tenants | Detalle de tenant | Mock; endpoint T-033 pendiente en backend |
 | Registro de usuarios (paso 2) | `/register` | Formulario parcialmente implementado |
 | Panel Administrador de Tenant | `/tenant-admin/*` | Sin páginas implementadas |

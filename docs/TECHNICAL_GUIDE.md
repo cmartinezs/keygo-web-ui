@@ -566,17 +566,44 @@ export async function getPlatformDashboard(): Promise<PlatformDashboardData>
 
 ### `contracts.ts`
 
-**Propósito:** ⏳ Mock del endpoint de contratación pública.
+**Propósito:** ⚠️ Módulo legado (mock). Supersedido por `src/api/billing.ts`. Mantener solo para compatibilidad con `PlanId` si aún se referencia (ahora `PlanId` vive en `src/components/plans.ts`).
+
+---
+
+### `billing.ts`
+
+**Propósito:** Módulo de API completo para el flujo de auto-contratación (billing). Conecta con todos los endpoints del contrato público del backend.
 
 **Construcción:**
 ```ts
-// Marcado: ⏳ pendiente (F-NEW-001)
-// Endpoint real futuro: POST /api/v1/public/contracts
-export async function submitContract(data): Promise<BaseResponse<void>>
-// Mock actual: espera 1500ms y devuelve éxito hardcodeado
+// Constante de query keys
+export const BILLING_QUERY_KEYS = {
+  catalog: (tenantSlug, clientId) => ['billing', 'catalog', tenantSlug, clientId],
+  contract: (contractId) => ['billing', 'contract', contractId],
+  // ...
+}
+
+// Helper de URL base
+function billingBase(tenantSlug, clientId): string
+// → `${KEYGO_BASE}/api/v1/tenants/{slug}/apps/{clientId}/billing`
+
+// Funciones públicas (sin auth):
+getBillingCatalog(tenantSlug?, clientId?) → AppPlan[]
+createBillingContract(request, tenantSlug?, clientId?) → AppContract
+verifyContractEmail(contractId, request, tenantSlug?, clientId?) → AppContract
+mockApprovePayment(contractId, tenantSlug?, clientId?) → AppContract   // DEV only
+activateBillingContract(contractId, tenantSlug?, clientId?) → AppContract
+getBillingContract(contractId, tenantSlug?, clientId?) → AppContract
+
+// Funciones autenticadas (Bearer required):
+getActiveSubscription(tenantSlug?, clientId?) → AppSubscription
+cancelSubscription(tenantSlug?, clientId?) → void
+listInvoices(tenantSlug?, clientId?) → AppInvoice[]
 ```
 
-**Deuda técnica:** El mock siempre retorna éxito — el path de error en `NewContractPage` nunca se ejercita localmente. Debería añadirse un modo de fallo simulado para testing de la UI de error.
+**Integración:** `NewContractPage` (getTenantSlug/CLIENT_ID de `src/api/client.ts`), TanStack Query para catálogo, llamadas imperativas para transiciones de estado.
+
+**Decisión de diseño:** `tenantSlug` y `clientId` tienen valores por defecto (`TENANT`, `CLIENT_ID` de `client.ts`), por lo que la mayoría de las llamadas no necesitan pasarlos explícitamente.
 
 ---
 
@@ -685,6 +712,45 @@ export interface PlatformDashboardData {
 ```
 
 **Consumido por:** `src/api/dashboard.ts`, `src/pages/admin/dashboard/` (sub-componentes).
+
+---
+
+### `billing.ts` (types)
+
+**Propósito:** DTOs completos del módulo de billing alineados con `docs/api-docs.json`.
+
+**Tipos clave:**
+```ts
+export type SubscriberType = 'TENANT' | 'TENANT_USER'
+export type BillingPeriod  = 'MONTHLY' | 'ANNUAL' | 'ONE_TIME'
+export type ContractStatus =
+  | 'PENDING_EMAIL_VERIFICATION' | 'PENDING_PAYMENT'
+  | 'READY_TO_ACTIVATE' | 'ACTIVATED' | 'EXPIRED' | 'CANCELLED' | 'FAILED'
+
+export interface AppPlanEntitlement { metric, displayName, value, unit, enforcementMode }
+export interface AppPlanVersion {
+  id, version, billingPeriod: BillingPeriod,
+  price, currency, trialDays, status: PlanStatus
+  entitlements: AppPlanEntitlement[]
+}
+export interface AppPlan {
+  id, name, description, subscriberType: SubscriberType,
+  status: PlanStatus, versions: AppPlanVersion[]
+}
+
+export interface AppContract {
+  id, status: ContractStatus, subscriberType: SubscriberType,
+  contractorEmail, contractorFirstName, contractorLastName,
+  planVersionId, billingPeriod: BillingPeriod,
+  companyName?, companySlug?, companyTaxId?, companyAddress?
+}
+
+export interface CreateContractRequest { planVersionId, billingPeriod, subscriberType, contractorEmail,
+  contractorFirstName, contractorLastName, companyName?, companySlug?, companyTaxId?, companyAddress? }
+export interface VerifyContractEmailRequest { code: string }
+```
+
+**Consumido por:** `src/api/billing.ts`, todos los steps de `src/pages/register/`.
 
 ---
 
@@ -1032,24 +1098,33 @@ initMutation.isSuccess                                  → LoginForm
 
 **`NewContractPage.tsx`**
 
-**Propósito:** Wizard de 3 pasos para contratación de un plan.
+**Propósito:** Wizard de 5 pasos para auto-contratación de un plan. Soporta flujo B2B (empresa) y B2C (personal) determinado por el campo `subscriberType` del catálogo.
 
 **Construcción:**
-- Pasos: `PlanStep` → `ContractorStep` → `TermsStep` → `SuccessStep`.
-- Estado elevado en `NewContractPage`: `selectedPlan`, `contractor`, `step`, `done`.
-- `useSearchParams()` lee `?plan=` para saltar al paso 1 con plan preseleccionado.
-- `StepIndicator` (privado): circles numerados con estado done/active/pending y `aria-current="step"`.
-- Honeypot a nivel de página (persiste entre pasos).
+- **Estado de la página:** `step` (0–4 | 'done'), `selectedPlan`, `selectedVersion`, `contractor`, `contractId`, `isProcessing`, `processError`.
+- **Catálogo:** `useQuery` con `BILLING_QUERY_KEYS.catalog` → `getBillingCatalog()`. TTL de 5 min.
+- **Pasos:**
+  - 0 → `PlanStep`: selección desde catálogo API, toggle de periodicidad.
+  - 1 → `ContractorStep`: formulario RHF+Zod diferenciado B2B/B2C.
+  - 2 → `TermsStep`: revisión + legal + Turnstile → llama `createBillingContract()`.
+  - 3 → `EmailVerificationStep`: OTP 6-dígitos → llama `verifyContractEmail()`.
+  - 4 → `PaymentStep`: orden + (en DEV) mock payment → `mockApprovePayment()` + `activateBillingContract()`.
+  - `done` → `SuccessStep`.
+- `StepIndicator` (privado): 5 steps, con checkmark SVG para completados y `aria-current="step"` para el activo.
+- Honeypot a nivel de página (`HoneypotField` + `useHoneypot`) filtrado en `handleTermsSubmit`.
+- Ancho de tarjeta mayor en paso 0 (grilla de planes) que en los demás pasos.
 
 **Steps:**
 | Componente | Archivo | Responsabilidad |
 |-----------|---------|-----------------|
-| `PlanStep` | `steps/PlanStep.tsx` | Selección de plan con `PlanCard mode='select'` |
-| `ContractorStep` | `steps/ContractorStep.tsx` | Formulario RHF+Zod con datos del contratante |
-| `TermsStep` | `steps/TermsStep.tsx` | Resumen + checkboxes legales + Turnstile + submit |
-| `SuccessStep` | `steps/SuccessStep.tsx` | Confirmación (presenter puro — recibe `planName` por props) |
+| `PlanStep` | `steps/PlanStep.tsx` | Grilla de planes desde API; toggle mensual/anual |
+| `ContractorStep` | `steps/ContractorStep.tsx` | Formulario RHF+Zod, B2B con companySlug auto-generado |
+| `TermsStep` | `steps/TermsStep.tsx` | Resumen + checkboxes legales + Turnstile + `createContract` |
+| `EmailVerificationStep` | `steps/EmailVerificationStep.tsx` | Input OTP 6-dígitos con auto-foco y paste |
+| `PaymentStep` | `steps/PaymentStep.tsx` | Mock DEV / aviso PROD + activación |
+| `SuccessStep` | `steps/SuccessStep.tsx` | Confirmación con companySlug (B2B) y link a `/login` |
 
-**Integración:** `submitContract` (api/contracts.ts — mock), `PLAN_NAMES` (components/plans.ts), `useHoneypot`, `HoneypotField`.
+**Integración:** `getBillingCatalog`, `createBillingContract`, `verifyContractEmail`, `mockApprovePayment`, `activateBillingContract` de `src/api/billing.ts`; `BILLING_QUERY_KEYS`; `useHoneypot`; `HoneypotField`; `toast` (sonner).
 
 ---
 
@@ -1252,7 +1327,7 @@ Crear `src/mocks/handlers.ts` con `http.get/post(...)` de MSW respetando el shap
 | 6 | `src/api/client.ts` | Sin interceptor de respuesta para 401 silencioso | Media |
 | 7 | `src/api/client.ts` | Sin timeout global en Axios | Baja |
 | 8 | `src/api/users.ts` | Valida `.success` en vez de `.data` (inconsistente) | Media |
-| 9 | `src/api/contracts.ts` | Mock que siempre retorna éxito — path de error no testeable | Baja |
+| 9 | `src/api/contracts.ts` | Módulo legado (mock) — `PlanId` migrado a `plans.ts`. Pendiente eliminar si no hay más dependientes | Baja |
 | 10 | `src/hooks/useRateLimit.ts` | `setInterval` no se limpia en unmount | Baja |
 | 11 | `src/styles/index.css` | Fuente `Inter` no importada explícitamente | Baja |
 | 12 | `src/main.tsx` | `QueryClient` sin configuración global (staleTime, retry) | Baja |

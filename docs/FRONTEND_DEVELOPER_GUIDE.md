@@ -1,8 +1,8 @@
 # Manual del Desarrollador Frontend — `keygo-ui`
 
 > * **Audiencia:** Desarrolladores frontend que implementan la interfaz de usuario de KeyGo usando React. 
-> * **Versión del backend:** KeyGo Server 1.0-SNAPSHOT (Fases 0-9b completadas, Fase 10 pendiente).
-> * **Fecha:** 2026-03-26
+> * **Versión del backend:** KeyGo Server 1.0-SNAPSHOT (Fases 0-9b + Billing completadas, Fase 10 pendiente).
+> * **Fecha:** 2026-03-29
 > * **Estado:** Documento vivo — se actualiza conforme avanza el backend.
 
 ---
@@ -23,8 +23,7 @@
 12. [Gestión segura de tokens](#12-gestión-segura-de-tokens)
 13. [Interceptores HTTP y manejo de errores](#13-interceptores-http-y-manejo-de-errores)
 14. [Inventario de endpoints — disponibles vs. pendientes](#14-inventario-de-endpoints--disponibles-vs-pendientes)
-15. [Guía de mocking para features pendientes](#15-guía-de-mocking-para-features-pendientes)
-16. [Checklist de seguridad](#16-checklist-de-seguridad)
+15. [Guía de mocking para features pendientes](#15-guía-de-mocking-para-features-pendientes)16. [Checklist de seguridad](#16-checklist-de-seguridad)
 17. [Comandos de verificación del backend](#17-comandos-de-verificación-del-backend)
 18. [Referencias](#18-referencias)
 
@@ -1943,7 +1942,377 @@ Reglas rápidas de interpretación en frontend:
 | `user_id` | UUID string | Filtrar memberships por ID de usuario |
 | `client_app_id` | UUID string | Filtrar memberships por ID de app |
 
-## 15. Guía de mocking para features pendientes
+---
+
+## 14.3. Billing — Catálogo y contratación (público + ADMIN_TENANT)
+
+> El flujo de contratación de billing es **autoservicio y público**; no requiere Bearer.  
+> La gestión de suscripción y facturas requiere `Authorization: Bearer <jwt>` con rol `ADMIN` o `ADMIN_TENANT`.
+
+### 14.3.1. Catálogo de planes (público)
+
+| Caso de uso | Método | Endpoint | Auth | `ResponseCode` | Estado |
+|---|---|---|---|---|---|
+| Listar catálogo de planes | GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/catalog` | Público | `APP_PLAN_CATALOG_RETRIEVED` | ✅ |
+| Ver detalle de un plan | GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/catalog/{planCode}` | Público | `APP_PLAN_RETRIEVED` | ✅ |
+| Crear plan (admin) | POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/plans` | Bearer ADMIN_TENANT | `APP_PLAN_CREATED` | ✅ |
+
+**Query param en listado:**
+
+| Param | Tipo | Descripción |
+|---|---|---|
+| `subscriberType` | `TENANT` \| `TENANT_USER` | Filtrar por tipo de suscriptor (opcional) |
+
+**Respuesta de `GET /billing/catalog`** (`ResponseCode: APP_PLAN_CATALOG_RETRIEVED`):
+
+```json
+{
+  "date": "2026-03-29T10:00:00Z",
+  "success": { "code": "APP_PLAN_CATALOG_RETRIEVED", "message": "App plan catalog retrieved successfully" },
+  "data": [
+    {
+      "id": "plan-uuid",
+      "clientAppId": "app-uuid",
+      "code": "STARTER",
+      "name": "Plan Starter",
+      "description": "Plan básico para equipos pequeños",
+      "subscriberType": "TENANT",
+      "status": "ACTIVE",
+      "isPublic": true,
+      "versions": [
+        {
+          "id": "version-uuid",
+          "version": "1.0",
+          "currency": "MXN",
+          "billingPeriod": "MONTHLY",
+          "basePrice": 299.00,
+          "setupFee": 0.00,
+          "trialDays": 14,
+          "effectiveFrom": "2026-04-01",
+          "effectiveTo": null,
+          "status": "ACTIVE"
+        }
+      ],
+      "entitlements": [
+        {
+          "id": "entitlement-uuid",
+          "metricCode": "MAX_USERS",
+          "metricType": "QUOTA",
+          "limitValue": 10,
+          "periodType": "NONE",
+          "enforcementMode": "HARD",
+          "isEnabled": true
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Body de `POST /billing/plans`:**
+
+```json
+{
+  "code": "STARTER",
+  "name": "Plan Starter",
+  "description": "Plan básico",
+  "subscriberType": "TENANT",
+  "isPublic": true,
+  "version": "1.0",
+  "billingPeriod": "MONTHLY",
+  "basePrice": 299.00,
+  "currency": "MXN",
+  "trialDays": 14,
+  "effectiveFrom": "2026-04-01",
+  "entitlements": [
+    {
+      "metricCode": "MAX_USERS",
+      "metricType": "QUOTA",
+      "limitValue": 10,
+      "periodType": "NONE",
+      "enforcementMode": "HARD",
+      "isEnabled": true
+    }
+  ]
+}
+```
+
+### 14.3.2. Flujo de contratación self-service (público)
+
+> `{slug}` y `{clientId}` en estos endpoints refieren al **PROVEEDOR** (quien ofrece los planes, p.ej. `keygo`/`keygo-platform`). El suscriptor es un nuevo entity creado durante la activación.
+
+| Caso de uso | Método | Endpoint | Auth | `ResponseCode` | Estado |
+|---|---|---|---|---|---|
+| Iniciar contrato | POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts` | Público | `APP_CONTRACT_CREATED` | ✅ |
+| Ver estado del contrato | GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}` | Público | `APP_CONTRACT_RETRIEVED` | ✅ |
+| **Verificar email** | **POST** | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/verify-email` | **Público** | `APP_CONTRACT_EMAIL_VERIFIED` | ✅ |
+| Simular pago aprobado (DEV) | POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/mock-approve-payment` | Público (DEV) | `APP_CONTRACT_PAYMENT_APPROVED` | ✅ |
+| Activar contrato | POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/activate` | Público | `APP_CONTRACT_ACTIVATED` | ✅ |
+
+> `mock-approve-payment` solo funciona cuando `keygo.billing.mock-payment-enabled=true`. En producción devuelve `404 RESOURCE_NOT_FOUND`.
+
+**Flujo UI paso a paso:**
+
+1. Usuario ve el catálogo → selecciona plan → obtiene `planVersionId`
+2. Llena formulario → `POST /billing/contracts` → servidor envía email con código de 6 dígitos
+3. Usuario ingresa código → `POST /billing/contracts/{contractId}/verify-email` → estado pasa a `PENDING_PAYMENT`
+4. Usuario paga → mock: `POST /billing/contracts/{contractId}/mock-approve-payment` → `READY_TO_ACTIVATE`
+5. `POST /billing/contracts/{contractId}/activate` → contrato `ACTIVATED`, suscripción creada
+
+**Body de `POST /billing/contracts` (B2B — `subscriberType=TENANT`):**
+
+```json
+{
+  "planVersionId": "uuid-de-la-version",
+  "billingPeriod": "MONTHLY",
+  "subscriberType": "TENANT",
+  "contractorEmail": "admin@acme.com",
+  "contractorFirstName": "Carlos",
+  "contractorLastName": "Martínez",
+  "companyName": "Acme Corp",
+  "companySlug": "acme-corp",
+  "companyTaxId": "RFC123456XYZ",
+  "companyAddress": "Av. Reforma 300, CDMX"
+}
+```
+
+**Body de `POST /billing/contracts` (B2C — `subscriberType=TENANT_USER`):**
+
+```json
+{
+  "planVersionId": "uuid-de-la-version",
+  "billingPeriod": "MONTHLY",
+  "subscriberType": "TENANT_USER",
+  "contractorEmail": "usuario@example.com",
+  "contractorFirstName": "Ana",
+  "contractorLastName": "López"
+}
+```
+
+**Body de `POST /billing/contracts/{contractId}/verify-email`:**
+
+```json
+{
+  "code": "123456"
+}
+```
+
+**Respuesta de `POST /billing/contracts/{contractId}/verify-email`** (`ResponseCode: APP_CONTRACT_EMAIL_VERIFIED`, HTTP 200):
+
+```json
+{
+  "date": "2026-03-29T10:05:00Z",
+  "success": { "code": "APP_CONTRACT_EMAIL_VERIFIED", "message": "Contract email verified successfully" },
+  "data": {
+    "id": "contract-uuid",
+    "status": "PENDING_PAYMENT",
+    "emailVerified": true,
+    "paymentVerified": false,
+    "expiresAt": "2026-03-30T10:00:00Z"
+  }
+}
+```
+
+> **Manejo de errores en verify-email:** `400 INVALID_INPUT` si el código es incorrecto o expiró. Mostrar mensaje "Código inválido o expirado" con opción de reiniciar el contrato.
+
+**Respuesta de `POST /billing/contracts`** (`ResponseCode: APP_CONTRACT_CREATED`, HTTP 201):
+
+```json
+{
+  "planVersionId": "uuid-de-la-version",
+  "billingPeriod": "MONTHLY",
+  "subscriberType": "TENANT",
+  "contractorEmail": "admin@acme.com",
+  "contractorFirstName": "Carlos",
+  "contractorLastName": "Martínez",
+  "companyName": "Acme Corp",
+  "companySlug": "acme-corp",
+  "companyTaxId": "RFC123456XYZ",
+  "companyAddress": "Av. Reforma 300, CDMX"
+}
+```
+
+**Body de `POST /billing/contracts` (B2C — `subscriberType=TENANT_USER`):**
+
+```json
+{
+  "planVersionId": "uuid-de-la-version",
+  "billingPeriod": "MONTHLY",
+  "subscriberType": "TENANT_USER",
+  "contractorEmail": "usuario@example.com",
+  "contractorFirstName": "Ana",
+  "contractorLastName": "López"
+}
+```
+
+**Respuesta de `POST /billing/contracts`** (`ResponseCode: APP_CONTRACT_CREATED`, HTTP 201):
+
+```json
+{
+  "date": "2026-03-29T10:00:00Z",
+  "success": { "code": "APP_CONTRACT_CREATED", "message": "App contract created successfully" },
+  "data": {
+    "id": "contract-uuid",
+    "clientAppId": "app-uuid",
+    "selectedPlanVersionId": "version-uuid",
+    "billingPeriod": "MONTHLY",
+    "subscriberType": "TENANT",
+    "status": "PENDING_EMAIL_VERIFICATION",
+    "contractorEmail": "admin@acme.com",
+    "contractorFirstName": "Carlos",
+    "contractorLastName": "Martínez",
+    "companyName": "Acme Corp",
+    "companySlug": "acme-corp",
+    "emailVerified": false,
+    "paymentVerified": false,
+    "expiresAt": "2026-03-30T10:00:00Z",
+    "createdAt": "2026-03-29T10:00:00Z"
+  }
+}
+```
+
+**Máquina de estados del contrato:**
+
+| Estado | Descripción |
+|---|---|
+| `PENDING_EMAIL_VERIFICATION` | Inicial — esperando verificación de email del contratante |
+| `PENDING_PAYMENT` | Email verificado — esperando confirmación de pago |
+| `READY_TO_ACTIVATE` | Pago verificado — listo para activar |
+| `ACTIVATED` | Activado — tenant/usuario + suscripción + factura creados |
+| `EXPIRED` | TTL superado (24h por defecto) |
+| `CANCELLED` | Cancelado manualmente |
+| `FAILED` | Error en la activación |
+
+### 14.3.3. Gestión de suscripción y facturas (Bearer ADMIN_TENANT)
+
+> Auth requerida: `Authorization: Bearer <jwt>` con rol `ADMIN` o `ADMIN_TENANT` (scope de tenant validado).
+>
+> ⚠️ **Semántica de path variables:** en estos endpoints, `{slug}` es el tenant del **SUSCRIPTOR** (ej. `acme-corp`), y `{clientId}` es el `client_id` global de la app del **PROVEEDOR** (ej. `keygo-platform`). El servidor resuelve el `client_id` de forma global (no filtra por el tenant del suscriptor).
+
+| Caso de uso | Método | Endpoint | Auth | `ResponseCode` | Estado |
+|---|---|---|---|---|---|
+| Ver suscripción activa | GET | `/api/v1/tenants/{subscriberSlug}/apps/{providerClientId}/billing/subscription` | Bearer ADMIN/ADMIN_TENANT | `APP_SUBSCRIPTION_RETRIEVED` | ✅ |
+| Cancelar al fin del período | POST | `/api/v1/tenants/{subscriberSlug}/apps/{providerClientId}/billing/subscription/cancel` | Bearer ADMIN/ADMIN_TENANT | `APP_SUBSCRIPTION_CANCELLED` | ✅ |
+| Listar facturas | GET | `/api/v1/tenants/{subscriberSlug}/apps/{providerClientId}/billing/invoices` | Bearer ADMIN/ADMIN_TENANT | `APP_INVOICE_LIST_RETRIEVED` | ✅ |
+
+**Ejemplo concreto:** empresa `acme-corp` que contrató el plan de `keygo-platform`:
+- `GET /api/v1/tenants/acme-corp/apps/keygo-platform/billing/subscription` con Bearer JWT del admin de `acme-corp`
+
+**Respuesta de `GET /billing/subscription`:**
+
+```json
+{
+  "date": "2026-03-29T10:00:00Z",
+  "success": { "code": "APP_SUBSCRIPTION_RETRIEVED", "message": "App subscription retrieved successfully" },
+  "data": {
+    "id": "subscription-uuid",
+    "clientAppId": "app-uuid",
+    "appPlanVersionId": "version-uuid",
+    "subscriberType": "TENANT",
+    "subscriberTenantId": "tenant-uuid",
+    "subscriberTenantUserId": null,
+    "status": "ACTIVE",
+    "currentPeriodStart": "2026-03-29T10:00:00Z",
+    "currentPeriodEnd": "2026-04-29T10:00:00Z",
+    "cancelAtPeriodEnd": false,
+    "nextBillingAt": "2026-04-29T10:00:00Z",
+    "autoRenew": true,
+    "createdAt": "2026-03-29T10:00:00Z"
+  }
+}
+```
+
+**Respuesta de `GET /billing/invoices`:**
+
+```json
+{
+  "date": "2026-03-29T10:00:00Z",
+  "success": { "code": "APP_INVOICE_LIST_RETRIEVED", "message": "App invoice list retrieved successfully" },
+  "data": [
+    {
+      "id": "invoice-uuid",
+      "subscriptionId": "subscription-uuid",
+      "invoiceNumber": "INV-A1B2C3D4",
+      "status": "ISSUED",
+      "issueDate": "2026-03-29",
+      "dueDate": "2026-04-28",
+      "periodStart": "2026-03-29",
+      "periodEnd": "2026-04-29",
+      "currency": "MXN",
+      "subtotal": 299.00,
+      "taxAmount": 0.00,
+      "total": 299.00,
+      "billingNameSnapshot": "Carlos Martínez",
+      "planVersionSnapshot": "1.0",
+      "pdfUrl": null,
+      "createdAt": "2026-03-29T10:00:00Z"
+    }
+  ]
+}
+```
+
+### 14.3.4. Errores frecuentes de billing
+
+| `failure.code` | HTTP | Causa |
+|---|---|---|
+| `APP_PLAN_NOT_FOUND` / `APP_PLAN_VERSION_NOT_FOUND` | 404 | Plan o versión no existe o no es pública |
+| `APP_CONTRACT_NOT_FOUND` | 404 | `contractId` inválido |
+| `APP_SUBSCRIPTION_NOT_FOUND` | 404 | Sin suscripción activa para ese app+tenant |
+| `APP_CONTRACT_NOT_READY` | 400 | Intento de activar con status != `READY_TO_ACTIVATE` |
+| `INVALID_INPUT` | 400 | `companySlug` duplicado, campos requeridos faltantes |
+| `RESOURCE_NOT_FOUND` | 404 | `tenantSlug` o `clientId` inválido |
+| `AUTHENTICATION_REQUIRED` | 401 | Bearer token faltante (endpoints protegidos) |
+| `INSUFFICIENT_PERMISSIONS` | 403 | Rol insuficiente |
+
+### 14.3.5. Guía de implementación del flujo de contratación en SPA
+
+```mermaid
+sequenceDiagram
+    actor U as Usuario
+    participant SPA as SPA
+    participant K as KeyGo Server
+
+    Note over SPA,K: Paso 1 — Mostrar catálogo
+    SPA->>K: GET /billing/catalog[?subscriberType=TENANT]
+    K-->>SPA: lista de planes con versiones y entitlements
+    SPA->>U: Renderiza cards de planes con precios
+
+    Note over U,SPA: Paso 2 — Usuario elige plan
+    U->>SPA: Selecciona plan + período → obtiene planVersionId
+
+    Note over U,SPA: Paso 3 — Formulario de contratante
+    U->>SPA: Llena nombre, email, empresa (B2B) o solo datos personales (B2C)
+    SPA->>K: POST /billing/contracts {planVersionId, subscriberType, ...}
+    K-->>SPA: {contractId, status: PENDING_EMAIL_VERIFICATION}
+
+    Note over U,SPA: Paso 4 — Email verification
+    U->>SPA: Ingresa código recibido por email
+    Note over SPA,K: (Llamar endpoint de verificación de email del contrato)
+
+    Note over SPA,K: Paso 5 — Pago (DEV: mock)
+    SPA->>K: POST /billing/contracts/{id}/mock-approve-payment
+    K-->>SPA: {status: READY_TO_ACTIVATE}
+
+    Note over SPA,K: Paso 6 — Activar
+    SPA->>K: POST /billing/contracts/{id}/activate
+    K-->>SPA: {status: ACTIVATED} → tenant + usuario + suscripción creados
+
+    Note over U,SPA: Éxito — redirigir a login o panel
+    SPA->>U: Mostrar confirmación + instrucciones de acceso
+```
+
+**Checklist de implementación en SPA:**
+
+| # | Control | Detalle |
+|---|---|---|
+| 1 | Mostrar catálogo filtrado por tipo | Usar `?subscriberType=TENANT` o `TENANT_USER` según el producto |
+| 2 | Guardar `planVersionId` (no `planId`) | El contrato referencia la versión, no el plan |
+| 3 | Guardar `contractId` en estado SPA | Necesario para consultar estado y activar |
+| 4 | Polling de estado del contrato | `GET /contracts/{id}` cada ~3s durante verificación de email y pago |
+| 5 | Validar `companySlug` único antes de enviar | Mostrar inline si el servidor retorna `INVALID_INPUT` por slug duplicado |
+| 6 | No exponer `mock-approve-payment` en producción | Controlar con variable de entorno `VITE_BILLING_MOCK_ENABLED` |
+| 7 | Manejar `status=EXPIRED` | Pedir al usuario que cree un nuevo contrato |
+| 8 | Manejar `status=FAILED` | Mostrar error + CTA de contacto a soporte |
 
 ### 15.1. Simular claims de rol en el JWT
 
@@ -2042,6 +2411,156 @@ export const handlers = [
         userAgent: 'Firefox/124', ip: '10.0.0.5', current: false },
     ],
   })),
+
+  // ── Billing — handlers para endpoints ya implementados ───────────────────
+
+  // Catálogo de planes (público)
+  http.get(`${B}/tenants/:slug/apps/:clientId/billing/catalog`, () => HttpResponse.json({
+    date: new Date().toISOString(),
+    success: { code: 'APP_PLAN_CATALOG_RETRIEVED', message: 'App plan catalog retrieved successfully' },
+    data: [
+      {
+        id: 'plan-uuid-1',
+        clientAppId: 'app-uuid',
+        code: 'STARTER',
+        name: 'Plan Starter',
+        description: 'Plan básico para equipos pequeños',
+        subscriberType: 'TENANT',
+        status: 'ACTIVE',
+        isPublic: true,
+        versions: [
+          {
+            id: 'version-uuid-1',
+            version: '1.0',
+            currency: 'MXN',
+            billingPeriod: 'MONTHLY',
+            basePrice: 299.00,
+            setupFee: 0.00,
+            trialDays: 14,
+            effectiveFrom: '2026-04-01',
+            effectiveTo: null,
+            status: 'ACTIVE',
+          },
+        ],
+        entitlements: [
+          { id: 'e1', metricCode: 'MAX_USERS', metricType: 'QUOTA', limitValue: 10,
+            periodType: 'NONE', enforcementMode: 'HARD', isEnabled: true },
+        ],
+      },
+    ],
+  })),
+
+  // Detalle de plan (público)
+  http.get(`${B}/tenants/:slug/apps/:clientId/billing/catalog/:planCode`, ({ params }) =>
+    HttpResponse.json({
+      date: new Date().toISOString(),
+      success: { code: 'APP_PLAN_RETRIEVED', message: 'App plan retrieved successfully' },
+      data: {
+        id: 'plan-uuid-1', clientAppId: 'app-uuid', code: params.planCode,
+        name: 'Plan Starter', subscriberType: 'TENANT', status: 'ACTIVE', isPublic: true,
+        versions: [{ id: 'version-uuid-1', version: '1.0', currency: 'MXN',
+          billingPeriod: 'MONTHLY', basePrice: 299.00, setupFee: 0.00,
+          trialDays: 14, effectiveFrom: '2026-04-01', effectiveTo: null, status: 'ACTIVE' }],
+        entitlements: [],
+      },
+    })
+  ),
+
+  // Iniciar contrato (público)
+  http.post(`${B}/tenants/:slug/apps/:clientId/billing/contracts`, () =>
+    HttpResponse.json({
+      date: new Date().toISOString(),
+      success: { code: 'APP_CONTRACT_CREATED', message: 'App contract created successfully' },
+      data: {
+        id: 'contract-uuid-mock',
+        clientAppId: 'app-uuid',
+        selectedPlanVersionId: 'version-uuid-1',
+        billingPeriod: 'MONTHLY',
+        subscriberType: 'TENANT',
+        status: 'PENDING_EMAIL_VERIFICATION',
+        contractorEmail: 'admin@acme.com',
+        contractorFirstName: 'Carlos',
+        contractorLastName: 'Martínez',
+        companyName: 'Acme Corp',
+        companySlug: 'acme-corp',
+        emailVerified: false,
+        paymentVerified: false,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date().toISOString(),
+      },
+    }, { status: 201 })
+  ),
+
+  // Mock approve payment [DEV] (público)
+  http.post(`${B}/tenants/:slug/apps/:clientId/billing/contracts/:contractId/mock-approve-payment`,
+    ({ params }) => HttpResponse.json({
+      date: new Date().toISOString(),
+      success: { code: 'APP_CONTRACT_PAYMENT_APPROVED', message: 'Payment approved (mock)' },
+      data: { id: params.contractId, status: 'READY_TO_ACTIVATE',
+        emailVerified: true, paymentVerified: true },
+    })
+  ),
+
+  // Activar contrato (público)
+  http.post(`${B}/tenants/:slug/apps/:clientId/billing/contracts/:contractId/activate`,
+    ({ params }) => HttpResponse.json({
+      date: new Date().toISOString(),
+      success: { code: 'APP_CONTRACT_ACTIVATED', message: 'Contract activated successfully' },
+      data: { id: params.contractId, status: 'ACTIVATED',
+        emailVerified: true, paymentVerified: true },
+    })
+  ),
+
+  // Ver suscripción activa (Bearer)
+  http.get(`${B}/tenants/:slug/apps/:clientId/billing/subscription`, () =>
+    HttpResponse.json({
+      date: new Date().toISOString(),
+      success: { code: 'APP_SUBSCRIPTION_RETRIEVED', message: 'App subscription retrieved successfully' },
+      data: {
+        id: 'subscription-uuid-mock',
+        clientAppId: 'app-uuid',
+        appPlanVersionId: 'version-uuid-1',
+        subscriberType: 'TENANT',
+        subscriberTenantId: 'tenant-uuid-mock',
+        subscriberTenantUserId: null,
+        status: 'ACTIVE',
+        currentPeriodStart: new Date().toISOString(),
+        currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        cancelAtPeriodEnd: false,
+        nextBillingAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        autoRenew: true,
+        createdAt: new Date().toISOString(),
+      },
+    })
+  ),
+
+  // Listar facturas (Bearer)
+  http.get(`${B}/tenants/:slug/apps/:clientId/billing/invoices`, () =>
+    HttpResponse.json({
+      date: new Date().toISOString(),
+      success: { code: 'APP_INVOICE_LIST_RETRIEVED', message: 'App invoice list retrieved successfully' },
+      data: [
+        {
+          id: 'invoice-uuid-1',
+          subscriptionId: 'subscription-uuid-mock',
+          invoiceNumber: 'INV-A1B2C3D4',
+          status: 'ISSUED',
+          issueDate: '2026-03-29',
+          dueDate: '2026-04-28',
+          periodStart: '2026-03-29',
+          periodEnd: '2026-04-29',
+          currency: 'MXN',
+          subtotal: 299.00,
+          taxAmount: 0.00,
+          total: 299.00,
+          billingNameSnapshot: 'Carlos Martínez',
+          planVersionSnapshot: '1.0',
+          pdfUrl: null,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+    })
+  ),
 ];
 ```
 
@@ -2146,6 +2665,7 @@ cd keygo-ui && pnpm install && pnpm dev   # http://localhost:5173
 | Documento | Ruta | Relevancia |
 |---|---|---|
 | Flujo de Autenticación | `docs/api/AUTH_FLOW.md` | Flujo OAuth2/PKCE completo con diagramas |
+| Flujo de Billing | `docs/api/BILLING_FLOW.md` | Flujo de contratación, catálogo, activación, suscripción |
 | Superficie API | `docs/design/API_SURFACE.md` | Contratos de todos los endpoints por plano |
 | Códigos de Respuesta | `docs/api/RESPONSE_CODES.md` | Filosofía y códigos del envelope `BaseResponse` |
 | Roadmap | `ROADMAP.md` | Propuestas T-NNN y F-NNN — features pendientes |
@@ -2156,6 +2676,6 @@ cd keygo-ui && pnpm install && pnpm dev   # http://localhost:5173
 
 ---
 
-*Manual generado por AI Agent — KeyGo Server 2026-03-25*
+*Manual actualizado por AI Agent — KeyGo Server 2026-03-29*
 *Actualizar cuando se implementen endpoints marcados ⏳ o cuando cambien la estructura de roles/claims.*
 

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "KeyGo Server API",
-    "description": "Enterprise authentication service — open source alternative for centralized identity, user and access management.\n\n⚠️ Bootstrap security is disabled — all endpoints are public.",
+    "description": "Enterprise authentication service — open source alternative for centralized identity, user and access management.\n\n🔒 Protected endpoints require `Authorization: Bearer \u003Cjwt\u003E`.",
     "contact": {
       "name": "KeyGo Server",
       "url": "https://github.com/cmartinezs/keygo-server"
@@ -29,12 +29,8 @@
       "description": "Application-scoped roles — requires Bearer JWT"
     },
     {
-      "name": "Client Apps",
-      "description": "OAuth2 client application management per tenant — requires Bearer JWT"
-    },
-    {
-      "name": "OAuth2 / Authorization",
-      "description": "OAuth2 Authorization Code + PKCE flow, token exchange, refresh token rotation and client_credentials grant — all public endpoints (no X-KEYGO-ADMIN)"
+      "name": "Billing — Subscription",
+      "description": "Subscription & invoice management — requires Bearer JWT with ADMIN_TENANT role"
     },
     {
       "name": "Registration",
@@ -45,16 +41,32 @@
       "description": "Public platform endpoints — no authentication required"
     },
     {
-      "name": "Tenants",
-      "description": "Tenant lifecycle management — requires Bearer JWT"
-    },
-    {
       "name": "Admin",
       "description": "Administrative endpoints — requires ADMIN Bearer JWT"
     },
     {
       "name": "Memberships",
       "description": "User access to applications — requires Bearer JWT"
+    },
+    {
+      "name": "Billing — Contracts",
+      "description": "Self-service contracting flow — no auth required (email & payment verification built into the flow)"
+    },
+    {
+      "name": "Client Apps",
+      "description": "OAuth2 client application management per tenant — requires Bearer JWT"
+    },
+    {
+      "name": "Billing — Catalog",
+      "description": "App plan catalog — public read, admin write"
+    },
+    {
+      "name": "OAuth2 / Authorization",
+      "description": "OAuth2 Authorization Code + PKCE flow, token exchange, refresh token rotation and client_credentials grant — all public endpoints (no X-KEYGO-ADMIN)"
+    },
+    {
+      "name": "Tenants",
+      "description": "Tenant lifecycle management — requires Bearer JWT"
     },
     {
       "name": "Account Profile",
@@ -1654,6 +1666,448 @@
         }
       }
     },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/subscription/cancel": {
+      "post": {
+        "tags": [
+          "Billing — Subscription"
+        ],
+        "summary": "Cancel subscription at period end",
+        "description": "Marks the active subscription for cancellation at the end of the current billing period. Requires ADMIN_TENANT role.",
+        "operationId": "cancelSubscription",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug (suscriptor)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id (proveedor)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancellation scheduled",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No active subscription found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/plans": {
+      "post": {
+        "tags": [
+          "Billing — Catalog"
+        ],
+        "summary": "Create a billing plan",
+        "description": "Creates a new plan with its initial version and entitlements. Requires ADMIN_TENANT role.",
+        "operationId": "createPlan",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Plan created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Duplicate plan code or invalid input",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant or client app not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Initiate a subscription contract",
+        "description": "Starts the contracting flow: creates a contract in PENDING_EMAIL_VERIFICATION status. The subscriber must verify their email before payment is collected.",
+        "operationId": "createContract",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppContractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Contract initiated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid plan version or duplicate company slug",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant or client app not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts/{contractId}/verify-email": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Verify contract email",
+        "description": "Validates the 6-digit code sent to the contractor's email. Advances contract status from PENDING_EMAIL_VERIFICATION → PENDING_PAYMENT.",
+        "operationId": "verifyEmail_1",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyContractEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified — contract now in PENDING_PAYMENT",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired verification code",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts/{contractId}/mock-approve-payment": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "[DEV] Mock approve payment",
+        "description": "Simulates a successful payment for a contract in PENDING_PAYMENT status. Only available when `keygo.billing.mock-payment-enabled=true`.",
+        "operationId": "mockApprovePayment",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment approved (mock)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found or mock disabled",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts/{contractId}/activate": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Activate contract",
+        "description": "Activates a READY_TO_ACTIVATE contract: creates the tenant/user, subscription and first invoice.",
+        "operationId": "activateContract",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract activated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contract not in READY_TO_ACTIVATE status",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenants/{tenantSlug}/apps/{clientAppId}/roles": {
       "get": {
         "tags": [
@@ -2165,6 +2619,328 @@
           },
           "404": {
             "description": "Tenant or client app not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/subscription": {
+      "get": {
+        "tags": [
+          "Billing — Subscription"
+        ],
+        "summary": "Get active subscription",
+        "description": "Returns the current active subscription for the client app. Requires ADMIN_TENANT role.",
+        "operationId": "getSubscription",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug (suscriptor)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id (proveedor)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscription retrieved",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No active subscription found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/invoices": {
+      "get": {
+        "tags": [
+          "Billing — Subscription"
+        ],
+        "summary": "List invoices",
+        "description": "Returns all invoices associated with the client app subscription. Requires ADMIN_TENANT role.",
+        "operationId": "listInvoices",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug (suscriptor)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id (proveedor)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoices retrieved",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant or client app not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts/{contractId}": {
+      "get": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Get contract status",
+        "description": "Returns the current status and details of a subscription contract.",
+        "operationId": "getContract",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract retrieved",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/catalog": {
+      "get": {
+        "tags": [
+          "Billing — Catalog"
+        ],
+        "summary": "Get public plan catalog",
+        "description": "Returns all active public plans for a client app. Optional filter by subscriberType (TENANT | TENANT_USER). No auth required.",
+        "operationId": "getCatalog",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "subscriberType",
+            "in": "query",
+            "description": "Filter by subscriber type (TENANT or TENANT_USER)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "TENANT",
+                "TENANT_USER"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Catalog retrieved",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant or client app not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/catalog/{planCode}": {
+      "get": {
+        "tags": [
+          "Billing — Catalog"
+        ],
+        "summary": "Get public plan detail",
+        "description": "Returns a single public plan with its active version and entitlements. No auth required.",
+        "operationId": "getPlanPublic",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientId",
+            "in": "path",
+            "description": "Client app client_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "planCode",
+            "in": "path",
+            "description": "Plan code (e.g. STARTER)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan retrieved",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Plan, tenant or client app not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3057,6 +3833,151 @@
             "$ref": "#/components/schemas/MessageResponse"
           },
           "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateAppPlanRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "subscriberType": {
+            "type": "string",
+            "enum": [
+              "TENANT",
+              "TENANT_USER"
+            ]
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "version": {
+            "type": "string"
+          },
+          "billingPeriod": {
+            "type": "string",
+            "enum": [
+              "MONTHLY",
+              "YEARLY",
+              "ONE_TIME"
+            ]
+          },
+          "basePrice": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "trialDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "effectiveFrom": {
+            "type": "string",
+            "format": "date"
+          },
+          "entitlements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntitlementRequest"
+            }
+          }
+        }
+      },
+      "EntitlementRequest": {
+        "type": "object",
+        "properties": {
+          "metricCode": {
+            "type": "string"
+          },
+          "metricType": {
+            "type": "string",
+            "enum": [
+              "QUOTA",
+              "BOOLEAN",
+              "RATE"
+            ]
+          },
+          "limitValue": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "periodType": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "DAY",
+              "MONTH"
+            ]
+          },
+          "enforcementMode": {
+            "type": "string",
+            "enum": [
+              "HARD",
+              "SOFT"
+            ]
+          },
+          "isEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateAppContractRequest": {
+        "type": "object",
+        "properties": {
+          "planVersionId": {
+            "type": "string"
+          },
+          "billingPeriod": {
+            "type": "string",
+            "enum": [
+              "MONTHLY",
+              "YEARLY",
+              "ONE_TIME"
+            ]
+          },
+          "subscriberType": {
+            "type": "string",
+            "enum": [
+              "TENANT",
+              "TENANT_USER"
+            ]
+          },
+          "contractorEmail": {
+            "type": "string"
+          },
+          "contractorFirstName": {
+            "type": "string"
+          },
+          "contractorLastName": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "companySlug": {
+            "type": "string"
+          },
+          "companyTaxId": {
+            "type": "string"
+          },
+          "companyAddress": {
+            "type": "string"
+          }
+        }
+      },
+      "VerifyContractEmailRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
             "type": "string"
           }
         }

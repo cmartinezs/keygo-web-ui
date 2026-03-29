@@ -25,11 +25,11 @@ Actualizado automáticamente por el agente al final de cada implementación.
 
 > Ítems que están siendo implementados o en revisión activa.
 
-### [EN DESARROLLO] Página de nuevo contrato (`/contratar`) — F-NEW-001
-- **Archivos:** `src/pages/register/NewContractPage.tsx`, `src/api/contracts.ts`
-- **Estado:** UI implementada (3 pasos: plan → datos → condiciones). Mock simulado activo.
-- **Pendiente:** Conectar al endpoint real `POST /api/v1/public/contracts` cuando esté disponible en backend. Ver sección [Endpoints pendientes](#-endpoints-pendientes-de-backend).
-- **Fecha inicio:** 2026-03-26
+### [COMPLETADO] Página de nuevo contrato (`/subscribe`) — F-NEW-001
+- **Archivos:** `src/pages/register/NewContractPage.tsx`, `src/api/billing.ts`, `src/types/billing.ts`, `src/pages/register/steps/` (PlanStep, ContractorStep, TermsStep, EmailVerificationStep, PaymentStep, SuccessStep)
+- **Estado:** ✅ Implementado. Flujo completo de 5 pasos conectado al backend de billing (catálogo, createContract, verifyEmail, mockApprovePayment, activateContract). Soporta B2B (empresa) y B2C (personal).
+- **Deuda pendiente:** Integración PSP real para el paso de pago (actualmente solo mock DEV). Ver [Pendientes de backend](#-endpoints-pendientes-de-backend).
+- **Fecha completado:** 2026-07-08
 
 ---
 
@@ -295,7 +295,8 @@ Actualizado automáticamente por el agente al final de cada implementación.
 
 | # | Feature | Método | Endpoint | Ticket | Bloqueante para |
 |---|---|---|---|---|---|
-| 1 | Endpoint público de auto-contratación | POST | `/api/v1/public/contracts` | F-NEW-001 | `NewContractPage` |
+| 1 | ~~Endpoint público de auto-contratación~~ | ~~POST~~ | ~~`/api/v1/public/contracts`~~ | F-NEW-001 | ✅ Implementado — billing API en `src/api/billing.ts` |
+| 1b | Integración PSP real (pago) | POST | `/billing/contracts/{id}/pay` (pendiente definir) | — | `PaymentStep` — actualmente usa mock DEV |
 | 2 | Listar tenants | GET | `/api/v1/tenants` | F-033 | `admin/TenantsPage` |
 | 3 | Reactivar tenant | PUT | `/api/v1/tenants/{slug}/activate` | — | `admin/TenantDetailPage` |
 | 4 | Auditoría global de plataforma | GET | `/api/v1/platform/audit` | F-034 | `admin/DashboardPage` |

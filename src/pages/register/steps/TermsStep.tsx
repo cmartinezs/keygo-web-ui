@@ -1,18 +1,19 @@
 import { useState } from 'react'
-import type { PlanId } from '@/api/contracts'
+import type { AppPlan, AppPlanVersion } from '@/types/billing'
 import type { ContractorFormValues } from './ContractorStep'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
 
 const TURNSTILE_ENABLED = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY)
 
-const PLAN_LABELS: Record<PlanId, string> = {
-  starter: 'Starter — Gratis',
-  business: 'Business — 49 € / mes',
-  'on-premise': 'On-Premise — A medida',
+const PERIOD_LABELS: Record<string, string> = {
+  MONTHLY: '/mes',
+  ANNUAL: '/año',
+  ONE_TIME: ' pago único',
 }
 
 interface TermsStepProps {
-  plan: PlanId
+  plan: AppPlan
+  version: AppPlanVersion
   contractor: ContractorFormValues
   onBack: () => void
   onSubmit: () => void
@@ -20,57 +21,64 @@ interface TermsStepProps {
   error: string | null
 }
 
-export function TermsStep({ plan, contractor, onBack, onSubmit, isSubmitting, error }: TermsStepProps) {
+export function TermsStep({ plan, version, contractor, onBack, onSubmit, isSubmitting, error }: TermsStepProps) {
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [acceptPrivacy, setAcceptPrivacy] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
 
   const canSubmit = acceptTerms && acceptPrivacy && !isSubmitting && (!TURNSTILE_ENABLED || !!captchaToken)
 
+  const priceLabel = version.basePrice === 0
+    ? 'Gratis'
+    : `${new Intl.NumberFormat('es-MX', { style: 'currency', currency: version.currency, minimumFractionDigits: 0 }).format(version.basePrice)}${PERIOD_LABELS[version.billingPeriod] ?? ''}`
+
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-slate-900">Resumen y condiciones</h2>
-        <p className="mt-1 text-slate-500 text-sm">Revisa tu solicitud y acepta las condiciones para finalizar.</p>
+        <p className="mt-1 text-slate-500 text-sm">Revisa tu solicitud y acepta las condiciones para continuar.</p>
       </div>
 
       {/* Summary */}
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">Resumen de tu solicitud</h3>
-        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-sm">
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Resumen de la contratación</h3>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <div>
-            <dt className="text-slate-500">Plan seleccionado</dt>
-            <dd className="font-semibold text-indigo-700">{PLAN_LABELS[plan]}</dd>
+            <dt className="text-slate-500">Plan</dt>
+            <dd className="font-semibold text-indigo-700">{plan.name}</dd>
           </div>
           <div>
-            <dt className="text-slate-500">Organización</dt>
-            <dd className="font-medium text-slate-800">{contractor.organizationName}</dd>
+            <dt className="text-slate-500">Precio</dt>
+            <dd className="font-semibold text-slate-800">{priceLabel}</dd>
           </div>
-          <div>
-            <dt className="text-slate-500">Responsable</dt>
-            <dd className="font-medium text-slate-800">{contractor.firstName} {contractor.lastName}</dd>
-          </div>
-          <div>
-            <dt className="text-slate-500">Correo de contacto</dt>
-            <dd className="font-medium text-slate-800">{contractor.email}</dd>
-          </div>
-          {contractor.phone && (
-            <div>
-              <dt className="text-slate-500">Teléfono</dt>
-              <dd className="font-medium text-slate-800">{contractor.phone}</dd>
+          {version.trialDays > 0 && (
+            <div className="sm:col-span-2">
+              <dt className="text-slate-500">Período de prueba</dt>
+              <dd className="font-medium text-emerald-700">{version.trialDays} días gratis</dd>
             </div>
           )}
-          <div>
-            <dt className="text-slate-500">País</dt>
-            <dd className="font-medium text-slate-800">{contractor.country}</dd>
-          </div>
-        </dl>
 
-        {plan === 'on-premise' && (
-          <p className="mt-4 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-            Para el plan On-Premise, nuestro equipo se pondrá en contacto contigo en un plazo de 24-48 h hábiles para configurar los detalles del contrato.
-          </p>
-        )}
+          <div className="sm:col-span-2 border-t border-slate-200 pt-3 mt-1">
+            <dt className="text-slate-500 mb-1">Responsable del contrato</dt>
+            <dd className="font-medium text-slate-800">{contractor.firstName} {contractor.lastName}</dd>
+            <dd className="text-slate-500">{contractor.email}</dd>
+          </div>
+
+          {plan.subscriberType === 'TENANT' && contractor.companyName && (
+            <>
+              <div>
+                <dt className="text-slate-500">Empresa</dt>
+                <dd className="font-medium text-slate-800">{contractor.companyName}</dd>
+              </div>
+              {contractor.companySlug && (
+                <div>
+                  <dt className="text-slate-500">Identificador</dt>
+                  <dd className="font-medium text-slate-500 font-mono text-xs">{contractor.companySlug}</dd>
+                </div>
+              )}
+            </>
+          )}
+        </dl>
       </div>
 
       {/* Terms checkboxes */}
@@ -105,7 +113,8 @@ export function TermsStep({ plan, contractor, onBack, onSubmit, isSubmitting, er
             <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-medium">
               Política de Privacidad
             </a>
-            , incluyendo el tratamiento de mis datos personales. <span aria-hidden="true" className="text-red-500">*</span>
+            , incluyendo el tratamiento de mis datos personales.{' '}
+            <span aria-hidden="true" className="text-red-500">*</span>
           </span>
         </label>
       </fieldset>
@@ -120,15 +129,15 @@ export function TermsStep({ plan, contractor, onBack, onSubmit, isSubmitting, er
         </div>
       )}
 
-      {/* Cloudflare Turnstile CAPTCHA (only when VITE_TURNSTILE_SITE_KEY is set) */}
+      {/* Cloudflare Turnstile CAPTCHA */}
       <TurnstileWidget onTokenChange={setCaptchaToken} />
 
-      <div className="flex flex-col-reverse sm:flex-row justify-between gap-3 pt-2">
+      <div className="flex gap-3 pt-2">
         <button
           type="button"
           onClick={onBack}
           disabled={isSubmitting}
-          className="border border-slate-300 hover:border-slate-400 disabled:opacity-50 text-slate-600 font-medium px-6 py-2.5 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="flex-1 sm:flex-none border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
           ← Atrás
         </button>
@@ -136,7 +145,7 @@ export function TermsStep({ plan, contractor, onBack, onSubmit, isSubmitting, er
           type="button"
           onClick={onSubmit}
           disabled={!canSubmit}
-          className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-2.5 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"
+          className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>
@@ -144,10 +153,10 @@ export function TermsStep({ plan, contractor, onBack, onSubmit, isSubmitting, er
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
-              Enviando solicitud…
+              Procesando…
             </>
           ) : (
-            'Enviar solicitud'
+            'Confirmar y continuar →'
           )}
         </button>
       </div>

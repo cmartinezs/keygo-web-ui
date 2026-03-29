@@ -1,4 +1,4 @@
-import type { PlanId } from '@/api/contracts'
+export type PlanId = 'starter' | 'business' | 'on-premise'
 
 export interface PlanInfo {
   id: PlanId

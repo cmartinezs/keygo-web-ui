@@ -1,43 +1,52 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { submitContract } from '@/api/contracts' // ⏳ pendiente
-import type { PlanId } from '@/api/contracts'
-import { PLAN_NAMES } from '@/components/plans'
+import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import {
+  getBillingCatalog,
+  createBillingContract,
+  verifyContractEmail,
+  mockApprovePayment,
+  activateBillingContract,
+  BILLING_QUERY_KEYS,
+} from '@/api/billing'
+import { TENANT, CLIENT_ID } from '@/api/client'
+import type { AppPlan, AppPlanVersion } from '@/types/billing'
 import { PlanStep } from './steps/PlanStep'
 import { ContractorStep } from './steps/ContractorStep'
 import type { ContractorFormValues } from './steps/ContractorStep'
 import { TermsStep } from './steps/TermsStep'
+import { EmailVerificationStep } from './steps/EmailVerificationStep'
+import { PaymentStep } from './steps/PaymentStep'
 import { SuccessStep } from './steps/SuccessStep'
-import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
+import { useHoneypot } from '@/hooks/useHoneypot'
 
-// ── Step config ──────────────────────────────────────────────────────────────
+// ── Step definitions ──────────────────────────────────────────────────────────
 
 const STEPS = [
   { label: 'Plan' },
   { label: 'Tus datos' },
-  { label: 'Condiciones' },
+  { label: 'Revisión' },
+  { label: 'Email' },
+  { label: 'Pago' },
 ] as const
 
-const VALID_PLANS: PlanId[] = ['starter', 'business', 'on-premise']
-
-function parsePlanParam(value: string | null): PlanId | null {
-  if (value && (VALID_PLANS as string[]).includes(value)) return value as PlanId
-  return null
-}
+type StepIndex = 0 | 1 | 2 | 3 | 4
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 interface StepIndicatorProps {
-  current: number
+  current: StepIndex
+  done: boolean
 }
 
-function StepIndicator({ current }: StepIndicatorProps) {
+function StepIndicator({ current, done }: StepIndicatorProps) {
   return (
     <nav aria-label="Pasos del registro" className="flex items-center justify-center gap-0 mb-8">
       {STEPS.map((step, idx) => {
-        const isDone = idx < current
-        const isActive = idx === current
+        const isDone = done || idx < current
+        const isActive = !done && idx === current
         return (
           <div key={step.label} className="flex items-center">
             <div className="flex flex-col items-center gap-1">
@@ -64,7 +73,7 @@ function StepIndicator({ current }: StepIndicatorProps) {
               </span>
             </div>
             {idx < STEPS.length - 1 && (
-              <div className={`w-16 sm:w-24 h-0.5 mx-1 mb-4 ${isDone ? 'bg-emerald-400' : 'bg-slate-200'}`} aria-hidden="true" />
+              <div className={`w-10 sm:w-16 h-0.5 mx-1 mb-4 ${isDone ? 'bg-emerald-400' : 'bg-slate-200'}`} aria-hidden="true" />
             )}
           </div>
         )
@@ -76,50 +85,126 @@ function StepIndicator({ current }: StepIndicatorProps) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function NewContractPage() {
-  const [searchParams] = useSearchParams()
-  const preselectedPlan = parsePlanParam(searchParams.get('plan'))
-
-  const [step, setStep] = useState(preselectedPlan ? 1 : 0)
-  const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(preselectedPlan)
-  const [contractor, setContractor] = useState<ContractorFormValues | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [step, setStep] = useState<StepIndex>(0)
   const [done, setDone] = useState(false)
+
+  const [selectedPlan, setSelectedPlan] = useState<AppPlan | null>(null)
+  const [selectedVersion, setSelectedVersion] = useState<AppPlanVersion | null>(null)
+  const [contractor, setContractor] = useState<ContractorFormValues | null>(null)
+
+  // post-createContract
+  const [contractId, setContractId] = useState<string | null>(null)
+
+  // loading/error state for post-form API calls
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processError, setProcessError] = useState<string | null>(null)
 
   const honeypot = useHoneypot()
 
-  async function handleSubmit() {
-    if (!selectedPlan || !contractor) return
+  // ── Catalog query ──────────────────────────────────────────────────────────
+  const {
+    data: plans = [],
+    isLoading: catalogLoading,
+    isError: catalogError,
+  } = useQuery({
+    queryKey: BILLING_QUERY_KEYS.catalog(TENANT, CLIENT_ID),
+    queryFn: () => getBillingCatalog(TENANT, CLIENT_ID),
+    staleTime: 5 * 60 * 1000, // 5 min
+  })
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+
+  function handlePlanSelect(plan: AppPlan, version: AppPlanVersion) {
+    setSelectedPlan(plan)
+    setSelectedVersion(version)
+  }
+
+  function handleContractorNext(data: ContractorFormValues) {
+    setContractor(data)
+    setStep(2)
+  }
+
+  async function handleTermsSubmit() {
+    if (!selectedPlan || !selectedVersion || !contractor) return
+
     const { blocked } = honeypot.validate()
-    if (blocked) return // silently discard automated submissions
-    setIsSubmitting(true)
-    setSubmitError(null)
+    if (blocked) return // silently discard bot submissions
+
+    setIsProcessing(true)
+    setProcessError(null)
+
     try {
-      await submitContract({
-        plan: selectedPlan,
-        organization_name: contractor.organizationName,
-        owner_first_name: contractor.firstName,
-        owner_last_name: contractor.lastName,
-        owner_email: contractor.email,
-        phone: contractor.phone ?? undefined,
-        country: contractor.country,
+      const contract = await createBillingContract({
+        planVersionId: selectedVersion.id,
+        billingPeriod: selectedVersion.billingPeriod,
+        subscriberType: selectedPlan.subscriberType,
+        contractorEmail: contractor.email,
+        contractorFirstName: contractor.firstName,
+        contractorLastName: contractor.lastName,
+        ...(selectedPlan.subscriberType === 'TENANT' && {
+          companyName: contractor.companyName,
+          companySlug: contractor.companySlug,
+          companyTaxId: contractor.companyTaxId || undefined,
+          companyAddress: contractor.companyAddress || undefined,
+        }),
       })
-      setDone(true)
-    } catch {
-      setSubmitError('Ha ocurrido un error al enviar tu solicitud. Por favor, inténtalo de nuevo.')
+      setContractId(contract.id)
+      setStep(3)
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err)
+      if (msg.includes('slug') || msg.includes('INVALID_INPUT')) {
+        setProcessError('El identificador de empresa ya está en uso. Por favor, elige otro.')
+      } else {
+        setProcessError('No se pudo iniciar el contrato. Por favor, inténtalo de nuevo.')
+      }
     } finally {
-      setIsSubmitting(false)
+      setIsProcessing(false)
     }
   }
 
+  async function handleEmailVerification(code: string) {
+    if (!contractId) return
+    setIsProcessing(true)
+    setProcessError(null)
+    try {
+      await verifyContractEmail(contractId, { code })
+      setStep(4)
+    } catch {
+      setProcessError('El código es incorrecto o ha expirado. Revisa tu correo e inténtalo de nuevo.')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  async function handleMockApprove() {
+    if (!contractId) return
+    setIsProcessing(true)
+    setProcessError(null)
+    try {
+      await mockApprovePayment(contractId)
+      // Auto-activate contract after payment approval
+      await activateBillingContract(contractId)
+      setDone(true)
+      toast.success('¡Cuenta activada exitosamente!')
+    } catch {
+      setProcessError('No se pudo completar el pago o la activación. Por favor, inténtalo de nuevo.')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  // ── Narrow card width on plan step ────────────────────────────────────────
+  const isWide = step === 0 && !done
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
-      {/* Honeypot trap — bots fill this; real users never see it */}
+      {/* Honeypot — invisible to real users */}
       <HoneypotField name="website" {...honeypot.fieldProps} />
 
       {/* Top bar */}
       <header className="py-4 px-6 border-b border-white/60 bg-white/70 backdrop-blur-sm">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg" aria-label="Volver al inicio">
             <svg className="w-6 h-6 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
@@ -127,53 +212,75 @@ export default function NewContractPage() {
             <span className="font-bold text-slate-900">KeyGo</span>
           </Link>
           <Link to="/login" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">
-            ¿Ya tienes cuenta? <span className="font-semibold text-indigo-600">Iniciar sesión</span>
+            ¿Ya tienes cuenta?{' '}
+            <span className="font-semibold text-indigo-600">Iniciar sesión</span>
           </Link>
         </div>
       </header>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-start py-10 px-4">
-        {/* Pending feature notice — contained width */}
-        <div className="w-full max-w-3xl mb-6">
-          <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5" role="status">
-            <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 002 0V6zm-1 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-            </svg>
-            <span><strong>Próximamente:</strong> El proceso de auto-contratación está en desarrollo. Nuestro equipo se pondrá en contacto contigo tras recibir tu solicitud.</span>
-          </div>
-        </div>
-
-        {/* Content card — wider when showing plan grid */}
-        <div className={`w-full ${step === 0 && !done ? 'max-w-5xl' : 'max-w-3xl'}`}>
+        <div className={`w-full ${isWide ? 'max-w-5xl' : 'max-w-3xl'}`}>
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-10">
             {done && selectedPlan && contractor ? (
-              <SuccessStep email={contractor.email} planName={PLAN_NAMES[selectedPlan]} />
+              <SuccessStep
+                email={contractor.email}
+                planName={selectedPlan.name}
+                companySlug={contractor.companySlug}
+              />
             ) : (
               <>
-                <StepIndicator current={step} />
+                <StepIndicator current={step} done={done} />
+
                 {step === 0 && (
                   <PlanStep
-                    selectedPlan={selectedPlan}
-                    onSelect={setSelectedPlan}
+                    plans={plans}
+                    isLoading={catalogLoading}
+                    isError={catalogError}
+                    selectedPlanId={selectedPlan?.id ?? null}
+                    selectedVersionId={selectedVersion?.id ?? null}
+                    onSelect={handlePlanSelect}
                     onNext={() => setStep(1)}
                   />
                 )}
-                {step === 1 && (
+
+                {step === 1 && selectedPlan && (
                   <ContractorStep
+                    subscriberType={selectedPlan.subscriberType}
                     defaultValues={contractor ?? {}}
                     onBack={() => setStep(0)}
-                    onNext={(data) => { setContractor(data); setStep(2) }}
+                    onNext={handleContractorNext}
                   />
                 )}
-                {step === 2 && selectedPlan && contractor && (
+
+                {step === 2 && selectedPlan && selectedVersion && contractor && (
                   <TermsStep
                     plan={selectedPlan}
+                    version={selectedVersion}
                     contractor={contractor}
                     onBack={() => setStep(1)}
-                    onSubmit={handleSubmit}
-                    isSubmitting={isSubmitting}
-                    error={submitError}
+                    onSubmit={handleTermsSubmit}
+                    isSubmitting={isProcessing}
+                    error={processError}
+                  />
+                )}
+
+                {step === 3 && contractor && (
+                  <EmailVerificationStep
+                    email={contractor.email}
+                    isSubmitting={isProcessing}
+                    error={processError}
+                    onSubmit={handleEmailVerification}
+                  />
+                )}
+
+                {step === 4 && selectedPlan && selectedVersion && (
+                  <PaymentStep
+                    plan={selectedPlan}
+                    version={selectedVersion}
+                    isProcessing={isProcessing}
+                    error={processError}
+                    onMockApprove={handleMockApprove}
                   />
                 )}
               </>
@@ -183,4 +290,14 @@ export default function NewContractPage() {
       </main>
     </div>
   )
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+
+function extractErrorMessage(err: unknown): string {
+  if (typeof err === 'object' && err !== null) {
+    const e = err as Record<string, unknown>
+    if (typeof e['message'] === 'string') return e['message']
+  }
+  return ''
 }
