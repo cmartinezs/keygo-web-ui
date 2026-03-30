@@ -1,11 +1,12 @@
 import axios from 'axios'
 import { useTokenStore } from '@/auth/tokenStore'
+import { env } from '@/config/env'
 
-export const KEYGO_BASE = import.meta.env.VITE_KEYGO_BASE ?? 'http://localhost:8080/keygo-server'
+export const KEYGO_BASE = env.KEYGO_BASE
 export const API_V1 = `${KEYGO_BASE}/api/v1`
-export const TENANT = import.meta.env.VITE_TENANT_SLUG ?? 'keygo'
-export const CLIENT_ID = import.meta.env.VITE_CLIENT_ID ?? 'keygo-ui'
-export const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI ?? 'http://localhost:5173/callback'
+export const TENANT = env.TENANT_SLUG
+export const CLIENT_ID = env.CLIENT_ID
+export const REDIRECT_URI = env.REDIRECT_URI
 
 export const tenantUrl = (slug: string) => `${API_V1}/tenants/${slug}`
 export const appUrl = (slug: string, clientId: string) => `${tenantUrl(slug)}/apps/${clientId}`

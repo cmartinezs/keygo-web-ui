@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { env } from '@/config/env'
 
 declare global {
   interface Window {
@@ -20,7 +21,7 @@ interface TurnstileRenderOptions {
 }
 
 const TURNSTILE_API_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js'
-const SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined
+const SITE_KEY = env.TURNSTILE_SITE_KEY
 
 /**
  * Cloudflare Turnstile CAPTCHA integration.

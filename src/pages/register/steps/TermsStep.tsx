@@ -1,19 +1,21 @@
 import { useState } from 'react'
-import type { AppPlan, AppPlanVersion } from '@/types/billing'
+import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption } from '@/types/billing'
 import type { ContractorFormValues } from './ContractorStep'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
+import { env } from '@/config/env'
 
-const TURNSTILE_ENABLED = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY)
+const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
 
 const PERIOD_LABELS: Record<string, string> = {
   MONTHLY: '/mes',
-  ANNUAL: '/año',
+  YEARLY: '/año',
   ONE_TIME: ' pago único',
 }
 
 interface TermsStepProps {
   plan: AppPlan
   version: AppPlanVersion
+  billingOption: AppPlanVersionBillingOption | null
   contractor: ContractorFormValues
   onBack: () => void
   onSubmit: () => void
@@ -21,16 +23,16 @@ interface TermsStepProps {
   error: string | null
 }
 
-export function TermsStep({ plan, version, contractor, onBack, onSubmit, isSubmitting, error }: TermsStepProps) {
+export function TermsStep({ plan, version, billingOption, contractor, onBack, onSubmit, isSubmitting, error }: TermsStepProps) {
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [acceptPrivacy, setAcceptPrivacy] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
 
   const canSubmit = acceptTerms && acceptPrivacy && !isSubmitting && (!TURNSTILE_ENABLED || !!captchaToken)
 
-  const priceLabel = version.basePrice === 0
+  const priceLabel = !billingOption || billingOption.base_price === 0
     ? 'Gratis'
-    : `${new Intl.NumberFormat('es-MX', { style: 'currency', currency: version.currency, minimumFractionDigits: 0 }).format(version.basePrice)}${PERIOD_LABELS[version.billingPeriod] ?? ''}`
+    : `${new Intl.NumberFormat('es-MX', { style: 'currency', currency: version.currency, minimumFractionDigits: 0 }).format(billingOption.base_price)}${PERIOD_LABELS[billingOption.billing_period] ?? ''}`
 
   return (
     <div className="flex flex-col gap-6">
@@ -51,10 +53,10 @@ export function TermsStep({ plan, version, contractor, onBack, onSubmit, isSubmi
             <dt className="text-slate-500">Precio</dt>
             <dd className="font-semibold text-slate-800">{priceLabel}</dd>
           </div>
-          {version.trialDays > 0 && (
+          {version.trial_days > 0 && (
             <div className="sm:col-span-2">
               <dt className="text-slate-500">Período de prueba</dt>
-              <dd className="font-medium text-emerald-700">{version.trialDays} días gratis</dd>
+              <dd className="font-medium text-emerald-700">{version.trial_days} días gratis</dd>
             </div>
           )}
 
@@ -64,7 +66,7 @@ export function TermsStep({ plan, version, contractor, onBack, onSubmit, isSubmi
             <dd className="text-slate-500">{contractor.email}</dd>
           </div>
 
-          {plan.subscriberType === 'TENANT' && contractor.companyName && (
+          {plan.subscriber_type === 'TENANT' && contractor.companyName && (
             <>
               <div>
                 <dt className="text-slate-500">Empresa</dt>

@@ -1,4 +1,6 @@
-export type PlanId = 'starter' | 'business' | 'on-premise'
+import type { AppPlan, AppPlanEntitlement } from '@/types/billing'
+
+export type PlanId = 'free' | 'personal' | 'team' | 'business' | 'flex' | 'enterprise' | 'starter' | 'on-premise'
 
 export interface PlanInfo {
   id: PlanId
@@ -71,7 +73,85 @@ export const PLANS: PlanInfo[] = [
 ]
 
 export const PLAN_NAMES: Record<PlanId, string> = {
-  starter: 'Starter',
+  free: 'Free',
+  personal: 'Personal',
+  team: 'Team',
   business: 'Business',
+  flex: 'Flex',
+  enterprise: 'Enterprise',
+  starter: 'Starter',
   'on-premise': 'On-Premise',
+}
+
+// ── Mapper: AppPlan (API) → PlanInfo (UI) ────────────────────────────────────
+
+const METRIC_LABELS: Partial<Record<string, (e: AppPlanEntitlement) => string | null>> = {
+  MAX_TENANTS:            (e) => e.is_enabled ? `Hasta un máximo de ${e.limit_value ?? '∞'} tenants` : null,
+  MAX_TENANT_USERS:       (e) => e.is_enabled ? `Hasta ${e.limit_value ?? '∞'} identidades` : null,
+  MAX_CLIENT_APPS:        (e) => e.is_enabled ? `Hasta ${e.limit_value ?? '∞'} aplicaciones` : null,
+  MAX_ADMINS:             (e) => e.is_enabled ? `Hasta ${e.limit_value ?? '∞'} administradores` : null,
+  MAX_MONTHLY_TOKENS:     (e) => e.is_enabled ? `${(e.limit_value ?? 0).toLocaleString('es-MX')} tokens/mes` : null,
+  AUDIT_LOG_DAYS:         (e) => e.is_enabled ? `Logs de auditoría ${e.limit_value ?? '∞'} días` : null,
+  SOCIAL_LOGIN:           (e) => e.is_enabled ? 'Social Login incluido' : null,
+  CUSTOM_DOMAIN:          (e) => e.is_enabled ? 'Dominio personalizado' : null,
+  SLA_UPTIME_PCT:         (e) => e.is_enabled && e.limit_value != null ? `SLA ${(e.limit_value / 10).toFixed(1)}% uptime` : null,
+  PRIORITY_SUPPORT:       (e) => e.is_enabled ? 'Soporte prioritario' : null,
+  CUSTOM_SLA:             (e) => e.is_enabled ? 'SLA personalizado' : null,
+  DEDICATED_SUCCESS_MGR:  (e) => e.is_enabled ? 'Success Manager dedicado' : null,
+}
+
+const HIGHLIGHTED_CODES = new Set(['BUSINESS', 'TEAM'])
+
+const CTA_MAP: Partial<Record<string, string>> = {
+  FREE:       'Empezar gratis',
+  PERSONAL:   'Empezar por $5/mes',
+  TEAM:       'Iniciar prueba de 14 días',
+  BUSINESS:   'Iniciar prueba de 14 días',
+  FLEX:       'Ver tarifas Flex',
+  ENTERPRISE: 'Hablar con ventas',
+}
+
+export function appPlanToPlanInfo(plan: AppPlan): PlanInfo {
+  console.log(`[plans] Mapping plan ${plan.code} (${plan.name})`)
+  const version = plan.versions?.[0]
+  const isFree = !version || version.free
+  const defaultOption = version?.billing_options.find((o) => o.is_default) ?? version?.billing_options[0]
+
+  const price =
+    isFree || !defaultOption || defaultOption.base_price === 0
+      ? plan.code === 'ENTERPRISE' || plan.code === 'FLEX'
+        ? 'A medida'
+        : 'Gratis'
+      : `$${defaultOption.base_price.toFixed(0)}`
+
+  const priceNote =
+    isFree || !defaultOption || defaultOption.base_price === 0
+      ? plan.code === 'ENTERPRISE' || plan.code === 'FLEX'
+        ? 'Pago por uso · contactar'
+        : 'Para siempre'
+      : defaultOption.billing_period === 'YEARLY'
+        ? 'por año · facturación anual'
+        : 'por mes'
+
+  const features = plan.entitlements
+    .map((e) => {
+      const label = METRIC_LABELS[e.metric_code]?.(e) ?? null
+      console.log(`[plans] ${plan.code} | ${e.metric_code} is_enabled=${e.is_enabled} limit_value=${e.limit_value} => "${label}"`)
+      return label
+    })
+    .filter((f): f is string => f !== null)
+
+  console.debug(`[plans] ${plan.code} → features (${features.length}):`, features)
+
+  return {
+    id: plan.code.toLowerCase() as PlanId,
+    name: plan.name,
+    badge: HIGHLIGHTED_CODES.has(plan.code) ? 'Más popular' : undefined,
+    price,
+    priceNote,
+    description: plan.description ?? '',
+    features,
+    cta: CTA_MAP[plan.code] ?? 'Comenzar',
+    highlighted: HIGHLIGHTED_CODES.has(plan.code),
+  }
 }

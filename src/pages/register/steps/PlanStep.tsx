@@ -1,8 +1,9 @@
-import type { AppPlan, AppPlanVersion, BillingPeriod } from '@/types/billing'
+import { useState } from 'react'
+import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPeriod } from '@/types/billing'
 
 const PERIOD_LABELS: Record<BillingPeriod, string> = {
   MONTHLY: 'mes',
-  ANNUAL: 'año',
+  YEARLY: 'año',
   ONE_TIME: 'único',
 }
 
@@ -19,28 +20,36 @@ function formatPrice(price: number, currency: string, period: BillingPeriod): st
 interface PlanCardSelectProps {
   plan: AppPlan
   selectedVersionId: string | null
-  onSelect: (plan: AppPlan, version: AppPlanVersion) => void
+  onSelect: (plan: AppPlan, version: AppPlanVersion, billingOption: AppPlanVersionBillingOption | null) => void
 }
 
 function PlanCardSelect({ plan, selectedVersionId, onSelect }: PlanCardSelectProps) {
-  const activeVersions = plan.versions.filter((v) => v.status === 'ACTIVE')
-  const currentVersion = activeVersions[0]
-  const isSelected = activeVersions.some((v) => v.id === selectedVersionId)
+  const versions = plan.versions ?? []
+  const version = versions.find((v) => v.status === 'ACTIVE') ?? versions[0]
+  const isFree = !version || version.free
+  const billingOptions = version?.billing_options ?? []
+  const defaultOption = billingOptions.find((o) => o.is_default) ?? billingOptions[0] ?? null
+  const [activeOption, setActiveOption] = useState<AppPlanVersionBillingOption | null>(defaultOption)
+  const isSelected = version?.id === selectedVersionId
 
-  if (!currentVersion) return null
+  if (!version) return null
 
-  const monthlyV = activeVersions.find((v) => v.billingPeriod === 'MONTHLY')
-  const annualV = activeVersions.find((v) => v.billingPeriod === 'ANNUAL')
-  const selectedV = activeVersions.find((v) => v.id === selectedVersionId) ?? currentVersion
+  const monthlyOption = billingOptions.find((o) => o.billing_period === 'MONTHLY') ?? null
+  const yearlyOption = billingOptions.find((o) => o.billing_period === 'YEARLY') ?? null
+
+  function selectOption(opt: AppPlanVersionBillingOption | null) {
+    setActiveOption(opt)
+    onSelect(plan, version, opt)
+  }
 
   return (
     <div
       role="radio"
       aria-checked={isSelected}
       tabIndex={0}
-      onClick={() => onSelect(plan, selectedV)}
+      onClick={() => onSelect(plan, version, activeOption)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onSelect(plan, selectedV)
+        if (e.key === 'Enter' || e.key === ' ') onSelect(plan, version, activeOption)
       }}
       className={`relative flex flex-col gap-4 rounded-2xl border-2 p-6 cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
         isSelected
@@ -56,7 +65,7 @@ function PlanCardSelect({ plan, selectedVersionId, onSelect }: PlanCardSelectPro
             <p className="text-sm text-slate-500 mt-0.5 leading-snug">{plan.description}</p>
           )}
         </div>
-        {plan.subscriberType === 'TENANT' ? (
+        {plan.subscriber_type === 'TENANT' ? (
           <span className="shrink-0 text-xs font-medium bg-sky-100 text-sky-700 rounded-full px-2.5 py-0.5">
             Empresa
           </span>
@@ -67,14 +76,14 @@ function PlanCardSelect({ plan, selectedVersionId, onSelect }: PlanCardSelectPro
         )}
       </div>
 
-      {/* Billing period toggle (only if both MONTHLY and ANNUAL exist) */}
-      {monthlyV && annualV && (
+      {/* Billing period toggle (only if both MONTHLY and YEARLY options exist) */}
+      {monthlyOption && yearlyOption && (
         <div className="flex gap-1 rounded-lg bg-slate-100 p-1 w-fit" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
-            onClick={() => onSelect(plan, monthlyV)}
+            onClick={() => selectOption(monthlyOption)}
             className={`text-xs font-medium px-3 py-1 rounded-md transition-colors ${
-              selectedVersionId === monthlyV.id
+              activeOption?.billing_period === 'MONTHLY'
                 ? 'bg-white text-indigo-700 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -83,9 +92,9 @@ function PlanCardSelect({ plan, selectedVersionId, onSelect }: PlanCardSelectPro
           </button>
           <button
             type="button"
-            onClick={() => onSelect(plan, annualV)}
+            onClick={() => selectOption(yearlyOption)}
             className={`text-xs font-medium px-3 py-1 rounded-md transition-colors ${
-              selectedVersionId === annualV.id
+              activeOption?.billing_period === 'YEARLY'
                 ? 'bg-white text-indigo-700 shadow-sm'
                 : 'text-slate-500 hover:text-slate-700'
             }`}
@@ -97,21 +106,23 @@ function PlanCardSelect({ plan, selectedVersionId, onSelect }: PlanCardSelectPro
 
       {/* Price */}
       <p className="text-2xl font-extrabold text-slate-900">
-        {formatPrice(selectedV.basePrice, selectedV.currency, selectedV.billingPeriod)}
+        {isFree || !activeOption || activeOption.base_price === 0
+          ? 'Gratis'
+          : formatPrice(activeOption.base_price, version.currency, activeOption.billing_period)}
       </p>
 
       {/* Trial */}
-      {selectedV.trialDays > 0 && (
-        <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
-          {selectedV.trialDays} días de prueba gratuita
+      {version.trial_days > 0 && (
+          <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+          {version.trial_days} días de prueba gratuita
         </p>
       )}
 
       {/* Entitlements */}
-      {plan.entitlements.filter((e) => e.isEnabled).length > 0 && (
+      {plan.entitlements.filter((e) => e.is_enabled).length > 0 && (
         <ul className="flex flex-col gap-2 mt-1">
           {plan.entitlements
-            .filter((e) => e.isEnabled)
+            .filter((e) => e.is_enabled)
             .slice(0, 5)
             .map((ent) => (
               <li key={ent.id} className="flex items-center gap-2 text-sm text-slate-600">
@@ -119,9 +130,9 @@ function PlanCardSelect({ plan, selectedVersionId, onSelect }: PlanCardSelectPro
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
                 <span>
-                  {ent.metricType === 'QUOTA' && ent.limitValue !== null
-                    ? `Hasta ${ent.limitValue} ${ent.metricCode.toLowerCase().replace(/_/g, ' ')}`
-                    : ent.metricCode.toLowerCase().replace(/_/g, ' ')}
+                  {ent.metric_type === 'QUOTA' && ent.limit_value !== null
+                    ? `Hasta ${ent.limit_value} ${ent.metric_code.toLowerCase().replace(/_/g, ' ')}`
+                    : ent.metric_code.toLowerCase().replace(/_/g, ' ')}
                 </span>
               </li>
             ))}
@@ -146,7 +157,7 @@ interface PlanStepProps {
   isError: boolean
   selectedPlanId: string | null
   selectedVersionId: string | null
-  onSelect: (plan: AppPlan, version: AppPlanVersion) => void
+  onSelect: (plan: AppPlan, version: AppPlanVersion, billingOption: AppPlanVersionBillingOption | null) => void
   onNext: () => void
 }
 

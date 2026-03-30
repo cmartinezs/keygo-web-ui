@@ -1739,7 +1739,7 @@
           "Billing — Catalog"
         ],
         "summary": "Create a billing plan",
-        "description": "Creates a new plan with its initial version and entitlements. Requires ADMIN_TENANT role.",
+        "description": "Creates a new plan with its initial version (price, currency, billing period, trial days) and an optional list of entitlements (feature flags and usage quotas). The plan code must be unique within the client app. Requires Bearer JWT with ADMIN_TENANT role.",
         "operationId": "createPlan",
         "parameters": [
           {
@@ -1749,7 +1749,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "keygo"
           },
           {
             "name": "clientId",
@@ -1758,7 +1759,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "keygo-ui"
           }
         ],
         "requestBody": {
@@ -1773,7 +1775,7 @@
         },
         "responses": {
           "201": {
-            "description": "Plan created",
+            "description": "Plan created successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -1783,7 +1785,7 @@
             }
           },
           "400": {
-            "description": "Duplicate plan code or invalid input",
+            "description": "Invalid request body or missing required fields",
             "content": {
               "*/*": {
                 "schema": {
@@ -1804,6 +1806,16 @@
           },
           "404": {
             "description": "Tenant or client app not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A plan with the same code already exists for this client app",
             "content": {
               "*/*": {
                 "schema": {
@@ -2832,7 +2844,7 @@
           "Billing — Catalog"
         ],
         "summary": "Get public plan catalog",
-        "description": "Returns all active public plans for a client app. Optional filter by subscriberType (TENANT | TENANT_USER). No auth required.",
+        "description": "Returns all active public plans for the specified client app. No authentication required. Each entry includes the plan metadata, its active version (price, billing period, trial days) and the associated entitlements.",
         "operationId": "getCatalog",
         "parameters": [
           {
@@ -2842,7 +2854,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "keygo"
           },
           {
             "name": "clientId",
@@ -2851,25 +2864,13 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "subscriberType",
-            "in": "query",
-            "description": "Filter by subscriber type (TENANT or TENANT_USER)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "TENANT",
-                "TENANT_USER"
-              ]
-            }
+            },
+            "example": "keygo-ui"
           }
         ],
         "responses": {
           "200": {
-            "description": "Catalog retrieved",
+            "description": "Plan catalog retrieved successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -2897,7 +2898,7 @@
           "Billing — Catalog"
         ],
         "summary": "Get public plan detail",
-        "description": "Returns a single public plan with its active version and entitlements. No auth required.",
+        "description": "Returns a single active public plan identified by its code, including the active version (price, billing period, trial days) and its full entitlements list. No authentication required.",
         "operationId": "getPlanPublic",
         "parameters": [
           {
@@ -2907,7 +2908,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "keygo"
           },
           {
             "name": "clientId",
@@ -2916,21 +2918,23 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "keygo-ui"
           },
           {
             "name": "planCode",
             "in": "path",
-            "description": "Plan code (e.g. STARTER)",
+            "description": "Plan code (e.g. FREE, STARTER, BUSINESS)",
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "FREE"
           }
         ],
         "responses": {
           "200": {
-            "description": "Plan retrieved",
+            "description": "Plan detail retrieved successfully",
             "content": {
               "*/*": {
                 "schema": {
@@ -2940,7 +2944,7 @@
             }
           },
           "404": {
-            "description": "Plan, tenant or client app not found",
+            "description": "Tenant, client app or plan not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -3837,6 +3841,28 @@
           }
         }
       },
+      "BillingOptionRequest": {
+        "type": "object",
+        "properties": {
+          "billingPeriod": {
+            "type": "string",
+            "enum": [
+              "MONTHLY",
+              "YEARLY",
+              "ONE_TIME"
+            ]
+          },
+          "basePrice": {
+            "type": "number"
+          },
+          "discountPct": {
+            "type": "number"
+          },
+          "isDefault": {
+            "type": "boolean"
+          }
+        }
+      },
       "CreateAppPlanRequest": {
         "type": "object",
         "properties": {
@@ -3849,29 +3875,15 @@
           "description": {
             "type": "string"
           },
-          "subscriberType": {
-            "type": "string",
-            "enum": [
-              "TENANT",
-              "TENANT_USER"
-            ]
-          },
           "isPublic": {
             "type": "boolean"
           },
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
           "version": {
             "type": "string"
-          },
-          "billingPeriod": {
-            "type": "string",
-            "enum": [
-              "MONTHLY",
-              "YEARLY",
-              "ONE_TIME"
-            ]
-          },
-          "basePrice": {
-            "type": "number"
           },
           "currency": {
             "type": "string"
@@ -3883,6 +3895,12 @@
           "effectiveFrom": {
             "type": "string",
             "format": "date"
+          },
+          "billingOptions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BillingOptionRequest"
+            }
           },
           "entitlements": {
             "type": "array",
@@ -3942,13 +3960,6 @@
               "MONTHLY",
               "YEARLY",
               "ONE_TIME"
-            ]
-          },
-          "subscriberType": {
-            "type": "string",
-            "enum": [
-              "TENANT",
-              "TENANT_USER"
             ]
           },
           "contractorEmail": {

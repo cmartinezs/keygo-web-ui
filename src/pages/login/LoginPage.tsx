@@ -16,11 +16,12 @@ import { useRateLimit } from '@/hooks/useRateLimit'
 import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
+import { env } from '@/config/env'
 import type { BaseResponse } from '@/types/base'
 import type { AppRole } from '@/types/roles'
 import type { AuthorizeData } from '@/types/auth'
 
-const TURNSTILE_ENABLED = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY)
+const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -617,4 +618,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

@@ -97,14 +97,63 @@ export async function getTenants(): Promise<TenantData[]> {
 
 ## Convención de naming — wire format vs. TypeScript
 
+> ⚠️ **La documentación autogenerada (`api-docs.json` y `FRONTEND_DEVELOPER_GUIDE.md`) puede mostrar nombres en camelCase. Esto es un error del generador. El backend real usa snake_case en todas las capas sin excepción.**
+
 | Contexto | Convención | Ejemplo |
 |----------|------------|---------|
 | Parámetros TypeScript internos (interfaces, props, form fields) | camelCase | `emailOrUsername`, `organizationName` |
-| **Claves de query params enviadas al backend** | **snake_case** | `code_challenge`, `client_id` |
-| **Claves del JSON body enviado al backend** | **snake_case** | `email_or_username`, `grant_type` |
-| Claves de respuesta recibidas del backend (`BaseResponse<T>`) | snake_case (respetar tal como vienen) | `access_token`, `id_token` |
+| **Claves de query params enviadas al backend** | **snake_case** | `name_like`, `client_app_id`, `code_challenge` |
+| **Claves del JSON body enviado al backend** | **snake_case** | `plan_version_id`, `billing_period`, `grant_type` |
+| **Claves de la respuesta recibida del backend** | **snake_case** | `access_token`, `client_app_id`, `base_price`, `metric_code` |
 
-> **Regla:** los DTOs de request (`*Request` interfaces) deben usar snake_case porque son el contrato wire directo con el backend. Los tipos de datos internos de la UI (form schemas, props) son camelCase.
+### Regla aplicada a los DTOs de TypeScript
+
+Los tipos de la respuesta (`*Data` interfaces en `src/types/`) deben reflejar el nombre real del campo wire:
+
+```ts
+// ✅ Correcto — nombres en snake_case tal como vienen del backend
+export interface AppPlanVersion {
+  id: string
+  billing_period: BillingPeriod
+  base_price: number
+  trial_days: number
+  effective_from: string
+  effective_to: string | null
+}
+
+// ❌ Incorrecto — camelCase que no coincide con el wire real
+export interface AppPlanVersion {
+  billingPeriod: BillingPeriod   // ← el backend envía billing_period
+  basePrice: number               // ← el backend envía base_price
+}
+```
+
+Los tipos de **request** (`*Request` interfaces) también usan snake_case:
+
+```ts
+// ✅ Correcto
+export interface CreateContractRequest {
+  plan_version_id: string
+  billing_period: BillingPeriod
+  contractor_email: string
+}
+```
+
+Los tipos **internos de la UI** (schemas de formulario Zod, props de componentes) usan camelCase y se mapean explícitamente al enviar al backend:
+
+```ts
+// Formulario interno (camelCase)
+interface ContractForm {
+  planVersionId: string
+  billingPeriod: BillingPeriod
+}
+
+// Al enviar al backend — convertir a snake_case
+const payload: CreateContractRequest = {
+  plan_version_id: form.planVersionId,
+  billing_period: form.billingPeriod,
+}
+```
 
 ```ts
 export async function createTenant(payload: CreateTenantRequest): Promise<TenantData> {

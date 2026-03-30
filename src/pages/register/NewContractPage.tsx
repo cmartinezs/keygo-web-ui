@@ -11,7 +11,7 @@ import {
   BILLING_QUERY_KEYS,
 } from '@/api/billing'
 import { TENANT, CLIENT_ID } from '@/api/client'
-import type { AppPlan, AppPlanVersion } from '@/types/billing'
+import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption } from '@/types/billing'
 import { PlanStep } from './steps/PlanStep'
 import { ContractorStep } from './steps/ContractorStep'
 import type { ContractorFormValues } from './steps/ContractorStep'
@@ -91,6 +91,7 @@ export default function NewContractPage() {
 
   const [selectedPlan, setSelectedPlan] = useState<AppPlan | null>(null)
   const [selectedVersion, setSelectedVersion] = useState<AppPlanVersion | null>(null)
+  const [selectedBillingOption, setSelectedBillingOption] = useState<AppPlanVersionBillingOption | null>(null)
   const [contractor, setContractor] = useState<ContractorFormValues | null>(null)
 
   // post-createContract
@@ -115,9 +116,10 @@ export default function NewContractPage() {
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
-  function handlePlanSelect(plan: AppPlan, version: AppPlanVersion) {
+  function handlePlanSelect(plan: AppPlan, version: AppPlanVersion, billingOption: AppPlanVersionBillingOption | null) {
     setSelectedPlan(plan)
     setSelectedVersion(version)
+    setSelectedBillingOption(billingOption)
   }
 
   function handleContractorNext(data: ContractorFormValues) {
@@ -136,17 +138,16 @@ export default function NewContractPage() {
 
     try {
       const contract = await createBillingContract({
-        planVersionId: selectedVersion.id,
-        billingPeriod: selectedVersion.billingPeriod,
-        subscriberType: selectedPlan.subscriberType,
-        contractorEmail: contractor.email,
-        contractorFirstName: contractor.firstName,
-        contractorLastName: contractor.lastName,
-        ...(selectedPlan.subscriberType === 'TENANT' && {
-          companyName: contractor.companyName,
-          companySlug: contractor.companySlug,
-          companyTaxId: contractor.companyTaxId || undefined,
-          companyAddress: contractor.companyAddress || undefined,
+        plan_version_id: selectedVersion.id,
+        ...(selectedBillingOption && { billing_period: selectedBillingOption.billing_period }),
+        contractor_email: contractor.email,
+        contractor_first_name: contractor.firstName,
+        contractor_last_name: contractor.lastName,
+        ...(selectedPlan.subscriber_type === 'TENANT' && {
+          company_name: contractor.companyName,
+          company_slug: contractor.companySlug,
+          company_tax_id: contractor.companyTaxId || undefined,
+          company_address: contractor.companyAddress || undefined,
         }),
       })
       setContractId(contract.id)
@@ -246,7 +247,7 @@ export default function NewContractPage() {
 
                 {step === 1 && selectedPlan && (
                   <ContractorStep
-                    subscriberType={selectedPlan.subscriberType}
+                    subscriberType={selectedPlan.subscriber_type}
                     defaultValues={contractor ?? {}}
                     onBack={() => setStep(0)}
                     onNext={handleContractorNext}
@@ -257,6 +258,7 @@ export default function NewContractPage() {
                   <TermsStep
                     plan={selectedPlan}
                     version={selectedVersion}
+                    billingOption={selectedBillingOption}
                     contractor={contractor}
                     onBack={() => setStep(1)}
                     onSubmit={handleTermsSubmit}
@@ -278,6 +280,7 @@ export default function NewContractPage() {
                   <PaymentStep
                     plan={selectedPlan}
                     version={selectedVersion}
+                    billingOption={selectedBillingOption}
                     isProcessing={isProcessing}
                     error={processError}
                     onMockApprove={handleMockApprove}

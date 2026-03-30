@@ -66,7 +66,7 @@ Con KeyGo puedes:
 # 1. Instalar dependencias
 npm install
 
-# 2. Configurar entorno
+# 2. Configurar entorno local
 cp .env.example .env.local   # editar con tus valores
 
 # 3. Iniciar en desarrollo
@@ -82,11 +82,34 @@ VITE_CLIENT_ID=keygo-ui
 VITE_REDIRECT_URI=http://localhost:5173/callback
 ```
 
+### Configuración por ambiente (Vite modes)
+
+Este proyecto usa archivos por modo:
+
+- `.env.development`
+- `.env.staging`
+- `.env.production`
+- `.env.local` (override local, ignorado por git)
+
+Precedencia típica en Vite: `.env.[mode].local` > `.env.[mode]` > `.env.local` > `.env`.
+
+Ejemplos:
+
+```bash
+npm run dev             # usa mode "development"
+npm run dev:staging     # usa mode "staging"
+npm run build           # build con mode "production"
+npm run build:staging   # build con mode "staging"
+```
+
 ### Comandos disponibles
 
 ```bash
 npm run dev      # Servidor de desarrollo (puerto 5173)
+npm run dev:staging
 npm run build    # Build de producción
+npm run build:staging
+npm run build:production
 npm run lint     # ESLint sobre .ts / .tsx
 npm run format   # Prettier
 ```
@@ -103,7 +126,7 @@ src/
 ├── pages/        # Vistas organizadas por rol: admin/, tenant-admin/, user/, login/, landing/
 ├── components/   # Componentes reutilizables (PlanCard, ScrollToTop…)
 ├── hooks/        # useCurrentUser, useHasRole, useManagedTenant
-├── types/        # DTOs TypeScript: base, tenant, clientapp, user, auth, roles
+├── types/        # DTOs TypeScript: bas,e, tenant, clientapp, user, auth, roles
 └── mocks/        # MSW handlers para endpoints pendientes de backend
 ```
 

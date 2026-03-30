@@ -14,7 +14,7 @@ interface TurnstileWidgetProps {
  * Usage:
  *   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
  *   <TurnstileWidget onTokenChange={setCaptchaToken} />
- *   // Disable submit if: Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY) && !captchaToken
+ *   // Disable submit if: Boolean(env.TURNSTILE_SITE_KEY) && !captchaToken
  */
 export function TurnstileWidget({ onTokenChange, className }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement | null>(null)

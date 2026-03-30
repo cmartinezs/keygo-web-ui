@@ -1,47 +1,55 @@
 // ── Billing — TypeScript DTOs ─────────────────────────────────────────────
 // Source of truth: docs/api-docs.json  +  docs/BILLING_FLOW.md
+// ⚠️ Todos los campos del wire format (request y response) usan snake_case.
+//    La doc autogenerada puede mostrar camelCase — es un error del generador.
 
 // ── Catalog ─────────────────────────────────────────────────────────────────
 
 export type SubscriberType = 'TENANT' | 'TENANT_USER'
-export type BillingPeriod = 'MONTHLY' | 'ANNUAL' | 'ONE_TIME'
+export type BillingPeriod = 'MONTHLY' | 'YEARLY' | 'ONE_TIME'
 export type PlanStatus = 'ACTIVE' | 'INACTIVE' | 'DEPRECATED'
-export type MetricType = 'QUOTA' | 'BOOLEAN' | 'UNLIMITED'
-export type PeriodType = 'NONE' | 'DAILY' | 'MONTHLY'
+export type MetricType = 'QUOTA' | 'BOOLEAN' | 'RATE'
+export type PeriodType = 'NONE' | 'DAY' | 'MONTH'
 export type EnforcementMode = 'HARD' | 'SOFT'
 
 export interface AppPlanEntitlement {
   id: string
-  metricCode: string
-  metricType: MetricType
-  limitValue: number | null
-  periodType: PeriodType
-  enforcementMode: EnforcementMode
-  isEnabled: boolean
+  metric_code: string
+  metric_type: MetricType
+  limit_value: number | null
+  period_type: PeriodType
+  enforcement_mode: EnforcementMode
+  is_enabled: boolean
+}
+
+export interface AppPlanVersionBillingOption {
+  billing_period: BillingPeriod
+  base_price: number
+  discount_pct: number
+  is_default: boolean
 }
 
 export interface AppPlanVersion {
   id: string
   version: string
   currency: string
-  billingPeriod: BillingPeriod
-  basePrice: number
-  setupFee: number
-  trialDays: number
-  effectiveFrom: string
-  effectiveTo: string | null
+  setup_fee: number
+  trial_days: number
+  effective_from: string
   status: PlanStatus
+  free: boolean
+  billing_options: AppPlanVersionBillingOption[]
 }
 
 export interface AppPlan {
   id: string
-  clientAppId: string
+  client_app_id: string
   code: string
   name: string
   description: string | null
-  subscriberType: SubscriberType
+  subscriber_type?: SubscriberType
   status: PlanStatus
-  isPublic: boolean
+  is_public: boolean
   versions: AppPlanVersion[]
   entitlements: AppPlanEntitlement[]
 }
@@ -59,33 +67,64 @@ export type ContractStatus =
 
 export interface AppContract {
   id: string
-  clientAppId: string
-  selectedPlanVersionId: string
-  billingPeriod: BillingPeriod
-  subscriberType: SubscriberType
+  client_app_id: string
+  selected_plan_version_id: string
+  billing_period: BillingPeriod
+  subscriber_type: SubscriberType
   status: ContractStatus
-  contractorEmail: string
-  contractorFirstName: string
-  contractorLastName: string
-  companyName: string | null
-  companySlug: string | null
-  emailVerified: boolean
-  paymentVerified: boolean
-  expiresAt: string
-  createdAt: string
+  contractor_email: string
+  contractor_first_name: string
+  contractor_last_name: string
+  company_name: string | null
+  company_slug: string | null
+  email_verified: boolean
+  payment_verified: boolean
+  expires_at: string
+  created_at: string
 }
 
 export interface CreateContractRequest {
-  planVersionId: string
-  billingPeriod: BillingPeriod
-  subscriberType: SubscriberType
-  contractorEmail: string
-  contractorFirstName: string
-  contractorLastName: string
-  companyName?: string
-  companySlug?: string
-  companyTaxId?: string
-  companyAddress?: string
+  plan_version_id: string
+  billing_period?: BillingPeriod
+  contractor_email: string
+  contractor_first_name: string
+  contractor_last_name: string
+  company_name?: string
+  company_slug?: string
+  company_tax_id?: string
+  company_address?: string
+}
+
+// ── Plan management (ADMIN_TENANT) ───────────────────────────────────────────
+
+export interface BillingOptionRequest {
+  billing_period: BillingPeriod
+  base_price: number
+  discount_pct?: number
+  is_default?: boolean
+}
+
+export interface EntitlementRequest {
+  metric_code: string
+  metric_type: MetricType
+  limit_value?: number
+  period_type?: PeriodType
+  enforcement_mode?: EnforcementMode
+  is_enabled: boolean
+}
+
+export interface CreateAppPlanRequest {
+  code: string
+  name: string
+  description?: string
+  is_public?: boolean
+  sort_order?: number
+  version?: string
+  currency: string
+  trial_days?: number
+  effective_from?: string
+  billing_options: BillingOptionRequest[]
+  entitlements?: EntitlementRequest[]
 }
 
 export interface VerifyContractEmailRequest {
@@ -98,18 +137,18 @@ export type SubscriptionStatus = 'ACTIVE' | 'CANCELLED' | 'PAST_DUE' | 'SUSPENDE
 
 export interface AppSubscription {
   id: string
-  clientAppId: string
-  appPlanVersionId: string
-  subscriberType: SubscriberType
-  subscriberTenantId: string | null
-  subscriberTenantUserId: string | null
+  client_app_id: string
+  app_plan_version_id: string
+  subscriber_type: SubscriberType
+  subscriber_tenant_id: string | null
+  subscriber_tenant_user_id: string | null
   status: SubscriptionStatus
-  currentPeriodStart: string
-  currentPeriodEnd: string
-  cancelAtPeriodEnd: boolean
-  nextBillingAt: string | null
-  autoRenew: boolean
-  createdAt: string
+  current_period_start: string
+  current_period_end: string
+  cancel_at_period_end: boolean
+  next_billing_at: string | null
+  auto_renew: boolean
+  created_at: string
 }
 
 // ── Invoices ─────────────────────────────────────────────────────────────────
@@ -118,19 +157,20 @@ export type InvoiceStatus = 'ISSUED' | 'PAID' | 'VOID' | 'OVERDUE'
 
 export interface AppInvoice {
   id: string
-  subscriptionId: string
-  invoiceNumber: string
+  subscription_id: string
+  invoice_number: string
   status: InvoiceStatus
-  issueDate: string
-  dueDate: string
-  periodStart: string
-  periodEnd: string
+  issue_date: string
+  due_date: string
+  period_start: string
+  period_end: string
   currency: string
   subtotal: number
-  taxAmount: number
+  tax_amount: number
   total: number
-  billingNameSnapshot: string
-  planVersionSnapshot: string
-  pdfUrl: string | null
-  createdAt: string
+  billing_name_snapshot: string
+  plan_version_snapshot: string
+  pdf_url: string | null
+  created_at: string
 }
+

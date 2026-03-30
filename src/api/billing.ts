@@ -12,12 +12,15 @@ import type {
   AppInvoice,
   CreateContractRequest,
   VerifyContractEmailRequest,
+  CreateAppPlanRequest,
 } from '@/types/billing'
 
 // ── Query keys ────────────────────────────────────────────────────────────────
 export const BILLING_QUERY_KEYS = {
   catalog: (tenantSlug: string, clientId: string) =>
     ['billing', 'catalog', tenantSlug, clientId] as const,
+  plan: (tenantSlug: string, clientId: string, planCode: string) =>
+    ['billing', 'catalog', tenantSlug, clientId, planCode] as const,
   contract: (contractId: string) =>
     ['billing', 'contract', contractId] as const,
   subscription: (tenantSlug: string, clientId: string) =>
@@ -41,6 +44,18 @@ export async function getBillingCatalog(
     `${billingBase(tenantSlug, clientId)}/catalog`,
   )
   return res.data.data ?? []
+}
+
+/** GET /billing/catalog/{planCode} — returns a single public plan by code. Public endpoint. */
+export async function getBillingCatalogPlan(
+  planCode: string,
+  tenantSlug: string = TENANT,
+  clientId: string = CLIENT_ID,
+): Promise<AppPlan> {
+  const res = await apiClient.get<BaseResponse<AppPlan>>(
+    `${billingBase(tenantSlug, clientId)}/catalog/${planCode}`,
+  )
+  return res.data.data!
 }
 
 // ── Contracts ─────────────────────────────────────────────────────────────────
@@ -168,4 +183,22 @@ export async function listInvoices(
     `${billingBase(tenantSlug, clientId)}/invoices`,
   )
   return res.data.data ?? []
+}
+
+// ── Plans management (ADMIN_TENANT) ───────────────────────────────────────────
+
+/**
+ * POST /billing/plans — creates a new billing plan with its initial version and entitlements.
+ * Requires Bearer ADMIN_TENANT.
+ */
+export async function createBillingPlan(
+  request: CreateAppPlanRequest,
+  tenantSlug: string,
+  clientId: string,
+): Promise<AppPlan> {
+  const res = await apiClient.post<BaseResponse<AppPlan>>(
+    `${billingBase(tenantSlug, clientId)}/plans`,
+    request,
+  )
+  return res.data.data!
 }

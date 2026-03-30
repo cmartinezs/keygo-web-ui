@@ -1,23 +1,25 @@
-import type { AppPlan, AppPlanVersion } from '@/types/billing'
+import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption } from '@/types/billing'
+import { env } from '@/config/env'
 
-const IS_DEV = import.meta.env.DEV
+const IS_DEV = env.DEV
 
 interface PaymentStepProps {
   plan: AppPlan
   version: AppPlanVersion
+  billingOption: AppPlanVersionBillingOption | null
   isProcessing: boolean
   error: string | null
   onMockApprove: () => void
 }
 
-export function PaymentStep({ plan, version, isProcessing, error, onMockApprove }: PaymentStepProps) {
-  const priceLabel = version.basePrice === 0
+export function PaymentStep({ plan, version, billingOption, isProcessing, error, onMockApprove }: PaymentStepProps) {
+  const priceLabel = !billingOption || billingOption.base_price === 0
     ? 'Gratis'
     : new Intl.NumberFormat('es-MX', {
         style: 'currency',
         currency: version.currency,
         minimumFractionDigits: 0,
-      }).format(version.basePrice)
+      }).format(billingOption.base_price)
 
   return (
     <div className="flex flex-col gap-6 items-center text-center">
@@ -42,16 +44,16 @@ export function PaymentStep({ plan, version, isProcessing, error, onMockApprove 
           <div>
             <p className="font-semibold text-slate-900">{plan.name}</p>
             <p className="text-sm text-slate-500">
-              {version.billingPeriod === 'MONTHLY' ? 'Facturación mensual'
-                : version.billingPeriod === 'ANNUAL' ? 'Facturación anual'
+              {billingOption?.billing_period === 'MONTHLY' ? 'Facturación mensual'
+                : billingOption?.billing_period === 'YEARLY' ? 'Facturación anual'
                 : 'Pago único'}
             </p>
           </div>
           <p className="text-lg font-bold text-slate-900">{priceLabel}</p>
         </div>
-        {version.trialDays > 0 && (
+        {version.trial_days > 0 && (
           <p className="mt-3 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-            Los primeros {version.trialDays} días son gratuitos. Se cobrarán después del período de prueba.
+            Los primeros {version.trial_days} días son gratuitos. Se cobrarán después del período de prueba.
           </p>
         )}
       </div>

@@ -7,8 +7,9 @@ import { registerUser } from '@/api/users'
 import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
+import { env } from '@/config/env'
 
-const TURNSTILE_ENABLED = Boolean(import.meta.env.VITE_TURNSTILE_SITE_KEY)
+const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
 
 // ── Steps ─────────────────────────────────────────────────────────────────────
 
