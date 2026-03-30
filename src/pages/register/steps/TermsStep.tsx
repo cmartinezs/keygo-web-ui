@@ -2,6 +2,9 @@ import { useState } from 'react'
 import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption } from '@/types/billing'
 import type { ContractorFormValues } from './ContractorStep'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
+import { PolicyModal } from '@/components/PolicyModal'
+import { TermsOfServiceContent } from '@/components/TermsOfServiceContent'
+import { PrivacyPolicyContent } from '@/components/PrivacyPolicyContent'
 import { env } from '@/config/env'
 
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
@@ -27,6 +30,8 @@ export function TermsStep({ plan, version, billingOption, contractor, onBack, on
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [acceptPrivacy, setAcceptPrivacy] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [showTermsModal, setShowTermsModal] = useState(false)
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
   const canSubmit = acceptTerms && acceptPrivacy && !isSubmitting && (!TURNSTILE_ENABLED || !!captchaToken)
 
@@ -66,7 +71,7 @@ export function TermsStep({ plan, version, billingOption, contractor, onBack, on
             <dd className="text-slate-500">{contractor.email}</dd>
           </div>
 
-          {plan.subscriber_type === 'TENANT' && contractor.companyName && (
+          {contractor.companyName && (
             <>
               <div>
                 <dt className="text-slate-500">Empresa</dt>
@@ -96,9 +101,13 @@ export function TermsStep({ plan, version, billingOption, contractor, onBack, on
           />
           <span className="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">
             He leído y acepto los{' '}
-            <a href="/terminos" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-medium">
+            <button
+              type="button"
+              onClick={() => setShowTermsModal(true)}
+              className="text-indigo-600 hover:underline font-medium focus-visible:ring-2 focus-visible:ring-indigo-500 rounded outline-none"
+            >
               Términos de Uso y Servicio
-            </a>{' '}
+            </button>{' '}
             de KeyGo. <span aria-hidden="true" className="text-red-500">*</span>
           </span>
         </label>
@@ -112,14 +121,37 @@ export function TermsStep({ plan, version, billingOption, contractor, onBack, on
           />
           <span className="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">
             He leído y acepto la{' '}
-            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline font-medium">
+            <button
+              type="button"
+              onClick={() => setShowPrivacyModal(true)}
+              className="text-indigo-600 hover:underline font-medium focus-visible:ring-2 focus-visible:ring-indigo-500 rounded outline-none"
+            >
               Política de Privacidad
-            </a>
+            </button>
             , incluyendo el tratamiento de mis datos personales.{' '}
             <span aria-hidden="true" className="text-red-500">*</span>
           </span>
         </label>
       </fieldset>
+
+      {/* Policy modals */}
+      <PolicyModal
+        isOpen={showTermsModal}
+        title="Terms of Use and Service"
+        onClose={() => setShowTermsModal(false)}
+        onAccept={() => setAcceptTerms(true)}
+      >
+        <TermsOfServiceContent />
+      </PolicyModal>
+
+      <PolicyModal
+        isOpen={showPrivacyModal}
+        title="Privacy Policy"
+        onClose={() => setShowPrivacyModal(false)}
+        onAccept={() => setAcceptPrivacy(true)}
+      >
+        <PrivacyPolicyContent />
+      </PolicyModal>
 
       {/* Error banner */}
       {error && (

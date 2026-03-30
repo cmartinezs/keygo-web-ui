@@ -2,7 +2,7 @@ import { useState } from 'react'
 import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPeriod } from '@/types/billing'
 import { PlanCard } from './PlanCard'
 import { PlanCardSelect } from './PlanCardSelect'
-import { appPlanToPlanInfo } from './plans'
+import { computePlanInfoForPeriod } from './plans'
 
 type DisplayMode = {
   mode: 'display'
@@ -98,7 +98,7 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
             return (
               <PlanCard
                 key={plan.id}
-                plan={appPlanToPlanInfo(plan)}
+                plan={computePlanInfoForPeriod(plan, activePeriod)}
                 mode="display"
                 ctaTo={`${props.ctaBase ?? '/subscribe'}?plan=${plan.code.toLowerCase()}`}
               />

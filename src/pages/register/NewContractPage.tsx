@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import {
@@ -102,6 +102,8 @@ export default function NewContractPage() {
   const [processError, setProcessError] = useState<string | null>(null)
 
   const honeypot = useHoneypot()
+  const [searchParams] = useSearchParams()
+  const planParam = searchParams.get('plan')?.toUpperCase() ?? null
 
   // ── Catalog query ──────────────────────────────────────────────────────────
   const {
@@ -113,6 +115,17 @@ export default function NewContractPage() {
     queryFn: () => getBillingCatalog(TENANT, CLIENT_ID),
     staleTime: 5 * 60 * 1000, // 5 min
   })
+
+  // ── Auto-select plan from URL param ───────────────────────────────────────
+  useEffect(() => {
+    if (!planParam || plans.length === 0 || selectedPlan) return
+    const match = plans.find((p) => p.code.toUpperCase() === planParam)
+    if (!match) return
+    const version = match.versions?.find((v) => v.status === 'ACTIVE') ?? match.versions?.[0] ?? null
+    if (!version) return
+    const billingOption = version.billing_options?.find((o) => o.is_default) ?? version.billing_options?.[0] ?? null
+    handlePlanSelect(match, version, billingOption)
+  }, [plans, planParam]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -143,7 +156,7 @@ export default function NewContractPage() {
         contractor_email: contractor.email,
         contractor_first_name: contractor.firstName,
         contractor_last_name: contractor.lastName,
-        ...(selectedPlan.subscriber_type === 'TENANT' && {
+        ...(contractor.companyName && {
           company_name: contractor.companyName,
           company_slug: contractor.companySlug,
           company_tax_id: contractor.companyTaxId || undefined,
@@ -247,7 +260,6 @@ export default function NewContractPage() {
 
                 {step === 1 && selectedPlan && (
                   <ContractorStep
-                    subscriberType={selectedPlan.subscriber_type}
                     defaultValues={contractor ?? {}}
                     onBack={() => setStep(0)}
                     onNext={handleContractorNext}

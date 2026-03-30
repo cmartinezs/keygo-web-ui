@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import type { SubscriberType } from '@/types/billing'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,11 +23,12 @@ const basePersonalSchema = z.object({
 })
 
 const companySchema = z.object({
-  companyName: z.string().min(2, 'El nombre de la empresa es requerido (mín. 2 caracteres)'),
+  companyName: z.string().min(2, 'El nombre de la empresa es requerido (mín. 2 caracteres)').optional().or(z.literal('')),
   companySlug: z
     .string()
-    .min(2, 'El identificador de empresa es requerido')
-    .regex(/^[a-z0-9-]+$/, 'Solo letras minúsculas, números y guiones'),
+    .regex(/^[a-z0-9-]*$/, 'Solo letras minúsculas, números y guiones')
+    .optional()
+    .or(z.literal('')),
   companyTaxId: z.string().optional(),
   companyAddress: z.string().optional(),
 })
@@ -71,7 +71,6 @@ const inputCls = (hasError: boolean) =>
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface ContractorStepProps {
-  subscriberType: SubscriberType
   defaultValues: Partial<ContractorFormValues>
   onBack: () => void
   onNext: (data: ContractorFormValues) => void
@@ -79,13 +78,8 @@ interface ContractorStepProps {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ContractorStep({ subscriberType, defaultValues, onBack, onNext }: ContractorStepProps) {
-  const isBusiness = subscriberType === 'TENANT'
-  // Cast B2C schema to the full form type so useForm resolver types align.
-  // B2C only validates personal fields; company fields remain undefined (all optional).
-  const schema = isBusiness
-    ? businessSchema
-    : (basePersonalSchema as unknown as typeof businessSchema)
+export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStepProps) {
+  const schema = businessSchema
 
   const {
     register,
@@ -98,28 +92,23 @@ export function ContractorStep({ subscriberType, defaultValues, onBack, onNext }
     defaultValues,
   })
 
-  // Auto-generate companySlug from companyName (B2B only)
+  // Auto-generate companySlug from companyName
   const companyName = watch('companyName')
   useEffect(() => {
-    if (!isBusiness) return
     const currentSlug = watch('companySlug')
     const autoSlug = toSlug(companyName ?? '')
     // Only auto-fill if the user hasn't manually edited the slug
-    if (!currentSlug || currentSlug === toSlug(defaultValues.companyName ?? '')) {
+    if (autoSlug && (!currentSlug || currentSlug === toSlug(defaultValues.companyName ?? ''))) {
       setValue('companySlug', autoSlug, { shouldValidate: false })
     }
-  }, [companyName, isBusiness]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [companyName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <form onSubmit={handleSubmit((data) => onNext(data as ContractorFormValues))} className="flex flex-col gap-6" noValidate>
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-slate-900">
-          {isBusiness ? 'Datos de la empresa' : 'Tus datos personales'}
-        </h2>
+        <h2 className="text-2xl font-bold text-slate-900">Tus datos</h2>
         <p className="mt-1 text-slate-500 text-sm">
-          {isBusiness
-            ? 'Información de la empresa y del responsable del contrato.'
-            : 'Información del titular de la cuenta.'}
+          Información del titular de la cuenta y, si aplica, de la empresa.
         </p>
       </div>
 
@@ -154,22 +143,21 @@ export function ContractorStep({ subscriberType, defaultValues, onBack, onNext }
             id="email"
             type="email"
             autoComplete="email"
-            placeholder={isBusiness ? 'admin@empresa.com' : 'tu@email.com'}
+            placeholder="tu@email.com"
             className={inputCls(!!errors.email)}
             {...register('email')}
           />
         </Field>
 
-        {/* Company info (B2B only) */}
-        {isBusiness && (
-          <>
+        {/* Company info (optional) */}
+        <>
             <div className="border-t border-slate-100 pt-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
                 Datos de la empresa
               </p>
             </div>
 
-            <Field id="companyName" label="Nombre de la empresa" error={errors.companyName?.message}>
+            <Field id="companyName" label="Nombre de la empresa" optional error={errors.companyName?.message}>
               <input
                 id="companyName"
                 type="text"
@@ -183,6 +171,7 @@ export function ContractorStep({ subscriberType, defaultValues, onBack, onNext }
             <Field
               id="companySlug"
               label="Identificador único (slug)"
+              optional
               error={errors.companySlug?.message}
             >
               <div className="relative">
@@ -227,7 +216,6 @@ export function ContractorStep({ subscriberType, defaultValues, onBack, onNext }
               </Field>
             </div>
           </>
-        )}
       </div>
 
       <div className="flex gap-3 pt-2">

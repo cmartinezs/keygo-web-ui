@@ -1,4 +1,4 @@
-import type { AppPlan, AppPlanEntitlement } from '@/types/billing'
+import type { AppPlan, AppPlanEntitlement, BillingPeriod } from '@/types/billing'
 
 export type PlanId = 'free' | 'personal' | 'team' | 'business' | 'flex' | 'enterprise' | 'starter' | 'on-premise'
 
@@ -13,75 +13,6 @@ export interface PlanInfo {
   features: string[]
   cta: string
   highlighted: boolean
-}
-
-export const PLANS: PlanInfo[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: 'Gratis',
-    priceNote: 'Para siempre',
-    description:
-      'Ideal para proyectos personales, prototipos o equipos pequeños que quieren explorar KeyGo sin compromisos.',
-    features: [
-      'Hasta 500 usuarios activos',
-      '1 tenant incluido',
-      '2 aplicaciones cliente',
-      'Inicio de sesión seguro',
-      'Soporte por comunidad',
-    ],
-    cta: 'Empezar gratis',
-    highlighted: false,
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    badge: 'Más popular',
-    price: '49 €',
-    priceNote: 'por mes · facturación anual',
-    description:
-      'Para empresas en crecimiento que necesitan gestionar múltiples organizaciones con control total y soporte dedicado.',
-    features: [
-      'Usuarios ilimitados',
-      'Tenants ilimitados',
-      'Aplicaciones cliente ilimitadas',
-      'Roles y permisos avanzados',
-      'SSO con tus sistemas actuales',
-      'Soporte prioritario por email',
-      'SLA 99.9 % de disponibilidad',
-    ],
-    cta: 'Iniciar prueba de 14 días',
-    highlighted: true,
-  },
-  {
-    id: 'on-premise',
-    name: 'On-Premise',
-    price: 'A medida',
-    priceNote: 'Licencia perpetua o suscripción',
-    description:
-      'Despliega KeyGo en tu propia infraestructura. Control total sobre tus datos, sin dependencias externas.',
-    features: [
-      'Instalación en tus servidores',
-      'Datos 100 % bajo tu control',
-      'Integración con Active Directory / LDAP',
-      'Acceso completo al código fuente',
-      'Soporte de implementación incluido',
-      'Actualizaciones y parches garantizados',
-    ],
-    cta: 'Contactar con ventas',
-    highlighted: false,
-  },
-]
-
-export const PLAN_NAMES: Record<PlanId, string> = {
-  free: 'Free',
-  personal: 'Personal',
-  team: 'Team',
-  business: 'Business',
-  flex: 'Flex',
-  enterprise: 'Enterprise',
-  starter: 'Starter',
-  'on-premise': 'On-Premise',
 }
 
 export function formatCurrencyPrice(amount: number, currency: string): string {
@@ -119,6 +50,48 @@ const CTA_MAP: Partial<Record<string, string>> = {
   BUSINESS:   'Iniciar prueba de 14 días',
   FLEX:       'Ver tarifas Flex',
   ENTERPRISE: 'Hablar con ventas',
+}
+
+export function computePlanInfoForPeriod(plan: AppPlan, activePeriod: BillingPeriod): PlanInfo {
+  const base = appPlanToPlanInfo(plan)
+  const version = plan.versions?.find((v) => v.status === 'ACTIVE') ?? plan.versions?.[0]
+  if (!version) return base
+
+  const isFree = version.free
+  const billingOptions = version.billing_options ?? []
+  const activeOption =
+    billingOptions.find((o) => o.billing_period === activePeriod) ??
+    billingOptions.find((o) => o.is_default) ??
+    billingOptions[0] ??
+    null
+  const isYearly = !isFree && activeOption?.billing_period === 'YEARLY'
+  const monthlyOption = billingOptions.find((o) => o.billing_period === 'MONTHLY') ?? null
+
+  const price = (() => {
+    if (isFree || !activeOption || activeOption.base_price === 0) return base.price
+    if (isYearly) return formatCurrencyPrice(activeOption.base_price / 12, version.currency)
+    return formatCurrencyPrice(activeOption.base_price, version.currency)
+  })()
+
+  const priceNote = (() => {
+    if (isFree || !activeOption || activeOption.base_price === 0) return base.priceNote
+    return 'por mes'
+  })()
+
+  const annualSavingsNote = (() => {
+    if (!isYearly || !activeOption || activeOption.base_price === 0) return undefined
+    const yearlyTotal = formatCurrencyPrice(activeOption.base_price, version.currency)
+    if (monthlyOption && monthlyOption.base_price > 0) {
+      const saving = formatCurrencyPrice(
+        monthlyOption.base_price * 12 - activeOption.base_price,
+        version.currency,
+      )
+      return `Pagas ${yearlyTotal}/año · ahorras ${saving} vs mensual`
+    }
+    return `Facturado ${yearlyTotal} al año`
+  })()
+
+  return { ...base, price, priceNote, annualSavingsNote }
 }
 
 export function appPlanToPlanInfo(plan: AppPlan): PlanInfo {
