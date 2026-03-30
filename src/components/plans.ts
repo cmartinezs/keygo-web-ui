@@ -27,12 +27,12 @@ export function formatCurrencyPrice(amount: number, currency: string): string {
 // ── Mapper: AppPlan (API) → PlanInfo (UI) ────────────────────────────────────
 
 const METRIC_LABELS: Partial<Record<string, (e: AppPlanEntitlement) => string | null>> = {
-  MAX_TENANTS:            (e) => e.is_enabled ? `Hasta un máximo de ${e.limit_value ?? '∞'} tenants` : null,
-  MAX_TENANT_USERS:       (e) => e.is_enabled ? `Hasta ${e.limit_value ?? '∞'} identidades` : null,
-  MAX_CLIENT_APPS:        (e) => e.is_enabled ? `Hasta ${e.limit_value ?? '∞'} aplicaciones` : null,
-  MAX_ADMINS:             (e) => e.is_enabled ? `Hasta ${e.limit_value ?? '∞'} administradores` : null,
-  MAX_MONTHLY_TOKENS:     (e) => e.is_enabled ? `${(e.limit_value ?? 0).toLocaleString('es-MX')} tokens/mes` : null,
-  AUDIT_LOG_DAYS:         (e) => e.is_enabled ? `Logs de auditoría ${e.limit_value ?? '∞'} días` : null,
+  MAX_TENANTS:            (e) => e.is_enabled ? (e.limit_value ? `Hasta ${e.limit_value} tenants` : 'Tenants ilimitados') : null,
+  MAX_TENANT_USERS:       (e) => e.is_enabled ? (e.limit_value ? `Hasta ${e.limit_value} identidades` : 'Identidades ilimitadas') : null,
+  MAX_CLIENT_APPS:        (e) => e.is_enabled ? (e.limit_value ? `Hasta ${e.limit_value} aplicaciones` : 'Aplicaciones ilimitadas') : null,
+  MAX_ADMINS:             (e) => e.is_enabled ? (e.limit_value ? `Hasta ${e.limit_value} administradores` : 'Administradores ilimitados') : null,
+  MAX_MONTHLY_TOKENS:     (e) => e.is_enabled ? (e.limit_value ? `${e.limit_value.toLocaleString('es-MX')} tokens/mes` : 'Tokens ilimitados') : null,
+  AUDIT_LOG_DAYS:         (e) => e.is_enabled ? (e.limit_value ? `Logs de auditoría ${e.limit_value} días` : 'Logs de auditoría sin límite') : null,
   SOCIAL_LOGIN:           (e) => e.is_enabled ? 'Social Login incluido' : null,
   CUSTOM_DOMAIN:          (e) => e.is_enabled ? 'Dominio personalizado' : null,
   SLA_UPTIME_PCT:         (e) => e.is_enabled && e.limit_value != null ? `SLA ${(e.limit_value / 10).toFixed(1)}% uptime` : null,

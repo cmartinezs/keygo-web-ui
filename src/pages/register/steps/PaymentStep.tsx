@@ -13,13 +13,16 @@ interface PaymentStepProps {
 }
 
 export function PaymentStep({ plan, version, billingOption, isProcessing, error, onMockApprove }: PaymentStepProps) {
-  const priceLabel = !billingOption || billingOption.base_price === 0
-    ? 'Gratis'
-    : new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency: version.currency,
-        minimumFractionDigits: 0,
-      }).format(billingOption.base_price)
+  const isCustomPricing = plan.code === 'FLEX' || plan.code === 'ENTERPRISE'
+  const priceLabel = isCustomPricing
+    ? 'A medida · contactar'
+    : !billingOption || billingOption.base_price === 0
+      ? 'Gratis'
+      : new Intl.NumberFormat('es-MX', {
+          style: 'currency',
+          currency: version.currency,
+          minimumFractionDigits: 0,
+        }).format(billingOption.base_price)
 
   return (
     <div className="flex flex-col gap-6 items-center text-center">

@@ -1,4 +1,4 @@
-import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption } from '@/types/billing'
+import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPeriod } from '@/types/billing'
 import { PlanCatalogGrid } from '@/components/PlanCatalogGrid'
 
 interface PlanStepProps {
@@ -7,6 +7,8 @@ interface PlanStepProps {
   isError: boolean
   selectedPlanId: string | null
   selectedVersionId: string | null
+  activePeriod: BillingPeriod
+  onPeriodChange: (period: BillingPeriod) => void
   onSelect: (plan: AppPlan, version: AppPlanVersion, billingOption: AppPlanVersionBillingOption | null) => void
   onNext: () => void
 }
@@ -17,6 +19,8 @@ export function PlanStep({
   isError,
   selectedPlanId,
   selectedVersionId,
+  activePeriod,
+  onPeriodChange,
   onSelect,
   onNext,
 }: PlanStepProps) {
@@ -37,6 +41,8 @@ export function PlanStep({
         isLoading={isLoading}
         isError={isError}
         selectedVersionId={selectedVersionId}
+        activePeriod={activePeriod}
+        onPeriodChange={onPeriodChange}
         onSelect={onSelect}
       />
 

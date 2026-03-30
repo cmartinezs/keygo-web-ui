@@ -20,24 +20,29 @@ interface TermsStepProps {
   version: AppPlanVersion
   billingOption: AppPlanVersionBillingOption | null
   contractor: ContractorFormValues
+  acceptTerms: boolean
+  acceptPrivacy: boolean
+  onAcceptTerms: (value: boolean) => void
+  onAcceptPrivacy: (value: boolean) => void
   onBack: () => void
   onSubmit: () => void
   isSubmitting: boolean
   error: string | null
 }
 
-export function TermsStep({ plan, version, billingOption, contractor, onBack, onSubmit, isSubmitting, error }: TermsStepProps) {
-  const [acceptTerms, setAcceptTerms] = useState(false)
-  const [acceptPrivacy, setAcceptPrivacy] = useState(false)
+export function TermsStep({ plan, version, billingOption, contractor, acceptTerms, acceptPrivacy, onAcceptTerms, onAcceptPrivacy, onBack, onSubmit, isSubmitting, error }: TermsStepProps) {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
 
   const canSubmit = acceptTerms && acceptPrivacy && !isSubmitting && (!TURNSTILE_ENABLED || !!captchaToken)
 
-  const priceLabel = !billingOption || billingOption.base_price === 0
-    ? 'Gratis'
-    : `${new Intl.NumberFormat('es-MX', { style: 'currency', currency: version.currency, minimumFractionDigits: 0 }).format(billingOption.base_price)}${PERIOD_LABELS[billingOption.billing_period] ?? ''}`
+  const isCustomPricing = plan.code === 'FLEX' || plan.code === 'ENTERPRISE'
+  const priceLabel = isCustomPricing
+    ? 'A medida · contactar'
+    : !billingOption || billingOption.base_price === 0
+      ? 'Gratis'
+      : `${new Intl.NumberFormat('es-MX', { style: 'currency', currency: version.currency, minimumFractionDigits: 0 }).format(billingOption.base_price)}${PERIOD_LABELS[billingOption.billing_period] ?? ''}`
 
   return (
     <div className="flex flex-col gap-6">
@@ -90,16 +95,26 @@ export function TermsStep({ plan, version, billingOption, contractor, onBack, on
 
       {/* Terms checkboxes */}
       <fieldset className="flex flex-col gap-3">
-        <legend className="text-sm font-semibold text-slate-700 mb-1">Aceptación de condiciones</legend>
+        <legend className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 mb-1">
+          Aceptación de condiciones
+          <span className="relative group/tip">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-slate-200 text-slate-500 text-[10px] font-bold cursor-default select-none">?</span>
+            <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg bg-slate-800 text-white text-xs px-3 py-2 text-center shadow-lg opacity-0 group-hover/tip:opacity-100 transition-opacity z-10">
+              Haz clic en el enlace, lee el documento completo y pulsa «Acepto» para marcar cada casilla.
+              <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+            </span>
+          </span>
+        </legend>
 
-        <label className="flex items-start gap-3 cursor-pointer group">
+        <label className="flex items-start gap-3 cursor-default group">
           <input
             type="checkbox"
             checked={acceptTerms}
-            onChange={(e) => setAcceptTerms(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 cursor-pointer"
+            readOnly
+            tabIndex={-1}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 cursor-default pointer-events-none"
           />
-          <span className="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">
+          <span className="text-sm text-slate-600">
             He leído y acepto los{' '}
             <button
               type="button"
@@ -112,14 +127,15 @@ export function TermsStep({ plan, version, billingOption, contractor, onBack, on
           </span>
         </label>
 
-        <label className="flex items-start gap-3 cursor-pointer group">
+        <label className="flex items-start gap-3 cursor-default group">
           <input
             type="checkbox"
             checked={acceptPrivacy}
-            onChange={(e) => setAcceptPrivacy(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1 cursor-pointer"
+            readOnly
+            tabIndex={-1}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 cursor-default pointer-events-none"
           />
-          <span className="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">
+          <span className="text-sm text-slate-600">
             He leído y acepto la{' '}
             <button
               type="button"
@@ -139,7 +155,7 @@ export function TermsStep({ plan, version, billingOption, contractor, onBack, on
         isOpen={showTermsModal}
         title="Terms of Use and Service"
         onClose={() => setShowTermsModal(false)}
-        onAccept={() => setAcceptTerms(true)}
+        onAccept={() => onAcceptTerms(true)}
       >
         <TermsOfServiceContent />
       </PolicyModal>
@@ -148,7 +164,7 @@ export function TermsStep({ plan, version, billingOption, contractor, onBack, on
         isOpen={showPrivacyModal}
         title="Privacy Policy"
         onClose={() => setShowPrivacyModal(false)}
-        onAccept={() => setAcceptPrivacy(true)}
+        onAccept={() => onAcceptPrivacy(true)}
       >
         <PrivacyPolicyContent />
       </PolicyModal>

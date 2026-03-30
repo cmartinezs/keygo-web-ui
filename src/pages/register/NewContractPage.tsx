@@ -11,7 +11,7 @@ import {
   BILLING_QUERY_KEYS,
 } from '@/api/billing'
 import { TENANT, CLIENT_ID } from '@/api/client'
-import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption } from '@/types/billing'
+import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPeriod } from '@/types/billing'
 import { PlanStep } from './steps/PlanStep'
 import { ContractorStep } from './steps/ContractorStep'
 import type { ContractorFormValues } from './steps/ContractorStep'
@@ -92,7 +92,11 @@ export default function NewContractPage() {
   const [selectedPlan, setSelectedPlan] = useState<AppPlan | null>(null)
   const [selectedVersion, setSelectedVersion] = useState<AppPlanVersion | null>(null)
   const [selectedBillingOption, setSelectedBillingOption] = useState<AppPlanVersionBillingOption | null>(null)
+  const [activePeriod, setActivePeriod] = useState<BillingPeriod>('MONTHLY')
   const [contractor, setContractor] = useState<ContractorFormValues | null>(null)
+
+  const [acceptTerms, setAcceptTerms] = useState(false)
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false)
 
   // post-createContract
   const [contractId, setContractId] = useState<string | null>(null)
@@ -104,6 +108,7 @@ export default function NewContractPage() {
   const honeypot = useHoneypot()
   const [searchParams] = useSearchParams()
   const planParam = searchParams.get('plan')?.toUpperCase() ?? null
+  const periodParam = searchParams.get('period')?.toUpperCase() as BillingPeriod | null
 
   // ── Catalog query ──────────────────────────────────────────────────────────
   const {
@@ -116,14 +121,25 @@ export default function NewContractPage() {
     staleTime: 5 * 60 * 1000, // 5 min
   })
 
-  // ── Auto-select plan from URL param ───────────────────────────────────────
+  // ── Auto-select plan and period from URL params ───────────────────────────
+  useEffect(() => {
+    if (periodParam === 'YEARLY' || periodParam === 'MONTHLY') {
+      setActivePeriod(periodParam)
+    }
+  }, [periodParam])
+
   useEffect(() => {
     if (!planParam || plans.length === 0 || selectedPlan) return
     const match = plans.find((p) => p.code.toUpperCase() === planParam)
     if (!match) return
     const version = match.versions?.find((v) => v.status === 'ACTIVE') ?? match.versions?.[0] ?? null
     if (!version) return
-    const billingOption = version.billing_options?.find((o) => o.is_default) ?? version.billing_options?.[0] ?? null
+    const period = periodParam === 'YEARLY' || periodParam === 'MONTHLY' ? periodParam : 'MONTHLY'
+    const billingOption =
+      version.billing_options?.find((o) => o.billing_period === period) ??
+      version.billing_options?.find((o) => o.is_default) ??
+      version.billing_options?.[0] ??
+      null
     handlePlanSelect(match, version, billingOption)
   }, [plans, planParam]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -252,8 +268,8 @@ export default function NewContractPage() {
                     isLoading={catalogLoading}
                     isError={catalogError}
                     selectedPlanId={selectedPlan?.id ?? null}
-                    selectedVersionId={selectedVersion?.id ?? null}
-                    onSelect={handlePlanSelect}
+                    selectedVersionId={selectedVersion?.id ?? null}                    activePeriod={activePeriod}
+                    onPeriodChange={setActivePeriod}                    onSelect={handlePlanSelect}
                     onNext={() => setStep(1)}
                   />
                 )}
@@ -272,6 +288,10 @@ export default function NewContractPage() {
                     version={selectedVersion}
                     billingOption={selectedBillingOption}
                     contractor={contractor}
+                    acceptTerms={acceptTerms}
+                    acceptPrivacy={acceptPrivacy}
+                    onAcceptTerms={setAcceptTerms}
+                    onAcceptPrivacy={setAcceptPrivacy}
                     onBack={() => setStep(1)}
                     onSubmit={handleTermsSubmit}
                     isSubmitting={isProcessing}

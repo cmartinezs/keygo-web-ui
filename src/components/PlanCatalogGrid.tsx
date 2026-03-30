@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPeriod } from '@/types/billing'
 import { PlanCard } from './PlanCard'
 import { PlanCardSelect } from './PlanCardSelect'
@@ -12,6 +12,8 @@ type DisplayMode = {
 type SelectMode = {
   mode: 'select'
   selectedVersionId: string | null
+  activePeriod: BillingPeriod
+  onPeriodChange: (period: BillingPeriod) => void
   onSelect: (plan: AppPlan, version: AppPlanVersion, billingOption: AppPlanVersionBillingOption | null) => void
 }
 
@@ -30,7 +32,9 @@ function hasMultiplePeriods(plans: AppPlan[]): boolean {
 
 export function PlanCatalogGrid(props: PlanCatalogGridProps) {
   const { plans, isLoading = false, isError = false } = props
-  const [activePeriod, setActivePeriod] = useState<BillingPeriod>('MONTHLY')
+  const [displayPeriod, setDisplayPeriod] = useState<BillingPeriod>('MONTHLY')
+  const activePeriod = props.mode === 'select' ? props.activePeriod : displayPeriod
+  const setActivePeriod = props.mode === 'select' ? props.onPeriodChange : setDisplayPeriod
   const showPeriodToggle = hasMultiplePeriods(plans)
 
   if (isLoading) {
@@ -88,33 +92,142 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
         </div>
       )}
 
-      <div
-        role={props.mode === 'select' ? 'radiogroup' : undefined}
-        aria-label={props.mode === 'select' ? 'Planes disponibles' : undefined}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch"
-      >
-        {plans.map((plan) => {
-          if (props.mode === 'display') {
-            return (
-              <PlanCard
-                key={plan.id}
-                plan={computePlanInfoForPeriod(plan, activePeriod)}
-                mode="display"
-                ctaTo={`${props.ctaBase ?? '/subscribe'}?plan=${plan.code.toLowerCase()}`}
-              />
-            )
-          }
-          return (
-            <PlanCardSelect
+      <PlanCarousel plans={plans} activePeriod={activePeriod} mode={props} />
+    </div>
+  )
+}
+
+// ── Carousel ──────────────────────────────────────────────────────────────────
+
+interface PlanCarouselProps {
+  plans: AppPlan[]
+  activePeriod: BillingPeriod
+  mode: PlanCatalogGridProps
+}
+
+function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
+  const total = plans.length
+  const [index, setIndex] = useState(0)
+  const [visibleCount, setVisibleCount] = useState(3)
+
+  useEffect(() => {
+    function update() {
+      if (window.innerWidth >= 1024) setVisibleCount(3)
+      else if (window.innerWidth >= 640) setVisibleCount(2)
+      else setVisibleCount(1)
+    }
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+
+  // Clamp index when visible count or total changes
+  useEffect(() => {
+    setIndex((i) => Math.min(i, Math.max(0, total - visibleCount)))
+  }, [visibleCount, total])
+
+  // Auto-scroll to the selected plan when it changes (e.g. pre-selected from URL)
+  useEffect(() => {
+    if (mode.mode !== 'select' || !mode.selectedVersionId) return
+    const selectedIdx = plans.findIndex((p) =>
+      p.versions?.some((v) => v.id === mode.selectedVersionId)
+    )
+    if (selectedIdx === -1) return
+    const maxIdx = Math.max(0, total - visibleCount)
+    setIndex(Math.min(selectedIdx, maxIdx))
+  }, [mode.mode === 'select' ? mode.selectedVersionId : null, visibleCount, total]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const maxIndex = Math.max(0, total - visibleCount)
+  const cardPct = 100 / visibleCount
+  const prev = () => setIndex((i) => Math.max(0, i - 1))
+  const next = () => setIndex((i) => Math.min(maxIndex, i + 1))
+
+  // A card is "visible" if it's within the current window
+  const isVisible = (i: number) => i >= index && i < index + visibleCount
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Track — pt-5 for badge above, pb-4 for shadow/border below */}
+      <div className="overflow-hidden pt-5 pb-4">
+        <div
+          className="flex transition-transform duration-500 ease-in-out items-stretch gap-0"
+          style={{ transform: `translateX(-${index * cardPct}%)` }}
+          role={mode.mode === 'select' ? 'radiogroup' : undefined}
+          aria-label={mode.mode === 'select' ? 'Planes disponibles' : undefined}
+        >
+          {plans.map((plan, i) => (
+            <div
               key={plan.id}
-              plan={plan}
-              selectedVersionId={props.selectedVersionId}
-              activePeriod={activePeriod}
-              onSelect={props.onSelect}
-            />
-          )
-        })}
+              className="shrink-0 px-2 self-stretch"
+              style={{ width: `${cardPct}%` }}
+              aria-hidden={!isVisible(i)}
+            >
+              {mode.mode === 'display' ? (
+                <PlanCard
+                  plan={computePlanInfoForPeriod(plan, activePeriod)}
+                  mode="display"
+                  ctaTo={`${mode.ctaBase ?? '/subscribe'}?plan=${plan.code.toLowerCase()}&period=${activePeriod.toLowerCase()}`}
+                />
+              ) : (
+                <PlanCardSelect
+                  plan={plan}
+                  selectedVersionId={mode.selectedVersionId}
+                  activePeriod={activePeriod}
+                  onSelect={(p, v, b) => { mode.onSelect(p, v, b) }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
       </div>
+
+      {/* Controls — only shown when there's something to navigate */}
+      {total > visibleCount && (
+        <div className="flex items-center justify-center gap-4">
+          <button
+            type="button"
+            onClick={prev}
+            disabled={index === 0}
+            aria-label="Plan anterior"
+            className="w-9 h-9 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+
+          {/* Dots — one per "position" */}
+          <div className="flex gap-2" role="tablist" aria-label="Selección de plan">
+            {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Posición ${i + 1}`}
+                onClick={() => setIndex(i)}
+                className={`rounded-full transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none ${
+                  i === index
+                    ? 'w-6 h-2.5 bg-indigo-600'
+                    : 'w-2.5 h-2.5 bg-slate-300 hover:bg-slate-400'
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={next}
+            disabled={index === maxIndex}
+            aria-label="Plan siguiente"
+            className="w-9 h-9 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

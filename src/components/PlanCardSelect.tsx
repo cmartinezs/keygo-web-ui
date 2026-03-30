@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPeriod } from '@/types/billing'
 import { PlanCard } from './PlanCard'
 import { computePlanInfoForPeriod } from './plans'
@@ -25,6 +26,14 @@ export function PlanCardSelect({ plan, selectedVersionId, activePeriod, onSelect
   const isSelected = version?.id === selectedVersionId
 
   if (!version) return null
+
+  // When the period toggle changes while this card is already selected,
+  // propagate the new billing option to the parent immediately.
+  useEffect(() => {
+    if (isSelected) {
+      onSelect(plan, version, activeOption)
+    }
+  }, [activePeriod]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const planInfo = computePlanInfoForPeriod(plan, activePeriod)
 
