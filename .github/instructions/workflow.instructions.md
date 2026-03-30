@@ -73,6 +73,17 @@ Después de cada cambio, verificar los siguientes puntos en orden:
 - [ ] Se usan clases Tailwind; no CSS inline (salvo casos excepcionales documentados).
 - [ ] Elementos interactivos tienen texto visible o `aria-label`.
 
+### Accesibilidad (WCAG 2.2 AA — ver `accessibility.instructions.md`)
+> Solo aplica cuando el cambio afecta componentes UI (`.tsx`). Todo componente nuevo o modificado debe cumplir estas reglas; no se exige retroactivo, pero no se deben introducir regresiones.
+- [ ] Se usa HTML semántico (`button`, `a`, `label`, landmarks); sin `div` clickeables.
+- [ ] Inputs del formulario tienen `<label>` asociado con `htmlFor` (no solo `placeholder`).
+- [ ] Errores de formulario usan `aria-describedby` + `aria-invalid` y son visibles con más que color.
+- [ ] Icon buttons tienen `aria-label`; iconos decorativos tienen `aria-hidden="true"`.
+- [ ] Foco visible en todos los elementos interactivos (no se elimina `outline` sin alternativa).
+- [ ] Modales atrapan el foco y se cierran con `Escape`.
+- [ ] Mensajes de estado/loading se anuncian con `role="status"` o `role="alert"`.
+- [ ] La UI no bloquea zoom del navegador ni se rompe en viewport móvil.
+
 ### Testing
 - [ ] Si se crea un componente nuevo, existe al menos un test básico de render.
 - [ ] Los mocks MSW usan el shape correcto de `BaseResponse<T>`.
@@ -108,6 +119,7 @@ Si durante la implementación se descubre un patrón, convención o restricción
    - Patrón de auth → `auth.instructions.md`
    - Patrón de estilo → `styling.instructions.md`
    - Patrón de test → `testing.instructions.md`
+   - Patrón de accesibilidad → `accessibility.instructions.md`
    - Workflow o convención general → este mismo archivo
 
 2. Usar el formato:

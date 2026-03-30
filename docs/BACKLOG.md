@@ -17,7 +17,8 @@ Actualizado automáticamente por el agente al final de cada implementación.
 4. [🔵 Mejoras y refactorizaciones](#-mejoras-y-refactorizaciones)
 5. [🟠 Deuda técnica](#-deuda-técnica)
 6. [⏳ Endpoints pendientes de backend](#-endpoints-pendientes-de-backend)
-7. [✅ Completados](#-completados)
+7. [♿ Backlog de accesibilidad](#-backlog-de-accesibilidad)
+8. [✅ Completados](#-completados)
 
 ---
 
@@ -311,6 +312,84 @@ Actualizado automáticamente por el agente al final de cada implementación.
 | 13 | Suspender usuario | PUT | `/api/v1/tenants/{slug}/users/{userId}/suspend` | T-033 | `tenant-admin/UsersPage` |
 | 14 | Activar usuario | PUT | `/api/v1/tenants/{slug}/users/{userId}/activate` | T-033 | `tenant-admin/UsersPage` |
 | 15 | Sesiones de usuario (admin) | GET | `/api/v1/tenants/{slug}/users/{userId}/sessions` | T-037 | `tenant-admin/UsersPage` |
+
+---
+
+## ♿ Backlog de accesibilidad
+
+> Items derivados de la política [`docs/ACCESSIBILITY-CHILE.md`](./ACCESSIBILITY-CHILE.md) (WCAG 2.2 AA, Ley N° 20.422).  
+> Incorporación paulatina: todo componente **nuevo o modificado** debe cumplir las reglas. No se exige auditoría retroactiva en un solo PR.
+
+### [ACCESIBILIDAD] Skip-to-content link global
+- **Detectado en:** `src/layouts/` / `index.html` — ausente en toda la aplicación
+- **Descripción:** Añadir un enlace "Saltar al contenido principal" visible al recibir foco, apuntando a `<main id="main-content">`. Es un requisito básico de navegación por teclado (WCAG 2.4.1).
+- **Afecta:** `AdminLayout.tsx` y cualquier layout que se implemente.
+- **Prioridad:** 🟡 Media-Alta
+- **Fecha detección:** 2026-03-30
+
+### [ACCESIBILIDAD] Foco visible consistente en toda la app
+- **Detectado en:** `src/styles/index.css` — revisar si se elimina el outline por defecto sin reemplazo
+- **Descripción:** Asegurar que todos los elementos interactivos tienen `focus-visible:ring` o equivalente visual claro. Prohibido `outline: none` sin alternativa (WCAG 2.4.7).
+- **Acción:** Auditar el CSS global y los componentes shadcn/ui personalizados.
+- **Prioridad:** 🟡 Media-Alta
+- **Fecha detección:** 2026-03-30
+
+### [ACCESIBILIDAD] PolicyModal — trampa de foco y cierre por Escape
+- **Detectado en:** `src/components/PolicyModal.tsx`
+- **Descripción:** Verificar que el modal usa el componente `<Dialog>` de shadcn/ui (que gestiona foco y `Escape` automáticamente) o implementar manejo manual de foco. Sin trampa de foco, los usuarios de teclado/lector de pantalla quedan fuera del modal (WCAG 2.1.2).
+- **Prioridad:** 🟡 Media-Alta
+- **Fecha detección:** 2026-03-30
+
+### [ACCESIBILIDAD] Formulario de login — labels, errores y autofill
+- **Detectado en:** `src/pages/login/LoginPage.tsx`
+- **Descripción:**
+  - Verificar que todos los inputs tienen `<label>` asociado (no solo `placeholder`).
+  - Errores de autenticación deben anunciarse con `role="alert"` y no solo con color.
+  - Añadir `autocomplete="username"` / `autocomplete="current-password"` para compatibilidad con gestores de contraseñas.
+- **Norma:** WCAG 1.3.5, 3.3.1, 3.3.2
+- **Prioridad:** 🟡 Media-Alta
+- **Fecha detección:** 2026-03-30
+
+### [ACCESIBILIDAD] Formulario de registro multistep — accesibilidad por paso
+- **Detectado en:** `src/pages/register/steps/` (ContractorStep, PlanStep, TermsStep, PaymentStep…)
+- **Descripción:**
+  - Cada paso debe anunciar su título al cambiar (puede usarse `aria-live` o mover el foco al heading del paso).
+  - Los inputs deben tener labels explícitos y errores asociados con `aria-describedby`.
+  - El indicador de progreso debe ser perceptible sin depender solo de color.
+- **Norma:** WCAG 1.3.1, 3.3.1, 4.1.3
+- **Prioridad:** 🟡 Media
+- **Fecha detección:** 2026-03-30
+
+### [ACCESIBILIDAD] LandingNav — menú mobile accesible
+- **Detectado en:** `src/pages/landing/LandingNav.tsx` — menú `hidden md:flex` sin hamburger alternativo
+- **Descripción:** Implementar menú desplegable accesible para `< md`: botón hamburger con `aria-expanded`, `aria-controls`, cierre con `Escape` y trampa de foco opcional. Relacionado con la mejora UX ya registrada.
+- **Norma:** WCAG 2.1.1, 4.1.2
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-03-30
+
+### [ACCESIBILIDAD] Turnstile CAPTCHA — opción alternativa accesible
+- **Detectado en:** `src/components/TurnstileWidget.tsx`
+- **Descripción:** El CAPTCHA visual puede bloquear usuarios con discapacidad visual. Verificar que Cloudflare Turnstile ofrece el modo "challenge" accesible o que existe un flujo alternativo. Si no hay alternativa, documentar como limitación conocida.
+- **Norma:** WCAG 1.1.1; sección 5.8 de ACCESSIBILITY-CHILE.md
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-03-30
+
+### [ACCESIBILIDAD] Dashboard admin — tablas y gráficos con alternativas textuales
+- **Detectado en:** `src/pages/admin/dashboard/` (IamCoreRow, SecurityRow, RankingsRow…)
+- **Descripción:** Los componentes de dashboard que muestran datos numéricos o gráficos deben:
+  - Usar `<table>` con `<caption>` y `<th scope>` para datos tabulares.
+  - Proveer alternativa textual o `aria-label` en gráficos.
+  - Anunciar actualizaciones en tiempo real con `aria-live="polite"`.
+- **Norma:** WCAG 1.1.1, 1.3.1
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-03-30
+
+### [ACCESIBILIDAD] Integrar eslint-plugin-jsx-a11y
+- **Detectado en:** Todo el proyecto — sin análisis estático de accesibilidad
+- **Descripción:** Instalar `eslint-plugin-jsx-a11y` junto con los plugins de ESLint pendientes (ver deuda técnica). Activar reglas recomendadas para detectar automáticamente violaciones de accesibilidad en cada commit.
+- **Dependencia:** Requiere resolver primero `[DEUDA] ESLint plugin faltante`.
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-03-30
 
 ---
 

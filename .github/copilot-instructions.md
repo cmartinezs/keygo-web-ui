@@ -76,6 +76,17 @@ Al finalizar **cada implementación**, ejecutar sin excepción:
 5. **Auto-aprendizaje** — si se descubre un patrón nuevo no documentado, añadirlo al archivo de instructions correspondiente.
 6. **Resumen post-implementación** — entregar el resumen estructurado definido en `workflow.instructions.md`.
 
+## Accesibilidad — norma chilena
+
+Este proyecto adopta **WCAG 2.2 nivel AA** como estándar técnico, con base en la **Ley N° 20.422** y los Decretos N° 1/2015 y N° 14/2014 de Chile.
+
+- **Documento normativo:** [`docs/ACCESSIBILITY-CHILE.md`](../docs/ACCESSIBILITY-CHILE.md) — política completa, requisitos obligatorios, Definition of Done, checklist para agentes AI y criterios de PR.
+- **Instrucciones para el agente:** [`.github/instructions/accessibility.instructions.md`](./instructions/accessibility.instructions.md) — reglas condensadas aplicables en cada componente `.tsx`.
+- **Incorporación paulatina:** todo componente **nuevo o modificado** debe cumplir las reglas. No se exige una auditoría retroactiva completa en cada PR, pero sí que no se introduzcan regresiones.
+- La accesibilidad **prevalece sobre la implementación visual** cuando hay conflicto.
+
+---
+
 ## Contrato backend — documentos vivos
 
 Ambos documentos se actualizan cada vez que el backend introduce cambios.
@@ -93,4 +104,6 @@ Ambos documentos se actualizan cada vez que el backend introduce cambios.
 - [docs/FRONTEND_DEVELOPER_GUIDE.md](../docs/FRONTEND_DEVELOPER_GUIDE.md) — Endpoints, flujo PKCE, convenciones de rol, checklist de seguridad.
 - [docs/api-docs.json](../docs/api-docs.json) — Especificación OpenAPI v3 del backend (fuente de verdad técnica).
 - [docs/BACKLOG.md](../docs/BACKLOG.md) — Features, mejoras y deuda técnica pendientes.
+- [docs/ACCESSIBILITY-CHILE.md](../docs/ACCESSIBILITY-CHILE.md) — Política de accesibilidad (WCAG 2.2 AA, Ley N° 20.422). Consultar antes de crear o modificar cualquier componente UI.
+- [.github/instructions/accessibility.instructions.md](./instructions/accessibility.instructions.md) — Reglas condensadas de accesibilidad para el agente AI.
 - [.github/instructions/workflow.instructions.md](./instructions/workflow.instructions.md) — Reglas de auto-aprendizaje, auto-corrección, revisión de consistencia y actualización de documentación.
