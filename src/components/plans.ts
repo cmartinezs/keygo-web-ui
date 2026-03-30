@@ -8,6 +8,7 @@ export interface PlanInfo {
   badge?: string
   price: string
   priceNote: string
+  annualSavingsNote?: string
   description: string
   features: string[]
   cta: string
@@ -83,6 +84,15 @@ export const PLAN_NAMES: Record<PlanId, string> = {
   'on-premise': 'On-Premise',
 }
 
+export function formatCurrencyPrice(amount: number, currency: string): string {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
 // ── Mapper: AppPlan (API) → PlanInfo (UI) ────────────────────────────────────
 
 const METRIC_LABELS: Partial<Record<string, (e: AppPlanEntitlement) => string | null>> = {
@@ -112,7 +122,6 @@ const CTA_MAP: Partial<Record<string, string>> = {
 }
 
 export function appPlanToPlanInfo(plan: AppPlan): PlanInfo {
-  console.log(`[plans] Mapping plan ${plan.code} (${plan.name})`)
   const version = plan.versions?.[0]
   const isFree = !version || version.free
   const defaultOption = version?.billing_options.find((o) => o.is_default) ?? version?.billing_options[0]
@@ -122,7 +131,7 @@ export function appPlanToPlanInfo(plan: AppPlan): PlanInfo {
       ? plan.code === 'ENTERPRISE' || plan.code === 'FLEX'
         ? 'A medida'
         : 'Gratis'
-      : `$${defaultOption.base_price.toFixed(0)}`
+      : formatCurrencyPrice(defaultOption.base_price, version!.currency)
 
   const priceNote =
     isFree || !defaultOption || defaultOption.base_price === 0
@@ -134,14 +143,8 @@ export function appPlanToPlanInfo(plan: AppPlan): PlanInfo {
         : 'por mes'
 
   const features = plan.entitlements
-    .map((e) => {
-      const label = METRIC_LABELS[e.metric_code]?.(e) ?? null
-      console.log(`[plans] ${plan.code} | ${e.metric_code} is_enabled=${e.is_enabled} limit_value=${e.limit_value} => "${label}"`)
-      return label
-    })
+    .map((e) => METRIC_LABELS[e.metric_code]?.(e) ?? null)
     .filter((f): f is string => f !== null)
-
-  console.debug(`[plans] ${plan.code} → features (${features.length}):`, features)
 
   return {
     id: plan.code.toLowerCase() as PlanId,

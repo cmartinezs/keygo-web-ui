@@ -62,9 +62,17 @@ export function PlanCard(props: PlanCardProps) {
         <div className={`text-4xl font-extrabold mb-1 ${highlighted ? 'text-white' : 'text-slate-900'}`}>
           {plan.price}
         </div>
-        <div className={`text-sm mb-4 ${highlighted ? 'text-indigo-200' : 'text-slate-400'}`}>
+        <div className={`text-sm mb-1 ${highlighted ? 'text-indigo-200' : 'text-slate-400'}`}>
           {plan.priceNote}
         </div>
+        {plan.annualSavingsNote && (
+          <div className={`text-xs font-medium mb-4 px-2 py-1 rounded-md w-fit ${
+            highlighted ? 'bg-indigo-500 text-indigo-100' : 'bg-emerald-50 text-emerald-700'
+          }`}>
+            {plan.annualSavingsNote}
+          </div>
+        )}
+        {!plan.annualSavingsNote && <div className="mb-4" />}
         <p className={`text-sm leading-relaxed ${highlighted ? 'text-indigo-100' : 'text-slate-500'}`}>
           {plan.description}
         </p>

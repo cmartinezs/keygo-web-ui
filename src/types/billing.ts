@@ -47,7 +47,6 @@ export interface AppPlan {
   code: string
   name: string
   description: string | null
-  subscriber_type?: SubscriberType
   status: PlanStatus
   is_public: boolean
   versions: AppPlanVersion[]
