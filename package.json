@@ -15,12 +15,14 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "^5.0.0",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.4.0",
     "jose": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.72.0",
     "react-router-dom": "^7.0.0",
+    "react-syntax-highlighter": "^16.1.1",
     "sonner": "^2.0.7",
     "zod": "^4.3.6",
     "zustand": "^5.0.0"

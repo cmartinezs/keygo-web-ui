@@ -61,9 +61,11 @@
     - [Admin — Tenants](#106-admin-tenants)
     - [Admin — Detalle de Tenant](#107-admin-detalle-de-tenant)
     - [Admin — Crear Tenant](#108-admin-crear-tenant)
+  - [Developer docs](#109-developer-docs--srcpagesdevelopers)
 11. [Cómo extender el proyecto](#11-cómo-extender-el-proyecto)
 12. [Deuda técnica consolidada](#12-deuda-técnica-consolidada)
 13. [Documentación de trazabilidad](#13-documentación-de-trazabilidad)
+14. [Plan de pruebas de seguridad de login](#14-plan-de-pruebas-de-seguridad-de-login)
 
 ---
 
@@ -236,6 +238,7 @@ Zustand
 
 **Construcción:**
 - Define todas las rutas con `<Routes>` de React Router 7.
+- Expone una ruta pública adicional `/developers` para la documentación de integración.
 - Wrap de rutas `/admin/*` con `<RoleGuard roles={['ADMIN']}>` + `<AdminLayout>`.
 - Rutas anidadas de tenant (`/:slug` y `/new`) como hijos de `TenantsPage` (patrón master-detail con `<Outlet>`).
 - `<Toaster>` de `sonner` con tema dark y posición `bottom-right`.
@@ -250,8 +253,10 @@ Zustand
 | Ruta | Componente | Guardia |
 |------|-----------|---------|
 | `/` | `LandingPage` | Pública |
+| `/developers` | `DeveloperDocsPage` | Pública |
 | `/login` | `LoginPage` | Pública |
 | `/subscribe` | `NewContractPage` | Pública |
+| `/subscribe/resume` | `Navigate -> /subscribe?resume=1` | Pública |
 | `/register` | `UserRegisterPage` | Pública |
 | `/admin` | `RoleGuard` → `AdminLayout` | `ADMIN` |
 | `/admin/dashboard` | `AdminDashboardPage` | — |
@@ -1036,7 +1041,7 @@ div.flex.h-screen
 
 ### 10.1 Landing — `src/pages/landing/`
 
-**`LandingPage.tsx`** — Composición pura. Monta `LandingNav` + 6 secciones + `CTASection` + `ScrollToTop`. Sin estado ni data fetching.
+**`LandingPage.tsx`** — Composición casi pura. Monta `LandingNav` + 6 secciones + `CTASection` + `ScrollToTop` y consume un flag de navegación en `location.state` para forzar scroll al inicio cuando se vuelve desde `/developers`.
 
 **Secciones:**
 | Archivo | Propósito | Notas |
@@ -1047,10 +1052,12 @@ div.flex.h-screen
 | `HowItWorksSection.tsx` | 3 pasos del flujo de auth | Array de datos inline |
 | `RolesSection.tsx` | Tarjetas de los 3 roles | Mapeados desde `AppRole` values |
 | `PricingSection.tsx` | Grid de plan cards en modo display | Usa `PlanCard` + `PLANS` |
-| `DevelopersSection.tsx` | Recursos para devs | 2 de 3 items marcados "próximamente" |
+| `DevelopersSection.tsx` | Recursos para devs | Enlaza la guía pública de integración y deja solo SDKs como pendiente |
 | `CTASection.tsx` | Footer con CTA final y copyright | Año dinámico: `new Date().getFullYear()` |
 
 **Decisión de diseño:** Cada sección es un componente independiente para facilitar su mantenimiento y reemplazo. `LandingPage` no contiene lógica — solo composición.
+
+**Actualización relevante:** `DevelopersSection.tsx` pasó de ser un bloque meramente promocional a un punto de entrada funcional hacia la guía pública `/developers`, usando `Link` de React Router para navegar a la documentación y al ancla de endpoints.
 
 ---
 
@@ -1104,6 +1111,7 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:**
 - **Estado de la página:** `step` (0–4 | 'done'), `selectedPlan`, `selectedVersion`, `contractor`, `contractId`, `isProcessing`, `processError`.
 - **Catálogo:** `useQuery` con `BILLING_QUERY_KEYS.catalog` → `getBillingCatalog()`. TTL de 5 min.
+- **Modo reanudación integrado:** desde el mismo wizard (`/subscribe`) permite lookup por ID de contrato en el paso 4 (email), hidrata plan/version desde catálogo y reposiciona el flujo en email o pago según el estado del contrato.
 - **Pasos:**
   - 0 → `PlanStep`: selección desde catálogo API, toggle de periodicidad.
   - 1 → `ContractorStep`: formulario RHF+Zod diferenciado B2B/B2C.
@@ -1266,6 +1274,24 @@ const mutation = useMutation({
 
 ---
 
+### 10.9 Developer docs — `src/pages/developers/`
+
+**`DeveloperDocsPage.tsx`**
+
+**Propósito:** página pública que documenta dos modelos de integración con KeyGo: login propio y login integrado de keygo-ui como hosted login.
+
+**Construcción:** organiza el contenido en cinco bloques: hero introductorio, comparativa de estrategias, sección de login propio, sección de login integrado, catálogo mínimo de endpoints y checklist de seguridad. Usa arrays inline para prerrequisitos, endpoints y reglas, renderiza snippets con subcomponentes locales `CodePanel`, `JsonPanel` y `QueryStringPanel`, tablas de campos con `FieldTable`, tabs de I/O con `EndpointIoTabs`, tabs de catálogo con `EndpointCatalogTabs`, y normaliza el scroll de entrada con `useLocation`: sin hash sube al tope; con hash hace scroll a la sección objetivo. El bloque de endpoints se presenta como tabs accesibles por endpoint para reducir altura visual y facilitar comparación rápida. Las tabs del catálogo usan etiquetas concisas (`Authorize`, `Login`, `Token`, `JWKS`) en layout con `flex-wrap` para evitar scroll horizontal en pantallas estrechas. El endpoint activo muestra método HTTP, requisito de auth/sesión y alterna en tabs entre `Request` y `Response`: `Request` muestra tablas de campos por canal (`queryParams` y/o `requestBody`) más ejemplos (query string para `queryParams`, JSON para `requestBody`), mientras `Response` muestra formato, tabla de campos y ejemplos JSON. Cada bloque usa una lista `examples[]` para soportar variantes excluyentes del mismo endpoint (por ejemplo, `authorization_code` y `refresh_token` en `/oauth2/token`).
+
+**Integración:** se registra en `App.tsx` bajo la ruta pública `/developers`, reutiliza `AppFooter` para mantener consistencia visual con el resto del acceso público, es enlazada desde `src/pages/landing/DevelopersSection.tsx` y al volver al landing navega con `state={{ scrollToTop: true }}` para resetear la posición vertical de la home.
+
+**Decisión de diseño:** se implementó como página pública separada, no como una subsección adicional del landing, para permitir un contenido más profundo, navegable por anclas y con snippets de código sin sobrecargar la home de marketing.
+
+**Estrategia:** documentación embebida en la SPA pública. El contenido es framework-agnóstico y describe el contrato HTTP real del backend en lugar de exponer helpers internos del proyecto.
+
+**Puntos de mejora / deuda técnica conocida:** la guía describe el patrón de login central soportado por el backend, pero la pantalla pública de login actual sigue parametrizada al tenant y client configurados por defecto; si se quiere ofrecer hosted login multi-tenant real desde esta misma SPA, habrá que aceptar parámetros dinámicos en la ruta de login.
+
+---
+
 ## 11. Cómo extender el proyecto
 
 ### Añadir una nueva página de admin
@@ -1364,3 +1390,30 @@ Se incorporó la carpeta `docs/tracking-telemetry/` para consolidar la estrategi
 ### Decisión de diseño
 
 Se eligió desacoplar esta temática en una carpeta dedicada para evitar sobrecargar la guía técnica principal y permitir evolución independiente del plan de telemetría sin mezclarlo con documentación de módulos de código ya implementados.
+
+---
+
+## 14. Plan de pruebas de seguridad de login
+
+Se incorporó `docs/SECURITY_LOGIN_TEST_PLAN.md` como documento operativo para validar hardening del flujo OAuth2/PKCE desde una perspectiva defensiva.
+
+**Propósito:** estandarizar pruebas repetibles sobre login y protección de credenciales, priorizando riesgos de autenticación indebida (por ejemplo, conocer solo `tenantSlug`) y abuso de sesión/código.
+
+**Construcción:** el plan está organizado por bloques de riesgo (tenant/client/redirect, sesión intermedia, PKCE/state/code, robo de credenciales, CORS/CSRF), cada uno con casos de prueba, resultado esperado y severidad.
+
+**Integración:** complementa `docs/AUTH_FLOW.md` (flujo y contratos), `docs/FRONTEND_DEVELOPER_GUIDE.md` (guía de implementación) y `docs/api-docs.json` (fuente de verdad técnica de endpoints).
+
+**Artefacto operativo asociado:** `docs/SECURITY_LOGIN_RUNBOOK.md` traduce el plan a una secuencia ejecutable con comandos `curl`, checklist `PASS/FAIL` y plantilla de evidencia para ejecución repetible en dev/staging.
+
+**Sistema automatizado asociado:** se agregó `scripts/security-login/` con un menú central (`scripts/security-login.sh`) para ejecutar casos críticos de forma semiautomática. Estructura:
+- `scripts/security-login/menu.sh`: selección de `.env.*`, menú de ejecución y orquestación.
+- `scripts/security-login/lib.sh`: carga de entorno, utilidades HTTP y generación de reportes.
+- `scripts/security-login/cases.sh`: implementación de casos automatizados (`T01`, `T02`, `T03`, `T05`, `T06`, `T08`, `T10-T12`).
+
+Los reportes se guardan en `tmp/security-login-reports/` con timestamp por ejecución.
+
+**Decisión de diseño:** separar pruebas de seguridad en un documento independiente evita mezclar checklists operativos con la guía técnica general y facilita su uso por QA/Seguridad en ciclos de regresión.
+
+**Estrategia:** enfoque de validación por abuso de flujo (negative testing) más evidencia reproducible, en lugar de checklist genérico de cumplimiento.
+
+**Puntos de mejora / deuda técnica conocida:** el plan no sustituye un pentest externo; conviene complementarlo con automatización parcial (scripts CI) y pruebas de DAST en staging.

@@ -1,9 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import LandingPage from './pages/landing/LandingPage'
+import DeveloperDocsPage from './pages/developers/DeveloperDocsPage'
 import LoginPage from './pages/login/LoginPage'
 import NewContractPage from './pages/register/NewContractPage'
-import ResumeContractPage from './pages/register/ResumeContractPage'
 import UserRegisterPage from './pages/register/UserRegisterPage'
 import { RoleGuard } from './auth/roleGuard'
 import AdminLayout from './layouts/AdminLayout'
@@ -18,9 +18,10 @@ export default function App() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/developers" element={<DeveloperDocsPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/subscribe" element={<NewContractPage />} />
-        <Route path="/subscribe/resume" element={<ResumeContractPage />} />
+        <Route path="/subscribe/resume" element={<Navigate to="/subscribe?resume=1" replace />} />
         <Route path="/register" element={<UserRegisterPage />} />
 
         {/* Admin — role ADMIN */}

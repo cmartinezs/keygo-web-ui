@@ -29,6 +29,31 @@ Referencia del flujo OAuth 2.0 Authorization Code + PKCE implementado en KeyGo S
 
 ---
 
+### [`SECURITY_LOGIN_TEST_PLAN.md`](SECURITY_LOGIN_TEST_PLAN.md)
+**Audiencia:** Frontend, backend, QA y seguridad.
+
+Plan operativo de pruebas de seguridad para login OAuth2/PKCE, centrado en:
+- validación de `tenantSlug` + `client_id` + `redirect_uri`;
+- acoplamiento de sesión entre authorize y login;
+- abuso de `authorization_code`, PKCE y `state`;
+- intentos de robo de credenciales/tokens (storage, logs, transporte, CORS/CSRF).
+
+Incluye casos negativos priorizados, ejemplos con `curl`, criterios de severidad y formato de evidencia reproducible.
+
+---
+
+### [`SECURITY_LOGIN_RUNBOOK.md`](SECURITY_LOGIN_RUNBOOK.md)
+**Audiencia:** QA, seguridad y desarrolladores en ejecución de pruebas.
+
+Runbook paso a paso con comandos listos para validar los casos críticos del plan de seguridad de login.
+Incluye:
+- setup de variables por ambiente;
+- comandos `curl` por caso prioritario;
+- checklist `PASS/FAIL`;
+- plantilla de reporte y criterios de escalamiento.
+
+---
+
 ### [`api-docs.json`](api-docs.json)
 **Audiencia:** Desarrolladores frontend y herramientas de generación de código.
 

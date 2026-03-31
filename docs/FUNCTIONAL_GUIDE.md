@@ -2,7 +2,7 @@
 
 > **Audiencia:** usuario final, product owner o cualquier persona que quiera entender qué puede hacer con la aplicación, sin necesidad de conocimiento técnico.
 >
-> **Última actualización:** 2026-03-28
+> **Última actualización:** 2026-03-31
 
 ---
 
@@ -13,6 +13,7 @@
    - 1.2 [Iniciar sesión](#12-iniciar-sesión)
    - 1.3 [Contratar un plan (Nuevo contrato)](#13-contratar-un-plan-nuevo-contrato)
    - 1.4 [Registrarse como usuario de una organización](#14-registrarse-como-usuario-de-una-organización)
+  - 1.5 [Documentación para desarrolladores](#15-documentación-para-desarrolladores)
 2. [Panel de Administrador Global (ADMIN)](#2-panel-de-administrador-global-admin)
    - 2.1 [Dashboard — Panel de control](#21-dashboard--panel-de-control)
    - 2.2 [Gestión de Tenants](#22-gestión-de-tenants)
@@ -99,12 +100,12 @@ Tres planes disponibles, cada uno con un botón "Contratar" que lleva al asisten
 
 #### Sección Desarrolladores (`#developers`)
 
-Recursos para integradores (algunos marcados como próximamente):
+Recursos para integradores:
 
-- **Documentación técnica** — _Próximamente_.
+- **Documentación técnica** — abre una guía pública en `/developers`.
 - **SDKs e integraciones** — _Próximamente_.
-- **API REST completa** — Especificación OpenAPI v3 disponible.
-- Portal de documentación — _Próximamente_ (con opción de notificación futura).
+- **API REST completa** — enlaza a la sección de endpoints esenciales dentro de la guía pública.
+- Banner destacado con acceso directo a la guía de integración.
 
 #### Pie de página / CTA final
 
@@ -200,6 +201,8 @@ Acciones: "← Atrás", "Continuar →".
 - Se envía un código OTP de 6 dígitos al email introducido.
 - Interface de 6 cajas con auto-foco, soporte de pegado y navegación con Retroceso.
 - Al confirmar: llama a `POST /billing/contracts/{id}/verify-email`.
+- Desde este mismo paso se puede **retomar una contratación existente** ingresando el ID de contrato, sin salir de `/subscribe`.
+- Si el contrato ya quedó en pago pendiente/listo para activar, el asistente avanza directamente al paso 5.
 
 #### Paso 5 — Pago
 
@@ -233,6 +236,27 @@ Permite a usuarios finales de una organización ya existente darse de alta en Ke
 #### Paso 2 — Datos personales
 
 _(En desarrollo)_ Formulario con los datos personales del nuevo usuario.
+
+---
+
+### 1.5 Documentación para desarrolladores
+
+**Ruta:** `/developers`
+
+Pantalla pública orientada a equipos técnicos que necesitan integrar KeyGo en una aplicación externa.
+
+#### Qué puede hacer el usuario en esta página
+
+- Comparar dos modelos de integración: **login propio** y **login integrado de keygo-ui**.
+- Revisar los prerrequisitos mínimos antes de iniciar el flujo OAuth2/PKCE.
+- Consultar una secuencia resumida para implementar un formulario propio de login.
+- Consultar la secuencia recomendada para reutilizar keygo-ui como login central hospedado.
+- Ver el contrato mínimo de endpoints necesarios para la integración, incluyendo método HTTP, requisitos de sesión/auth y tablas de campos para `queryParams`, `requestBody` y `response`, con ejemplos de `queryParams` en formato URL (`?campo=valor&otro=valor`) y ejemplos JSON para body/response.
+- Acceder desde la misma página al login público de KeyGo o volver al landing.
+
+#### Resultado esperado
+
+La página no autentica ni modifica datos. Su objetivo es orientar la integración técnica y servir como punto público de referencia enlazado desde la landing. Al entrar sin hash abre desde el inicio; si la URL contiene un hash como `#endpoints`, la vista se posiciona directamente en esa sección. Cuando el usuario usa la acción "Volver al landing", la home se abre nuevamente desde el inicio de la página.
 
 ---
 

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 const resources = [
   {
     icon: (
@@ -6,10 +8,10 @@ const resources = [
       </svg>
     ),
     title: 'Documentación técnica',
-    description: 'Guías de integración, referencia de la API REST y ejemplos de código para conectar KeyGo con tus aplicaciones.',
-    cta: 'Próximamente',
-    ctaHref: '#developers',
-    pending: true,
+    description: 'Guía pública para integrar KeyGo con login propio o reutilizando el login hospedado de keygo-ui.',
+    cta: 'Abrir guía',
+    ctaHref: '/developers',
+    pending: false,
   },
   {
     icon: (
@@ -20,7 +22,7 @@ const resources = [
     title: 'SDKs e integraciones',
     description: 'Librerías oficiales y ejemplos listos para usar en los frameworks y lenguajes más populares.',
     cta: 'Próximamente',
-    ctaHref: '#developers',
+    ctaHref: '/developers',
     pending: true,
   },
   {
@@ -32,8 +34,8 @@ const resources = [
     ),
     title: 'API REST completa',
     description: 'Endpoints documentados con OpenAPI v3. Integra KeyGo en tu stack en minutos con contratos claros y respuestas consistentes.',
-    cta: 'Ver especificación',
-    ctaHref: '#developers',
+    cta: 'Ver endpoints',
+    ctaHref: '/developers#endpoints',
     pending: false,
   },
 ]
@@ -66,47 +68,42 @@ export function DevelopersSection() {
               </div>
               <h3 className="text-white font-bold text-lg mb-3">{title}</h3>
               <p className="text-slate-400 text-sm leading-relaxed flex-1 mb-6">{description}</p>
-              <a
-                href={ctaHref}
-                className={`inline-flex items-center gap-2 text-sm font-semibold ${
-                  pending
-                    ? 'text-slate-500 cursor-default'
-                    : 'text-indigo-400 hover:text-indigo-300 transition-colors'
-                }`}
-                aria-disabled={pending}
-              >
-                {cta}
-                {!pending && (
+              {pending ? (
+                <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-500">
+                  <span>{cta}</span>
+                  <span className="rounded-full bg-slate-700 px-2 py-0.5 text-xs font-medium text-slate-400">
+                    En desarrollo
+                  </span>
+                </div>
+              ) : (
+                <Link
+                  to={ctaHref}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-400 transition-colors hover:text-indigo-300 focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                >
+                  {cta}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
-                )}
-                {pending && (
-                  <span className="bg-slate-700 text-slate-400 text-xs font-medium px-2 py-0.5 rounded-full">
-                    En desarrollo
-                  </span>
-                )}
-              </a>
+                </Link>
+              )}
             </div>
           ))}
         </div>
 
-        {/* Banner de documentación futura */}
         <div className="rounded-2xl border border-indigo-500/30 bg-indigo-950/40 px-8 py-10 flex flex-col sm:flex-row items-center gap-6 justify-between">
           <div>
-            <h3 className="text-white font-bold text-xl mb-2">Portal de documentación — próximamente</h3>
+            <h3 className="text-white font-bold text-xl mb-2">Guía de integración disponible</h3>
             <p className="text-slate-400 text-sm max-w-xl">
-              Estamos preparando un portal completo con guías paso a paso, referencia de la API,
-              tutoriales y ejemplos de integración para los principales frameworks.
+              Revisa el flujo recomendado para login propio y el patrón de login central con keygo-ui,
+              junto con el contrato mínimo de endpoints que debes implementar.
             </p>
           </div>
-          <a
-            href="#developers"
-            aria-disabled
-            className="shrink-0 border border-indigo-500/40 text-indigo-400 text-sm font-semibold px-6 py-3 rounded-xl cursor-default opacity-60"
+          <Link
+            to="/developers"
+            className="shrink-0 rounded-xl border border-indigo-400/40 px-6 py-3 text-sm font-semibold text-indigo-300 transition-colors hover:border-indigo-300 hover:bg-indigo-400/10 focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           >
-            Avisarme cuando esté listo
-          </a>
+            Leer documentación
+          </Link>
         </div>
       </div>
     </section>

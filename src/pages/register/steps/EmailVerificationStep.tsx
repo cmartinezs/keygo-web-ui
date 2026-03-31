@@ -11,15 +11,28 @@ interface EmailVerificationStepProps {
 
 // ── OTP input: 6 boxes, auto-focus next ──────────────────────────────────────
 
-function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
+interface OtpInputProps {
+  onComplete: (code: string) => void
+  shouldReset: boolean
+  onInputChange: () => void
+}
+
+function OtpInput({ onComplete, shouldReset, onInputChange }: OtpInputProps) {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(''))
   const refs = useRef<Array<HTMLInputElement | null>>(Array(6).fill(null))
+
+  useEffect(() => {
+    if (!shouldReset) return
+    setDigits(Array(6).fill(''))
+    refs.current[0]?.focus()
+  }, [shouldReset])
 
   function handleChange(index: number, value: string) {
     const digit = value.replace(/\D/g, '').slice(-1)
     const next = [...digits]
     next[index] = digit
     setDigits(next)
+    onInputChange()
 
     if (digit && index < 5) {
       refs.current[index + 1]?.focus()
@@ -40,6 +53,7 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
     e.preventDefault()
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
     if (!pasted) return
+    onInputChange()
     const next = Array(6).fill('')
     pasted.split('').forEach((ch, i) => { next[i] = ch })
     setDigits(next)
@@ -74,6 +88,7 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
 export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, onResend, isResending }: EmailVerificationStepProps) {
   const [code, setCode] = useState('')
   const [cooldown, setCooldown] = useState(0)
+  const [isErrorVisible, setIsErrorVisible] = useState(false)
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -81,8 +96,20 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
     return () => clearTimeout(t)
   }, [cooldown])
 
+  useEffect(() => {
+    if (!error) return
+    setCode('')
+    setIsErrorVisible(true)
+  }, [error])
+
   function handleComplete(otp: string) {
     setCode(otp)
+  }
+
+  function handleInputChange() {
+    if (isErrorVisible) {
+      setIsErrorVisible(false)
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -114,10 +141,10 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
       </div>
 
       <div className="w-full max-w-xs">
-        <OtpInput onComplete={handleComplete} />
+        <OtpInput onComplete={handleComplete} shouldReset={Boolean(error)} onInputChange={handleInputChange} />
       </div>
 
-      {error && (
+      {error && isErrorVisible && (
         <div className="w-full rounded-lg bg-red-50 border border-red-200 p-4 flex gap-3" role="alert">
           <svg className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
