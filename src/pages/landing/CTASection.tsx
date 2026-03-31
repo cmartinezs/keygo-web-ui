@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { AppFooter } from '@/components/AppFooter'
 
 export function CTASection() {
   return (
@@ -46,35 +47,7 @@ export function CTASection() {
         </div>
       </section>
 
-      {/* Footer inferior */}
-      <div className="border-t border-white/10 px-4 py-8">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <svg
-              className="w-5 h-5 text-indigo-400"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"
-              />
-            </svg>
-            <span className="text-white font-semibold">KeyGo</span>
-          </div>
-          <p className="text-slate-500 text-sm">
-            © {new Date().getFullYear()} KeyGo. Plataforma de gestión de identidades.
-          </p>
-          <div className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-emerald-400 rounded-full" aria-hidden="true" />
-            <span className="text-slate-400 text-sm">Todos los sistemas operativos</span>
-          </div>
-        </div>
-      </div>
+      <AppFooter variant="dark" />
     </footer>
   )
 }

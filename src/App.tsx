@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 import LandingPage from './pages/landing/LandingPage'
 import LoginPage from './pages/login/LoginPage'
 import NewContractPage from './pages/register/NewContractPage'
+import ResumeContractPage from './pages/register/ResumeContractPage'
 import UserRegisterPage from './pages/register/UserRegisterPage'
 import { RoleGuard } from './auth/roleGuard'
 import AdminLayout from './layouts/AdminLayout'
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/subscribe" element={<NewContractPage />} />
+        <Route path="/subscribe/resume" element={<ResumeContractPage />} />
         <Route path="/register" element={<UserRegisterPage />} />
 
         {/* Admin — role ADMIN */}

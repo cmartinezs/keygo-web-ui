@@ -8,6 +8,7 @@ import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
 import { env } from '@/config/env'
+import { AppFooter } from '@/components/AppFooter'
 
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
 
@@ -390,8 +391,8 @@ export default function UserRegisterPage() {
         username: data.username,
         email: data.email,
         password: data.password,
-        firstName: data.firstName || undefined,
-        lastName: data.lastName || undefined,
+        first_name: data.firstName || undefined,
+        last_name: data.lastName || undefined,
       })
       setRegisteredEmail(data.email)
     } catch (err) {
@@ -463,6 +464,8 @@ export default function UserRegisterPage() {
           </div>
         </div>
       </main>
+
+      <AppFooter />
     </div>
   )
 }

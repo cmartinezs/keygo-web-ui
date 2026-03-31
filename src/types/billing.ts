@@ -59,7 +59,9 @@ export type ContractStatus =
   | 'PENDING_EMAIL_VERIFICATION'
   | 'PENDING_PAYMENT'
   | 'READY_TO_ACTIVATE'
-  | 'ACTIVATED'
+  | 'ACTIVE'
+  | 'SUPERSEDED'
+  | 'FINALIZED'
   | 'EXPIRED'
   | 'CANCELLED'
   | 'FAILED'
@@ -67,15 +69,14 @@ export type ContractStatus =
 export interface AppContract {
   id: string
   client_app_id: string
+  contractor_id: string | null
   selected_plan_version_id: string
   billing_period: BillingPeriod
-  subscriber_type: SubscriberType
   status: ContractStatus
   contractor_email: string
   contractor_first_name: string
   contractor_last_name: string
   company_name: string | null
-  company_slug: string | null
   email_verified: boolean
   payment_verified: boolean
   expires_at: string
@@ -83,13 +84,13 @@ export interface AppContract {
 }
 
 export interface CreateContractRequest {
+  client_app_id: string
   plan_version_id: string
   billing_period?: BillingPeriod
   contractor_email: string
   contractor_first_name: string
   contractor_last_name: string
   company_name?: string
-  company_slug?: string
   company_tax_id?: string
   company_address?: string
 }

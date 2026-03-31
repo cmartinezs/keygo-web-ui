@@ -565,7 +565,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 px-4 overflow-hidden relative">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 px-4 overflow-hidden relative pb-10">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
@@ -615,6 +615,11 @@ export default function LoginPage() {
           </p>
         )}
       </div>
+
+      {/* Copyright */}
+      <footer className="absolute bottom-3 left-0 right-0 text-center text-xs text-slate-600" role="contentinfo">
+        © {new Date().getFullYear()} KeyGo — All Rights Reserved
+      </footer>
     </div>
   )
 }

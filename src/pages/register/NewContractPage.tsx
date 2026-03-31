@@ -8,6 +8,7 @@ import {
   verifyContractEmail,
   mockApprovePayment,
   activateBillingContract,
+  resendContractVerificationEmail,
   BILLING_QUERY_KEYS,
 } from '@/api/billing'
 import { TENANT, CLIENT_ID } from '@/api/client'
@@ -21,6 +22,7 @@ import { PaymentStep } from './steps/PaymentStep'
 import { SuccessStep } from './steps/SuccessStep'
 import { HoneypotField } from '@/components/HoneypotField'
 import { useHoneypot } from '@/hooks/useHoneypot'
+import { AppFooter } from '@/components/AppFooter'
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 
@@ -104,6 +106,7 @@ export default function NewContractPage() {
   // loading/error state for post-form API calls
   const [isProcessing, setIsProcessing] = useState(false)
   const [processError, setProcessError] = useState<string | null>(null)
+  const [isResending, setIsResending] = useState(false)
 
   const honeypot = useHoneypot()
   const [searchParams] = useSearchParams()
@@ -167,6 +170,7 @@ export default function NewContractPage() {
 
     try {
       const contract = await createBillingContract({
+        client_app_id: selectedPlan.client_app_id,
         plan_version_id: selectedVersion.id,
         ...(selectedBillingOption && { billing_period: selectedBillingOption.billing_period }),
         contractor_email: contractor.email,
@@ -174,7 +178,6 @@ export default function NewContractPage() {
         contractor_last_name: contractor.lastName,
         ...(contractor.companyName && {
           company_name: contractor.companyName,
-          company_slug: contractor.companySlug,
           company_tax_id: contractor.companyTaxId || undefined,
           company_address: contractor.companyAddress || undefined,
         }),
@@ -183,8 +186,8 @@ export default function NewContractPage() {
       setStep(3)
     } catch (err: unknown) {
       const msg = extractErrorMessage(err)
-      if (msg.includes('slug') || msg.includes('INVALID_INPUT')) {
-        setProcessError('El identificador de empresa ya está en uso. Por favor, elige otro.')
+      if (msg.includes('INVALID_INPUT')) {
+        setProcessError('Los datos introducidos no son válidos. Por favor, revísalos e inténtalo de nuevo.')
       } else {
         setProcessError('No se pudo iniciar el contrato. Por favor, inténtalo de nuevo.')
       }
@@ -204,6 +207,19 @@ export default function NewContractPage() {
       setProcessError('El código es incorrecto o ha expirado. Revisa tu correo e inténtalo de nuevo.')
     } finally {
       setIsProcessing(false)
+    }
+  }
+
+  async function handleResend() {
+    if (!contractId) return
+    setIsResending(true)
+    try {
+      await resendContractVerificationEmail(contractId)
+      toast.success('Código reenviado. Revisa tu bandeja de entrada.')
+    } catch {
+      toast.error('No se pudo reenviar el código. Inténtalo de nuevo más tarde.')
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -249,14 +265,13 @@ export default function NewContractPage() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col items-center justify-start py-10 px-4">
+      <main className="flex-1 flex flex-col items-center justify-center py-10 px-4">
         <div className={`w-full ${isWide ? 'max-w-5xl' : 'max-w-3xl'}`}>
           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-10">
             {done && selectedPlan && contractor ? (
               <SuccessStep
                 email={contractor.email}
                 planName={selectedPlan.name}
-                companySlug={contractor.companySlug}
               />
             ) : (
               <>
@@ -305,6 +320,8 @@ export default function NewContractPage() {
                     isSubmitting={isProcessing}
                     error={processError}
                     onSubmit={handleEmailVerification}
+                    onResend={handleResend}
+                    isResending={isResending}
                   />
                 )}
 
@@ -318,11 +335,20 @@ export default function NewContractPage() {
                     onMockApprove={handleMockApprove}
                   />
                 )}
+
+                <p className="text-center text-xs text-slate-400 mt-6 pt-4 border-t border-slate-100">
+                  ¿Iniciaste una contratación antes?{' '}
+                  <Link to="/subscribe/resume" className="text-indigo-600 hover:text-indigo-500 underline-offset-2 hover:underline">
+                    Continuar con un contrato existente
+                  </Link>
+                </p>
               </>
             )}
           </div>
         </div>
       </main>
+
+      <AppFooter />
     </div>
   )
 }

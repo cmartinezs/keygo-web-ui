@@ -1,10 +1,12 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface EmailVerificationStepProps {
   email: string
   isSubmitting: boolean
   error: string | null
   onSubmit: (code: string) => void
+  onResend?: () => Promise<void> | void
+  isResending?: boolean
 }
 
 // ── OTP input: 6 boxes, auto-focus next ──────────────────────────────────────
@@ -69,8 +71,15 @@ function OtpInput({ onComplete }: { onComplete: (code: string) => void }) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function EmailVerificationStep({ email, isSubmitting, error, onSubmit }: EmailVerificationStepProps) {
+export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, onResend, isResending }: EmailVerificationStepProps) {
   const [code, setCode] = useState('')
+  const [cooldown, setCooldown] = useState(0)
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [cooldown])
 
   function handleComplete(otp: string) {
     setCode(otp)
@@ -79,6 +88,11 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit }: 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (code.length === 6) onSubmit(code)
+  }
+
+  async function handleResend() {
+    await onResend?.()
+    setCooldown(60)
   }
 
   return (
@@ -133,6 +147,21 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit }: 
           'Verificar código →'
         )}
       </button>
+
+      {onResend && (
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={cooldown > 0 || isResending || isSubmitting}
+          className="text-sm text-indigo-600 hover:text-indigo-500 disabled:text-slate-400 disabled:cursor-not-allowed underline-offset-2 hover:underline transition-colors"
+        >
+          {isResending
+            ? 'Enviando…'
+            : cooldown > 0
+              ? `Reenviar código en ${cooldown}s`
+              : '¿No recibiste el código? Reenviar'}
+        </button>
+      )}
     </form>
   )
 }

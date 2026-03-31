@@ -1,9 +1,10 @@
 // ── Billing API ────────────────────────────────────────────────────────────
-// Endpoints: /api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/*
+// Contract endpoints: /api/v1/billing/contracts/*
+// Catalog/Subscription/Invoice endpoints: /api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/*
 // Auth: public (catalog + contracts); Bearer required (subscription, invoices)
 // Docs: docs/BILLING_FLOW.md  |  docs/api-docs.json §Billing
 
-import { apiClient, appUrl, TENANT, CLIENT_ID } from './client'
+import { apiClient, appUrl, API_V1, TENANT, CLIENT_ID } from './client'
 import type { BaseResponse } from '@/types/base'
 import type {
   AppPlan,
@@ -32,6 +33,7 @@ export const BILLING_QUERY_KEYS = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const billingBase = (tenantSlug: string, clientId: string) =>
   `${appUrl(tenantSlug, clientId)}/billing`
+const contractsBase = `${API_V1}/billing/contracts`
 
 // ── Catalog ───────────────────────────────────────────────────────────────────
 
@@ -67,11 +69,9 @@ export async function getBillingCatalogPlan(
  */
 export async function createBillingContract(
   request: CreateContractRequest,
-  tenantSlug: string = TENANT,
-  clientId: string = CLIENT_ID,
 ): Promise<AppContract> {
   const res = await apiClient.post<BaseResponse<AppContract>>(
-    `${billingBase(tenantSlug, clientId)}/contracts`,
+    contractsBase,
     request,
   )
   return res.data.data!
@@ -84,11 +84,9 @@ export async function createBillingContract(
 export async function verifyContractEmail(
   contractId: string,
   request: VerifyContractEmailRequest,
-  tenantSlug: string = TENANT,
-  clientId: string = CLIENT_ID,
 ): Promise<AppContract> {
   const res = await apiClient.post<BaseResponse<AppContract>>(
-    `${billingBase(tenantSlug, clientId)}/contracts/${contractId}/verify-email`,
+    `${contractsBase}/${contractId}/verify-email`,
     request,
   )
   return res.data.data!
@@ -100,27 +98,23 @@ export async function verifyContractEmail(
  */
 export async function mockApprovePayment(
   contractId: string,
-  tenantSlug: string = TENANT,
-  clientId: string = CLIENT_ID,
 ): Promise<AppContract> {
   const res = await apiClient.post<BaseResponse<AppContract>>(
-    `${billingBase(tenantSlug, clientId)}/contracts/${contractId}/mock-approve-payment`,
+    `${contractsBase}/${contractId}/mock-approve-payment`,
   )
   return res.data.data!
 }
 
 /**
  * POST /billing/contracts/{contractId}/activate — activates the contract.
- * Creates the tenant/user + subscription + first invoice.  Public endpoint.
+ * Creates the user + subscription + first invoice.  Public endpoint.
  * Contract must be in READY_TO_ACTIVATE status.
  */
 export async function activateBillingContract(
   contractId: string,
-  tenantSlug: string = TENANT,
-  clientId: string = CLIENT_ID,
 ): Promise<AppContract> {
   const res = await apiClient.post<BaseResponse<AppContract>>(
-    `${billingBase(tenantSlug, clientId)}/contracts/${contractId}/activate`,
+    `${contractsBase}/${contractId}/activate`,
   )
   return res.data.data!
 }
@@ -131,13 +125,20 @@ export async function activateBillingContract(
  */
 export async function getBillingContract(
   contractId: string,
-  tenantSlug: string = TENANT,
-  clientId: string = CLIENT_ID,
 ): Promise<AppContract> {
   const res = await apiClient.get<BaseResponse<AppContract>>(
-    `${billingBase(tenantSlug, clientId)}/contracts/${contractId}`,
+    `${contractsBase}/${contractId}`,
   )
   return res.data.data!
+}
+
+/**
+ * POST /billing/contracts/{contractId}/resend-verification-email — resends the 6-digit
+ * verification code to the contractor's email.  Public endpoint.
+ * ⏳ Pending backend implementation.
+ */
+export async function resendContractVerificationEmail(contractId: string): Promise<void> {
+  await apiClient.post(`${contractsBase}/${contractId}/resend-verification`)
 }
 
 // ── Subscription (authenticated) ──────────────────────────────────────────────

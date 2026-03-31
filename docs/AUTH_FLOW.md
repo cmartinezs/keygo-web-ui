@@ -741,7 +741,7 @@ flowchart TD
 | `docs/data/DATA_MODEL.md` | Modelo de tablas (`authorization_codes`, `sessions`, `refresh_tokens`, `signing_keys`) |
 | `ARCHITECTURE.md` | Arquitectura hexagonal y ubicacion de use cases/puertos |
 | `docs/design/IMPLEMENTATION_PLAN.md` | Historial de fases implementadas |
-| `postman/KeyGo-Server.postman_collection.json` | Requests de OAuth2/OIDC para pruebas |
+| `docs/postman/KeyGo-Server.postman_collection.json` | Requests de OAuth2/OIDC para pruebas |
 
 ---
 

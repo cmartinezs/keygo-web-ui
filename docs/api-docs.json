@@ -527,7 +527,8 @@
               "enum": [
                 "ACTIVE",
                 "SUSPENDED",
-                "PENDING"
+                "PENDING",
+                "DELETED"
               ]
             }
           },
@@ -1678,7 +1679,7 @@
           {
             "name": "tenantSlug",
             "in": "path",
-            "description": "Tenant slug (suscriptor)",
+            "description": "Tenant slug (creado por el Contractor)",
             "required": true,
             "schema": {
               "type": "string"
@@ -1830,294 +1831,6 @@
             "BearerAuth": []
           }
         ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts": {
-      "post": {
-        "tags": [
-          "Billing — Contracts"
-        ],
-        "summary": "Initiate a subscription contract",
-        "description": "Starts the contracting flow: creates a contract in PENDING_EMAIL_VERIFICATION status. The subscriber must verify their email before payment is collected.",
-        "operationId": "createContract",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Client app client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAppContractRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Contract initiated",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Response"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid plan version or duplicate company slug",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Tenant or client app not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts/{contractId}/verify-email": {
-      "post": {
-        "tags": [
-          "Billing — Contracts"
-        ],
-        "summary": "Verify contract email",
-        "description": "Validates the 6-digit code sent to the contractor's email. Advances contract status from PENDING_EMAIL_VERIFICATION → PENDING_PAYMENT.",
-        "operationId": "verifyEmail_1",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Client app client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "contractId",
-            "in": "path",
-            "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyContractEmailRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Email verified — contract now in PENDING_PAYMENT",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Response"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid or expired verification code",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Contract not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts/{contractId}/mock-approve-payment": {
-      "post": {
-        "tags": [
-          "Billing — Contracts"
-        ],
-        "summary": "[DEV] Mock approve payment",
-        "description": "Simulates a successful payment for a contract in PENDING_PAYMENT status. Only available when `keygo.billing.mock-payment-enabled=true`.",
-        "operationId": "mockApprovePayment",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Client app client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "contractId",
-            "in": "path",
-            "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Payment approved (mock)",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Response"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Contract not found or mock disabled",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts/{contractId}/activate": {
-      "post": {
-        "tags": [
-          "Billing — Contracts"
-        ],
-        "summary": "Activate contract",
-        "description": "Activates a READY_TO_ACTIVATE contract: creates the tenant/user, subscription and first invoice.",
-        "operationId": "activateContract",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Client app client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "contractId",
-            "in": "path",
-            "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Contract activated",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Response"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Contract not in READY_TO_ACTIVATE status",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Contract not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/tenants/{tenantSlug}/apps/{clientAppId}/roles": {
@@ -2317,6 +2030,274 @@
           },
           "404": {
             "description": "User or tenant not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/contracts": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Initiate a subscription contract",
+        "description": "Starts the contracting flow: creates a contract in PENDING_EMAIL_VERIFICATION status. The target client app is identified by clientAppId in the request body.",
+        "operationId": "createContract",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAppContractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Contract initiated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid plan version or missing fields",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client app not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/contracts/{contractId}/verify-email": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Verify contract email",
+        "description": "Validates the 6-digit code sent to the contractor's email. Advances contract status from PENDING_EMAIL_VERIFICATION → PENDING_PAYMENT.",
+        "operationId": "verifyEmail_1",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyContractEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified — contract now in PENDING_PAYMENT",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired verification code",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/contracts/{contractId}/resend-verification": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Resend contract verification code",
+        "description": "Resends the 6-digit verification code to the contractor's email. If the current code is still valid, the **same code** is resent (no regeneration). If the code has already expired, a **new code** is generated and the contract updated. Only valid when the contract is in `PENDING_EMAIL_VERIFICATION` status.",
+        "operationId": "resendVerification_1",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verification code resent successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contract is not in PENDING_EMAIL_VERIFICATION status",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/contracts/{contractId}/mock-approve-payment": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "[DEV] Mock approve payment",
+        "description": "Simulates a successful payment for a contract in PENDING_PAYMENT status. Only available when `keygo.billing.mock-payment-enabled=true`.",
+        "operationId": "mockApprovePayment",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment approved (mock)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found or mock disabled",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/contracts/{contractId}/activate": {
+      "post": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Activate contract",
+        "description": "Activates a READY_TO_ACTIVATE contract: creates the subscription and first invoice.",
+        "operationId": "activateContract",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract activated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contract not in READY_TO_ACTIVATE status",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found",
             "content": {
               "*/*": {
                 "schema": {
@@ -2648,13 +2629,13 @@
           "Billing — Subscription"
         ],
         "summary": "Get active subscription",
-        "description": "Returns the current active subscription for the client app. Requires ADMIN_TENANT role.",
+        "description": "Returns the current active subscription for the client app. {tenantSlug} is the tenant created by the Contractor (has contractor_id in DB). Requires ADMIN_TENANT role.",
         "operationId": "getSubscription",
         "parameters": [
           {
             "name": "tenantSlug",
             "in": "path",
-            "description": "Tenant slug (suscriptor)",
+            "description": "Tenant slug (creado por el Contractor)",
             "required": true,
             "schema": {
               "type": "string"
@@ -2721,7 +2702,7 @@
           {
             "name": "tenantSlug",
             "in": "path",
-            "description": "Tenant slug (suscriptor)",
+            "description": "Tenant slug (creado por el Contractor)",
             "required": true,
             "schema": {
               "type": "string"
@@ -2774,68 +2755,6 @@
             "BearerAuth": []
           }
         ]
-      }
-    },
-    "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/contracts/{contractId}": {
-      "get": {
-        "tags": [
-          "Billing — Contracts"
-        ],
-        "summary": "Get contract status",
-        "description": "Returns the current status and details of a subscription contract.",
-        "operationId": "getContract",
-        "parameters": [
-          {
-            "name": "tenantSlug",
-            "in": "path",
-            "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clientId",
-            "in": "path",
-            "description": "Client app client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "contractId",
-            "in": "path",
-            "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Contract retrieved",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/Response"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Contract not found",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponse"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/catalog": {
@@ -3184,6 +3103,104 @@
             "BearerAuth": []
           }
         ]
+      }
+    },
+    "/api/v1/billing/contracts/{contractId}": {
+      "get": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Get contract status",
+        "description": "Returns the current status and details of a subscription contract.",
+        "operationId": "getContract",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contract retrieved",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/billing/contracts/{contractId}/resume": {
+      "get": {
+        "tags": [
+          "Billing — Contracts"
+        ],
+        "summary": "Resume contract onboarding",
+        "description": "Returns the current onboarding state of a contract with UI-oriented hints (`nextAction`, `verificationCodeExpired`). Use this endpoint to restore the frontend flow when the user returns after closing the page. Returns 400 if the contract is in a terminal state (EXPIRED, CANCELLED, FAILED, SUPERSEDED, FINALIZED).",
+        "operationId": "resumeOnboarding",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "path",
+            "description": "Contract UUID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Onboarding state retrieved successfully",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Contract is in a terminal state and cannot be resumed",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contract not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/admin/platform/dashboard": {
@@ -3812,7 +3829,8 @@
             "enum": [
               "ACTIVE",
               "SUSPENDED",
-              "PENDING"
+              "PENDING",
+              "RESET_PASSWORD"
             ]
           }
         }
@@ -3948,51 +3966,6 @@
           }
         }
       },
-      "CreateAppContractRequest": {
-        "type": "object",
-        "properties": {
-          "planVersionId": {
-            "type": "string"
-          },
-          "billingPeriod": {
-            "type": "string",
-            "enum": [
-              "MONTHLY",
-              "YEARLY",
-              "ONE_TIME"
-            ]
-          },
-          "contractorEmail": {
-            "type": "string"
-          },
-          "contractorFirstName": {
-            "type": "string"
-          },
-          "contractorLastName": {
-            "type": "string"
-          },
-          "companyName": {
-            "type": "string"
-          },
-          "companySlug": {
-            "type": "string"
-          },
-          "companyTaxId": {
-            "type": "string"
-          },
-          "companyAddress": {
-            "type": "string"
-          }
-        }
-      },
-      "VerifyContractEmailRequest": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          }
-        }
-      },
       "CreateAppRoleRequest": {
         "type": "object",
         "properties": {
@@ -4076,6 +4049,51 @@
           "emailOrUsername",
           "password"
         ]
+      },
+      "CreateAppContractRequest": {
+        "type": "object",
+        "properties": {
+          "clientAppId": {
+            "type": "string"
+          },
+          "planVersionId": {
+            "type": "string"
+          },
+          "billingPeriod": {
+            "type": "string",
+            "enum": [
+              "MONTHLY",
+              "YEARLY",
+              "ONE_TIME"
+            ]
+          },
+          "contractorEmail": {
+            "type": "string"
+          },
+          "contractorFirstName": {
+            "type": "string"
+          },
+          "contractorLastName": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "companyTaxId": {
+            "type": "string"
+          },
+          "companyAddress": {
+            "type": "string"
+          }
+        }
+      },
+      "VerifyContractEmailRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
       },
       "UpdateUserProfileRequest": {
         "type": "object",

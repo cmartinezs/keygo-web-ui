@@ -82,12 +82,6 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
                 <dt className="text-slate-500">Empresa</dt>
                 <dd className="font-medium text-slate-800">{contractor.companyName}</dd>
               </div>
-              {contractor.companySlug && (
-                <div>
-                  <dt className="text-slate-500">Identificador</dt>
-                  <dd className="font-medium text-slate-500 font-mono text-xs">{contractor.companySlug}</dd>
-                </div>
-              )}
             </>
           )}
         </dl>

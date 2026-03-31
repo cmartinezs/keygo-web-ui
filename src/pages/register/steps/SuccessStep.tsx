@@ -3,10 +3,9 @@ import { Link } from 'react-router-dom'
 interface SuccessStepProps {
   email: string
   planName: string
-  companySlug?: string | null
 }
 
-export function SuccessStep({ email, planName, companySlug }: SuccessStepProps) {
+export function SuccessStep({ email, planName }: SuccessStepProps) {
   return (
     <div className="flex flex-col items-center gap-6 py-8 text-center">
       {/* Icon */}
@@ -32,12 +31,6 @@ export function SuccessStep({ email, planName, companySlug }: SuccessStepProps) 
           <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-0.5">Correo de acceso</p>
           <p className="font-semibold text-slate-800">{email}</p>
         </div>
-        {companySlug && (
-          <div>
-            <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-0.5">Identificador de empresa</p>
-            <p className="font-mono text-sm text-indigo-700">{companySlug}</p>
-          </div>
-        )}
         <p className="text-sm text-slate-600 pt-1">
           Recibirás un correo con tus credenciales de acceso en breve. Usa el botón de abajo para iniciar sesión.
         </p>

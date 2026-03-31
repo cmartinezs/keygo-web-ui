@@ -1,18 +1,6 @@
-import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function toSlug(value: string): string {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -24,11 +12,6 @@ const basePersonalSchema = z.object({
 
 const companySchema = z.object({
   companyName: z.string().min(2, 'El nombre de la empresa es requerido (mín. 2 caracteres)').optional().or(z.literal('')),
-  companySlug: z
-    .string()
-    .regex(/^[a-z0-9-]*$/, 'Solo letras minúsculas, números y guiones')
-    .optional()
-    .or(z.literal('')),
   companyTaxId: z.string().optional(),
   companyAddress: z.string().optional(),
 })
@@ -84,24 +67,11 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
     formState: { errors },
   } = useForm<ContractorFormValues>({
     resolver: zodResolver(schema),
     defaultValues,
   })
-
-  // Auto-generate companySlug from companyName
-  const companyName = watch('companyName')
-  useEffect(() => {
-    const currentSlug = watch('companySlug')
-    const autoSlug = toSlug(companyName ?? '')
-    // Only auto-fill if the user hasn't manually edited the slug
-    if (autoSlug && (!currentSlug || currentSlug === toSlug(defaultValues.companyName ?? ''))) {
-      setValue('companySlug', autoSlug, { shouldValidate: false })
-    }
-  }, [companyName]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <form onSubmit={handleSubmit((data) => onNext(data as ContractorFormValues))} className="flex flex-col gap-6" noValidate>
@@ -166,30 +136,6 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
                 className={inputCls(!!errors.companyName)}
                 {...register('companyName')}
               />
-            </Field>
-
-            <Field
-              id="companySlug"
-              label="Identificador único (slug)"
-              optional
-              error={errors.companySlug?.message}
-            >
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm select-none">
-                  keygo.io/
-                </span>
-                <input
-                  id="companySlug"
-                  type="text"
-                  autoComplete="off"
-                  placeholder="acme-corp"
-                  className={`${inputCls(!!errors.companySlug)} pl-[4.5rem]`}
-                  {...register('companySlug')}
-                />
-              </div>
-              <p className="text-xs text-slate-400">
-                Solo letras minúsculas, números y guiones. No se puede cambiar después.
-              </p>
             </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
