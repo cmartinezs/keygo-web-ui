@@ -381,6 +381,7 @@ export default function LoginPage() {
   const isAutoRetryingRef = useRef(false)
   const lastAuthErrorRef = useRef<{ message: string; retryable: boolean } | null>(null)
   const loginPhaseRef = useRef<'login' | 'post-login'>('login')
+  const autoRetryCountRef = useRef(0)
 
   // Client-side rate limiting — progressive lockout on repeated credential failures
   const rateLimit = useRateLimit('login')
@@ -480,14 +481,19 @@ export default function LoginPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // While in error state, retry every 10 s — backend may have come back up.
-  // Once initMutation succeeds the interval stops (isError becomes false).
-  // If a login attempt later fails with a network error, loginMutation.onError
-  // calls initMutation.mutate() again → transitions back to isError → interval restarts.
-  // isAutoRetryingRef suppresses the spinner; the toast provides all visual feedback.
+  // While in error state, retry automatically up to env.QUERY_RETRY_COUNT times (every 10 s).
+  // Each new error episode resets the counter. Once exhausted, only the manual retry button works.
+  // isAutoRetryingRef suppresses the full spinner; toasts provide visual feedback.
   useEffect(() => {
     if (!initMutation.isError) return
+    autoRetryCountRef.current = 0
+
+    if (env.QUERY_RETRY_COUNT === 0) return
+
     const id = setInterval(() => {
+      if (autoRetryCountRef.current >= env.QUERY_RETRY_COUNT) return
+      autoRetryCountRef.current += 1
+      const remaining = env.QUERY_RETRY_COUNT - autoRetryCountRef.current
       isAutoRetryingRef.current = true
       const toastId = toast.loading('Intentando reconectar…')
       setTimeout(() => {
@@ -497,7 +503,11 @@ export default function LoginPage() {
           },
           onError: () => {
             setTimeout(() => {
-              toast.error('Sin conexión. Reintentando en 10 s…', { id: toastId })
+              if (remaining > 0) {
+                toast.error(`Sin conexión. Reintentando en 10 s…`, { id: toastId })
+              } else {
+                toast.error('Sin conexión. Usa el botón para reintentar manualmente.', { id: toastId })
+              }
             }, 800)
           },
         })

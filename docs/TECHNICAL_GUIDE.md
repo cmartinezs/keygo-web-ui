@@ -2,7 +2,7 @@
 
 > **Audiencia:** desarrollador que hereda o extiende el proyecto. Asume conocimiento de React, TypeScript y OAuth2.
 >
-> **Última actualización:** 2026-03-28
+> **Última actualización:** 2026-03-31
 
 ---
 
@@ -63,6 +63,7 @@
     - [Admin — Crear Tenant](#108-admin-crear-tenant)
 11. [Cómo extender el proyecto](#11-cómo-extender-el-proyecto)
 12. [Deuda técnica consolidada](#12-deuda-técnica-consolidada)
+13. [Documentación de trazabilidad](#13-documentación-de-trazabilidad)
 
 ---
 
@@ -1338,3 +1339,28 @@ Crear `src/mocks/handlers.ts` con `http.get/post(...)` de MSW respetando el shap
 | 17 | `src/layouts/AdminLayout.tsx` | Buscador, notificaciones, Mi perfil y Configuración son decorativos | Media |
 | 18 | Proyecto general | Sin infraestructura de tests (Vitest, Testing Library, MSW) | **Alta** |
 | 19 | `tsconfig.json` | `moduleResolution: "Node"` es el modo legacy | Baja |
+
+---
+
+## 13. Documentación de trazabilidad
+
+Se incorporó la carpeta `docs/tracking-telemetry/` para consolidar la estrategia de tracking y telemetría de usuario. Esta carpeta concentra decisiones, arquitectura, contrato de eventos, privacidad, operación, rollout y KPIs, de forma separada de la guía técnica general.
+
+### Archivos incluidos
+
+| Archivo | Propósito |
+|---------|-----------|
+| `docs/tracking-telemetry/README.md` | Resumen ejecutivo, decisiones cerradas e índice de navegación |
+| `docs/tracking-telemetry/01-vision-alcance.md` | Objetivos, no objetivos, casos de uso y principios |
+| `docs/tracking-telemetry/02-arquitectura.md` | Diseño de captura, cola, scheduler y transporte batch |
+| `docs/tracking-telemetry/03-contrato-eventos.md` | Envelope, taxonomía, versionado e idempotencia |
+| `docs/tracking-telemetry/04-privacidad-seguridad.md` | Minimización de datos, sanitización y controles de acceso |
+| `docs/tracking-telemetry/05-operacion-retencion.md` | Retención de 90 días, envío cada 10-15 min y SLO operativo |
+| `docs/tracking-telemetry/06-rollout-fases.md` | Fases A/B/C con riesgos y mitigaciones |
+| `docs/tracking-telemetry/07-verificacion-kpis.md` | Estrategia de pruebas y métricas de calidad del dato |
+| `docs/tracking-telemetry/08-backend-contrato-pendiente.md` | Gap contractual actual y propuesta de ingestión batch |
+| `docs/tracking-telemetry/09-plan-prs.md` | Plan de ejecución incremental por PR con alcance, riesgos y rollback |
+
+### Decisión de diseño
+
+Se eligió desacoplar esta temática en una carpeta dedicada para evitar sobrecargar la guía técnica principal y permitir evolución independiente del plan de telemetría sin mezclarlo con documentación de módulos de código ya implementados.

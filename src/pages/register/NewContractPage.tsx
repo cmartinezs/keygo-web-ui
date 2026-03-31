@@ -118,6 +118,7 @@ export default function NewContractPage() {
     data: plans = [],
     isLoading: catalogLoading,
     isError: catalogError,
+    refetch: refetchCatalog,
   } = useQuery({
     queryKey: BILLING_QUERY_KEYS.catalog(TENANT, CLIENT_ID),
     queryFn: () => getBillingCatalog(TENANT, CLIENT_ID),
@@ -282,6 +283,7 @@ export default function NewContractPage() {
                     plans={plans}
                     isLoading={catalogLoading}
                     isError={catalogError}
+                    onRetry={() => void refetchCatalog()}
                     selectedPlanId={selectedPlan?.id ?? null}
                     selectedVersionId={selectedVersion?.id ?? null}                    activePeriod={activePeriod}
                     onPeriodChange={setActivePeriod}                    onSelect={handlePlanSelect}

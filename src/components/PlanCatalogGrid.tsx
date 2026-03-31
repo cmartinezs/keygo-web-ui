@@ -21,6 +21,7 @@ type PlanCatalogGridProps = {
   plans: AppPlan[]
   isLoading?: boolean
   isError?: boolean
+  onRetry?: () => void
 } & (DisplayMode | SelectMode)
 
 function hasMultiplePeriods(plans: AppPlan[]): boolean {
@@ -31,7 +32,7 @@ function hasMultiplePeriods(plans: AppPlan[]): boolean {
 }
 
 export function PlanCatalogGrid(props: PlanCatalogGridProps) {
-  const { plans, isLoading = false, isError = false } = props
+  const { plans, isLoading = false, isError = false, onRetry } = props
   const [displayPeriod, setDisplayPeriod] = useState<BillingPeriod>('MONTHLY')
   const activePeriod = props.mode === 'select' ? props.activePeriod : displayPeriod
   const setActivePeriod = props.mode === 'select' ? props.onPeriodChange : setDisplayPeriod
@@ -50,9 +51,23 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-center" role="alert">
-        <p className="text-slate-600 font-medium">No se pudo cargar el catálogo de planes.</p>
-        <p className="text-sm text-slate-400">Por favor, recarga la página o inténtalo más tarde.</p>
+      <div className="flex flex-col items-center gap-4 py-12 text-center" role="alert">
+        <svg className="w-8 h-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+        <div>
+          <p className="text-slate-600 font-medium">No se pudo cargar el catálogo de planes.</p>
+          <p className="text-sm text-slate-400 mt-1">Revisa tu conexión e inténtalo de nuevo.</p>
+        </div>
+        {onRetry && (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 underline-offset-2 hover:underline transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+          >
+            Reintentar
+          </button>
+        )}
       </div>
     )
   }

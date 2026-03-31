@@ -4,7 +4,7 @@ import { getBillingCatalog, BILLING_QUERY_KEYS } from '@/api/billing'
 import { TENANT, CLIENT_ID } from '@/api/client'
 
 export function PricingSection() {
-  const { data: rawPlans = [], isLoading, isError } = useQuery({
+  const { data: rawPlans = [], isLoading, isError, refetch } = useQuery({
     queryKey: BILLING_QUERY_KEYS.catalog(TENANT, CLIENT_ID),
     queryFn: () => getBillingCatalog(),
     staleTime: 1000 * 60 * 10,
@@ -28,15 +28,14 @@ export function PricingSection() {
           </p>
         </div>
 
-        {!isLoading && !isError && (
-          <PlanCatalogGrid
-            mode="display"
-            plans={plans}
-            isLoading={isLoading}
-            isError={isError}
-            ctaBase="/subscribe"
-          />
-        )}
+        <PlanCatalogGrid
+          mode="display"
+          plans={plans}
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={() => void refetch()}
+          ctaBase="/subscribe"
+        />
 
         <div className="mt-12 text-center">
           <p className="text-slate-500 text-sm">

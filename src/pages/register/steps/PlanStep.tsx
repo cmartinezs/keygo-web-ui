@@ -5,6 +5,7 @@ interface PlanStepProps {
   plans: AppPlan[]
   isLoading: boolean
   isError: boolean
+  onRetry?: () => void
   selectedPlanId: string | null
   selectedVersionId: string | null
   activePeriod: BillingPeriod
@@ -17,6 +18,7 @@ export function PlanStep({
   plans,
   isLoading,
   isError,
+  onRetry,
   selectedPlanId,
   selectedVersionId,
   activePeriod,
@@ -40,6 +42,7 @@ export function PlanStep({
         plans={plans}
         isLoading={isLoading}
         isError={isError}
+        onRetry={onRetry}
         selectedVersionId={selectedVersionId}
         activePeriod={activePeriod}
         onPeriodChange={onPeriodChange}

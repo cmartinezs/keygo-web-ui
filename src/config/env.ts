@@ -6,6 +6,9 @@ const envSchema = z.object({
   VITE_CLIENT_ID: z.string().min(1),
   VITE_REDIRECT_URI: z.string().url(),
   VITE_TURNSTILE_SITE_KEY: z.string().min(1).optional(),
+  // Número de reintentos automáticos para queries fallidas y reconexión en login.
+  // Cuando se agotan, se muestra un botón de reintento manual.  Default: 2.
+  VITE_QUERY_RETRY_COUNT: z.coerce.number().int().min(0).default(2),
 })
 
 const parsedEnv = envSchema.safeParse(import.meta.env)
@@ -23,6 +26,7 @@ export const env = Object.freeze({
   CLIENT_ID: parsedEnv.data.VITE_CLIENT_ID,
   REDIRECT_URI: parsedEnv.data.VITE_REDIRECT_URI,
   TURNSTILE_SITE_KEY: parsedEnv.data.VITE_TURNSTILE_SITE_KEY,
+  QUERY_RETRY_COUNT: parsedEnv.data.VITE_QUERY_RETRY_COUNT,
   DEV: import.meta.env.DEV,
   PROD: import.meta.env.PROD,
 })

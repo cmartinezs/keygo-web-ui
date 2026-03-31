@@ -131,6 +131,22 @@ export interface VerifyContractEmailRequest {
   code: string
 }
 
+/**
+ * Respuesta de GET /billing/contracts/{contractId}/resume
+ * Extiende AppContract con campos de orientación al wizard del frontend:
+ * `next_action` indica el paso en que debe posicionarse la UI al restaurar.
+ * `verification_code_expired` permite ofrecer reenvío inmediato.
+ */
+export interface AppContractResumeData
+  extends Omit<AppContract, 'client_app_id' | 'selected_plan_version_id' | 'billing_period'> {
+  client_app_id: string
+  selected_plan_version_id: string
+  billing_period: BillingPeriod
+  verification_code_expired: boolean
+  /** Acción sugerida: 'VERIFY_EMAIL' | 'PAYMENT' | 'ACTIVATE' | 'RESUME' */
+  next_action: string
+}
+
 // ── Subscription ─────────────────────────────────────────────────────────────
 
 export type SubscriptionStatus = 'ACTIVE' | 'CANCELLED' | 'PAST_DUE' | 'SUSPENDED'

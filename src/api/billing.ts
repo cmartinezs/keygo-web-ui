@@ -9,6 +9,7 @@ import type { BaseResponse } from '@/types/base'
 import type {
   AppPlan,
   AppContract,
+  AppContractResumeData,
   AppSubscription,
   AppInvoice,
   CreateContractRequest,
@@ -130,6 +131,24 @@ export async function getBillingContract(
     `${contractsBase}/${contractId}`,
   )
   return res.data.data!
+}
+
+/**
+ * GET /billing/contracts/{contractId}/resume ✅ — restaura el estado del onboarding.
+ * Devuelve el contrato con campos adicionales orientados al wizard del frontend:
+ * `next_action` y `verification_code_expired`.
+ * Devuelve 400 si el contrato está en estado terminal (EXPIRED, CANCELLED, etc.).
+ * Public endpoint.
+ */
+export async function resumeContractOnboarding(
+  contractId: string,
+): Promise<AppContractResumeData> {
+  const res = await apiClient.get<BaseResponse<AppContractResumeData>>(
+    `${contractsBase}/${contractId}/resume`,
+  )
+  if (!res.data.data)
+    throw new Error(res.data.failure?.message ?? 'No se pudo restaurar el estado del contrato')
+  return res.data.data
 }
 
 /**
