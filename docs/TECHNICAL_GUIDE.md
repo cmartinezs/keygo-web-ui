@@ -2,7 +2,7 @@
 
 > **Audiencia:** desarrollador que hereda o extiende el proyecto. Asume conocimiento de React, TypeScript y OAuth2.
 >
-> **Última actualización:** 2026-03-31
+> **Última actualización:** 2026-04-01
 
 ---
 
@@ -26,6 +26,7 @@
    - [jwksVerify.ts](#jwksverifyts)
    - [refresh.ts](#refreshts)
    - [roleGuard.tsx](#roleguardtsx)
+   - [blockingErrorStore.ts](#blockingerrorstoreets)
 5. [Módulo de API — `src/api/`](#5-módulo-de-api--srcapi)
    - [client.ts](#clientts)
    - [auth.ts](#authts)
@@ -47,6 +48,7 @@
 8. [Componentes reutilizables — `src/components/`](#8-componentes-reutilizables--srccomponents)
    - [HoneypotField.tsx](#honeypotfieldtsx)
    - [TurnstileWidget.tsx](#turnstilewidgettsx)
+   - [BlockingErrorModal.tsx](#blockingerrormodaltsx)
    - [PlanCard.tsx](#planCardtsx)
    - [plans.ts](#plansts)
    - [ScrollToTop.tsx](#scrolltotoptsx)
@@ -239,13 +241,14 @@ Zustand
 **Construcción:**
 - Define todas las rutas con `<Routes>` de React Router 7.
 - Expone una ruta pública adicional `/developers` para la documentación de integración.
+- Monta `<BlockingErrorModal />` globalmente junto a `<Toaster />`, fuera de `<Routes>`, para que se renderice sobre cualquier pantalla activa.
 - Wrap de rutas `/admin/*` con `<RoleGuard roles={['ADMIN']}>` + `<AdminLayout>`.
 - Rutas anidadas de tenant (`/:slug` y `/new`) como hijos de `TenantsPage` (patrón master-detail con `<Outlet>`).
 - `<Toaster>` de `sonner` con tema dark y posición `bottom-right`.
 - Catch-all `*` redirige a `/login`.
 
 **Integración:**
-- `RoleGuard` → `src/auth/roleGuard.tsx`
+- `AuthGuard` / `RoleGuard` → `src/auth/roleGuard.tsx`
 - `AdminLayout` → `src/layouts/AdminLayout.tsx`
 - Todas las páginas → `src/pages/**`
 
@@ -265,7 +268,7 @@ Zustand
 | `/admin/tenants/:slug` | `TenantDetailPage` (outlet) | — |
 | `*` | `Navigate to="/login"` | — |
 
-**Deuda técnica:** Sin rutas para `ADMIN_TENANT` ni `USER_TENANT`. Sin página 404. `Home.tsx` no está conectado al router.
+**Deuda técnica:** Sin rutas para `ADMIN_TENANT` ni `USER_TENANT`. Sin página 404. `Home.tsx` no está conectado al router. La ruta `/access/no-role` fue eliminada al migrar a modal bloqueante.
 
 ---
 
@@ -420,6 +423,41 @@ interface TokenState {
 **Decisión de diseño:** El patrón `children ?? <Outlet />` soporta dos usos: envolver un componente directamente en JSX, o actuar como layout guard en rutas anidadas de React Router.
 
 **Deuda técnica:** El redireccionamiento por rol incorrecto va a `/login` en lugar de a una página 403/Unauthorized dedicada. Puede confundir al usuario.
+
+---
+
+### `blockingErrorStore.ts`
+
+**Propósito:** Store Zustand para errores bloqueantes que impiden continuar el flujo normal de la aplicación, independientemente del componente donde ocurran.
+
+**Construcción:**
+```ts
+export type BlockingError = NoRoleError  // unión extensible: | ConnectionError | ...
+
+interface NoRoleError {
+  kind: 'NO_ROLE'
+  supportCode: string  // 'KG-NO-ROLE'
+  userId: string
+  usernameHint: string
+  rolesDetected: string
+  tenantClaim: string
+  issuer: string
+  timestamp: string
+}
+
+useBlockingErrorStore  // { error, setError, clearError }
+```
+
+**Integración:**
+- `setError()` es llamado desde `src/pages/login/LoginPage.tsx` cuando el login resulta exitoso pero sin roles compatibles con la UI.
+- `clearError()` es llamado en `src/components/BlockingErrorModal.tsx` al ejecutar acciones configuradas como cierre de modal.
+- El modal `BlockingErrorModal` suscribe al store y se monta/desmonta reactivamente.
+
+**Decisión de diseño:** Store Zustand independiente del `tokenStore` — los errores bloqueantes no son estado de sesión, son estado de UI de emergencia. Separar las responsabilidades facilita activar el modal desde cualquier capa (api, hooks, efectos).
+
+**Estrategia:** Unión de tipos con campo discriminante `kind` — añadir un nuevo tipo de error bloqueante requiere solo: (1) extender la unión en este archivo, (2) añadir un branch en `BlockingErrorModal.tsx`.
+
+**Puntos de mejora / deuda técnica conocida:** No persiste entre recargas de página — si el usuario recarga estando en el estado bloqueante, el error se pierde. El `useEffect` de `LoginPage` lo redetecta si la sesión sigue viva (token en `sessionStorage`).
 
 ---
 
@@ -881,6 +919,41 @@ function useRateLimit(formKey: string) {
 
 ## 8. Componentes reutilizables — `src/components/`
 
+### `BlockingErrorModal.tsx`
+
+**Propósito:** Modal de error bloqueante montado globalmente. Se superpone a la pantalla activa cuando el sistema detecta un error que impide continuar el flujo normal.
+
+**Construcción — componentes internos:**
+
+`DetailCell({ label, value })` — celda de dato de soporte reutilizable dentro del modal.
+
+`NoRoleContent({ error, actions, onAction })` — contenido específico para `kind === 'NO_ROLE'`:
+- Hace `useQuery` a `GET /api/v1/tenants/{slug}/account/profile` (no requiere rol) para obtener `username` y `email` reales del backend, sobreescribiendo los hints del token que pudieran ser `N/D`.
+- Muestra el código de referencia `KG-NO-ROLE`, datos de diagnóstico y los botones de acción.
+- Botón copiar: escribe un bloque de texto `clave=valor` en el portapapeles vía `navigator.clipboard.writeText`.
+- Botones configurables: renderiza acciones definidas en `error.actions` (o acciones por defecto) y delega la ejecución al handler `onAction` del padre.
+
+`BlockingErrorModal()` — contenedor del modal:
+- Suscribe al `useBlockingErrorStore`. Si `error === null`, no renderiza nada (`return null`).
+- Cuando se activa, mueve el foco al contenedor del modal (`innerRef.current?.focus()`).
+- Trampa de foco: `onKeyDown` intercepta Tab/Shift+Tab para circular dentro del modal.
+- Bloquea Escape (`e.preventDefault()`) — es un modal bloqueante intencional.
+- Overlay semitransparente (`bg-slate-950/55`) para mantener contexto visual de la pantalla base.
+- `role="alertdialog"` + `aria-modal="true"` + `aria-labelledby` para accesibilidad.
+
+**Integración:**
+- Montado en `src/App.tsx` junto al `<Toaster />`, fuera de `<Routes>`.
+- Se activa vía `useBlockingErrorStore.setError(...)` desde cualquier punto de la app.
+- `NoRoleContent` usa `getProfile` de `src/api/account.ts` y `ACCOUNT_QUERY_KEYS` para el cache de TanStack Query.
+
+**Decisión de diseño:** Modal bloqueante en vez de página dedicada, para que el mensaje de error aparezca sobre el contexto donde ocurrió el problema — el usuario no pierde orientación visual. La acción de cierre es explícita (botón), no accidental (Escape o clic fuera).
+
+**Estrategia:** Discriminación por `error.kind` — cada tipo de error bloqueante tiene su propio componente de contenido. Añadir un caso nuevo no requiere modificar la lógica del contenedor.
+
+**Puntos de mejora / deuda técnica conocida:** La query al perfil no se cancela si el modal se desmonta antes de que responda; es inofensivo porque TanStack Query deduplicará la respuesta si el modal vuelve a montarse.
+
+---
+
 ### `HoneypotField.tsx`
 
 **Propósito:** Campo trampa visualmente invisible para bots.
@@ -1079,6 +1152,11 @@ Helpers privados:
 - `extractAuthorizeError(error)` — normaliza errores del paso 1.
 - `extractLoginError(error)` — normaliza errores del paso 2.
 
+Detección de sesión sin roles:
+- Un `useEffect` observa `accessToken` e `idToken`. Si hay token pero `roles.length === 0`, llama `setError(...)` en `useBlockingErrorStore` con `kind: 'NO_ROLE'`, activando el modal bloqueante sobre la pantalla actual.
+- Esto cubre tanto el login recién completado como la sesión restaurada al recargar la página (refresh token en `sessionStorage`).
+- `resolveRedirectPath` ya no maneja el caso sin roles — ese flujo está completamente en manos del store.
+
 **Máquina de estados implícita (renderCardContent):**
 ```
 initMutation.isPending && autoreintentando && hay error → InitErrorState (estático)
@@ -1096,7 +1174,7 @@ initMutation.isSuccess                                  → LoginForm
 - `loginPhaseRef` — distingue errores de login vs. errores post-login para enrutar el handling.
 - `isAutoRetryingRef` — suprime el spinner durante auto-reintentos silenciosos.
 
-**Integración:** `authorize`, `login`, `exchangeToken` (api/auth.ts) → `verifyIdToken`, `extractRoles` (auth/jwksVerify.ts) → `setTokens` (auth/tokenStore.ts) → `persistRefreshToken` (auth/refresh.ts) → `useHoneypot`, `useRateLimit`, `TurnstileWidget`.
+**Integración:** `authorize`, `login`, `exchangeToken` (api/auth.ts) → `verifyIdToken`, `extractRoles` (auth/jwksVerify.ts) → `setTokens` (auth/tokenStore.ts) → `persistRefreshToken` (auth/refresh.ts) → `useBlockingErrorStore` (auth/blockingErrorStore.ts) → `useHoneypot`, `useRateLimit`, `TurnstileWidget`.
 
 **Deuda técnica:** `resolveRedirectPath` referencia rutas (`/tenant-admin/dashboard`, `/dashboard`) que aún no existen en el router.
 

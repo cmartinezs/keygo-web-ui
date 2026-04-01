@@ -2,7 +2,7 @@
 
 > **Audiencia:** usuario final, product owner o cualquier persona que quiera entender qué puede hacer con la aplicación, sin necesidad de conocimiento técnico.
 >
-> **Última actualización:** 2026-03-31
+> **Última actualización:** 2026-04-01
 
 ---
 
@@ -133,6 +133,21 @@ Permite autenticarse mediante el flujo OAuth2 Authorization Code + PKCE. El proc
    - `ADMIN` → `/admin/dashboard`
    - `ADMIN_TENANT` → `/tenant-admin/dashboard` _(en construcción)_
    - `USER_TENANT` → `/dashboard` _(en construcción)_
+  - **Sin rol compatible en JWT** → modal de asistencia bloqueante (se superpone a la pantalla actual)
+
+#### Caso especial: login exitoso sin rol compatible
+
+**Presentación:** Modal bloqueante sobre la pantalla actual (no es una página separada).
+
+Si el inicio de sesión fue correcto pero la cuenta no tiene permisos disponibles para usar la interfaz, el sistema levanta un modal de asistencia sobre cualquier pantalla que estuviera activa, sin navegar a ninguna ruta. El usuario no puede cerrar el modal con Escape ni haciendo clic fuera; solo puede actuar con las acciones explícitas.
+
+La pantalla muestra:
+- Confirmación de que la autenticación fue exitosa.
+- Instrucciones para contactar soporte técnico o administrador.
+- Un código de referencia visible (`KG-NO-ROLE`) para reportar el caso rápidamente.
+- Datos de referencia para soporte (ID de usuario `sub`, usuario, correo, roles detectados, tenant del JWT, tenant esperado por la UI, client ID de la UI e issuer).
+- Botón para copiar los datos al portapapeles.
+- Acciones configurables según el problema (por ejemplo: cerrar mensaje, cerrar sesión, navegar a login).
 
 #### Mensajes de error posibles
 

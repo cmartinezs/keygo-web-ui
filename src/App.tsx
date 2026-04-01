@@ -11,6 +11,7 @@ import AdminDashboardPage from './pages/admin/DashboardPage'
 import TenantsPage from './pages/admin/TenantsPage'
 import TenantDetailPage from './pages/admin/TenantDetailPage'
 import TenantCreatePage from './pages/admin/TenantCreatePage'
+import { BlockingErrorModal } from './components/BlockingErrorModal'
 
 export default function App() {
   return (
@@ -55,6 +56,7 @@ export default function App() {
           },
         }}
       />
+      <BlockingErrorModal />
     </>
   )
 }

@@ -6,10 +6,12 @@ import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
+import { decodeJwt } from 'jose'
 import { authorize, login, exchangeToken } from '@/api/auth'
 import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/auth/pkce'
 import { verifyIdToken, extractRoles } from '@/auth/jwksVerify'
 import { useTokenStore } from '@/auth/tokenStore'
+import { useBlockingErrorStore } from '@/auth/blockingErrorStore'
 import { persistRefreshToken } from '@/auth/refresh'
 import { TENANT } from '@/api/client'
 import { useRateLimit } from '@/hooks/useRateLimit'
@@ -376,7 +378,8 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
  */
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { accessToken, roles, setTokens } = useTokenStore()
+  const { accessToken, idToken, roles, setTokens } = useTokenStore()
+  const { setError } = useBlockingErrorStore()
   const codeVerifierRef = useRef<string | null>(null)
   const isAutoRetryingRef = useRef(false)
   const lastAuthErrorRef = useRef<{ message: string; retryable: boolean } | null>(null)
@@ -386,10 +389,52 @@ export default function LoginPage() {
   // Client-side rate limiting — progressive lockout on repeated credential failures
   const rateLimit = useRateLimit('login')
 
-  // Redirect if already authenticated
+  // Si hay sesión válida pero sin roles compatibles → activar modal de error bloqueante.
+  // Cubre tanto login recién completado como sesión restaurada al recargar la página.
   useEffect(() => {
-    if (accessToken) navigate(resolveRedirectPath(roles), { replace: true })
-  }, [accessToken, roles, navigate])
+    if (!accessToken) return
+    if (roles.length > 0) {
+      navigate(resolveRedirectPath(roles), { replace: true })
+      return
+    }
+    try {
+      const claims = idToken ? (decodeJwt(idToken) as Record<string, unknown>) : {}
+      setError({
+        kind: 'NO_ROLE',
+        supportCode: 'KG-NO-ROLE',
+        userId: typeof claims.sub === 'string' ? claims.sub : 'N/D',
+        usernameHint:
+          typeof claims.preferred_username === 'string'
+            ? claims.preferred_username
+            : typeof claims.username === 'string'
+              ? claims.username
+              : 'N/D',
+        rolesDetected: '(sin roles)',
+        tenantClaim: typeof claims.tenant_slug === 'string' ? claims.tenant_slug : 'N/D',
+        issuer: typeof claims.iss === 'string' ? claims.iss : 'N/D',
+        timestamp: new Date().toISOString(),
+        actions: [
+          { id: 'close-modal', label: 'Cerrar mensaje', kind: 'close', variant: 'secondary' },
+          { id: 'logout', label: 'Cerrar sesión', kind: 'logout', variant: 'primary' },
+        ],
+      })
+    } catch {
+      setError({
+        kind: 'NO_ROLE',
+        supportCode: 'KG-NO-ROLE',
+        userId: 'N/D',
+        usernameHint: 'N/D',
+        rolesDetected: '(sin roles)',
+        tenantClaim: 'N/D',
+        issuer: 'N/D',
+        timestamp: new Date().toISOString(),
+        actions: [
+          { id: 'close-modal', label: 'Cerrar mensaje', kind: 'close', variant: 'secondary' },
+          { id: 'logout', label: 'Cerrar sesión', kind: 'logout', variant: 'primary' },
+        ],
+      })
+    }
+  }, [accessToken, idToken, roles, navigate, setError])
 
   // ── Paso 0-1: generate PKCE + call /oauth2/authorize ──────────────────────
   const initMutation = useMutation<AuthorizeData>({
@@ -442,7 +487,10 @@ export default function LoginPage() {
         roles,
       })
       persistRefreshToken(tokens.refresh_token)
-      navigate(resolveRedirectPath(roles), { replace: true })
+      if (roles.length > 0) {
+        navigate(resolveRedirectPath(roles), { replace: true })
+      }
+      // Sin roles: el useEffect detecta accessToken sin roles y activa el modal bloqueante
     },
     onError: (error) => {
       const phase = loginPhaseRef.current
