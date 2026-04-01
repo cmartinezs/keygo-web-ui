@@ -121,6 +121,8 @@ Permite autenticarse mediante el flujo OAuth2 Authorization Code + PKCE. El proc
 
 #### Flujo paso a paso
 
+0. **Pantalla de carga global** (automática, previa a cualquier ruta) — Al abrir o recargar la aplicación, se muestra una capa de carga visual mientras se valida o restaura la sesión. Evita que el usuario vea la pantalla en blanco en conexiones lentas.
+
 1. **Preparación de sesión** (automática, invisible) — La aplicación establece un canal seguro con el servidor. Se muestra un spinner animado ("Preparando sesión segura…"). Si falla, se muestra un mensaje descriptivo con opción de reintentar.
 
 2. **Formulario de credenciales:**
@@ -159,6 +161,12 @@ La pantalla muestra:
 | Aplicación o tenant no disponible | Servicio no disponible |
 | Acceso suspendido | Acceso temporalmente suspendido |
 | Sesión expirada | Re-inicialización automática |
+
+#### Comportamiento ante cargas lentas en cualquier pantalla
+
+- Si una vista tarda en cargar datos por red, la aplicación muestra un loader global con mensaje de espera.
+- El loader aparece solo cuando la espera supera un umbral breve (para evitar parpadeos en cargas rápidas).
+- Mientras el loader está activo, el usuario recibe feedback visual y evita percibir una pantalla vacía.
 
 #### Protección de seguridad
 

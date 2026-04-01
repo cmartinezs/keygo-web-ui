@@ -46,6 +46,7 @@
    - [useTheme.ts](#usethemets)
    - [useTurnstile.ts](#useturnstilts)
 8. [Componentes reutilizables — `src/components/`](#8-componentes-reutilizables--srccomponents)
+  - [GlobalLoaderOverlay.tsx](#globalloaderoverlaytsx)
    - [HoneypotField.tsx](#honeypotfieldtsx)
    - [TurnstileWidget.tsx](#turnstilewidgettsx)
    - [BlockingErrorModal.tsx](#blockingerrormodaltsx)
@@ -76,13 +77,13 @@
 ```
 Browser
   │
-  ├─ index.html          ← script inline de tema (antes de React)
+  ├─ index.html          ← script inline de tema + fallback de carga inicial
   │
-  └─ src/main.tsx        ← restoreSession() → monta React
+  └─ src/main.tsx        ← monta React + AppBootstrap (restoreSession)
        │
        ├─ QueryClientProvider (TanStack Query — cache de datos del servidor)
        ├─ BrowserRouter   (React Router 7 — enrutamiento client-side)
-       └─ App.tsx         ← árbol de rutas + Toaster
+    └─ App.tsx         ← árbol de rutas + Toaster + loader global de red
             │
             ├─ Rutas públicas   (Landing, Login, Suscripción, Registro)
             └─ /admin/*         ← RoleGuard (ADMIN) → AdminLayout → Outlet
@@ -205,10 +206,13 @@ Zustand
   })()
   ```
 - `<div id="root">` — punto de montaje de React.
+- Dentro de `#root` existe un fallback visual (`#kg-boot`) que evita pantalla en blanco antes de que React quede montado.
 
 **Integración:** El script inline aplica `.dark` a `<html>` **antes de que React monte**, eliminando el flash de tema incorrecto (FOCT). `useThemeStore` lee el mismo `localStorage.getItem('keygo-theme')` en su inicialización, quedando sincronizado.
 
 **Decisión de diseño:** La inicialización del tema debe ocurrir sincrónicamente en el HTML, no en un `useEffect`, porque los effects corren tras el primer render y causarían parpadeo visual.
+
+**Estrategia de carga inicial:** El fallback de `#kg-boot` da feedback inmediato en conexiones lentas o cuando el bundle tarda en hidratar.
 
 ---
 
@@ -220,15 +224,17 @@ Zustand
 
 **Construcción:**
 1. Crea `QueryClient` con configuración por defecto.
-2. Llama `restoreSession()` — intenta restaurar la sesión desde `sessionStorage` antes de montar.
-3. En `.finally()` (siempre, independientemente del resultado): monta el árbol React con `StrictMode` + `QueryClientProvider` + `BrowserRouter` + `App`.
+2. Monta React inmediatamente con `StrictMode` + `QueryClientProvider` + `BrowserRouter`.
+3. Usa `AppBootstrap` para ejecutar `restoreSession()` dentro de un `useEffect`.
+4. Mientras `restoreSession()` está en progreso, renderiza `GlobalLoaderOverlay` en modo inmediato.
+5. Al finalizar `restoreSession()` (éxito o error), muestra `App`.
 
 **Integración:**
 - `restoreSession` → `src/auth/refresh.ts`
 - `QueryClientProvider` → disponible para todos los `useQuery`/`useMutation` del árbol
 - `BrowserRouter` → habilita `useNavigate`, `useLocation`, etc.
 
-**Decisión de diseño:** "Session-first render" — el app no monta hasta que `restoreSession` termina. Garantiza que los guards de ruta evalúen el estado de auth ya hidratado. El `.finally()` asegura que un error de refresh no bloquee el montaje (el usuario simplemente llegará al login).
+**Decisión de diseño:** "render-first + bootstrap gate" — la app monta de inmediato para evitar pantalla en blanco, pero el contenido funcional queda detrás de `AppBootstrap` hasta completar restauración de sesión.
 
 **Deuda técnica:** `QueryClient` sin configuración global — sin `staleTime`, sin política de reintentos, sin `refetchOnWindowFocus: false`.
 
@@ -242,6 +248,8 @@ Zustand
 - Define todas las rutas con `<Routes>` de React Router 7.
 - Expone una ruta pública adicional `/developers` para la documentación de integración.
 - Monta `<BlockingErrorModal />` globalmente junto a `<Toaster />`, fuera de `<Routes>`, para que se renderice sobre cualquier pantalla activa.
+- Usa `useIsFetching()` y `useIsMutating()` para detectar actividad global de red en TanStack Query.
+- Muestra `<GlobalLoaderOverlay />` mientras existan cargas o mutaciones activas (si no hay error bloqueante).
 - Wrap de rutas `/admin/*` con `<RoleGuard roles={['ADMIN']}>` + `<AdminLayout>`.
 - Rutas anidadas de tenant (`/:slug` y `/new`) como hijos de `TenantsPage` (patrón master-detail con `<Outlet>`).
 - `<Toaster>` de `sonner` con tema dark y posición `bottom-right`.
@@ -269,6 +277,8 @@ Zustand
 | `*` | `Navigate to="/login"` | — |
 
 **Deuda técnica:** Sin rutas para `ADMIN_TENANT` ni `USER_TENANT`. Sin página 404. `Home.tsx` no está conectado al router. La ruta `/access/no-role` fue eliminada al migrar a modal bloqueante.
+
+**Deuda técnica adicional:** El loader global depende de TanStack Query. Si aparecen llamadas HTTP fuera de Query, deben añadirse al mecanismo global para mantener comportamiento consistente.
 
 ---
 
@@ -918,6 +928,29 @@ function useRateLimit(formKey: string) {
 ---
 
 ## 8. Componentes reutilizables — `src/components/`
+
+### `GlobalLoaderOverlay.tsx`
+
+**Propósito:** Componente reusable de carga fullscreen para evitar pantallas vacías durante demoras de red o durante el bootstrap inicial.
+
+**Construcción:**
+- Recibe `active` para activar/desactivar el overlay.
+- Implementa anti-flicker con `SHOW_DELAY_MS` (delay de entrada) y `MIN_VISIBLE_MS` (tiempo mínimo visible).
+- Permite `skipDelays` para mostrar carga inmediata cuando se necesita.
+- Expone `title`, `description` y `zIndexClassName` para adaptar el contexto sin duplicar implementación.
+- Declara `role="status"`, `aria-live="polite"` y `aria-atomic="true"` para accesibilidad.
+
+**Integración:**
+- `src/main.tsx`: se usa durante `restoreSession()` dentro de `AppBootstrap`.
+- `src/App.tsx`: se usa para actividad global de red detectada por TanStack Query.
+
+**Decisión de diseño:** Centralizar la experiencia de espera en una sola pieza evita crear loaders por pantalla y mantiene consistencia visual.
+
+**Estrategia:** Activación contextual en dos niveles: bootstrap (inmediata) y red global (con delay).
+
+**Puntos de mejora / deuda técnica conocida:**
+- Separar en modo bloqueante/no bloqueante para polling en background.
+- Integrar señales de Axios si se incorporan requests fuera de TanStack Query.
 
 ### `BlockingErrorModal.tsx`
 

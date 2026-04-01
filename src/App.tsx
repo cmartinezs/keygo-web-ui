@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
+import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import LandingPage from './pages/landing/LandingPage'
 import DeveloperDocsPage from './pages/developers/DeveloperDocsPage'
 import LoginPage from './pages/login/LoginPage'
@@ -12,8 +13,15 @@ import TenantsPage from './pages/admin/TenantsPage'
 import TenantDetailPage from './pages/admin/TenantDetailPage'
 import TenantCreatePage from './pages/admin/TenantCreatePage'
 import { BlockingErrorModal } from './components/BlockingErrorModal'
+import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
+import { useBlockingErrorStore } from './auth/blockingErrorStore'
 
 export default function App() {
+  const isFetching = useIsFetching()
+  const isMutating = useIsMutating()
+  const hasBlockingError = useBlockingErrorStore((state) => Boolean(state.error))
+  const isBusy = !hasBlockingError && (isFetching > 0 || isMutating > 0)
+
   return (
     <>
       <Routes>
@@ -55,6 +63,11 @@ export default function App() {
             toast: 'bg-slate-800 border border-white/10 text-slate-100 text-sm',
           },
         }}
+      />
+      <GlobalLoaderOverlay
+        active={isBusy}
+        title="Cargando contenido"
+        description="Estamos trayendo la informacion necesaria para esta vista."
       />
       <BlockingErrorModal />
     </>

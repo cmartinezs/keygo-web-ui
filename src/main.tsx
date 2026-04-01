@@ -6,6 +6,7 @@ import App from './App'
 import './styles/index.css'
 import { restoreSession } from './auth/refresh'
 import { env } from './config/env'
+import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -16,14 +17,40 @@ const queryClient = new QueryClient({
   },
 })
 
-restoreSession().finally(() => {
-  createRoot(document.getElementById('root')!).render(
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </React.StrictMode>
-  )
-})
+function AppBootstrap() {
+  const [isBootstrapping, setIsBootstrapping] = React.useState(true)
+
+  React.useEffect(() => {
+    let mounted = true
+    restoreSession().finally(() => {
+      if (mounted) setIsBootstrapping(false)
+    })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  if (isBootstrapping) {
+    return (
+      <GlobalLoaderOverlay
+        active
+        skipDelays
+        zIndexClassName="z-50"
+        title="Iniciando KeyGo"
+        description="Estamos validando tu sesion para cargar la aplicacion de forma segura."
+      />
+    )
+  }
+
+  return <App />
+}
+
+createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppBootstrap />
+      </BrowserRouter>
+    </QueryClientProvider>
+  </React.StrictMode>
+)
