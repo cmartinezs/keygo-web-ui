@@ -14,10 +14,10 @@ export function PolicyModal({ isOpen, title, children, onClose, onAccept }: Poli
 
   useEffect(() => {
     if (!isOpen) return
-    setHasScrolledToBottom(false)
-
-    // After render, check if content is short enough that scrolling isn't needed
     const frame = requestAnimationFrame(() => {
+      setHasScrolledToBottom(false)
+
+      // After render, check if content is short enough that scrolling isn't needed
       const el = scrollRef.current
       if (el && el.scrollHeight - el.scrollTop <= el.clientHeight + 4) {
         setHasScrolledToBottom(true)

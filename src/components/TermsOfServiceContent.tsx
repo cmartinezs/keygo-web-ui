@@ -29,9 +29,9 @@ export function TermsOfServiceContent() {
       <section>
         <h3 className="font-semibold text-slate-900 mb-2">1. Acceptance of Terms</h3>
         <p>
-          By accessing, registering for, or using the KeyGo platform ("Service"), you agree to be bound by
-          these Terms of Use and Service ("Terms"). These Terms constitute a legally binding agreement between
-          you or the entity you represent ("Customer") and KeyGo. Acceptance may be performed by electronic means
+          By accessing, registering for, or using the KeyGo platform (&quot;Service&quot;), you agree to be bound by
+          these Terms of Use and Service (&quot;Terms&quot;). These Terms constitute a legally binding agreement between
+          you or the entity you represent (&quot;Customer&quot;) and KeyGo. Acceptance may be performed by electronic means
           and will be considered valid under applicable Chilean law.
         </p>
       </section>
@@ -168,9 +168,9 @@ export function TermsOfServiceContent() {
       <section>
         <h3 className="font-semibold text-slate-900 mb-2">1. Aceptación de los Términos</h3>
         <p>
-          Al acceder, registrarte o utilizar la plataforma KeyGo ("Servicio"), aceptas quedar obligado por
-          estos Términos de Uso y Servicio ("Términos"). Estos Términos constituyen un acuerdo legalmente vinculante
-          entre tú o la entidad que representas ("Cliente") y KeyGo. La aceptación podrá realizarse por medios
+          Al acceder, registrarte o utilizar la plataforma KeyGo (&quot;Servicio&quot;), aceptas quedar obligado por
+          estos Términos de Uso y Servicio (&quot;Términos&quot;). Estos Términos constituyen un acuerdo legalmente vinculante
+          entre tú o la entidad que representas (&quot;Cliente&quot;) y KeyGo. La aceptación podrá realizarse por medios
           electrónicos y se considerará válida conforme a la legislación chilena aplicable.
         </p>
       </section>

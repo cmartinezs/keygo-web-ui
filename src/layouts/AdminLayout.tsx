@@ -360,7 +360,10 @@ export default function AdminLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   // Close mobile drawer on route change
-  useEffect(() => { setMobileOpen(false) }, [location.pathname])
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => setMobileOpen(false))
+    return () => window.cancelAnimationFrame(frame)
+  }, [location.pathname])
 
   // Close dropdown on outside click
   useEffect(() => {

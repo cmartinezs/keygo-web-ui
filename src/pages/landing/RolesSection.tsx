@@ -78,7 +78,7 @@ export function RolesSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {roles.map(({ role, tag, tagColor, description, capabilities, accentBg, accentText, borderColor }) => (
+          {roles.map(({ role, tag, tagColor, description, capabilities, accentText, borderColor }) => (
             <article
               key={tag}
               className={`rounded-2xl border-2 p-8 transition-all ${borderColor}`}

@@ -85,7 +85,7 @@ export function useTurnstile(containerRef: React.RefObject<HTMLDivElement | null
       setToken(null)
       setHasError(false)
     }
-  }, [enabled]) // containerRef is a stable ref object
+  }, [enabled, containerRef])
 
   function reset() {
     if (widgetIdRef.current && window.turnstile) {

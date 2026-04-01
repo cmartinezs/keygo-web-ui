@@ -202,7 +202,8 @@ export default function TenantsPage() {
 
   // Reset to page 0 whenever filters change
   useEffect(() => {
-    setPage(0)
+    const frame = window.requestAnimationFrame(() => setPage(0))
+    return () => window.cancelAnimationFrame(frame)
   }, [filter, debouncedSearch])
 
   const queryParams: ListTenantsParams = {

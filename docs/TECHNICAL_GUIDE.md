@@ -177,6 +177,20 @@ Zustand
 
 **Deuda técnica:** Vitest, Testing Library y MSW no están instalados — las instrucciones del proyecto exigen tests pero aún no hay infraestructura de testing.
 
+### `.eslintrc.cjs` y `.eslintignore`
+
+**Propósito:** Estandarizar calidad estática del código con ESLint para TypeScript + React 19.
+
+**Construcción:**
+- Configuración con `@typescript-eslint/parser` y plugins `react`, `react-hooks`, `@typescript-eslint`.
+- Se activa `plugin:react/jsx-runtime` para soportar el runtime moderno de JSX sin requerir `import React` en cada componente.
+- Reglas `react/react-in-jsx-scope` y `react/jsx-uses-react` se desactivan por compatibilidad con React 17+.
+- `.eslintignore` excluye artefactos no fuente (`dist/`, `coverage/`, `tmp/`) para evitar ruido y tiempo extra en lint.
+
+**Integración:** `npm run lint` ejecuta ESLint sobre el repositorio y respeta `.eslintignore` automáticamente.
+
+**Decisión de diseño:** Preferir una configuración alineada al runtime actual de React y reglas de hooks activas, para capturar errores reales de orden de hooks, pureza y dependencias.
+
 ---
 
 ### `tailwind.config.cjs` / `postcss.config.cjs`

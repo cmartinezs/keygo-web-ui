@@ -23,8 +23,11 @@ function OtpInput({ onComplete, shouldReset, onInputChange }: OtpInputProps) {
 
   useEffect(() => {
     if (!shouldReset) return
-    setDigits(Array(6).fill(''))
-    refs.current[0]?.focus()
+    const frame = window.requestAnimationFrame(() => {
+      setDigits(Array(6).fill(''))
+      refs.current[0]?.focus()
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [shouldReset])
 
   function handleChange(index: number, value: string) {
@@ -98,8 +101,11 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
 
   useEffect(() => {
     if (!error) return
-    setCode('')
-    setIsErrorVisible(true)
+    const frame = window.requestAnimationFrame(() => {
+      setCode('')
+      setIsErrorVisible(true)
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [error])
 
   function handleComplete(otp: string) {

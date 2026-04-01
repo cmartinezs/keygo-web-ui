@@ -562,7 +562,7 @@ export default function LoginPage() {
       }, 600)
     }, 10_000)
     return () => clearInterval(id)
-  }, [initMutation.isError, initMutation.mutate])
+  }, [initMutation])
 
   // Derived state
   const loginError = loginMutation.error ? extractLoginError(loginMutation.error) : null

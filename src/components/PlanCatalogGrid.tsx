@@ -138,7 +138,10 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
 
   // Clamp index when visible count or total changes
   useEffect(() => {
-    setIndex((i) => Math.min(i, Math.max(0, total - visibleCount)))
+    const frame = window.requestAnimationFrame(() => {
+      setIndex((i) => Math.min(i, Math.max(0, total - visibleCount)))
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [visibleCount, total])
 
   // Auto-scroll to the selected plan when it changes (e.g. pre-selected from URL)
@@ -149,7 +152,10 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
     )
     if (selectedIdx === -1) return
     const maxIdx = Math.max(0, total - visibleCount)
-    setIndex(Math.min(selectedIdx, maxIdx))
+    const frame = window.requestAnimationFrame(() => {
+      setIndex(Math.min(selectedIdx, maxIdx))
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [mode.mode === 'select' ? mode.selectedVersionId : null, visibleCount, total]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const maxIndex = Math.max(0, total - visibleCount)

@@ -31,7 +31,7 @@ export function PrivacyPolicyContent() {
         <p>
           Esta Política de Privacidad describe cómo KeyGo trata los datos personales recopilados a través
           de su plataforma, sitio web, consola de administración, flujos de autenticación y canales de soporte
-          (el "Servicio").
+          (el &quot;Servicio&quot;).
         </p>
         <p className="mt-2">
           En relación con los datos necesarios para operar el Servicio, gestionar cuentas, facturación,
@@ -193,7 +193,7 @@ export function PrivacyPolicyContent() {
         <h3 className="font-semibold text-slate-900 mb-2">1. Controller and Scope</h3>
         <p>
           This Privacy Policy describes how KeyGo processes personal data collected through its platform,
-          website, administration console, authentication flows, and support channels (the "Service").
+          website, administration console, authentication flows, and support channels (the &quot;Service&quot;).
         </p>
         <p className="mt-2">
           In relation to the data necessary to operate the Service, manage accounts, billing, support,

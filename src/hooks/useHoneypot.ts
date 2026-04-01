@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 
 /** Minimum ms a human needs to interact with and fill a form before submitting */
@@ -20,12 +20,17 @@ export interface HoneypotFieldProps {
  * On detection, block silently — never reveal the reason to the caller (no error signal to bots).
  */
 export function useHoneypot() {
-  const mountedAt = useRef(Date.now())
+  const mountedAt = useRef<number | null>(null)
   const [value, setValue] = useState('')
+
+  useEffect(() => {
+    mountedAt.current = Date.now()
+  }, [])
 
   function validate(): { blocked: boolean; reason: 'honeypot_filled' | 'too_fast' | null } {
     if (value.length > 0) return { blocked: true, reason: 'honeypot_filled' }
-    const elapsed = Date.now() - mountedAt.current
+    const baseline = mountedAt.current ?? Date.now()
+    const elapsed = Date.now() - baseline
     if (elapsed < MIN_INTERACTION_MS) return { blocked: true, reason: 'too_fast' }
     return { blocked: false, reason: null }
   }

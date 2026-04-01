@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface RateLimitState {
   attempts: number
@@ -65,13 +65,17 @@ export function useRateLimit(formKey: string) {
     }, 1000)
   }
 
-  // Kick off countdown on first render if already locked (e.g. after page refresh)
-  const mountedRef = useRef(false)
-  if (!mountedRef.current) {
-    mountedRef.current = true
+  // Kick off countdown if already locked (e.g. after page refresh)
+  useEffect(() => {
     const { lockedUntil } = readState(storageKey)
     if (lockedUntil && lockedUntil > Date.now()) startCountdown(lockedUntil)
-  }
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+  }, [storageKey])
 
   const recordFailure = useCallback(() => {
     const state = readState(storageKey)

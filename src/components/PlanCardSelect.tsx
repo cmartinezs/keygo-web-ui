@@ -25,15 +25,15 @@ export function PlanCardSelect({ plan, selectedVersionId, activePeriod, onSelect
     null
   const isSelected = version?.id === selectedVersionId
 
-  if (!version) return null
-
   // When the period toggle changes while this card is already selected,
   // propagate the new billing option to the parent immediately.
   useEffect(() => {
-    if (isSelected) {
+    if (isSelected && version) {
       onSelect(plan, version, activeOption)
     }
-  }, [activePeriod]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activePeriod, isSelected, version, activeOption, onSelect, plan])
+
+  if (!version) return null
 
   const planInfo = computePlanInfoForPeriod(plan, activePeriod)
 
