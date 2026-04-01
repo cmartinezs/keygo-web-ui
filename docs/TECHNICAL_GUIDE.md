@@ -29,6 +29,8 @@
    - [blockingErrorStore.ts](#blockingerrorstoreets)
 5. [Módulo de API — `src/api/`](#5-módulo-de-api--srcapi)
    - [client.ts](#clientts)
+  - [errorNormalizer.ts](#errornormalizerts)
+  - [response.ts](#responsets)
    - [auth.ts](#authts)
    - [tenants.ts](#tenantsts)
    - [users.ts](#usersts)
@@ -161,6 +163,8 @@ Zustand
 | `build` | `vite build` |
 | `lint` | ESLint sobre `.ts/.tsx` |
 | `format` | Prettier |
+| `test` | Vitest en modo CI (`vitest run`) |
+| `test:watch` | Vitest en modo watch |
 
 **Dependencias de producción destacadas:**
 | Paquete | Versión | Propósito |
@@ -175,7 +179,7 @@ Zustand
 | `zod` | ^4.3 | Validación de schemas |
 | `sonner` | ^2 | Notificaciones toast |
 
-**Deuda técnica:** Vitest, Testing Library y MSW no están instalados — las instrucciones del proyecto exigen tests pero aún no hay infraestructura de testing.
+**Actualización relevante:** Se incorporo infraestructura base de tests con Vitest y scripts npm (`test`, `test:watch`).
 
 ### `.eslintrc.cjs` y `.eslintignore`
 
@@ -519,11 +523,56 @@ apiClient.interceptors.request.use(config => {
 })
 ```
 
+**Interceptor de respuesta (apiClient + authClient):**
+- Normaliza cualquier error de transporte/API con `normalizeApiError`.
+- Si el error es Axios, preserva el objeto original y adjunta `appApiError` para compatibilidad con pantallas que aún usan `axios.isAxiosError(...)`.
+- Si no es Axios, rechaza directamente un `AppApiError`.
+
 **Integración:** Importado por todos los módulos de `src/api/*.ts`.
 
 **Decisión de diseño:** Dos instancias Axios separadas por responsabilidad — `authClient` para el flujo OAuth2 (necesita cookies de sesión del servidor), `apiClient` para llamadas autenticadas (necesita Bearer token).
 
-**Deuda técnica:** Sin interceptor de respuesta para 401 (token expirado durante uso activo), sin timeout, sin normalización global de errores.
+**Deuda técnica:** Sin timeout global en Axios y sin estrategia de retry/backoff centralizada; la normalización de errores ya existe pero falta migrar gradualmente los consumidores UI a `appApiError`.
+
+---
+
+### `errorNormalizer.ts`
+
+**Propósito:** Normalizar respuestas de error del backend y errores de red en un único modelo de dominio (`AppApiError`) reutilizable por API, hooks y UI.
+
+**Construcción:**
+- `normalizeApiError(error: unknown): AppApiError` extrae y prioriza:
+  - `data.clientMessage`
+  - `failure.message`
+  - fallback de red o mensaje genérico
+- Mapea metadatos técnicos: `httpStatus`, `code`, `origin`, `clientRequestCause`, `detail`, `exception`, `fieldErrors`.
+- Calcula `retryable` usando reglas por status/origen/código (`408`, `429`, `5xx`, `SERVER_PROCESSING`, `EXTERNAL_SERVICE_ERROR`, `OPERATION_FAILED`, errores de red).
+
+**Integración:**
+- Consumido por `src/api/client.ts` en interceptores de respuesta.
+- Provee `getAppApiError(...)` para adopción incremental en páginas/hook que necesiten lectura consistente del error.
+
+**Decisión de diseño:** En esta fase se prioriza compatibilidad retroactiva. Se adjunta `appApiError` al `AxiosError` en vez de reemplazarlo para no romper lógica existente mientras migra la UI.
+
+**Estrategia:** Capa de adaptación centralizada por contrato backend (`ErrorResponse`) con fallback seguro para errores no tipados.
+
+**Puntos de mejora / deuda técnica conocida:**
+- Completar migración del resto de pantallas y hooks secundarios para aprovechar `getAppApiError(...)` de forma homogénea en toda la UI.
+- Agregar tests unitarios dedicados para cada variante de error del contrato OpenAPI.
+
+---
+
+### `response.ts`
+
+**Propósito:** Centralizar el desempaquetado seguro de `BaseResponse<T>` para que todos los módulos de `src/api/` retornen `data` o lancen un `AppApiError` normalizado.
+
+**Construcción:**
+- `unwrapResponseData<T>(body, fallbackMessage)` retorna `body.data` cuando existe.
+- Si `data` viene `null/undefined`, lanza `buildAppApiErrorFromBaseResponse(...)` para preservar `code`, `origin`, `clientMessage`, `fieldErrors` y `retryable`.
+
+**Integración:** Usado por `auth.ts`, `account.ts`, `tenants.ts`, `users.ts`, `clientApps.ts`, `memberships.ts`, `serviceInfo.ts`, `dashboard.ts` y `billing.ts`.
+
+**Decisión de diseño:** Evitar lógica duplicada en cada endpoint y eliminar `throw new Error(...)` ad-hoc, manteniendo un contrato de error uniforme para TanStack Query y UI.
 
 ---
 
@@ -700,7 +749,7 @@ interface PagedData<T> {
 
 **Integración:** Todos los módulos de `src/api/` devuelven tipos derivados de `BaseResponse<T>`. Las funciones de API desenvuelven `.data` antes de retornar.
 
-**Decisión de diseño:** `data`, `success` y `failure` son todos opcionales en el tipo, lo que refleja fielmente el contrato del backend pero obliga al frontend a verificar la presencia antes de usar. La documentación inline en `ErrorData` explica cómo mapear `origin` + `clientRequestCause` a UX.
+**Decisión de diseño:** `data`, `success` y `failure` son todos opcionales en el tipo, lo que refleja fielmente el contrato del backend pero obliga al frontend a verificar la presencia antes de usar. `ErrorData` incluye los campos enriquecidos del contrato OpenAPI (`layer`, `fieldErrors`) además de `origin` y `clientRequestCause` para clasificación UX.
 
 ---
 
@@ -1196,8 +1245,8 @@ Componentes privados:
 
 Helpers privados:
 - `resolveRedirectPath(roles)` — mapea rol → ruta post-login.
-- `extractAuthorizeError(error)` — normaliza errores del paso 1.
-- `extractLoginError(error)` — normaliza errores del paso 2.
+- `extractAuthorizeError(error)` — normaliza errores del paso 1 usando `getAppApiError(...)`.
+- `extractLoginError(error)` — normaliza errores del paso 2 usando `getAppApiError(...)`.
 
 Detección de sesión sin roles:
 - Un `useEffect` observa `accessToken` e `idToken`. Si hay token pero `roles.length === 0`, llama `setError(...)` en `useBlockingErrorStore` con `kind: 'NO_ROLE'`, activando el modal bloqueante sobre la pantalla actual.
@@ -1222,6 +1271,8 @@ initMutation.isSuccess                                  → LoginForm
 - `isAutoRetryingRef` — suprime el spinner durante auto-reintentos silenciosos.
 
 **Integración:** `authorize`, `login`, `exchangeToken` (api/auth.ts) → `verifyIdToken`, `extractRoles` (auth/jwksVerify.ts) → `setTokens` (auth/tokenStore.ts) → `persistRefreshToken` (auth/refresh.ts) → `useBlockingErrorStore` (auth/blockingErrorStore.ts) → `useHoneypot`, `useRateLimit`, `TurnstileWidget`.
+
+**Actualización relevante:** La captura de errores dejó de depender de parseo manual del envelope Axios y ahora usa `getAppApiError(...)` (código, mensaje y retryabilidad) para mantener consistencia con el contrato OpenAPI de `ErrorResponse`. La lógica de reintento/reconexión en `onError` también usa `retryable` y `httpStatus` normalizados.
 
 **Deuda técnica:** `resolveRedirectPath` referencia rutas (`/tenant-admin/dashboard`, `/dashboard`) que aún no existen en el router.
 
@@ -1260,6 +1311,8 @@ initMutation.isSuccess                                  → LoginForm
 
 **Integración:** `getBillingCatalog`, `createBillingContract`, `verifyContractEmail`, `mockApprovePayment`, `activateBillingContract` de `src/api/billing.ts`; `BILLING_QUERY_KEYS`; `useHoneypot`; `HoneypotField`; `toast` (sonner).
 
+**Actualización relevante:** El manejo de errores del flujo migró a `getAppApiError(...)` en sus handlers principales (lookup de contrato, creación, verificación de email, reenvío de código y pago/activación), eliminando parsing por string y homogenizando mensajes por contrato backend.
+
 ---
 
 ### 10.4 Registro de usuario — `src/pages/register/`
@@ -1275,6 +1328,8 @@ initMutation.isSuccess                                  → LoginForm
 - Llamada real a `registerUser()` — el único formulario público con backend operativo.
 
 **Integración:** `registerUser` (api/users.ts), `useHoneypot`, `HoneypotField`, `TurnstileWidget`.
+
+**Actualización relevante:** El submit ahora clasifica errores por `code`/`httpStatus` normalizados (`RESOURCE_NOT_FOUND`, `DUPLICATE_RESOURCE`, `CONFLICT/409`) en vez de heurísticas por texto (`includes('404'/'duplicate')`).
 
 ---
 
@@ -1465,6 +1520,11 @@ npm install -D vitest @testing-library/react @testing-library/user-event msw
 
 Crear `src/mocks/handlers.ts` con `http.get/post(...)` de MSW respetando el shape `BaseResponse<T>`. Configurar `vitest.config.ts` con `environment: 'jsdom'`.
 
+### Cobertura actual de errores API
+
+- `src/api/errorNormalizer.test.ts`: valida normalizacion de `ErrorResponse`, errores de red, retryabilidad y helpers (`isAppApiError`, `getAppApiError`).
+- `src/api/response.test.ts`: valida `unwrapResponseData` en path feliz y en errores con fallback/mensajes de backend.
+
 ---
 
 ## 12. Deuda técnica consolidada
@@ -1476,9 +1536,9 @@ Crear `src/mocks/handlers.ts` con `http.get/post(...)` de MSW respetando el shap
 | 3 | `src/auth/pkce.ts` | `state` generado pero nunca validado | Media (solo si se migra a redirect) |
 | 4 | `src/auth/refresh.ts` | Sin timer de refresh proactivo al 80% del TTL | Media |
 | 5 | `src/auth/roleGuard.tsx` | Redirige a `/login` en vez de `/403` para rol incorrecto | Baja |
-| 6 | `src/api/client.ts` | Sin interceptor de respuesta para 401 silencioso | Media |
+| 6 | `src/api/client.ts` | Falta política de refresh/retry para 401 en uso activo (ya existe normalización de errores) | Media |
 | 7 | `src/api/client.ts` | Sin timeout global en Axios | Baja |
-| 8 | `src/api/users.ts` | Valida `.success` en vez de `.data` (inconsistente) | Media |
+| 8 | `src/api/` | Falta expandir tests de error a integracion con MSW (mocks de endpoints y mapeo UI por `code`) | Media |
 | 9 | `src/api/contracts.ts` | Módulo legado (mock) — `PlanId` migrado a `plans.ts`. Pendiente eliminar si no hay más dependientes | Baja |
 | 10 | `src/hooks/useRateLimit.ts` | `setInterval` no se limpia en unmount | Baja |
 | 11 | `src/styles/index.css` | Fuente `Inter` no importada explícitamente | Baja |

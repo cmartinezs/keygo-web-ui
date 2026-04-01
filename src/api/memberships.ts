@@ -6,6 +6,7 @@
 import { apiClient, tenantUrl } from './client'
 import type { BaseResponse } from '@/types/base'
 import type { MembershipData, CreateMembershipRequest } from '@/types/membership'
+import { unwrapResponseData } from './response'
 
 // ── Query key constants ────────────────────────────────────────────────────────
 
@@ -33,9 +34,7 @@ export async function listMembershipsByApp(
   const res = await apiClient.get<BaseResponse<MembershipData[]>>(membershipsUrl(tenantSlug), {
     params: { client_app_id: clientAppId },
   })
-  if (!res.data.data)
-    throw new Error(res.data.failure?.message ?? 'Error al listar memberships')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al listar memberships')
 }
 
 /**
@@ -49,9 +48,7 @@ export async function listMembershipsByUser(
   const res = await apiClient.get<BaseResponse<MembershipData[]>>(membershipsUrl(tenantSlug), {
     params: { user_id: userId },
   })
-  if (!res.data.data)
-    throw new Error(res.data.failure?.message ?? 'Error al listar memberships del usuario')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al listar memberships del usuario')
 }
 
 /**
@@ -63,8 +60,7 @@ export async function createMembership(
   data: CreateMembershipRequest,
 ): Promise<MembershipData> {
   const res = await apiClient.post<BaseResponse<MembershipData>>(membershipsUrl(tenantSlug), data)
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al crear membership')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al crear membership')
 }
 
 /**

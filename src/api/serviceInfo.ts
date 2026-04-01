@@ -1,5 +1,6 @@
 import type { BaseResponse } from '@/types/base'
 import { apiClient, API_V1 } from './client'
+import { unwrapResponseData } from './response'
 
 export interface ServiceInfoData {
   title: string
@@ -25,15 +26,11 @@ export const PLATFORM_QUERY_KEYS = {
 
 export async function getServiceInfo(): Promise<ServiceInfoData> {
   const response = await apiClient.get<BaseResponse<ServiceInfoData>>(`${API_V1}/service/info`)
-  const body = response.data
-  if (!body.data) throw new Error(body.failure?.message ?? 'Failed to fetch service info')
-  return body.data
+  return unwrapResponseData(response.data, 'Failed to fetch service info')
 }
 
 /** GET /api/v1/platform/stats ✅ — estadísticas globales. Solo ADMIN. */
 export async function getPlatformStats(): Promise<PlatformStatsData> {
   const response = await apiClient.get<BaseResponse<PlatformStatsData>>(`${API_V1}/platform/stats`)
-  const body = response.data
-  if (!body.data) throw new Error(body.failure?.message ?? 'Failed to fetch platform stats')
-  return body.data
+  return unwrapResponseData(response.data, 'Failed to fetch platform stats')
 }

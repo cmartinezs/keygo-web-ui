@@ -5,9 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, Link } from 'react-router-dom'
-import axios from 'axios'
 import { decodeJwt } from 'jose'
 import { authorize, login, exchangeToken } from '@/api/auth'
+import { getAppApiError } from '@/api/errorNormalizer'
 import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/auth/pkce'
 import { verifyIdToken, extractRoles } from '@/auth/jwksVerify'
 import { useTokenStore } from '@/auth/tokenStore'
@@ -19,7 +19,6 @@ import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
 import { env } from '@/config/env'
-import type { BaseResponse } from '@/types/base'
 import type { AppRole } from '@/types/roles'
 import type { AuthorizeData } from '@/types/auth'
 
@@ -48,30 +47,32 @@ function resolveRedirectPath(roles: AppRole[]): string {
  * These occur before the form is shown.
  */
 function extractAuthorizeError(error: unknown): { message: string; retryable: boolean } {
-  if (axios.isAxiosError(error) && error.response) {
-    const body = error.response.data as BaseResponse<unknown>
-    const code = body.failure?.code
-    if (code === 'RESOURCE_NOT_FOUND')
-      return {
-        message: 'La aplicación o el tenant no están disponibles. Contacta al administrador.',
-        retryable: false,
-      }
-    if (code === 'BUSINESS_RULE_VIOLATION')
-      return {
-        message: 'El acceso está suspendido temporalmente. Contacta al administrador.',
-        retryable: false,
-      }
-    if (code === 'INVALID_INPUT')
-      return {
-        message: 'Error de configuración de la aplicación. Contacta al administrador.',
-        retryable: false,
-      }
-    if (body.failure?.message) return { message: body.failure.message, retryable: false }
+  const appError = getAppApiError(error)
+
+  if (appError.code === 'RESOURCE_NOT_FOUND') {
+    return {
+      message: 'La aplicación o el tenant no están disponibles. Contacta al administrador.',
+      retryable: false,
+    }
   }
+
+  if (appError.code === 'BUSINESS_RULE_VIOLATION') {
+    return {
+      message: 'El acceso está suspendido temporalmente. Contacta al administrador.',
+      retryable: false,
+    }
+  }
+
+  if (appError.code === 'INVALID_INPUT') {
+    return {
+      message: 'Error de configuración de la aplicación. Contacta al administrador.',
+      retryable: false,
+    }
+  }
+
   return {
-    message:
-      'No se pudo conectar con el servidor de autenticación. Puedes volver a intentarlo ahora o más tarde.',
-    retryable: true,
+    message: appError.clientMessage,
+    retryable: appError.retryable,
   }
 }
 
@@ -80,32 +81,39 @@ function extractAuthorizeError(error: unknown): { message: string; retryable: bo
  * `sessionExpired` signals Pasos 0-1 must be re-run before retrying.
  */
 function extractLoginError(error: unknown): { message: string; sessionExpired: boolean } {
-  if (axios.isAxiosError(error) && error.response) {
-    const body = error.response.data as BaseResponse<unknown>
-    const code = body.failure?.code
-    if (code === 'AUTHENTICATION_REQUIRED')
-      return { message: 'Credenciales incorrectas. Vuelve a intentarlo.', sessionExpired: false }
-    if (code === 'BUSINESS_RULE_VIOLATION')
-      return {
-        message: 'Tu cuenta no tiene acceso a esta aplicación.',
-        sessionExpired: false,
-      }
-    if (code === 'EMAIL_NOT_VERIFIED')
-      return {
-        message: 'Correo pendiente de verificación. Revisa tu bandeja de entrada.',
-        sessionExpired: false,
-      }
-    if (code === 'RESOURCE_NOT_FOUND')
-      return { message: 'Usuario no encontrado.', sessionExpired: false }
-    // INVALID_INPUT in this step → no prior session; Pasos 0-1 must be re-run
-    if (code === 'INVALID_INPUT')
-      return {
-        message: 'Tu sesión de inicio expiró. Por favor, vuelve a intentarlo.',
-        sessionExpired: true,
-      }
-    if (body.failure?.message) return { message: body.failure.message, sessionExpired: false }
+  const appError = getAppApiError(error)
+
+  if (appError.code === 'AUTHENTICATION_REQUIRED') {
+    return { message: 'Credenciales incorrectas. Vuelve a intentarlo.', sessionExpired: false }
   }
-  return { message: 'Error de conexión. Vuelve a intentarlo.', sessionExpired: false }
+
+  if (appError.code === 'BUSINESS_RULE_VIOLATION') {
+    return {
+      message: 'Tu cuenta no tiene acceso a esta aplicación.',
+      sessionExpired: false,
+    }
+  }
+
+  if (appError.code === 'EMAIL_NOT_VERIFIED') {
+    return {
+      message: 'Correo pendiente de verificación. Revisa tu bandeja de entrada.',
+      sessionExpired: false,
+    }
+  }
+
+  if (appError.code === 'RESOURCE_NOT_FOUND') {
+    return { message: 'Usuario no encontrado.', sessionExpired: false }
+  }
+
+  // INVALID_INPUT in this step -> no prior session; Pasos 0-1 must be re-run
+  if (appError.code === 'INVALID_INPUT') {
+    return {
+      message: 'Tu sesión de inicio expiró. Por favor, vuelve a intentarlo.',
+      sessionExpired: true,
+    }
+  }
+
+  return { message: appError.clientMessage, sessionExpired: false }
 }
 
 // ── Sub-components ───────────────────────────────────────────────────────────
@@ -495,13 +503,14 @@ export default function LoginPage() {
     onError: (error) => {
       const phase = loginPhaseRef.current
       loginPhaseRef.current = 'login' // reset for next attempt
+      const appError = getAppApiError(error)
 
       if (phase === 'post-login') {
-        const isNetwork = axios.isAxiosError(error) && !error.response
+        const isNetwork = appError.httpStatus === undefined
         toast.error(
           isNetwork
             ? 'Error de conexión al procesar el acceso. Por favor, intenta de nuevo.'
-            : 'No se pudo completar el acceso. Por favor, intenta de nuevo.',
+            : appError.clientMessage,
         )
         initMutation.mutate()
         return
@@ -509,12 +518,11 @@ export default function LoginPage() {
 
       // phase === 'login': error from POST /account/login
       const { sessionExpired } = extractLoginError(error)
-      const networkError = axios.isAxiosError(error) && !error.response
       if (sessionExpired) {
         toast.warning('Tu sesión expiró. Reconectando…')
         initMutation.mutate()
-      } else if (networkError) {
-        toast.warning('Error de conexión. Reconectando…')
+      } else if (appError.retryable) {
+        toast.warning('No se pudo conectar. Reconectando…')
         initMutation.mutate()
       } else {
         // Credential error (wrong password, account suspended, etc.) — count against rate limit

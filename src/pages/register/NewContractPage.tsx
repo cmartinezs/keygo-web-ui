@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { getAppApiError } from '@/api/errorNormalizer'
 import {
   getBillingCatalog,
   getBillingContract,
@@ -334,8 +335,13 @@ export default function NewContractPage() {
       }
 
       setResumeLookupError('Este contrato no se puede retomar porque está expirado, cancelado o fallido.')
-    } catch {
-      setResumeLookupError('No encontramos un contrato con ese ID. Verifica el dato e inténtalo de nuevo.')
+    } catch (err: unknown) {
+      const appError = getAppApiError(err)
+      if (appError.code === 'RESOURCE_NOT_FOUND') {
+        setResumeLookupError('No encontramos un contrato con ese ID. Verifica el dato e inténtalo de nuevo.')
+      } else {
+        setResumeLookupError(appError.clientMessage)
+      }
     } finally {
       setIsResumingContract(false)
     }
@@ -367,11 +373,11 @@ export default function NewContractPage() {
       setContractId(contract.id)
       setStep(3)
     } catch (err: unknown) {
-      const msg = extractErrorMessage(err)
-      if (msg.includes('INVALID_INPUT')) {
+      const appError = getAppApiError(err)
+      if (appError.code === 'INVALID_INPUT') {
         setProcessError('Los datos introducidos no son válidos. Por favor, revísalos e inténtalo de nuevo.')
       } else {
-        setProcessError('No se pudo iniciar el contrato. Por favor, inténtalo de nuevo.')
+        setProcessError(appError.clientMessage)
       }
     } finally {
       setIsProcessing(false)
@@ -385,8 +391,13 @@ export default function NewContractPage() {
     try {
       await verifyContractEmail(contractId, { code })
       setStep(4)
-    } catch {
-      setProcessError('El código es incorrecto o ha expirado. Revisa tu correo e inténtalo de nuevo.')
+    } catch (err: unknown) {
+      const appError = getAppApiError(err)
+      if (appError.code === 'INVALID_INPUT') {
+        setProcessError('El código es incorrecto o ha expirado. Revisa tu correo e inténtalo de nuevo.')
+      } else {
+        setProcessError(appError.clientMessage)
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -398,8 +409,9 @@ export default function NewContractPage() {
     try {
       await resendContractVerificationEmail(contractId)
       toast.success('Código reenviado. Revisa tu bandeja de entrada.')
-    } catch {
-      toast.error('No se pudo reenviar el código. Inténtalo de nuevo más tarde.')
+    } catch (err: unknown) {
+      const appError = getAppApiError(err)
+      toast.error(appError.clientMessage)
     } finally {
       setIsResending(false)
     }
@@ -415,8 +427,9 @@ export default function NewContractPage() {
       await activateBillingContract(contractId)
       setDone(true)
       toast.success('¡Cuenta activada exitosamente!')
-    } catch {
-      setProcessError('No se pudo completar el pago o la activación. Por favor, inténtalo de nuevo.')
+    } catch (err: unknown) {
+      const appError = getAppApiError(err)
+      setProcessError(appError.clientMessage)
     } finally {
       setIsProcessing(false)
     }
@@ -549,14 +562,4 @@ export default function NewContractPage() {
       <AppFooter />
     </div>
   )
-}
-
-// ── Utility ───────────────────────────────────────────────────────────────────
-
-function extractErrorMessage(err: unknown): string {
-  if (typeof err === 'object' && err !== null) {
-    const e = err as Record<string, unknown>
-    if (typeof e['message'] === 'string') return e['message']
-  }
-  return ''
 }

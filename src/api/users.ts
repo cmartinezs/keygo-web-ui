@@ -5,6 +5,7 @@
 
 import { apiClient, API_V1, tenantUrl } from './client'
 import type { BaseResponse } from '@/types/base'
+import { unwrapResponseData } from './response'
 import type {
   UserData,
   CreateUserRequest,
@@ -30,15 +31,13 @@ const userUrl = (tenantSlug: string, userId: string) => `${usersUrl(tenantSlug)}
 /** GET /api/v1/tenants/{tenantSlug}/users ✅ — lista usuarios del tenant. */
 export async function listUsers(tenantSlug: string): Promise<UserData[]> {
   const res = await apiClient.get<BaseResponse<UserData[]>>(usersUrl(tenantSlug))
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al listar usuarios')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al listar usuarios')
 }
 
 /** GET /api/v1/tenants/{tenantSlug}/users/{userId} ✅ */
 export async function getUser(tenantSlug: string, userId: string): Promise<UserData> {
   const res = await apiClient.get<BaseResponse<UserData>>(userUrl(tenantSlug, userId))
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Usuario no encontrado')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Usuario no encontrado')
 }
 
 /** POST /api/v1/tenants/{tenantSlug}/users ✅ — crea un usuario en el tenant. */
@@ -47,8 +46,7 @@ export async function createUser(
   data: CreateUserRequest,
 ): Promise<UserData> {
   const res = await apiClient.post<BaseResponse<UserData>>(usersUrl(tenantSlug), data)
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al crear el usuario')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al crear el usuario')
 }
 
 /** PUT /api/v1/tenants/{tenantSlug}/users/{userId} ✅ — actualiza firstName y lastName. */
@@ -58,8 +56,7 @@ export async function updateUser(
   data: UpdateUserRequest,
 ): Promise<UserData> {
   const res = await apiClient.put<BaseResponse<UserData>>(userUrl(tenantSlug, userId), data)
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al actualizar usuario')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al actualizar usuario')
 }
 
 /** POST /api/v1/tenants/{tenantSlug}/users/{userId}/reset-password ✅ */
@@ -93,9 +90,6 @@ export async function registerUser(
     `${API_V1}/tenants/${encodeURIComponent(tenantSlug)}/apps/${encodeURIComponent(clientId)}/register`,
     data,
   )
-  if (!res.data.data) {
-    throw new Error(res.data.failure?.message ?? 'Error al registrar usuario')
-  }
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al registrar usuario')
 }
 

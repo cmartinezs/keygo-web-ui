@@ -6,6 +6,7 @@
 
 import { apiClient, tenantUrl } from './client'
 import type { BaseResponse } from '@/types/base'
+import { unwrapResponseData } from './response'
 import type {
   ClientAppData,
   ClientAppCreatedData,
@@ -36,8 +37,7 @@ const appUrl = (tenantSlug: string, clientId: string) => `${appsUrl(tenantSlug)}
 /** GET /api/v1/tenants/{tenantSlug}/apps ✅ — lista todas las apps del tenant. */
 export async function listClientApps(tenantSlug: string): Promise<ClientAppData[]> {
   const res = await apiClient.get<BaseResponse<ClientAppData[]>>(appsUrl(tenantSlug))
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al listar apps')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al listar apps')
 }
 
 /** GET /api/v1/tenants/{tenantSlug}/apps/{clientId} ✅ */
@@ -46,8 +46,7 @@ export async function getClientApp(
   clientId: string,
 ): Promise<ClientAppData> {
   const res = await apiClient.get<BaseResponse<ClientAppData>>(appUrl(tenantSlug, clientId))
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'App no encontrada')
-  return res.data.data
+  return unwrapResponseData(res.data, 'App no encontrada')
 }
 
 /** POST /api/v1/tenants/{tenantSlug}/apps ✅ — crea una nueva ClientApp. */
@@ -56,8 +55,7 @@ export async function createClientApp(
   data: CreateClientAppRequest,
 ): Promise<ClientAppCreatedData> {
   const res = await apiClient.post<BaseResponse<ClientAppCreatedData>>(appsUrl(tenantSlug), data)
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al crear la app')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al crear la app')
 }
 
 /** PUT /api/v1/tenants/{tenantSlug}/apps/{clientId} ✅ — actualiza nombre, descripción y configuración. */
@@ -67,8 +65,7 @@ export async function updateClientApp(
   data: UpdateClientAppRequest,
 ): Promise<ClientAppData> {
   const res = await apiClient.put<BaseResponse<ClientAppData>>(appUrl(tenantSlug, clientId), data)
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al actualizar la app')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al actualizar la app')
 }
 
 /** POST /api/v1/tenants/{tenantSlug}/apps/{clientId}/rotate-secret ✅ — rota el clientSecret. */
@@ -79,8 +76,7 @@ export async function rotateClientAppSecret(
   const res = await apiClient.post<BaseResponse<ClientAppSecretData>>(
     `${appUrl(tenantSlug, clientId)}/rotate-secret`,
   )
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al rotar el secret')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al rotar el secret')
 }
 
 // ── App Roles ─────────────────────────────────────────────────────────────────
@@ -93,8 +89,7 @@ export async function listAppRoles(
   const res = await apiClient.get<BaseResponse<AppRoleData[]>>(
     `${appUrl(tenantSlug, clientAppId)}/roles`,
   )
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al listar roles')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al listar roles')
 }
 
 /** POST /api/v1/tenants/{tenantSlug}/apps/{clientAppId}/roles ✅ */
@@ -107,6 +102,5 @@ export async function createAppRole(
     `${appUrl(tenantSlug, clientAppId)}/roles`,
     data,
   )
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al crear el rol')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al crear el rol')
 }

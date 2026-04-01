@@ -1,6 +1,7 @@
 import type { BaseResponse } from '@/types/base'
 import type { PlatformDashboardData } from '@/types/dashboard'
 import { apiClient, API_V1 } from './client'
+import { unwrapResponseData } from './response'
 
 // ── Query keys ────────────────────────────────────────────────────────────────
 
@@ -15,7 +16,5 @@ export async function getPlatformDashboard(): Promise<PlatformDashboardData> {
   const response = await apiClient.get<BaseResponse<PlatformDashboardData>>(
     `${API_V1}/admin/platform/dashboard`,
   )
-  const body = response.data
-  if (!body.data) throw new Error(body.failure?.message ?? 'Failed to fetch platform dashboard')
-  return body.data
+  return unwrapResponseData(response.data, 'Failed to fetch platform dashboard')
 }

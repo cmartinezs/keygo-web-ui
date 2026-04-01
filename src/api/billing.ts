@@ -6,6 +6,7 @@
 
 import { apiClient, appUrl, API_V1, TENANT, CLIENT_ID } from './client'
 import type { BaseResponse } from '@/types/base'
+import { unwrapResponseData } from './response'
 import type {
   AppPlan,
   AppContract,
@@ -46,7 +47,7 @@ export async function getBillingCatalog(
   const res = await apiClient.get<BaseResponse<AppPlan[]>>(
     `${billingBase(tenantSlug, clientId)}/catalog`,
   )
-  return res.data.data ?? []
+  return unwrapResponseData(res.data, 'No se pudo obtener el catalogo de planes')
 }
 
 /** GET /billing/catalog/{planCode} — returns a single public plan by code. Public endpoint. */
@@ -58,7 +59,7 @@ export async function getBillingCatalogPlan(
   const res = await apiClient.get<BaseResponse<AppPlan>>(
     `${billingBase(tenantSlug, clientId)}/catalog/${planCode}`,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo obtener el plan solicitado')
 }
 
 // ── Contracts ─────────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ export async function createBillingContract(
     contractsBase,
     request,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo iniciar el contrato de suscripcion')
 }
 
 /**
@@ -90,7 +91,7 @@ export async function verifyContractEmail(
     `${contractsBase}/${contractId}/verify-email`,
     request,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo verificar el codigo de email')
 }
 
 /**
@@ -103,7 +104,7 @@ export async function mockApprovePayment(
   const res = await apiClient.post<BaseResponse<AppContract>>(
     `${contractsBase}/${contractId}/mock-approve-payment`,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo aprobar el pago de prueba')
 }
 
 /**
@@ -117,7 +118,7 @@ export async function activateBillingContract(
   const res = await apiClient.post<BaseResponse<AppContract>>(
     `${contractsBase}/${contractId}/activate`,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo activar el contrato')
 }
 
 /**
@@ -130,7 +131,7 @@ export async function getBillingContract(
   const res = await apiClient.get<BaseResponse<AppContract>>(
     `${contractsBase}/${contractId}`,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo recuperar el contrato')
 }
 
 /**
@@ -146,9 +147,7 @@ export async function resumeContractOnboarding(
   const res = await apiClient.get<BaseResponse<AppContractResumeData>>(
     `${contractsBase}/${contractId}/resume`,
   )
-  if (!res.data.data)
-    throw new Error(res.data.failure?.message ?? 'No se pudo restaurar el estado del contrato')
-  return res.data.data
+  return unwrapResponseData(res.data, 'No se pudo restaurar el estado del contrato')
 }
 
 /**
@@ -174,7 +173,7 @@ export async function getActiveSubscription(
   const res = await apiClient.get<BaseResponse<AppSubscription>>(
     `${billingBase(tenantSlug, clientId)}/subscription`,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo obtener la suscripcion activa')
 }
 
 /**
@@ -188,7 +187,7 @@ export async function cancelSubscription(
   const res = await apiClient.post<BaseResponse<AppSubscription>>(
     `${billingBase(tenantSlug, clientId)}/subscription/cancel`,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo cancelar la suscripcion')
 }
 
 /**
@@ -202,7 +201,7 @@ export async function listInvoices(
   const res = await apiClient.get<BaseResponse<AppInvoice[]>>(
     `${billingBase(tenantSlug, clientId)}/invoices`,
   )
-  return res.data.data ?? []
+  return unwrapResponseData(res.data, 'No se pudo listar las facturas')
 }
 
 // ── Plans management (ADMIN_TENANT) ───────────────────────────────────────────
@@ -220,5 +219,5 @@ export async function createBillingPlan(
     `${billingBase(tenantSlug, clientId)}/plans`,
     request,
   )
-  return res.data.data!
+  return unwrapResponseData(res.data, 'No se pudo crear el plan de facturacion')
 }

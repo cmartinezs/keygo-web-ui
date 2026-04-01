@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { getAppApiError } from '@/api/errorNormalizer'
 import { registerUser } from '@/api/users'
 import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
@@ -396,15 +397,19 @@ export default function UserRegisterPage() {
       })
       setRegisteredEmail(data.email)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : null
-      if (msg?.toLowerCase().includes('not found') || msg?.includes('404')) {
+      const appError = getAppApiError(err)
+      if (appError.code === 'RESOURCE_NOT_FOUND') {
         setSubmitError(
           'No se encontró la empresa o la aplicación. Verifica el identificador con tu administrador.',
         )
-      } else if (msg?.toLowerCase().includes('duplicate') || msg?.includes('409') || msg?.toLowerCase().includes('conflict')) {
+      } else if (
+        appError.code === 'DUPLICATE_RESOURCE'
+        || appError.code === 'CONFLICT'
+        || appError.httpStatus === 409
+      ) {
         setSubmitError('Ya existe una cuenta con ese correo o nombre de usuario.')
       } else {
-        setSubmitError('Ha ocurrido un error al crear tu cuenta. Inténtalo de nuevo.')
+        setSubmitError(appError.clientMessage)
       }
     } finally {
       setIsSubmitting(false)

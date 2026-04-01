@@ -1,6 +1,7 @@
 import type { BaseResponse } from '@/types/base'
 import type { AuthorizeData, LoginData, TokenData } from '@/types/auth'
 import { authClient, API_V1, CLIENT_ID, REDIRECT_URI } from './client'
+import { unwrapResponseData } from './response'
 
 export async function refreshToken(params: {
   tenantSlug: string
@@ -13,8 +14,7 @@ export async function refreshToken(params: {
     refresh_token: params.refreshToken,
   })
   const body = response.data
-  if (!body.data) throw new Error(body.failure?.message ?? 'Token refresh failed')
-  return body.data
+  return unwrapResponseData(body, 'Token refresh failed')
 }
 
 export async function authorize(params: {
@@ -35,8 +35,7 @@ export async function authorize(params: {
     },
   })
   const body = response.data
-  if (!body.data) throw new Error(body.failure?.message ?? 'Authorization initiation failed')
-  return body.data
+  return unwrapResponseData(body, 'Authorization initiation failed')
 }
 
 export async function login(params: {
@@ -50,8 +49,7 @@ export async function login(params: {
     password: params.password,
   })
   const body = response.data
-  if (!body.data) throw new Error(body.failure?.message ?? 'Login failed')
-  return body.data
+  return unwrapResponseData(body, 'Login failed')
 }
 
 export async function exchangeToken(params: {
@@ -68,6 +66,5 @@ export async function exchangeToken(params: {
     redirect_uri: REDIRECT_URI,
   })
   const body = response.data
-  if (!body.data) throw new Error(body.failure?.message ?? 'Token exchange failed')
-  return body.data
+  return unwrapResponseData(body, 'Token exchange failed')
 }

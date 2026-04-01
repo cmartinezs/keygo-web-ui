@@ -7,6 +7,7 @@
 import { apiClient, tenantUrl } from './client'
 import type { BaseResponse } from '@/types/base'
 import type { UserProfileData, UpdateUserProfileRequest } from '@/types/user'
+import { unwrapResponseData } from './response'
 
 // ── Query key constants ────────────────────────────────────────────────────────
 
@@ -27,8 +28,7 @@ const profileUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/pro
  */
 export async function getProfile(tenantSlug: string): Promise<UserProfileData> {
   const res = await apiClient.get<BaseResponse<UserProfileData>>(profileUrl(tenantSlug))
-  if (!res.data.data) throw new Error(res.data.failure?.message ?? 'Error al obtener el perfil')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al obtener el perfil')
 }
 
 /**
@@ -42,7 +42,5 @@ export async function updateProfile(
   data: UpdateUserProfileRequest,
 ): Promise<UserProfileData> {
   const res = await apiClient.patch<BaseResponse<UserProfileData>>(profileUrl(tenantSlug), data)
-  if (!res.data.data)
-    throw new Error(res.data.failure?.message ?? 'Error al actualizar el perfil')
-  return res.data.data
+  return unwrapResponseData(res.data, 'Error al actualizar el perfil')
 }

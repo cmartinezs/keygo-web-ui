@@ -8,6 +8,12 @@ export interface FailureInfo {
   message: string
 }
 
+export interface FieldValidationError {
+  field?: string
+  message?: string
+  rejectedValue?: unknown
+}
+
 export interface BaseResponse<T> {
   date: string
   success?: SuccessInfo
@@ -72,6 +78,8 @@ export type ClientRequestCause =
 export interface ErrorData {
   /** ResponseCode del error (mismo valor que `failure.code`) */
   code: string
+  /** Capa técnica donde se originó la excepción (backend) */
+  layer?: string
   /** Origen del error */
   origin: ErrorOrigin
   /** Sub-causa de errores de cliente (ausente si `origin !== 'CLIENT_REQUEST'`) */
@@ -86,6 +94,8 @@ export interface ErrorData {
   detail?: string
   /** Nombre de la clase de excepción — solo en perfiles `dev` / `local` */
   exception?: string
+  /** Errores de validación por campo (si aplica) */
+  fieldErrors?: FieldValidationError[]
 }
 
 /** Alias tipado para respuestas de error de la API */

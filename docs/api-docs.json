@@ -110,7 +110,7 @@
         ],
         "responses": {
           "200": {
-            "description": "User retrieved successfully",
+            "description": "User retrieved successfully (code: USER_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -120,7 +120,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -130,9 +130,29 @@
             }
           },
           "404": {
-            "description": "User or tenant not found",
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -187,7 +207,7 @@
         },
         "responses": {
           "200": {
-            "description": "User updated successfully",
+            "description": "User updated successfully (code: USER_UPDATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -197,7 +217,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -207,9 +227,29 @@
             }
           },
           "404": {
-            "description": "User or tenant not found",
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -256,7 +296,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Client app retrieved successfully",
+            "description": "Client app retrieved successfully (code: CLIENT_APP_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -266,7 +306,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -276,9 +316,29 @@
             }
           },
           "404": {
-            "description": "Client app or tenant not found",
+            "description": "Client app or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -333,7 +393,7 @@
         },
         "responses": {
           "200": {
-            "description": "Client app updated successfully",
+            "description": "Client app updated successfully (code: CLIENT_APP_UPDATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -343,7 +403,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
@@ -353,7 +413,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -363,9 +423,29 @@
             }
           },
           "404": {
-            "description": "Client app or tenant not found",
+            "description": "Client app or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -402,7 +482,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant suspended successfully",
+            "description": "Tenant suspended successfully (code: TENANT_SUSPENDED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -412,7 +492,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -422,7 +502,7 @@
             }
           },
           "403": {
-            "description": "Tenant is already suspended",
+            "description": "Tenant is already suspended (code: BUSINESS_RULE_VIOLATION)",
             "content": {
               "*/*": {
                 "schema": {
@@ -432,9 +512,29 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -471,7 +571,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant activated successfully",
+            "description": "Tenant activated successfully (code: TENANT_ACTIVATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -481,7 +581,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer token",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -491,9 +591,29 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -568,7 +688,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant list retrieved successfully",
+            "description": "Tenant list retrieved successfully (code: TENANT_LIST_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -578,7 +698,7 @@
             }
           },
           "400": {
-            "description": "Invalid query parameters",
+            "description": "Invalid pagination parameters (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
@@ -588,9 +708,29 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer token",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -623,7 +763,7 @@
         },
         "responses": {
           "201": {
-            "description": "Tenant created successfully",
+            "description": "Tenant created successfully (code: TENANT_CREATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -633,7 +773,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
@@ -643,9 +783,39 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A tenant with the derived slug already exists (code: DUPLICATE_TENANT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -682,7 +852,7 @@
         ],
         "responses": {
           "200": {
-            "description": "User list retrieved successfully",
+            "description": "User list retrieved successfully (code: USER_LIST_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -692,7 +862,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -702,9 +872,29 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -749,7 +939,7 @@
         },
         "responses": {
           "201": {
-            "description": "User created successfully",
+            "description": "User created successfully (code: USER_CREATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -759,7 +949,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
@@ -769,7 +959,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -779,7 +969,7 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -789,9 +979,29 @@
             }
           },
           "409": {
-            "description": "Email or username already exists in this tenant",
+            "description": "Email or username already exists in this tenant (code: DUPLICATE_RESOURCE)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -848,7 +1058,7 @@
         },
         "responses": {
           "200": {
-            "description": "Password reset successfully",
+            "description": "Password reset successfully (code: USER_PASSWORD_RESET)",
             "content": {
               "*/*": {
                 "schema": {
@@ -858,7 +1068,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
@@ -868,7 +1078,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -878,9 +1088,29 @@
             }
           },
           "404": {
-            "description": "User or tenant not found",
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -927,7 +1157,7 @@
         },
         "responses": {
           "200": {
-            "description": "Credentials valid",
+            "description": "Credentials valid (code: CREDENTIALS_VALID)",
             "content": {
               "*/*": {
                 "schema": {
@@ -937,7 +1167,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
@@ -947,7 +1177,7 @@
             }
           },
           "401": {
-            "description": "Invalid credentials or admin key missing",
+            "description": "Invalid credentials or Bearer token missing (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -957,7 +1187,7 @@
             }
           },
           "403": {
-            "description": "User account is suspended",
+            "description": "User account is suspended (code: BUSINESS_RULE_VIOLATION)",
             "content": {
               "*/*": {
                 "schema": {
@@ -967,9 +1197,29 @@
             }
           },
           "404": {
-            "description": "User or tenant not found",
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -1016,7 +1266,7 @@
         },
         "responses": {
           "200": {
-            "description": "Token(s) issued successfully",
+            "description": "Token(s) issued successfully (code: TOKEN_ISSUED / REFRESH_TOKEN_ROTATED / CLIENT_CREDENTIALS_TOKEN_ISSUED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1026,7 +1276,7 @@
             }
           },
           "400": {
-            "description": "Invalid request — missing required fields for the selected grant_type",
+            "description": "Invalid request — missing required fields for the selected grant_type (code: INVALID_INPUT)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1036,7 +1286,7 @@
             }
           },
           "401": {
-            "description": "Invalid code, credentials or token",
+            "description": "Invalid code, credentials or token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1046,9 +1296,29 @@
             }
           },
           "404": {
-            "description": "Tenant or client app not found",
+            "description": "Tenant or client app not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -1090,7 +1360,7 @@
         },
         "responses": {
           "200": {
-            "description": "Token revoked (or silently ignored if unknown)",
+            "description": "Token revoked — or silently ignored if unknown (code: TOKEN_REVOKED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1100,9 +1370,29 @@
             }
           },
           "400": {
-            "description": "Invalid request body",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -1153,7 +1443,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Memberships retrieved",
+            "description": "Memberships retrieved (code: MEMBERSHIP_LIST_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1162,12 +1452,32 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid query parameters",
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListMembershipData"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1209,7 +1519,7 @@
         },
         "responses": {
           "201": {
-            "description": "Membership created",
+            "description": "Membership created (code: MEMBERSHIP_CREATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1219,21 +1529,71 @@
             }
           },
           "400": {
-            "description": "Invalid input",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseMembershipData"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Tenant suspended or membership inactive (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "404": {
-            "description": "User, app, or tenant not found",
+            "description": "Tenant or client app not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseMembershipData"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Membership already exists for this user + app (code: DUPLICATE_RESOURCE)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1268,7 +1628,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Client apps retrieved successfully",
+            "description": "Client apps retrieved successfully (code: CLIENT_APP_LIST_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1278,7 +1638,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1288,9 +1648,29 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -1335,7 +1715,7 @@
         },
         "responses": {
           "201": {
-            "description": "Client app created successfully",
+            "description": "Client app created successfully (code: CLIENT_APP_CREATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1345,7 +1725,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
@@ -1355,7 +1735,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1365,9 +1745,29 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -1422,7 +1822,7 @@
         },
         "responses": {
           "200": {
-            "description": "Email verified — user is now active",
+            "description": "Email verified — user is now active (code: EMAIL_VERIFIED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1432,21 +1832,51 @@
             }
           },
           "400": {
-            "description": "Invalid or already-used verification code",
+            "description": "Invalid or already-used verification code (code: INVALID_INPUT)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User or client app not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "422": {
-            "description": "Verification code has expired — request a new one",
+            "description": "Verification code has expired — request a new one (code: EMAIL_VERIFICATION_EXPIRED)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1486,7 +1916,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Client secret rotated successfully",
+            "description": "Client secret rotated successfully (code: CLIENT_APP_SECRET_ROTATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1496,7 +1926,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1506,9 +1936,29 @@
             }
           },
           "404": {
-            "description": "Client app or tenant not found",
+            "description": "Client app or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -1563,17 +2013,7 @@
         },
         "responses": {
           "200": {
-            "description": "New verification email sent",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Current code is still active — wait until it expires",
+            "description": "New verification email sent (code: EMAIL_VERIFICATION_RESENT)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1583,11 +2023,41 @@
             }
           },
           "404": {
-            "description": "User not found",
+            "description": "User not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Current code is still active — wait until it expires (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1635,7 +2105,7 @@
         },
         "responses": {
           "201": {
-            "description": "User registered — verification email sent",
+            "description": "User registered — verification email sent (code: USER_REGISTERED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1645,21 +2115,51 @@
             }
           },
           "400": {
-            "description": "Invalid request body or duplicate email/username",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseRegistrationData"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "404": {
-            "description": "Tenant or client app not found",
+            "description": "Tenant or client app not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseRegistrationData"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email or username already exists in this tenant (code: DUPLICATE_RESOURCE)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1697,7 +2197,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Cancellation scheduled",
+            "description": "Cancellation scheduled (code: APP_SUBSCRIPTION_CANCELLED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1706,8 +2206,8 @@
               }
             }
           },
-          "404": {
-            "description": "No active subscription found",
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1716,10 +2216,40 @@
               }
             }
           },
-          "401": {
-            "description": "Missing or invalid Bearer token",
+          "404": {
+            "description": "No subscription found for this contractor (code: SUBSCRIPTION_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Subscription is not active and cannot be cancelled (code: SUBSCRIPTION_INVALID_STATE)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -1776,7 +2306,7 @@
         },
         "responses": {
           "201": {
-            "description": "Plan created successfully",
+            "description": "Plan created successfully (code: APP_PLAN_CREATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1786,7 +2316,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body or missing required fields",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
@@ -1796,7 +2326,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer token",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1806,7 +2336,7 @@
             }
           },
           "404": {
-            "description": "Tenant or client app not found",
+            "description": "Tenant or client app not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1816,9 +2346,29 @@
             }
           },
           "409": {
-            "description": "A plan with the same code already exists for this client app",
+            "description": "A plan with the same code already exists for this client app (code: DUPLICATE_RESOURCE)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -1864,7 +2414,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Roles retrieved",
+            "description": "Roles retrieved (code: ROLE_LIST_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1873,12 +2423,42 @@
               }
             }
           },
-          "404": {
-            "description": "App or tenant not found",
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListAppRoleData"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant or client app not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1930,7 +2510,7 @@
         },
         "responses": {
           "201": {
-            "description": "Role created",
+            "description": "Role created (code: ROLE_CREATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1940,21 +2520,71 @@
             }
           },
           "400": {
-            "description": "Invalid input or duplicate role code",
+            "description": "Request body validation failed (code: INVALID_INPUT). data.field_errors lists each invalid field.",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppRoleData"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Tenant suspended or insufficient permissions (code: BUSINESS_RULE_VIOLATION / INSUFFICIENT_PERMISSIONS)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
           },
           "404": {
-            "description": "App or tenant not found",
+            "description": "Tenant or client app not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppRoleData"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Role code already exists in this app (code: DUPLICATE_RESOURCE)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1999,7 +2629,7 @@
         },
         "responses": {
           "200": {
-            "description": "Login successful — authorization code issued",
+            "description": "Login successful — authorization code issued (code: LOGIN_SUCCESSFUL)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2009,7 +2639,7 @@
             }
           },
           "400": {
-            "description": "No authorization state in session — call GET /oauth2/authorize first",
+            "description": "No authorization state in session — call GET /oauth2/authorize first (code: INVALID_INPUT)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2019,7 +2649,7 @@
             }
           },
           "401": {
-            "description": "Invalid credentials",
+            "description": "Invalid credentials (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2029,9 +2659,29 @@
             }
           },
           "404": {
-            "description": "User or tenant not found",
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2061,7 +2711,7 @@
         },
         "responses": {
           "201": {
-            "description": "Contract initiated",
+            "description": "Contract initiated (code: APP_CONTRACT_CREATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2070,8 +2720,8 @@
               }
             }
           },
-          "400": {
-            "description": "Invalid plan version or missing fields",
+          "404": {
+            "description": "Plan version not found (code: PLAN_VERSION_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2080,10 +2730,20 @@
               }
             }
           },
-          "404": {
-            "description": "Client app not found",
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
             "content": {
-              "*/*": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2125,7 +2785,7 @@
         },
         "responses": {
           "200": {
-            "description": "Email verified — contract now in PENDING_PAYMENT",
+            "description": "Email verified — contract now in PENDING_PAYMENT (code: APP_CONTRACT_EMAIL_VERIFIED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2135,7 +2795,7 @@
             }
           },
           "400": {
-            "description": "Invalid or expired verification code",
+            "description": "Verification code is invalid or already used (code: INVALID_INPUT)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2145,9 +2805,39 @@
             }
           },
           "404": {
-            "description": "Contract not found",
+            "description": "Contract or provider app not found (code: CONTRACT_NOT_FOUND / PROVIDER_APP_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Verification code has expired — resend a new one (code: EMAIL_VERIFICATION_EXPIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2179,7 +2869,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Verification code resent successfully",
+            "description": "Verification code resent successfully (code: APP_CONTRACT_VERIFICATION_RESENT)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2188,8 +2878,8 @@
               }
             }
           },
-          "400": {
-            "description": "Contract is not in PENDING_EMAIL_VERIFICATION status",
+          "404": {
+            "description": "Contract not found (code: CONTRACT_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2198,10 +2888,30 @@
               }
             }
           },
-          "404": {
-            "description": "Contract not found",
+          "422": {
+            "description": "Contract is not in PENDING_EMAIL_VERIFICATION state (code: CONTRACT_INVALID_STATE)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2233,7 +2943,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Payment approved (mock)",
+            "description": "Payment approved (code: APP_CONTRACT_PAYMENT_APPROVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2243,9 +2953,39 @@
             }
           },
           "404": {
-            "description": "Contract not found or mock disabled",
+            "description": "Contract not found or mock disabled (code: CONTRACT_NOT_FOUND / RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Contract already ACTIVE or CANCELLED, cannot approve (code: CONTRACT_INVALID_STATE)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2277,7 +3017,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Contract activated",
+            "description": "Contract activated (code: APP_CONTRACT_ACTIVATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2286,8 +3026,8 @@
               }
             }
           },
-          "400": {
-            "description": "Contract not in READY_TO_ACTIVATE status",
+          "404": {
+            "description": "Contract or plan version not found (code: CONTRACT_NOT_FOUND / PLAN_VERSION_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2296,10 +3036,30 @@
               }
             }
           },
-          "404": {
-            "description": "Contract not found",
+          "422": {
+            "description": "Contract is not in READY_TO_ACTIVATE state, payment not verified, or no contractor linked (code: CONTRACT_INVALID_STATE)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2339,7 +3099,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Profile retrieved successfully",
+            "description": "Profile retrieved successfully (code: USER_PROFILE_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2349,7 +3109,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer token",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2359,9 +3119,29 @@
             }
           },
           "404": {
-            "description": "User or tenant not found",
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2409,7 +3189,7 @@
         },
         "responses": {
           "200": {
-            "description": "Profile updated successfully",
+            "description": "Profile updated successfully (code: USER_PROFILE_UPDATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2419,7 +3199,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer token",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2429,9 +3209,29 @@
             }
           },
           "404": {
-            "description": "User or tenant not found",
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2473,7 +3273,7 @@
         ],
         "responses": {
           "200": {
-            "description": "User info claims retrieved",
+            "description": "User info claims retrieved (code: USER_INFO_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2483,7 +3283,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer token",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2493,9 +3293,29 @@
             }
           },
           "404": {
-            "description": "User or tenant not found",
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2591,7 +3411,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Authorization initiated — client app metadata returned",
+            "description": "Authorization initiated — client app metadata returned (code: AUTHORIZATION_INITIATED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2601,7 +3421,7 @@
             }
           },
           "400": {
-            "description": "Invalid or missing query parameters",
+            "description": "Invalid or missing query parameters (code: INVALID_INPUT)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2611,9 +3431,29 @@
             }
           },
           "404": {
-            "description": "Tenant or client app not found",
+            "description": "Tenant or client app not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2653,7 +3493,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Subscription retrieved",
+            "description": "Subscription retrieved (code: APP_SUBSCRIPTION_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2662,8 +3502,8 @@
               }
             }
           },
-          "404": {
-            "description": "No active subscription found",
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2672,10 +3512,30 @@
               }
             }
           },
-          "401": {
-            "description": "Missing or invalid Bearer token",
+          "404": {
+            "description": "No subscription found for this contractor (code: SUBSCRIPTION_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2748,6 +3608,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2789,7 +3669,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Plan catalog retrieved successfully",
+            "description": "Plan catalog retrieved successfully (code: APP_PLAN_CATALOG_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2799,9 +3679,29 @@
             }
           },
           "404": {
-            "description": "Tenant or client app not found",
+            "description": "Tenant or client app not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2853,7 +3753,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Plan detail retrieved successfully",
+            "description": "Plan detail retrieved successfully (code: APP_PLAN_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2863,9 +3763,29 @@
             }
           },
           "404": {
-            "description": "Tenant, client app or plan not found",
+            "description": "Tenant, client app or plan not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -2905,7 +3825,7 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2913,6 +3833,26 @@
                   "additionalProperties": {
 
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2950,7 +3890,7 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2958,6 +3898,26 @@
                   "additionalProperties": {
 
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2987,7 +3947,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Tenant retrieved successfully",
+            "description": "Tenant retrieved successfully (code: TENANT_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -2997,7 +3957,7 @@
             }
           },
           "401": {
-            "description": "Missing or invalid admin key",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -3007,9 +3967,29 @@
             }
           },
           "404": {
-            "description": "Tenant not found",
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -3042,6 +4022,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -3064,6 +4064,26 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -3078,7 +4098,7 @@
         "operationId": "getStats",
         "responses": {
           "200": {
-            "description": "Platform statistics retrieved successfully",
+            "description": "Platform statistics retrieved successfully (code: PLATFORM_STATS_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -3088,9 +4108,39 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer token",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions — ADMIN role required (code: INSUFFICIENT_PERMISSIONS)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -3127,7 +4177,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Contract retrieved",
+            "description": "Contract retrieved (code: APP_CONTRACT_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -3137,9 +4187,29 @@
             }
           },
           "404": {
-            "description": "Contract not found",
+            "description": "Contract not found (code: CONTRACT_NOT_FOUND)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -3171,7 +4241,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Onboarding state retrieved successfully",
+            "description": "Onboarding state retrieved successfully (code: APP_CONTRACT_ONBOARDING_RESUMED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -3180,8 +4250,8 @@
               }
             }
           },
-          "400": {
-            "description": "Contract is in a terminal state and cannot be resumed",
+          "404": {
+            "description": "Contract not found (code: CONTRACT_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -3190,10 +4260,30 @@
               }
             }
           },
-          "404": {
-            "description": "Contract not found",
+          "422": {
+            "description": "Contract is in a terminal state (EXPIRED, CANCELLED, FAILED, SUPERSEDED, FINALIZED) and cannot be resumed (code: CONTRACT_INVALID_STATE)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -3213,7 +4303,7 @@
         "operationId": "getDashboard",
         "responses": {
           "200": {
-            "description": "Platform dashboard retrieved successfully",
+            "description": "Platform dashboard retrieved successfully (code: PLATFORM_DASHBOARD_RETRIEVED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -3223,9 +4313,39 @@
             }
           },
           "401": {
-            "description": "Missing or invalid Bearer token",
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions — ADMIN role required (code: INSUFFICIENT_PERMISSIONS)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
@@ -3271,7 +4391,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Membership revoked",
+            "description": "Membership revoked (code: MEMBERSHIP_REVOKED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -3280,12 +4400,42 @@
               }
             }
           },
-          "404": {
-            "description": "Membership not found",
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Membership not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -3330,6 +4480,47 @@
           }
         }
       },
+      "ErrorData": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "layer": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "CLIENT_REQUEST",
+              "BUSINESS_RULE",
+              "SERVER_PROCESSING"
+            ]
+          },
+          "clientRequestCause": {
+            "type": "string",
+            "enum": [
+              "CLIENT_TECHNICAL",
+              "USER_INPUT"
+            ]
+          },
+          "clientMessage": {
+            "type": "string"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "exception": {
+            "type": "string"
+          },
+          "fieldErrors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldValidationError"
+            }
+          }
+        }
+      },
       "ErrorResponse": {
         "type": "object",
         "properties": {
@@ -3344,13 +4535,27 @@
             "$ref": "#/components/schemas/MessageResponse"
           },
           "data": {
-
+            "$ref": "#/components/schemas/ErrorData"
           },
           "debug": {
             "$ref": "#/components/schemas/MessageResponse"
           },
           "throwable": {
             "type": "string"
+          }
+        }
+      },
+      "FieldValidationError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "rejectedValue": {
+
           }
         }
       },

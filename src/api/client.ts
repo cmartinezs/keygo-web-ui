@@ -1,6 +1,10 @@
 import axios from 'axios'
 import { useTokenStore } from '@/auth/tokenStore'
 import { env } from '@/config/env'
+import {
+  normalizeApiError,
+  type AxiosErrorWithAppApiError,
+} from './errorNormalizer'
 
 export const KEYGO_BASE = env.KEYGO_BASE
 export const API_V1 = `${KEYGO_BASE}/api/v1`
@@ -26,3 +30,18 @@ apiClient.interceptors.request.use((config) => {
   }
   return config
 })
+
+function onRejectedWithNormalizedError(error: unknown): Promise<never> {
+  const appApiError = normalizeApiError(error)
+
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosErrorWithAppApiError
+    axiosError.appApiError = appApiError
+    return Promise.reject(axiosError)
+  }
+
+  return Promise.reject(appApiError)
+}
+
+apiClient.interceptors.response.use((response) => response, onRejectedWithNormalizedError)
+authClient.interceptors.response.use((response) => response, onRejectedWithNormalizedError)
