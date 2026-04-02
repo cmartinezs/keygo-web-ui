@@ -33,6 +33,10 @@ La propuesta está inspirada en patrones tipo "Profile" y "Account Settings" per
    - RFC tecnico detallado para backend.
    - Incluye request/response, validaciones, mensajes, HTTP y codigos KeyGo.
 
+5. `05-frontend-implementation-plan.md`
+   - Plan de ejecucion frontend por fases (Fase 1 a Fase 12).
+   - Incluye baseline de contrato, brechas confirmadas y orden de implementacion.
+
 ## Decisión de nomenclatura recomendada
 
 Se recomienda usar **Mi cuenta** como etiqueta raíz en todos los puntos de navegación visibles al usuario.

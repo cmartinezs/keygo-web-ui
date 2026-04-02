@@ -1518,6 +1518,59 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 **Grupos de navegación actuales (ejemplo ADMIN):**
 
 | Grupo | Items |
+
+---
+
+## 10. API de cuenta (actualizacion 2026-04-02)
+
+### `src/api/account.ts`
+
+**Proposito:** Consolidar la capa API del dominio Account para todos los flujos self-service del usuario autenticado.
+
+**Construccion:**
+- Mantiene wrappers existentes de perfil (`getProfile`, `updateProfile`).
+- Se agregaron wrappers para seguridad y configuracion:
+  - `changePassword`
+  - `getSessions`
+  - `revokeSession`
+  - `getNotificationPreferences`
+  - `updateNotificationPreferences`
+  - `getAccountAccess`
+- Se agregaron wrappers temporales para `connections` (mock-first):
+  - `getAccountConnections`
+  - `linkAccountConnection`
+  - `unlinkAccountConnection`
+- Se amplio `ACCOUNT_QUERY_KEYS` para `sessions`, `notificationPreferences`, `access` y `connections`.
+
+**Integracion:**
+- Usa `apiClient` + `tenantUrl` para construir paths del tenant autenticado.
+- Usa `RequestOptions` para `signal`, `timeoutMs` e `idempotencyKey` en mutaciones.
+- Usa `unwrapResponseData` para extraer `BaseResponse<T>.data` de forma consistente.
+
+**Decision de diseno:** Priorizar wrappers tipados y puros en `src/api/` para desacoplar UI de detalles HTTP y permitir evolucion por fases (backend real vs MSW temporal en connections).
+
+**Estrategia:** API domain-first; primero se completa la superficie de endpoints y query keys para luego conectar UI (fases 5-8) sin duplicar logica de red en componentes.
+
+**Puntos de mejora / deuda tecnica conocida:**
+- El contrato oficial OpenAPI de `connections` aun no existe; los wrappers se mantienen como compatibilidad temporal para MSW.
+- El mapeo detallado de naming interno/wire se profundiza en Fase 3.
+
+### `src/types/user.ts`
+
+**Proposito:** Centralizar DTOs del dominio usuario/cuenta para evitar definiciones locales en componentes o modulos API.
+
+**Construccion:**
+- Se agregaron tipos de account para soportar la ampliacion de `src/api/account.ts`:
+  - `ChangePasswordRequest`, `ChangePasswordResult`
+  - `AccountSessionData`, `RevokeAccountSessionResult`
+  - `NotificationPreferencesData`, `UpdateNotificationPreferencesRequest`
+  - `AccountAccessRoleData`, `AccountAccessData`
+  - `AccountConnectionData`, `LinkAccountConnectionRequest`, `LinkAccountConnectionResult`, `UnlinkAccountConnectionResult`
+
+**Integracion:** Los nuevos DTOs son consumidos por la capa API de account y quedaran disponibles para hooks/paginas de settings/profile en fases siguientes.
+
+**Decision de diseno:** Mantener DTOs en un unico modulo de tipos del dominio para preservar trazabilidad y evitar `any` o `Record<string, unknown>` en endpoints criticos.
+
 |-------|-------|
 | Plataforma | Dashboard, Tenants, Apps, Usuarios |
 | Accesos & Registro | Accesos, Registro |

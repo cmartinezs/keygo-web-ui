@@ -69,6 +69,10 @@
       "description": "Tenant lifecycle management — requires Bearer JWT"
     },
     {
+      "name": "Account Settings",
+      "description": "Self-service account security and settings — requires Bearer token (no X-KEYGO-ADMIN)"
+    },
+    {
       "name": "Account Profile",
       "description": "Self-service profile management — requires Bearer token (no X-KEYGO-ADMIN)"
     },
@@ -2597,6 +2601,218 @@
         ]
       }
     },
+    "/api/v1/tenants/{tenantSlug}/apps/{clientAppId}/roles/{roleCode}/parent": {
+      "post": {
+        "tags": [
+          "App Roles"
+        ],
+        "summary": "Assign parent role",
+        "description": "Set a parent role for the given child role. Replaces any existing parent. Enforces cycle-free assignment and max depth of 5 levels.",
+        "operationId": "assignParent",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientAppId",
+            "in": "path",
+            "description": "Client app ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "roleCode",
+            "in": "path",
+            "description": "Child role code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRoleParentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Parent assigned (code: ROLE_PARENT_ASSIGNED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseVoid"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Cycle detected or depth exceeded (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant, app or role not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "App Roles"
+        ],
+        "summary": "Remove parent role",
+        "description": "Remove the parent assignment from the given role. No-op if it has no parent.",
+        "operationId": "removeParent",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clientAppId",
+            "in": "path",
+            "description": "Client app ID",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "roleCode",
+            "in": "path",
+            "description": "Role code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parent removed (code: ROLE_PARENT_REMOVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseVoid"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant, app or role not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/tenants/{tenantSlug}/account/login": {
       "post": {
         "tags": [
@@ -2660,6 +2876,108 @@
           },
           "404": {
             "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/account/change-password": {
+      "post": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "Change own password",
+        "description": "Allows the authenticated user to rotate their own password. Requires the current password for verification. Requires Authorization: Bearer \u003Caccess_token\u003E.",
+        "operationId": "changePassword",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully (code: ACCOUNT_PASSWORD_CHANGED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseChangePasswordResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — new password violates policy (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Current password is incorrect (code: BUSINESS_RULE_VIOLATION)",
             "content": {
               "*/*": {
                 "schema": {
@@ -3241,6 +3559,168 @@
         }
       }
     },
+    "/api/v1/tenants/{tenantSlug}/account/notification-preferences": {
+      "get": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "Get notification preferences",
+        "description": "Returns the notification preferences of the authenticated user. If the user has never configured them, default values are returned. Requires Authorization: Bearer \u003Caccess_token\u003E.",
+        "operationId": "getNotificationPreferences",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Preferences retrieved (code: ACCOUNT_NOTIFICATION_PREFERENCES_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseNotificationPreferencesData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "Update notification preferences",
+        "description": "Updates all notification preferences of the authenticated user (upsert). All 5 boolean fields are required. Unknown fields in the body return 400. Requires Authorization: Bearer \u003Caccess_token\u003E.",
+        "operationId": "updateNotificationPreferences",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Preferences updated (code: ACCOUNT_NOTIFICATION_PREFERENCES_UPDATED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseNotificationPreferencesData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — unknown field or invalid body (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenants/{tenantSlug}/userinfo": {
       "get": {
         "tags": [
@@ -3764,6 +4244,150 @@
           },
           "404": {
             "description": "Tenant, client app or plan not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/account/sessions": {
+      "get": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "List own active sessions",
+        "description": "Returns all ACTIVE sessions of the authenticated user. The current session is identified by matching User-Agent + IP address. Requires Authorization: Bearer \u003Caccess_token\u003E.",
+        "operationId": "listSessions",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessions retrieved successfully (code: ACCOUNT_SESSIONS_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListAccountSessionData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/account/access": {
+      "get": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "Get own access and roles",
+        "description": "Returns the authenticated user's memberships (apps + roles) within the tenant. Returns an empty list if the user has no memberships. Requires Authorization: Bearer \u003Caccess_token\u003E.",
+        "operationId": "getAccess",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Access retrieved (code: ACCOUNT_ACCESS_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListUserAccessData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
@@ -4446,6 +5070,97 @@
             "BearerAuth": []
           }
         ]
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/account/sessions/{sessionId}": {
+      "delete": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "Revoke own session",
+        "description": "Closes a session belonging to the authenticated user. Idempotent: returns already_closed=true if the session was already closed or not found. Requires Authorization: Bearer \u003Caccess_token\u003E.",
+        "operationId": "revokeSession",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "sessionId",
+            "in": "path",
+            "description": "Session UUID to revoke",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session revoked or already closed (code: ACCOUNT_SESSION_REVOKED or ACCOUNT_SESSION_ALREADY_CLOSED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseRevokeUserSessionResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Session does not belong to the authenticated user (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -5704,6 +6419,18 @@
           }
         }
       },
+      "AssignRoleParentRequest": {
+        "type": "object",
+        "properties": {
+          "parentRoleCode": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "parentRoleCode"
+        ]
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -5756,6 +6483,49 @@
           },
           "redirect_uri": {
             "type": "string"
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseChangePasswordResult": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ChangePasswordResult"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "ChangePasswordResult": {
+        "type": "object",
+        "properties": {
+          "changed": {
+            "type": "boolean"
           }
         }
       },
@@ -5975,6 +6745,70 @@
           },
           "website": {
             "type": "string"
+          }
+        }
+      },
+      "UpdateNotificationPreferencesRequest": {
+        "type": "object",
+        "properties": {
+          "securityAlertsEmail": {
+            "type": "boolean"
+          },
+          "securityAlertsInApp": {
+            "type": "boolean"
+          },
+          "billingAlertsEmail": {
+            "type": "boolean"
+          },
+          "productUpdatesEmail": {
+            "type": "boolean"
+          },
+          "weeklyDigest": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BaseResponseNotificationPreferencesData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/NotificationPreferencesData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "NotificationPreferencesData": {
+        "type": "object",
+        "properties": {
+          "securityAlertsEmail": {
+            "type": "boolean"
+          },
+          "securityAlertsInApp": {
+            "type": "boolean"
+          },
+          "billingAlertsEmail": {
+            "type": "boolean"
+          },
+          "productUpdatesEmail": {
+            "type": "boolean"
+          },
+          "weeklyDigest": {
+            "type": "boolean"
           }
         }
       },
@@ -6354,6 +7188,124 @@
           },
           "throwable": {
             "type": "string"
+          }
+        }
+      },
+      "AccountSessionData": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "browser": {
+            "type": "string"
+          },
+          "os": {
+            "type": "string"
+          },
+          "deviceType": {
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastAccessedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isCurrent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BaseResponseListAccountSessionData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountSessionData"
+            }
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseListUserAccessData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserAccessData"
+            }
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "UserAccessData": {
+        "type": "object",
+        "properties": {
+          "clientAppId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clientAppName": {
+            "type": "string"
+          },
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -7053,6 +8005,42 @@
           "tenantsWithoutUsers": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "BaseResponseRevokeUserSessionResult": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/RevokeUserSessionResult"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "RevokeUserSessionResult": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "alreadyClosed": {
+            "type": "boolean"
           }
         }
       }

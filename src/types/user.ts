@@ -70,6 +70,97 @@ export interface UpdateUserProfileRequest {
   website?: string
 }
 
+/** Request de POST /tenants/{slug}/account/change-password */
+export interface ChangePasswordRequest {
+  current_password: string
+  new_password: string
+}
+
+/** Respuesta de POST /tenants/{slug}/account/change-password */
+export interface ChangePasswordResult {
+  changed: boolean
+}
+
+/** Sesion de usuario en GET /tenants/{slug}/account/sessions */
+export interface AccountSessionData {
+  session_id: string
+  status: string
+  browser: string
+  os: string
+  device_type: string
+  ip_address: string
+  created_at: string
+  last_accessed_at: string
+  expires_at: string
+  is_current: boolean
+}
+
+/** Respuesta de DELETE /tenants/{slug}/account/sessions/{sessionId} */
+export interface RevokeAccountSessionResult {
+  revoked: boolean
+}
+
+/** Preferencias de notificacion del usuario autenticado */
+export interface NotificationPreferencesData {
+  security_alerts_email: boolean
+  security_alerts_in_app: boolean
+  billing_alerts_email: boolean
+  billing_alerts_in_app: boolean
+  product_updates_email: boolean
+  product_updates_in_app: boolean
+}
+
+/** Request de PATCH /tenants/{slug}/account/notification-preferences */
+export interface UpdateNotificationPreferencesRequest {
+  security_alerts_email?: boolean
+  security_alerts_in_app?: boolean
+  billing_alerts_email?: boolean
+  billing_alerts_in_app?: boolean
+  product_updates_email?: boolean
+  product_updates_in_app?: boolean
+}
+
+/** Rol efectivo de una app dentro del endpoint /account/access */
+export interface AccountAccessRoleData {
+  role_code: string
+  role_name: string
+}
+
+/** Membresia por app dentro del endpoint /account/access */
+export interface AccountAccessData {
+  app_id: string
+  app_code: string
+  app_name: string
+  roles: AccountAccessRoleData[]
+}
+
+/** Conexion externa vinculada (temporal hasta contrato OpenAPI oficial) */
+export interface AccountConnectionData {
+  id: string
+  provider: string
+  provider_user_id?: string
+  status: string
+  linked_at: string
+  last_used_at?: string | null
+}
+
+/** Request de vinculacion para /account/connections/{provider}/link (temporal) */
+export interface LinkAccountConnectionRequest {
+  authorization_code?: string
+  state?: string
+}
+
+/** Respuesta de POST /account/connections/{provider}/link (temporal) */
+export interface LinkAccountConnectionResult {
+  linked: boolean
+  connection: AccountConnectionData
+}
+
+/** Respuesta de DELETE /account/connections/{connectionId} (temporal) */
+export interface UnlinkAccountConnectionResult {
+  unlinked: boolean
+}
+
 // ── Self-registration  ────────────────────────────────────────────────────────
 
 /** Datos devueltos por POST /register */
