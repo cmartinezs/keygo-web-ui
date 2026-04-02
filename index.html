@@ -9,7 +9,13 @@
       (function () {
         try {
           var p = localStorage.getItem('keygo-theme') || 'system'
+          var highContrast = p === 'high-contrast'
           var dark = p === 'dark' || (p === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          if (highContrast) {
+            document.documentElement.classList.add('high-contrast')
+            document.documentElement.classList.add('dark')
+            return
+          }
           if (dark) document.documentElement.classList.add('dark')
         } catch (e) {}
       })()

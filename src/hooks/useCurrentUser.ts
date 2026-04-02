@@ -1,5 +1,6 @@
 import { decodeJwt } from 'jose'
 import { useTokenStore } from '@/auth/tokenStore'
+import type { AppRole } from '@/types/roles'
 
 export interface CurrentUser {
   sub: string
@@ -7,7 +8,8 @@ export interface CurrentUser {
   username?: string
   displayName?: string
   tenantSlug?: string
-  roles: string[]
+  roles: AppRole[]
+  activeRole: AppRole | null
 }
 
 /**
@@ -15,7 +17,7 @@ export interface CurrentUser {
  * Returns null when the user is not authenticated.
  */
 export function useCurrentUser(): CurrentUser | null {
-  const { idToken, roles } = useTokenStore()
+  const { idToken, roles, activeRole } = useTokenStore()
   if (!idToken) return null
 
   try {
@@ -28,7 +30,7 @@ export function useCurrentUser(): CurrentUser | null {
     const sub = typeof claims.sub === 'string' ? claims.sub : ''
     const displayName = username ?? email ?? sub
 
-    return { sub, email, username, displayName, tenantSlug, roles }
+    return { sub, email, username, displayName, tenantSlug, roles, activeRole }
   } catch {
     return null
   }

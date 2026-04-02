@@ -16,6 +16,7 @@ import type {
   AppRoleData,
   CreateAppRoleRequest,
 } from '@/types/clientapp'
+import type { RequestOptions } from './requestOptions'
 
 // ── Query key constants ────────────────────────────────────────────────────────
 
@@ -35,8 +36,14 @@ const appUrl = (tenantSlug: string, clientId: string) => `${appsUrl(tenantSlug)}
 // ── Client Apps ───────────────────────────────────────────────────────────────
 
 /** GET /api/v1/tenants/{tenantSlug}/apps ✅ — lista todas las apps del tenant. */
-export async function listClientApps(tenantSlug: string): Promise<ClientAppData[]> {
-  const res = await apiClient.get<BaseResponse<ClientAppData[]>>(appsUrl(tenantSlug))
+export async function listClientApps(
+  tenantSlug: string,
+  options?: RequestOptions,
+): Promise<ClientAppData[]> {
+  const res = await apiClient.get<BaseResponse<ClientAppData[]>>(appsUrl(tenantSlug), {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  })
   return unwrapResponseData(res.data, 'Error al listar apps')
 }
 
@@ -44,8 +51,12 @@ export async function listClientApps(tenantSlug: string): Promise<ClientAppData[
 export async function getClientApp(
   tenantSlug: string,
   clientId: string,
+  options?: RequestOptions,
 ): Promise<ClientAppData> {
-  const res = await apiClient.get<BaseResponse<ClientAppData>>(appUrl(tenantSlug, clientId))
+  const res = await apiClient.get<BaseResponse<ClientAppData>>(appUrl(tenantSlug, clientId), {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  })
   return unwrapResponseData(res.data, 'App no encontrada')
 }
 
@@ -53,8 +64,15 @@ export async function getClientApp(
 export async function createClientApp(
   tenantSlug: string,
   data: CreateClientAppRequest,
+  options?: RequestOptions,
 ): Promise<ClientAppCreatedData> {
-  const res = await apiClient.post<BaseResponse<ClientAppCreatedData>>(appsUrl(tenantSlug), data)
+  const res = await apiClient.post<BaseResponse<ClientAppCreatedData>>(appsUrl(tenantSlug), data, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
   return unwrapResponseData(res.data, 'Error al crear la app')
 }
 
@@ -63,8 +81,15 @@ export async function updateClientApp(
   tenantSlug: string,
   clientId: string,
   data: UpdateClientAppRequest,
+  options?: RequestOptions,
 ): Promise<ClientAppData> {
-  const res = await apiClient.put<BaseResponse<ClientAppData>>(appUrl(tenantSlug, clientId), data)
+  const res = await apiClient.put<BaseResponse<ClientAppData>>(appUrl(tenantSlug, clientId), data, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
   return unwrapResponseData(res.data, 'Error al actualizar la app')
 }
 
@@ -72,9 +97,18 @@ export async function updateClientApp(
 export async function rotateClientAppSecret(
   tenantSlug: string,
   clientId: string,
+  options?: RequestOptions,
 ): Promise<ClientAppSecretData> {
   const res = await apiClient.post<BaseResponse<ClientAppSecretData>>(
     `${appUrl(tenantSlug, clientId)}/rotate-secret`,
+    undefined,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
   )
   return unwrapResponseData(res.data, 'Error al rotar el secret')
 }
@@ -85,9 +119,14 @@ export async function rotateClientAppSecret(
 export async function listAppRoles(
   tenantSlug: string,
   clientAppId: string,
+  options?: RequestOptions,
 ): Promise<AppRoleData[]> {
   const res = await apiClient.get<BaseResponse<AppRoleData[]>>(
     `${appUrl(tenantSlug, clientAppId)}/roles`,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+    },
   )
   return unwrapResponseData(res.data, 'Error al listar roles')
 }
@@ -97,10 +136,18 @@ export async function createAppRole(
   tenantSlug: string,
   clientAppId: string,
   data: CreateAppRoleRequest,
+  options?: RequestOptions,
 ): Promise<AppRoleData> {
   const res = await apiClient.post<BaseResponse<AppRoleData>>(
     `${appUrl(tenantSlug, clientAppId)}/roles`,
     data,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
   )
   return unwrapResponseData(res.data, 'Error al crear el rol')
 }

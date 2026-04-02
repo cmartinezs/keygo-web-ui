@@ -53,6 +53,37 @@ src/
 - **Features pendientes:** Mockear con MSW en `src/mocks/handlers.ts` y señalar con `<PendingFeatureBadge />`.
 - **Exportaciones:** Named exports en todos los módulos, default export solo en páginas y layouts.
 
+## Regla global de carga y red (obligatoria)
+
+Esta regla aplica siempre, en toda feature nueva o modificación de flujo existente.
+
+1. **Carga de pagina y render critico**
+   - Evitar pantalla en blanco en primer paint y cambios de ruta.
+   - Usar loader global solo en ventanas de asentamiento de ruta o bootstrap critico.
+   - El loader global debe activarse solo ante red lenta sostenida (no por actividad breve).
+
+2. **Carga de componentes (scope local)**
+   - Cada bloque visual debe resolver su estado con skeleton/spinner/error local.
+   - No bloquear toda la pantalla por cargas parciales de widgets secundarios.
+   - Mantener continuidad de UI: preferir placeholders locales antes que overlays globales.
+
+3. **Llamadas al backend (resiliencia)**
+   - Timeout explicito por request (base de referencia: 10s).
+   - GET criticos con retry controlado (base de referencia: cada 5s, maximo 3 intentos).
+   - POST/PUT/PATCH/DELETE criticos sin auto-retry mientras backend no garantice idempotencia real.
+   - Si hay retry o recuperacion en segundo plano que impacta UI, notificar con toast.
+
+4. **Priorizacion de decision**
+   - Primero: proteger render critico (sin blancos).
+   - Segundo: preservar UX local de cada componente.
+   - Tercero: endurecer resiliencia de red segun criticidad y seguridad del endpoint.
+
+5. **Regla de cumplimiento**
+   - Ninguna implementacion se considera terminada si no explicita esta separacion:
+     - render de pagina,
+     - render de componente,
+     - politica de backend.
+
 ## Reutilización y patrones de diseño
 
 - **Reutilizar antes de crear:** verificar `src/components/` y shadcn/ui antes de crear un componente nuevo.

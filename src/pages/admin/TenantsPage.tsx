@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useOutlet, NavLink } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { listTenants, TENANT_QUERY_KEYS } from '@/api/tenants'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import { runGetWithRecovery } from '@/lib/network/recovery'
 import type { TenantData, TenantStatus, ListTenantsParams } from '@/types/tenant'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -213,10 +219,26 @@ export default function TenantsPage() {
     size: PAGE_SIZE,
   }
 
+  async function fetchTenantsWithRecovery(signal: AbortSignal) {
+    return runGetWithRecovery({
+      signal,
+      label: 'tenants',
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        listTenants(queryParams, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: TENANT_QUERY_KEYS.list(queryParams),
-    queryFn: () => listTenants(queryParams),
+    queryFn: ({ signal }) => fetchTenantsWithRecovery(signal),
     placeholderData: (prev) => prev,
+    retry: false,
   })
 
   const tenants = data?.content ?? []

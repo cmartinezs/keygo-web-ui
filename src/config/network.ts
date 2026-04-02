@@ -1,0 +1,3 @@
+export const NETWORK_REQUEST_TIMEOUT_MS = 10_000
+export const NETWORK_RETRY_DELAY_MS = 5_000
+export const NETWORK_MAX_RETRIES = 3

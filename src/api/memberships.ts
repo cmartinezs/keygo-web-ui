@@ -7,6 +7,7 @@ import { apiClient, tenantUrl } from './client'
 import type { BaseResponse } from '@/types/base'
 import type { MembershipData, CreateMembershipRequest } from '@/types/membership'
 import { unwrapResponseData } from './response'
+import type { RequestOptions } from './requestOptions'
 
 // ── Query key constants ────────────────────────────────────────────────────────
 
@@ -30,9 +31,12 @@ const membershipsUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/members
 export async function listMembershipsByApp(
   tenantSlug: string,
   clientAppId: string,
+  options?: RequestOptions,
 ): Promise<MembershipData[]> {
   const res = await apiClient.get<BaseResponse<MembershipData[]>>(membershipsUrl(tenantSlug), {
     params: { client_app_id: clientAppId },
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
   })
   return unwrapResponseData(res.data, 'Error al listar memberships')
 }
@@ -44,9 +48,12 @@ export async function listMembershipsByApp(
 export async function listMembershipsByUser(
   tenantSlug: string,
   userId: string,
+  options?: RequestOptions,
 ): Promise<MembershipData[]> {
   const res = await apiClient.get<BaseResponse<MembershipData[]>>(membershipsUrl(tenantSlug), {
     params: { user_id: userId },
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
   })
   return unwrapResponseData(res.data, 'Error al listar memberships del usuario')
 }
@@ -58,8 +65,15 @@ export async function listMembershipsByUser(
 export async function createMembership(
   tenantSlug: string,
   data: CreateMembershipRequest,
+  options?: RequestOptions,
 ): Promise<MembershipData> {
-  const res = await apiClient.post<BaseResponse<MembershipData>>(membershipsUrl(tenantSlug), data)
+  const res = await apiClient.post<BaseResponse<MembershipData>>(membershipsUrl(tenantSlug), data, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
   return unwrapResponseData(res.data, 'Error al crear membership')
 }
 
@@ -70,6 +84,13 @@ export async function createMembership(
 export async function revokeMembership(
   tenantSlug: string,
   membershipId: string,
+  options?: RequestOptions,
 ): Promise<void> {
-  await apiClient.delete(`${membershipsUrl(tenantSlug)}/${membershipId}`)
+  await apiClient.delete(`${membershipsUrl(tenantSlug)}/${membershipId}`, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
 }

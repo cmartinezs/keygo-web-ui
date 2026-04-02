@@ -1,9 +1,11 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import LandingPage from './pages/landing/LandingPage'
 import DeveloperDocsPage from './pages/developers/DeveloperDocsPage'
 import LoginPage from './pages/login/LoginPage'
+import LogoutPage from './pages/login/LogoutPage'
 import NewContractPage from './pages/register/NewContractPage'
 import UserRegisterPage from './pages/register/UserRegisterPage'
 import DashboardHomePage from './pages/dashboard/DashboardHomePage'
@@ -23,12 +25,53 @@ import TenantCreatePage from './pages/admin/TenantCreatePage'
 import { BlockingErrorModal } from './components/BlockingErrorModal'
 import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
 import { useBlockingErrorStore } from './auth/blockingErrorStore'
+import { useThemeStore } from './hooks/useTheme'
+
+const SLOW_REQUEST_THRESHOLD_MS = 5000
+const ROUTE_SETTLING_WINDOW_MS = 1200
 
 export default function App() {
+  const location = useLocation()
   const isFetching = useIsFetching()
   const isMutating = useIsMutating()
+  const themePreference = useThemeStore((state) => state.preference)
   const hasBlockingError = useBlockingErrorStore((state) => Boolean(state.error))
-  const isBusy = !hasBlockingError && (isFetching > 0 || isMutating > 0)
+  const isNetworkBusy = isFetching > 0 || isMutating > 0
+  const [isRouteSettling, setIsRouteSettling] = useState(true)
+  const [isSlowNetwork, setIsSlowNetwork] = useState(false)
+  const isHighContrast = themePreference === 'high-contrast'
+
+  useEffect(() => {
+    const openSettleFrame = window.requestAnimationFrame(() => {
+      setIsRouteSettling(true)
+    })
+    const settleTimer = window.setTimeout(() => {
+      setIsRouteSettling(false)
+    }, ROUTE_SETTLING_WINDOW_MS)
+    return () => {
+      window.cancelAnimationFrame(openSettleFrame)
+      window.clearTimeout(settleTimer)
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!isNetworkBusy) {
+      const resetSlowFrame = window.requestAnimationFrame(() => {
+        setIsSlowNetwork(false)
+      })
+      return () => window.cancelAnimationFrame(resetSlowFrame)
+    }
+
+    const slowTimer = window.setTimeout(() => {
+      setIsSlowNetwork(true)
+    }, SLOW_REQUEST_THRESHOLD_MS)
+
+    return () => {
+      window.clearTimeout(slowTimer)
+    }
+  }, [isNetworkBusy])
+
+  const shouldShowGlobalLoader = !hasBlockingError && isRouteSettling && isSlowNetwork
 
   return (
     <>
@@ -37,6 +80,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/developers" element={<DeveloperDocsPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/logout" element={<LogoutPage />} />
         <Route path="/subscribe" element={<NewContractPage />} />
         <Route path="/subscribe/resume" element={<Navigate to="/subscribe?resume=1" replace />} />
         <Route path="/register" element={<UserRegisterPage />} />
@@ -82,18 +126,21 @@ export default function App() {
       </Routes>
       <Toaster
         position="bottom-right"
-        theme="dark"
+        theme={isHighContrast ? 'light' : 'dark'}
         richColors
         toastOptions={{
           classNames: {
-            toast: 'bg-slate-800 border border-white/10 text-slate-100 text-sm',
+            toast: isHighContrast
+              ? 'bg-black border-2 border-white text-white text-sm'
+              : 'bg-slate-800 border border-white/10 text-slate-100 text-sm',
           },
         }}
       />
       <GlobalLoaderOverlay
-        active={isBusy}
+        active={shouldShowGlobalLoader}
+        skipDelays
         title="Cargando contenido"
-        description="Estamos trayendo la informacion necesaria para esta vista."
+        description="La vista esta tardando mas de lo esperado. Estamos trabajando para mostrarla."
       />
       <BlockingErrorModal />
     </>

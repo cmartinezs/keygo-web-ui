@@ -2,6 +2,7 @@ import type { BaseResponse } from '@/types/base'
 import type { AuthorizeData, LoginData, TokenData } from '@/types/auth'
 import { authClient, API_V1, CLIENT_ID, REDIRECT_URI } from './client'
 import { unwrapResponseData } from './response'
+import type { RequestOptions } from './requestOptions'
 
 export async function refreshToken(params: {
   tenantSlug: string
@@ -21,9 +22,11 @@ export async function authorize(params: {
   tenantSlug: string
   codeChallenge: string
   state: string
-}): Promise<AuthorizeData> {
+}, options?: RequestOptions): Promise<AuthorizeData> {
   const url = `${API_V1}/tenants/${params.tenantSlug}/oauth2/authorize`
   const response = await authClient.get<BaseResponse<AuthorizeData>>(url, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
     params: {
       client_id: CLIENT_ID,
       redirect_uri: REDIRECT_URI,
@@ -42,11 +45,17 @@ export async function login(params: {
   tenantSlug: string
   emailOrUsername: string
   password: string
-}): Promise<LoginData> {
+}, options?: RequestOptions): Promise<LoginData> {
   const url = `${API_V1}/tenants/${params.tenantSlug}/account/login`
   const response = await authClient.post<BaseResponse<LoginData>>(url, {
     email_or_username: params.emailOrUsername,
     password: params.password,
+  }, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
   })
   const body = response.data
   return unwrapResponseData(body, 'Login failed')
@@ -56,7 +65,7 @@ export async function exchangeToken(params: {
   tenantSlug: string
   code: string
   codeVerifier: string
-}): Promise<TokenData> {
+}, options?: RequestOptions): Promise<TokenData> {
   const url = `${API_V1}/tenants/${params.tenantSlug}/oauth2/token`
   const response = await authClient.post<BaseResponse<TokenData>>(url, {
     grant_type: 'authorization_code',
@@ -64,6 +73,12 @@ export async function exchangeToken(params: {
     code: params.code,
     code_verifier: params.codeVerifier,
     redirect_uri: REDIRECT_URI,
+  }, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
   })
   const body = response.data
   return unwrapResponseData(body, 'Token exchange failed')

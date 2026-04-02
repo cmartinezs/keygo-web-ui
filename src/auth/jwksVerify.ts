@@ -24,8 +24,9 @@ export async function verifyIdToken(
 }
 
 export function extractRoles(claims: KeyGoJwtClaims): AppRole[] {
-  if (!claims.roles) return []
-  return claims.roles
-    .map((r) => r.toUpperCase() as AppRole)
+  if (!Array.isArray(claims.roles) || claims.roles.length === 0) return []
+
+  return [...new Set(claims.roles.map((r) => r.toUpperCase()))]
+    .map((r) => r as AppRole)
     .filter((r): r is AppRole => APP_ROLES.includes(r))
 }

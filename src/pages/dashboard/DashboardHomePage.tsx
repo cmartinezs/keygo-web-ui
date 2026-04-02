@@ -1,18 +1,15 @@
 import AdminDashboardPage from '@/pages/admin/DashboardPage'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { resolvePrimaryRole } from '@/types/roles'
 import type { AppRole } from '@/types/roles'
-
-function resolvePrimaryRole(roles: string[]): AppRole {
-  if (roles.includes('ADMIN')) return 'ADMIN'
-  if (roles.includes('ADMIN_TENANT')) return 'ADMIN_TENANT'
-  return 'USER_TENANT'
-}
 
 interface StatCardProps {
   title: string
   value: string
   description: string
 }
+
+type NonAdminRole = Exclude<AppRole, 'ADMIN'>
 
 function StatCard({ title, value, description }: StatCardProps) {
   return (
@@ -24,7 +21,7 @@ function StatCard({ title, value, description }: StatCardProps) {
   )
 }
 
-function RoleOverview({ role }: { role: AppRole }) {
+function RoleOverview({ role }: { role: NonAdminRole }) {
   const roleCopy = {
     ADMIN_TENANT: {
       title: 'Panel de administracion del tenant',
@@ -74,11 +71,11 @@ function RoleOverview({ role }: { role: AppRole }) {
 
 export default function DashboardHomePage() {
   const user = useCurrentUser()
-  const role = resolvePrimaryRole(user?.roles ?? [])
+  const role = user?.activeRole ?? resolvePrimaryRole(user?.roles ?? []) ?? 'USER_TENANT'
 
   if (role === 'ADMIN') {
     return <AdminDashboardPage />
   }
 
-  return <RoleOverview role={role} />
+  return <RoleOverview role={role as NonAdminRole} />
 }

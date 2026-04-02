@@ -25,6 +25,17 @@ import { SuccessStep } from './steps/SuccessStep'
 import { HoneypotField } from '@/components/HoneypotField'
 import { useHoneypot } from '@/hooks/useHoneypot'
 import { AppFooter } from '@/components/AppFooter'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import {
+  buildTimeoutStateMessage,
+  isRequestTimeout,
+  notifyMutationTimeout,
+  runGetWithRecovery,
+} from '@/lib/network/recovery'
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 
@@ -35,6 +46,14 @@ const STEPS = [
   { label: 'Email' },
   { label: 'Pago' },
 ] as const
+
+const CATALOG_TIMEOUT_MS = NETWORK_REQUEST_TIMEOUT_MS
+const CATALOG_RETRY_DELAY_MS = NETWORK_RETRY_DELAY_MS
+const CATALOG_MAX_RETRIES = NETWORK_MAX_RETRIES
+const CONTRACT_LOOKUP_TIMEOUT_MS = NETWORK_REQUEST_TIMEOUT_MS
+const CONTRACT_LOOKUP_RETRY_DELAY_MS = NETWORK_RETRY_DELAY_MS
+const CONTRACT_LOOKUP_MAX_RETRIES = NETWORK_MAX_RETRIES
+const WRITE_OPERATION_TIMEOUT_MS = NETWORK_REQUEST_TIMEOUT_MS
 
 type StepIndex = 0 | 1 | 2 | 3 | 4
 
@@ -161,6 +180,10 @@ function ResumeLookupStep({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function NewContractPage() {
+  function normalizeKeySegment(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9-]/g, '-')
+  }
+
   // ── State ──────────────────────────────────────────────────────────────────
   const [step, setStep] = useState<StepIndex>(0)
   const [done, setDone] = useState(false)
@@ -193,6 +216,34 @@ export default function NewContractPage() {
   const periodParam = searchParams.get('period')?.toUpperCase() as BillingPeriod | null
   const resumeParam = searchParams.get('resume')
 
+  async function fetchCatalogWithRecovery(signal: AbortSignal): Promise<AppPlan[]> {
+    return runGetWithRecovery({
+      signal,
+      label: 'catalogo de planes',
+      timeoutMs: CATALOG_TIMEOUT_MS,
+      retryDelayMs: CATALOG_RETRY_DELAY_MS,
+      maxRetries: CATALOG_MAX_RETRIES,
+      query: () => getBillingCatalog(TENANT, CLIENT_ID, {
+        signal,
+        timeoutMs: CATALOG_TIMEOUT_MS,
+      }),
+    })
+  }
+
+  async function fetchContractWithRecovery(contractLookupId: string): Promise<AppContract> {
+    const controller = new AbortController()
+    return runGetWithRecovery({
+      signal: controller.signal,
+      label: 'contrato',
+      timeoutMs: CONTRACT_LOOKUP_TIMEOUT_MS,
+      retryDelayMs: CONTRACT_LOOKUP_RETRY_DELAY_MS,
+      maxRetries: CONTRACT_LOOKUP_MAX_RETRIES,
+      query: () => getBillingContract(contractLookupId, {
+        timeoutMs: CONTRACT_LOOKUP_TIMEOUT_MS,
+      }),
+    })
+  }
+
   // ── Catalog query ──────────────────────────────────────────────────────────
   const {
     data: plans = [],
@@ -201,8 +252,9 @@ export default function NewContractPage() {
     refetch: refetchCatalog,
   } = useQuery({
     queryKey: BILLING_QUERY_KEYS.catalog(TENANT, CLIENT_ID),
-    queryFn: () => getBillingCatalog(TENANT, CLIENT_ID),
+    queryFn: ({ signal }) => fetchCatalogWithRecovery(signal),
     staleTime: 5 * 60 * 1000, // 5 min
+    retry: false,
   })
 
   // ── Auto-select plan and period from URL params ───────────────────────────
@@ -300,7 +352,7 @@ export default function NewContractPage() {
     setProcessError(null)
 
     try {
-      const contract = await getBillingContract(id)
+      const contract = await fetchContractWithRecovery(id)
       const canMapPlan = syncPlanSelectionFromContract(contract)
 
       if (!canMapPlan) {
@@ -336,6 +388,13 @@ export default function NewContractPage() {
 
       setResumeLookupError('Este contrato no se puede retomar porque está expirado, cancelado o fallido.')
     } catch (err: unknown) {
+      if (isRequestTimeout(err)) {
+        setResumeLookupError(buildTimeoutStateMessage('consulta del contrato', {
+          retryHint: 'Intenta nuevamente en unos minutos.',
+          includeRetryExhaustedNote: true,
+        }))
+        return
+      }
       const appError = getAppApiError(err)
       if (appError.code === 'RESOURCE_NOT_FOUND') {
         setResumeLookupError('No encontramos un contrato con ese ID. Verifica el dato e inténtalo de nuevo.')
@@ -369,10 +428,20 @@ export default function NewContractPage() {
           company_tax_id: contractor.companyTaxId || undefined,
           company_address: contractor.companyAddress || undefined,
         }),
+      }, {
+        timeoutMs: WRITE_OPERATION_TIMEOUT_MS,
+        idempotencyKey: `kg-contract-create-${normalizeKeySegment(contractor.email)}-${selectedVersion.id}`,
       })
       setContractId(contract.id)
       setStep(3)
     } catch (err: unknown) {
+      if (isRequestTimeout(err)) {
+        setProcessError(buildTimeoutStateMessage('creacion del contrato', {
+          retryHint: 'Verifica tu conexion y vuelve a intentarlo.',
+        }))
+        notifyMutationTimeout('creacion del contrato')
+        return
+      }
       const appError = getAppApiError(err)
       if (appError.code === 'INVALID_INPUT') {
         setProcessError('Los datos introducidos no son válidos. Por favor, revísalos e inténtalo de nuevo.')
@@ -389,9 +458,17 @@ export default function NewContractPage() {
     setIsProcessing(true)
     setProcessError(null)
     try {
-      await verifyContractEmail(contractId, { code })
+      await verifyContractEmail(contractId, { code }, {
+        timeoutMs: WRITE_OPERATION_TIMEOUT_MS,
+        idempotencyKey: `kg-verify-email-${contractId}-${code}`,
+      })
       setStep(4)
     } catch (err: unknown) {
+      if (isRequestTimeout(err)) {
+        setProcessError(buildTimeoutStateMessage('verificacion del codigo'))
+        notifyMutationTimeout('verificacion del codigo')
+        return
+      }
       const appError = getAppApiError(err)
       if (appError.code === 'INVALID_INPUT') {
         setProcessError('El código es incorrecto o ha expirado. Revisa tu correo e inténtalo de nuevo.')
@@ -407,9 +484,18 @@ export default function NewContractPage() {
     if (!contractId) return
     setIsResending(true)
     try {
-      await resendContractVerificationEmail(contractId)
+      await resendContractVerificationEmail(contractId, {
+        timeoutMs: WRITE_OPERATION_TIMEOUT_MS,
+        idempotencyKey: `kg-resend-email-${contractId}`,
+      })
       toast.success('Código reenviado. Revisa tu bandeja de entrada.')
     } catch (err: unknown) {
+      if (isRequestTimeout(err)) {
+        notifyMutationTimeout('reenvio del codigo', {
+          retryHint: 'Intenta nuevamente en unos momentos.',
+        })
+        return
+      }
       const appError = getAppApiError(err)
       toast.error(appError.clientMessage)
     } finally {
@@ -422,12 +508,25 @@ export default function NewContractPage() {
     setIsProcessing(true)
     setProcessError(null)
     try {
-      await mockApprovePayment(contractId)
+      await mockApprovePayment(contractId, {
+        timeoutMs: WRITE_OPERATION_TIMEOUT_MS,
+        idempotencyKey: `kg-mock-approve-${contractId}`,
+      })
       // Auto-activate contract after payment approval
-      await activateBillingContract(contractId)
+      await activateBillingContract(contractId, {
+        timeoutMs: WRITE_OPERATION_TIMEOUT_MS,
+        idempotencyKey: `kg-activate-${contractId}`,
+      })
       setDone(true)
       toast.success('¡Cuenta activada exitosamente!')
     } catch (err: unknown) {
+      if (isRequestTimeout(err)) {
+        setProcessError(buildTimeoutStateMessage('aprobacion/activacion', {
+          retryHint: 'Revisa el estado del contrato y vuelve a intentar si corresponde.',
+        }))
+        notifyMutationTimeout('pago o activacion')
+        return
+      }
       const appError = getAppApiError(err)
       setProcessError(appError.clientMessage)
     } finally {

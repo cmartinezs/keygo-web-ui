@@ -13,6 +13,7 @@ import type {
   ResetPasswordRequest,
   RegistrationData,
 } from '@/types/user'
+import type { RequestOptions } from './requestOptions'
 
 // ── Query key constants ────────────────────────────────────────────────────────
 
@@ -29,14 +30,27 @@ const userUrl = (tenantSlug: string, userId: string) => `${usersUrl(tenantSlug)}
 // ── Tenant user management (ADMIN / ADMIN_TENANT) ─────────────────────────────
 
 /** GET /api/v1/tenants/{tenantSlug}/users ✅ — lista usuarios del tenant. */
-export async function listUsers(tenantSlug: string): Promise<UserData[]> {
-  const res = await apiClient.get<BaseResponse<UserData[]>>(usersUrl(tenantSlug))
+export async function listUsers(
+  tenantSlug: string,
+  options?: RequestOptions,
+): Promise<UserData[]> {
+  const res = await apiClient.get<BaseResponse<UserData[]>>(usersUrl(tenantSlug), {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  })
   return unwrapResponseData(res.data, 'Error al listar usuarios')
 }
 
 /** GET /api/v1/tenants/{tenantSlug}/users/{userId} ✅ */
-export async function getUser(tenantSlug: string, userId: string): Promise<UserData> {
-  const res = await apiClient.get<BaseResponse<UserData>>(userUrl(tenantSlug, userId))
+export async function getUser(
+  tenantSlug: string,
+  userId: string,
+  options?: RequestOptions,
+): Promise<UserData> {
+  const res = await apiClient.get<BaseResponse<UserData>>(userUrl(tenantSlug, userId), {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  })
   return unwrapResponseData(res.data, 'Usuario no encontrado')
 }
 
@@ -44,8 +58,15 @@ export async function getUser(tenantSlug: string, userId: string): Promise<UserD
 export async function createUser(
   tenantSlug: string,
   data: CreateUserRequest,
+  options?: RequestOptions,
 ): Promise<UserData> {
-  const res = await apiClient.post<BaseResponse<UserData>>(usersUrl(tenantSlug), data)
+  const res = await apiClient.post<BaseResponse<UserData>>(usersUrl(tenantSlug), data, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
   return unwrapResponseData(res.data, 'Error al crear el usuario')
 }
 
@@ -54,8 +75,15 @@ export async function updateUser(
   tenantSlug: string,
   userId: string,
   data: UpdateUserRequest,
+  options?: RequestOptions,
 ): Promise<UserData> {
-  const res = await apiClient.put<BaseResponse<UserData>>(userUrl(tenantSlug, userId), data)
+  const res = await apiClient.put<BaseResponse<UserData>>(userUrl(tenantSlug, userId), data, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
   return unwrapResponseData(res.data, 'Error al actualizar usuario')
 }
 
@@ -64,8 +92,15 @@ export async function resetUserPassword(
   tenantSlug: string,
   userId: string,
   data: ResetPasswordRequest,
+  options?: RequestOptions,
 ): Promise<void> {
-  await apiClient.post(`${userUrl(tenantSlug, userId)}/reset-password`, data)
+  await apiClient.post(`${userUrl(tenantSlug, userId)}/reset-password`, data, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
 }
 
 // ── Self-registration (público) ───────────────────────────────────────────────

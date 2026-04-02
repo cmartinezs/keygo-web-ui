@@ -21,8 +21,15 @@ interface RoleGuardProps {
 
 /** Protects routes that require a specific role. Redirects to /login or `redirectTo` if unauthorized. */
 export function RoleGuard({ roles, redirectTo = '/login', children }: RoleGuardProps) {
-  const { accessToken, roles: userRoles } = useTokenStore()
+  const { accessToken, roles: userRoles, activeRole } = useTokenStore()
   if (!accessToken) return <Navigate to="/login" replace />
+
+  if (activeRole) {
+    const canAccessWithActiveRole = roles.includes(activeRole) && userRoles.includes(activeRole)
+    if (!canAccessWithActiveRole) return <Navigate to={redirectTo} replace />
+    return children ? <>{children}</> : <Outlet />
+  }
+
   if (!roles.some((r) => userRoles.includes(r))) return <Navigate to={redirectTo} replace />
   return children ? <>{children}</> : <Outlet />
 }

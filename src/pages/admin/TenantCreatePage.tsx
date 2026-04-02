@@ -5,6 +5,8 @@ import { z } from 'zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createTenant, TENANT_QUERY_KEYS } from '@/api/tenants'
 import { toast } from 'sonner'
+import { NETWORK_REQUEST_TIMEOUT_MS } from '@/config/network'
+import { isRequestTimeout, notifyMutationTimeout } from '@/lib/network/recovery'
 
 // ── Validation schema ─────────────────────────────────────────────────────────
 
@@ -65,13 +67,17 @@ export default function TenantCreatePage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const mutation = useMutation({
-    mutationFn: createTenant,
+    mutationFn: (values: FormValues) => createTenant(values, { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
     onSuccess: (data) => {
       toast.success(`Tenant "${data.name}" creado correctamente.`)
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.all })
       navigate(`../${data.slug}`, { relative: 'path' })
     },
     onError: (err: Error) => {
+      if (isRequestTimeout(err)) {
+        notifyMutationTimeout('creacion del tenant')
+        return
+      }
       toast.error(err.message ?? 'Error al crear el tenant. Intenta de nuevo.')
     },
   })

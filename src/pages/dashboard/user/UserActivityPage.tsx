@@ -5,6 +5,12 @@ import { listClientApps, CLIENT_APP_QUERY_KEYS } from '@/api/clientApps'
 import { TENANT } from '@/api/client'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTokenStore } from '@/auth/tokenStore'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import { runGetWithRecovery } from '@/lib/network/recovery'
 
 export default function UserActivityPage() {
   const currentUser = useCurrentUser()
@@ -14,13 +20,39 @@ export default function UserActivityPage() {
 
   const membershipsQuery = useQuery({
     queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, userId),
-    queryFn: () => listMembershipsByUser(tenantSlug, userId),
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'actividad de memberships',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+        listMembershipsByUser(tenantSlug, userId, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+      }),
     enabled: userId.length > 0,
+    retry: false,
   })
 
   const appsQuery = useQuery({
     queryKey: CLIENT_APP_QUERY_KEYS.all(tenantSlug),
-    queryFn: () => listClientApps(tenantSlug),
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'catalogo de aplicaciones',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+        listClientApps(tenantSlug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+      }),
+    retry: false,
   })
 
   const appNameById = new Map((appsQuery.data ?? []).map((app) => [app.id, app.name]))

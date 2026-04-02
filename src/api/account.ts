@@ -8,6 +8,7 @@ import { apiClient, tenantUrl } from './client'
 import type { BaseResponse } from '@/types/base'
 import type { UserProfileData, UpdateUserProfileRequest } from '@/types/user'
 import { unwrapResponseData } from './response'
+import type { RequestOptions } from './requestOptions'
 
 // ── Query key constants ────────────────────────────────────────────────────────
 
@@ -26,8 +27,14 @@ const profileUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/pro
  * Devuelve el perfil completo del usuario autenticado (campos OIDC extendidos).
  * Requiere: Authorization: Bearer <access_token>. No requiere X-KEYGO-ADMIN.
  */
-export async function getProfile(tenantSlug: string): Promise<UserProfileData> {
-  const res = await apiClient.get<BaseResponse<UserProfileData>>(profileUrl(tenantSlug))
+export async function getProfile(
+  tenantSlug: string,
+  options?: RequestOptions,
+): Promise<UserProfileData> {
+  const res = await apiClient.get<BaseResponse<UserProfileData>>(profileUrl(tenantSlug), {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  })
   return unwrapResponseData(res.data, 'Error al obtener el perfil')
 }
 
@@ -40,7 +47,14 @@ export async function getProfile(tenantSlug: string): Promise<UserProfileData> {
 export async function updateProfile(
   tenantSlug: string,
   data: UpdateUserProfileRequest,
+  options?: RequestOptions,
 ): Promise<UserProfileData> {
-  const res = await apiClient.patch<BaseResponse<UserProfileData>>(profileUrl(tenantSlug), data)
+  const res = await apiClient.patch<BaseResponse<UserProfileData>>(profileUrl(tenantSlug), data, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
   return unwrapResponseData(res.data, 'Error al actualizar el perfil')
 }

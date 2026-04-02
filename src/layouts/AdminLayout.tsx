@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme'
 import type { ThemePreference } from '@/hooks/useTheme'
 import { SidebarMenu } from '@/components/dashboard/SidebarMenu'
 import type { SidebarMenuSection } from '@/components/dashboard/SidebarMenu'
+import { APP_ROLE_LABELS, resolvePrimaryRole } from '@/types/roles'
 import type { AppRole } from '@/types/roles'
 
 // ── Icons (inline SVG) ───────────────────────────────────────────────────────
@@ -177,6 +178,115 @@ function IconSettings() {
   )
 }
 
+// ── Generic Dropdown (interfaz uniforme para selectores) ─────────────────────
+//
+// NORMAS DE COMPONENTES SELECTORES:
+// 1. Todos los dropdowns deben usar el componente reutilizable <Dropdown<T>>
+// 2. Props estándar: `value`, `onChange`, `options`, `label`, `ariaLabel`
+// 3. Evitar duplicación de lógica: open/close, click-outside, estilos, a11y
+// 4. Si necesitas un selector personalizado, extender <Dropdown> no crear uno nuevo
+// 5. Los selectores deben tener iconos opcionales para claridad visual
+// 6. El componente wrapper (ej: ThemeToggle, RoleSwitcher) solo maneja transformación
+//    de data y delega UI al Dropdown
+//
+// Estructura típica de un wrapper:
+//   1. Recibe props unificadas (value, onChange)
+//   2. Construye array de DropdownOption<T>
+//   3. Delega al Dropdown con options + label + ariaLabel
+//
+
+interface DropdownOption<T> {
+  value: T
+  label: string
+  icon?: React.ReactNode
+}
+
+interface DropdownProps<T> {
+  value: T
+  onChange: (value: T) => void
+  options: DropdownOption<T>[]
+  label: string
+  icon?: React.ReactNode
+  ariaLabel: string
+}
+
+function Dropdown<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+  icon,
+  ariaLabel,
+}: DropdownProps<T>) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const current = options.find((o) => o.value === value)
+
+  function select(v: T) {
+    onChange(v)
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        className="flex items-center gap-1.5 h-9 px-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 text-sm font-medium"
+      >
+        {icon}
+        <span>{current?.label ?? label}</span>
+        <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {open && (
+        <ul
+          role="listbox"
+          aria-label={ariaLabel}
+          className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
+        >
+          {options.map((o) => {
+            const active = value === o.value
+            return (
+              <li key={o.value} role="option" aria-selected={active}>
+                <button
+                  onClick={() => select(o.value)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                    active
+                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 font-semibold'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
+                  }`}
+                >
+                  {o.icon}
+                  {o.label}
+                  {active && (
+                    <svg className="w-3.5 h-3.5 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 // ── Theme toggle ──────────────────────────────────────────────────────────────
 
 const THEME_META: Record<ThemePreference, { icon: React.ReactNode; label: string }> = {
@@ -204,82 +314,71 @@ const THEME_META: Record<ThemePreference, { icon: React.ReactNode; label: string
     ),
     label: 'Oscuro',
   },
+  'high-contrast': {
+    icon: (
+      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m9-9H3" />
+      </svg>
+    ),
+    label: 'Alto contraste',
+  },
 }
 
-const THEME_OPTIONS: ThemePreference[] = ['system', 'light', 'dark']
+const THEME_OPTIONS: ThemePreference[] = ['system', 'light', 'dark', 'high-contrast']
 
 interface ThemeToggleProps {
-  preference: ThemePreference
-  onSelect: (p: ThemePreference) => void
+  value: ThemePreference
+  onChange: (p: ThemePreference) => void
 }
 
-function ThemeToggle({ preference, onSelect }: ThemeToggleProps) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  const current = THEME_META[preference]
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  function select(p: ThemePreference) {
-    onSelect(p)
-    setOpen(false)
-  }
+function ThemeToggle({ value, onChange }: ThemeToggleProps) {
+  const options: DropdownOption<ThemePreference>[] = THEME_OPTIONS.map((p) => ({
+    value: p,
+    label: THEME_META[p].label,
+    icon: THEME_META[p].icon,
+  }))
 
   return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={`Tema: ${current.label}`}
-        className="flex items-center gap-1.5 h-9 px-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 text-sm font-medium"
-      >
-        {current.icon}
-        <span>{current.label}</span>
-        <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+    <Dropdown
+      value={value}
+      onChange={onChange}
+      options={options}
+      label="Tema"
+      icon={THEME_META[value].icon}
+      ariaLabel={`Tema: ${THEME_META[value].label}`}
+    />
+  )
+}
 
-      {open && (
-        <ul
-          role="listbox"
-          aria-label="Seleccionar tema"
-          className="absolute right-0 top-full mt-2 w-36 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
-        >
-          {THEME_OPTIONS.map((p) => {
-            const meta = THEME_META[p]
-            const active = preference === p
-            return (
-              <li key={p} role="option" aria-selected={active}>
-                <button
-                  onClick={() => select(p)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
-                    active
-                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 font-semibold'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
-                  }`}
-                >
-                  {meta.icon}
-                  {meta.label}
-                  {active && (
-                    <svg className="w-3.5 h-3.5 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
+interface RoleSwitcherProps {
+  value: AppRole
+  availableRoles: AppRole[]
+  onChange: (role: AppRole) => void
+}
+
+// Mapeo de iconos para cada rol
+const ROLE_ICONS: Record<AppRole, React.ReactNode> = {
+  ADMIN: <IconShield />,
+  ADMIN_TENANT: <IconBuilding />,
+  USER_TENANT: <IconUser />,
+}
+
+function RoleSwitcher({ value, availableRoles, onChange }: RoleSwitcherProps) {
+  const options: DropdownOption<AppRole>[] = availableRoles.map((role) => ({
+    value: role,
+    label: APP_ROLE_LABELS[role],
+    icon: ROLE_ICONS[role],
+  }))
+
+  return (
+    <Dropdown
+      value={value}
+      onChange={onChange}
+      options={options}
+      label="Rol"
+      ariaLabel="Rol activo"
+      icon={ROLE_ICONS[value]}
+    />
   )
 }
 
@@ -300,12 +399,6 @@ function UserAvatar({ name }: { name: string }) {
       {initials}
     </div>
   )
-}
-
-function resolvePrimaryRole(roles: string[]): AppRole {
-  if (roles.includes('ADMIN')) return 'ADMIN'
-  if (roles.includes('ADMIN_TENANT')) return 'ADMIN_TENANT'
-  return 'USER_TENANT'
 }
 
 const SIDEBAR_BY_ROLE: Record<AppRole, SidebarMenuSection[]> = {
@@ -389,7 +482,9 @@ const SIDEBAR_BY_ROLE: Record<AppRole, SidebarMenuSection[]> = {
 // ── Layout ────────────────────────────────────────────────────────────────────
 
 export default function AdminLayout() {
-  const clearTokens = useTokenStore((s) => s.clearTokens)
+  const roles = useTokenStore((s) => s.roles)
+  const activeRole = useTokenStore((s) => s.activeRole)
+  const setActiveRole = useTokenStore((s) => s.setActiveRole)
   const navigate = useNavigate()
   const user = useCurrentUser()
   const { preference, setPreference } = useTheme()
@@ -419,13 +514,18 @@ export default function AdminLayout() {
 
   function handleLogout() {
     setDropdownOpen(false)
-    clearTokens()
-    navigate('/login', { replace: true })
+    navigate('/logout', { replace: true })
+  }
+
+  function handleRoleChange(nextRole: AppRole) {
+    setActiveRole(nextRole)
+    setDropdownOpen(false)
+    navigate('/dashboard', { replace: true })
   }
 
   const displayName = user?.displayName ?? 'Admin'
-  const sidebarRole = resolvePrimaryRole(user?.roles ?? [])
-  const roleLabel = sidebarRole.replace('_', ' ')
+  const sidebarRole = activeRole ?? resolvePrimaryRole(roles) ?? 'USER_TENANT'
+  const roleLabel = APP_ROLE_LABELS[sidebarRole]
   const sidebarSections = SIDEBAR_BY_ROLE[sidebarRole]
 
   return (
@@ -515,8 +615,17 @@ export default function AdminLayout() {
           {/* Spacer */}
           <div className="flex-1" />
 
+          {/* Active role selector */}
+          {roles.length > 0 && (
+            <RoleSwitcher
+              availableRoles={roles}
+              value={sidebarRole}
+              onChange={handleRoleChange}
+            />
+          )}
+
           {/* Theme toggle + Notifications */}
-          <ThemeToggle preference={preference} onSelect={setPreference} />
+          <ThemeToggle value={preference} onChange={setPreference} />
 
           {/* Notifications */}
           <button

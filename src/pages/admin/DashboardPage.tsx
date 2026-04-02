@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { getPlatformDashboard, DASHBOARD_QUERY_KEYS } from '@/api/dashboard'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import { runGetWithRecovery } from '@/lib/network/recovery'
 import { CardSkeleton, ErrorAlert, SectionTitle } from './dashboard/DashboardPrimitives'
 import { ServiceStatusRow } from './dashboard/ServiceStatusRow'
 import { IamCoreRow } from './dashboard/IamCoreRow'
@@ -35,9 +41,25 @@ function SkeletonGrid({ count }: { count: number }) {
 export default function AdminDashboardPage() {
   const [range, setRange] = useState<DateRange>('7d')
 
+  async function fetchDashboardWithRecovery(signal: AbortSignal) {
+    return runGetWithRecovery({
+      signal,
+      label: 'dashboard',
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        getPlatformDashboard({
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: DASHBOARD_QUERY_KEYS.platformDashboard,
-    queryFn: getPlatformDashboard,
+    queryFn: ({ signal }) => fetchDashboardWithRecovery(signal),
+    retry: false,
   })
 
   function handleRefresh() {

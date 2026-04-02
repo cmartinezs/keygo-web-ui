@@ -188,6 +188,25 @@ if (isError) return <ErrorMessage message={error.message} />
 return <MyComponent data={data} />
 ```
 
+### Regla obligatoria de carga: pagina vs componente vs backend
+
+Aplicar siempre esta separación en cualquier pantalla o flujo con datos:
+
+1. **Render de pagina (critico)**
+  - Evitar pantalla en blanco durante bootstrap o cambios de ruta.
+  - El loader global solo se usa para asentamiento critico de ruta/pagina y ante red lenta sostenida.
+
+2. **Render de componente (local)**
+  - Cada widget o bloque visual maneja su `isLoading`, `isError` y `data` localmente.
+  - Preferir skeletons/placeholders locales en lugar de bloquear toda la pantalla.
+
+3. **Llamadas backend (resiliencia)**
+  - Timeout explicito para requests criticos.
+  - GET criticos con retry controlado (intervalo y maximo de intentos definidos).
+  - Mutaciones criticas sin auto-retry mientras backend no garantice idempotencia real.
+
+Si una accion de recuperacion en background modifica el estado visible, notificar con `toast`.
+
 ### Mutaciones con feedback
 
 ```tsx

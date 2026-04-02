@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { create } from 'zustand'
 
-export type ThemePreference = 'light' | 'dark' | 'system'
+export type ThemePreference = 'light' | 'dark' | 'high-contrast' | 'system'
 
 const STORAGE_KEY = 'keygo-theme'
 
@@ -10,12 +10,19 @@ function getSystemIsDark(): boolean {
 }
 
 function applyTheme(preference: ThemePreference): void {
-  const dark = preference === 'dark' || (preference === 'system' && getSystemIsDark())
+  const highContrast = preference === 'high-contrast'
+  const dark = highContrast || preference === 'dark' || (preference === 'system' && getSystemIsDark())
   document.documentElement.classList.toggle('dark', dark)
+  document.documentElement.classList.toggle('high-contrast', highContrast)
 }
 
 // Read persisted preference synchronously — safe because localStorage is sync
 const storedPreference = (localStorage.getItem(STORAGE_KEY) as ThemePreference | null) ?? 'system'
+
+// Keep html theme classes synchronized with persisted preference on initial load.
+if (typeof document !== 'undefined') {
+  applyTheme(storedPreference)
+}
 
 // ── Zustand store ─────────────────────────────────────────────────────────────
 
@@ -37,7 +44,7 @@ export const useThemeStore = create<ThemeStore>()((set) => ({
 
 /**
  * Returns the current theme preference and a function to cycle through
- * system → light → dark → system.
+ * system → light → dark → high-contrast → system.
  * Also wires up a system-preference listener when in 'system' mode.
  */
 export function useTheme() {
@@ -54,7 +61,13 @@ export function useTheme() {
 
   function cycleTheme(): void {
     const next: ThemePreference =
-      preference === 'system' ? 'light' : preference === 'light' ? 'dark' : 'system'
+      preference === 'system'
+        ? 'light'
+        : preference === 'light'
+          ? 'dark'
+          : preference === 'dark'
+            ? 'high-contrast'
+            : 'system'
     setPreference(next)
   }
 

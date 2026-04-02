@@ -2,6 +2,16 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getTenant, suspendTenant, activateTenant, TENANT_QUERY_KEYS } from '@/api/tenants'
 import { toast } from 'sonner'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import {
+  isRequestTimeout,
+  notifyMutationTimeout,
+  runGetWithRecovery,
+} from '@/lib/network/recovery'
 import type { TenantStatus } from '@/types/tenant'
 
 // ── Status badge ──────────────────────────────────────────────────────────────
@@ -69,30 +79,60 @@ export default function TenantDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  async function fetchTenantWithRecovery(signal: AbortSignal) {
+    if (!slug) throw new Error('Tenant slug requerido')
+
+    return runGetWithRecovery({
+      signal,
+      label: 'tenant',
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        getTenant(slug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const { data: tenant, isLoading, isError, error } = useQuery({
     queryKey: TENANT_QUERY_KEYS.detail(slug!),
-    queryFn: () => getTenant(slug!),
+    queryFn: ({ signal }) => fetchTenantWithRecovery(signal),
     enabled: !!slug,
+    retry: false,
   })
 
   const suspendMutation = useMutation({
-    mutationFn: () => suspendTenant(slug!),
+    mutationFn: () => suspendTenant(slug!, { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
     onSuccess: () => {
       toast.success('Tenant suspendido correctamente.')
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.detail(slug!) })
     },
-    onError: () => toast.error('No se pudo suspender el tenant. Intenta de nuevo.'),
+    onError: (err) => {
+      if (isRequestTimeout(err)) {
+        notifyMutationTimeout('suspension')
+        return
+      }
+      toast.error('No se pudo suspender el tenant. Intenta de nuevo.')
+    },
   })
 
   const activateMutation = useMutation({
-    mutationFn: () => activateTenant(slug!),
+    mutationFn: () => activateTenant(slug!, { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
     onSuccess: () => {
       toast.success('Tenant activado correctamente.')
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.detail(slug!) })
     },
-    onError: () => toast.error('No se pudo activar el tenant.'),
+    onError: (err) => {
+      if (isRequestTimeout(err)) {
+        notifyMutationTimeout('activacion')
+        return
+      }
+      toast.error('No se pudo activar el tenant.')
+    },
   })
 
   const handleSuspend = () => {

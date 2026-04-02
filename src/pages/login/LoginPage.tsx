@@ -19,10 +19,22 @@ import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
 import { env } from '@/config/env'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import {
+  buildMutationTimeoutMessage,
+  isRequestTimeout,
+} from '@/lib/network/recovery'
 import type { AppRole } from '@/types/roles'
 import type { AuthorizeData } from '@/types/auth'
 
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
+const AUTH_TIMEOUT_MS = NETWORK_REQUEST_TIMEOUT_MS
+const AUTH_RETRY_DELAY_MS = NETWORK_RETRY_DELAY_MS
+const AUTH_MAX_RETRIES = NETWORK_MAX_RETRIES
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -482,7 +494,10 @@ export default function LoginPage() {
       const challenge = await generateCodeChallenge(verifier)
       const state = generateState()
       codeVerifierRef.current = verifier
-      return authorize({ tenantSlug: TENANT, codeChallenge: challenge, state })
+      return authorize(
+        { tenantSlug: TENANT, codeChallenge: challenge, state },
+        { timeoutMs: AUTH_TIMEOUT_MS },
+      )
     },
     retry: 0, // Config errors (tenant not found, suspended) must not be auto-retried
     onSuccess: () => {
@@ -507,12 +522,21 @@ export default function LoginPage() {
         tenantSlug: TENANT,
         emailOrUsername: values.emailOrUsername,
         password: values.password,
+      }, {
+        timeoutMs: AUTH_TIMEOUT_MS,
+        idempotencyKey: `kg-login-${TENANT}-${values.emailOrUsername.toLowerCase()}`,
       })
 
       // Authorization code obtained — any error from here on must trigger re-init
       // because the code is single-use and the session state is now uncertain.
       loginPhaseRef.current = 'post-login'
-      const tokens = await exchangeToken({ tenantSlug: TENANT, code, codeVerifier })
+      const tokens = await exchangeToken(
+        { tenantSlug: TENANT, code, codeVerifier },
+        {
+          timeoutMs: AUTH_TIMEOUT_MS,
+          idempotencyKey: `kg-token-exchange-${TENANT}-${code}`,
+        },
+      )
       const claims = await verifyIdToken(tokens.id_token, TENANT)
       const roles = extractRoles(claims)
       return { tokens, roles }
@@ -535,6 +559,14 @@ export default function LoginPage() {
       const phase = loginPhaseRef.current
       loginPhaseRef.current = 'login' // reset for next attempt
       const appError = getAppApiError(error)
+
+      if (isRequestTimeout(error)) {
+        toast.error(buildMutationTimeoutMessage('operacion de inicio de sesion', {
+          timeoutMs: AUTH_TIMEOUT_MS,
+          retryHint: 'Vuelve a intentarlo.',
+        }))
+        return
+      }
 
       if (phase === 'post-login') {
         const isNetwork = appError.httpStatus === undefined
@@ -576,12 +608,15 @@ export default function LoginPage() {
     if (!initMutation.isError) return
     autoRetryCountRef.current = 0
 
-    if (env.QUERY_RETRY_COUNT === 0) return
+    const authError = extractAuthorizeError(initMutation.error)
+    if (!authError.retryable) return
+
+    if (AUTH_MAX_RETRIES === 0) return
 
     const id = setInterval(() => {
-      if (autoRetryCountRef.current >= env.QUERY_RETRY_COUNT) return
+      if (autoRetryCountRef.current >= AUTH_MAX_RETRIES) return
       autoRetryCountRef.current += 1
-      const remaining = env.QUERY_RETRY_COUNT - autoRetryCountRef.current
+      const remaining = AUTH_MAX_RETRIES - autoRetryCountRef.current
       isAutoRetryingRef.current = true
       const toastId = toast.loading('Intentando reconectar…')
       setTimeout(() => {
@@ -589,10 +624,17 @@ export default function LoginPage() {
           onSuccess: () => {
             toast.success('Conexión restablecida', { id: toastId })
           },
-          onError: () => {
+          onError: (error) => {
             setTimeout(() => {
+              if (isRequestTimeout(error)) {
+                toast.error(buildMutationTimeoutMessage('reconexion', {
+                  timeoutMs: AUTH_TIMEOUT_MS,
+                  retryHint: 'Reintentando…',
+                }), { id: toastId })
+                return
+              }
               if (remaining > 0) {
-                toast.error(`Sin conexión. Reintentando en 10 s…`, { id: toastId })
+                toast.error('Sin conexión. Reintentando en 5 s…', { id: toastId })
               } else {
                 toast.error('Sin conexión. Usa el botón para reintentar manualmente.', { id: toastId })
               }
@@ -600,7 +642,7 @@ export default function LoginPage() {
           },
         })
       }, 600)
-    }, 10_000)
+    }, AUTH_RETRY_DELAY_MS)
     return () => clearInterval(id)
   }, [initMutation])
 

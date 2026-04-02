@@ -7,6 +7,16 @@ import { z } from 'zod'
 import { TENANT } from '@/api/client'
 import { getAppApiError } from '@/api/errorNormalizer'
 import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import {
+  isRequestTimeout,
+  notifyMutationTimeout,
+  runGetWithRecovery,
+} from '@/lib/network/recovery'
+import {
   createUser,
   listUsers,
   resetUserPassword,
@@ -100,9 +110,25 @@ export default function TenantUsersPage() {
   const [editingUser, setEditingUser] = useState<UserData | null>(null)
   const [resetPasswordUser, setResetPasswordUser] = useState<UserData | null>(null)
 
+  async function fetchUsersWithRecovery(signal: AbortSignal) {
+    return runGetWithRecovery({
+      signal,
+      label: 'usuarios',
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        listUsers(tenantSlug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: USER_QUERY_KEYS.all(tenantSlug),
-    queryFn: () => listUsers(tenantSlug),
+    queryFn: ({ signal }) => fetchUsersWithRecovery(signal),
+    retry: false,
   })
 
   const createForm = useForm<CreateUserFormData>({
@@ -127,7 +153,11 @@ export default function TenantUsersPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: (payload: CreateUserRequest) => createUser(tenantSlug, payload),
+    mutationFn: (payload: CreateUserRequest) =>
+      createUser(tenantSlug, payload, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-user-create-${tenantSlug}-${payload.username.toLowerCase()}`,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.all(tenantSlug) })
       createForm.reset()
@@ -135,12 +165,20 @@ export default function TenantUsersPage() {
       toast.success('Usuario creado correctamente')
     },
     onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('creacion de usuario')
+        return
+      }
       toast.error(getAppApiError(mutationError).clientMessage)
     },
   })
 
   const updateMutation = useMutation({
-    mutationFn: (payload: UpdateUserRequest) => updateUser(tenantSlug, editingUser!.id, payload),
+    mutationFn: (payload: UpdateUserRequest) =>
+      updateUser(tenantSlug, editingUser!.id, payload, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-user-update-${tenantSlug}-${editingUser!.id}`,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.all(tenantSlug) })
       editForm.reset({ first_name: '', last_name: '' })
@@ -148,19 +186,30 @@ export default function TenantUsersPage() {
       toast.success('Usuario actualizado correctamente')
     },
     onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('actualizacion de usuario')
+        return
+      }
       toast.error(getAppApiError(mutationError).clientMessage)
     },
   })
 
   const resetMutation = useMutation({
     mutationFn: (payload: ResetPasswordRequest) =>
-      resetUserPassword(tenantSlug, resetPasswordUser!.id, payload),
+      resetUserPassword(tenantSlug, resetPasswordUser!.id, payload, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-user-reset-password-${tenantSlug}-${resetPasswordUser!.id}`,
+      }),
     onSuccess: () => {
       resetForm.reset({ new_password: '' })
       setResetPasswordUser(null)
       toast.success('Contrasena restablecida correctamente')
     },
     onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('reseteo de contrasena')
+        return
+      }
       toast.error(getAppApiError(mutationError).clientMessage)
     },
   })

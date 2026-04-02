@@ -3,6 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { PlanCatalogGrid } from '@/components/PlanCatalogGrid'
 import { getBillingCatalog, BILLING_QUERY_KEYS } from '@/api/billing'
 import { TENANT, CLIENT_ID } from '@/api/client'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import { runGetWithRecovery } from '@/lib/network/recovery'
 
 export function PricingSection() {
   const sectionRef = useRef<HTMLElement | null>(null)
@@ -35,11 +41,27 @@ export function PricingSection() {
     }
   }, [shouldLoadPlans])
 
+  async function fetchCatalogWithRecovery(signal: AbortSignal) {
+    return runGetWithRecovery({
+      signal,
+      label: 'planes',
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        getBillingCatalog(TENANT, CLIENT_ID, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const { data: rawPlans = [], isLoading, isError, refetch } = useQuery({
     queryKey: BILLING_QUERY_KEYS.catalog(TENANT, CLIENT_ID),
-    queryFn: () => getBillingCatalog(),
+    queryFn: ({ signal }) => fetchCatalogWithRecovery(signal),
     enabled: shouldLoadPlans,
     staleTime: 1000 * 60 * 10,
+    retry: false,
   })
 
   const plans = rawPlans.filter((p) => p.is_public && p.status === 'ACTIVE')

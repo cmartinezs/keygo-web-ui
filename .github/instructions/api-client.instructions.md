@@ -95,6 +95,17 @@ export async function getTenants(): Promise<TenantData[]> {
 - No mezclar lógica de UI (toasts, navigate) dentro de `src/api/` — eso va en el hook o componente.
 - Prefijos de verbo: `get*`, `create*`, `update*`, `delete*`.
 
+## Politica obligatoria de resiliencia de red
+
+Esta politica aplica a toda llamada critica del frontend:
+
+- Definir timeout explícito por request (base de referencia: 10s).
+- Para GET críticos, permitir retry controlado con backoff fijo (base de referencia: cada 5s, máximo 3 intentos).
+- Para POST/PUT/PATCH/DELETE críticos, no habilitar auto-retry mientras backend no confirme idempotencia real.
+- Si existe soporte de idempotencia por header (por ejemplo `X-Idempotency-Key`), tratarlo como complemento y no como reemplazo de la validación de backend.
+
+Esta capa define resiliencia de backend; la decisión de loader global o placeholders locales pertenece a la capa de render (página/componente).
+
 ## Convención de naming — wire format vs. TypeScript
 
 > ⚠️ **La documentación autogenerada (`api-docs.json` y `FRONTEND_DEVELOPER_GUIDE.md`) puede mostrar nombres en camelCase. Esto es un error del generador. El backend real usa snake_case en todas las capas sin excepción.**

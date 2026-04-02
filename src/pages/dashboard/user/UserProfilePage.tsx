@@ -8,6 +8,16 @@ import { ACCOUNT_QUERY_KEYS, getProfile, updateProfile } from '@/api/account'
 import { TENANT } from '@/api/client'
 import { getAppApiError } from '@/api/errorNormalizer'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import {
+  isRequestTimeout,
+  notifyMutationTimeout,
+  runGetWithRecovery,
+} from '@/lib/network/recovery'
 import type { UpdateUserProfileRequest } from '@/types/user'
 
 const profileSchema = z.object({
@@ -28,9 +38,25 @@ export default function UserProfilePage() {
   const tenantSlug = currentUser?.tenantSlug ?? TENANT
   const queryClient = useQueryClient()
 
+  async function fetchProfileWithRecovery(signal: AbortSignal) {
+    return runGetWithRecovery({
+      signal,
+      label: 'perfil',
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        getProfile(tenantSlug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const profileQuery = useQuery({
     queryKey: ACCOUNT_QUERY_KEYS.profile(tenantSlug),
-    queryFn: () => getProfile(tenantSlug),
+    queryFn: ({ signal }) => fetchProfileWithRecovery(signal),
+    retry: false,
   })
 
   const form = useForm<ProfileFormData>({
@@ -63,12 +89,20 @@ export default function UserProfilePage() {
   }, [form, profileQuery.data])
 
   const updateMutation = useMutation({
-    mutationFn: (payload: UpdateUserProfileRequest) => updateProfile(tenantSlug, payload),
+    mutationFn: (payload: UpdateUserProfileRequest) =>
+      updateProfile(tenantSlug, payload, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-user-profile-update-${tenantSlug}-${currentUser?.sub ?? 'anonymous'}`,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEYS.profile(tenantSlug) })
       toast.success('Perfil actualizado correctamente')
     },
     onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('actualizacion de perfil')
+        return
+      }
       toast.error(getAppApiError(mutationError).clientMessage)
     },
   })

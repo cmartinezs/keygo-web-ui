@@ -275,6 +275,20 @@ Actualizado automáticamente por el agente al final de cada implementación.
 - **Prioridad:** 🟠 Media
 - **Fecha detección:** 2026-03-26
 
+### [DEUDA TÉCNICA] Soporte backend pendiente para X-Idempotency-Key
+- **Detectado en:** `src/api/billing.ts`, `src/api/auth.ts`, `src/pages/register/NewContractPage.tsx`, `src/pages/login/LoginPage.tsx`
+- **Descripción:** El frontend ya envía `X-Idempotency-Key` en operaciones POST críticas, pero el backend todavía no aplica deduplicación transaccional basada en esa clave. Mientras no exista soporte efectivo, no es seguro habilitar reintentos automáticos en POST.
+- **Impacto actual:**
+  - Reintentos automáticos se limitan a GET idempotentes.
+  - En POST críticos se usa timeout + mensaje al usuario + reintento manual.
+- **Criterios de cierre en backend:**
+  - Persistencia de clave de idempotencia por operación.
+  - Ventana de deduplicación definida.
+  - Mismo resultado para solicitudes repetidas con misma clave.
+  - Documentación oficial del contrato (OpenAPI/guía backend).
+- **Prioridad:** 🟠 Media-Alta
+- **Fecha detección:** 2026-04-02
+
 ### [DEUDA] Solo 3 de 6 tipos definidos en `src/types/`
 - **Detectado en:** `src/types/` — faltan `tenant.ts`, `clientapp.ts`, `user.ts`
 - **Descripción:** Los DTOs de dominio están parcialmente definidos. Cuando se implementen los módulos de API (`tenants.ts`, `clientApps.ts`, `users.ts`), habrá tentación de definir interfaces locales — hay que crearlos antes en `src/types/` para centralizar la fuente de verdad.

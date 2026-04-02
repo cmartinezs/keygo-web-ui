@@ -3,10 +3,21 @@ import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { listClientApps, createClientApp, rotateClientAppSecret, CLIENT_APP_QUERY_KEYS, type GrantType, type CreateClientAppRequest } from '@/api/clientApps'
 import { getAppApiError } from '@/api/errorNormalizer'
 import { TENANT } from '@/api/client'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import {
+  isRequestTimeout,
+  notifyMutationTimeout,
+  runGetWithRecovery,
+} from '@/lib/network/recovery'
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: 'Activa',
@@ -33,9 +44,25 @@ export default function TenantAppsPage() {
   const [rotateSecretAppId, setRotateSecretAppId] = useState<string | null>(null)
   const [rotatedSecret, setRotatedSecret] = useState<string | null>(null)
 
+  async function fetchAppsWithRecovery(signal: AbortSignal) {
+    return runGetWithRecovery({
+      signal,
+      label: 'aplicaciones',
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        listClientApps(tenantSlug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: CLIENT_APP_QUERY_KEYS.all(tenantSlug),
-    queryFn: () => listClientApps(tenantSlug),
+    queryFn: ({ signal }) => fetchAppsWithRecovery(signal),
+    retry: false,
   })
 
   const createForm = useForm<CreateClientAppFormData>({
@@ -49,19 +76,42 @@ export default function TenantAppsPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateClientAppRequest) => createClientApp(tenantSlug, data),
+    mutationFn: (data: CreateClientAppRequest) =>
+      createClientApp(tenantSlug, data, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-app-create-${tenantSlug}-${data.name.toLowerCase()}`,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CLIENT_APP_QUERY_KEYS.all(tenantSlug) })
       createForm.reset()
       setIsCreateOpen(false)
+      toast.success('Aplicacion creada correctamente')
+    },
+    onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('creacion de aplicacion')
+        return
+      }
+      toast.error(getAppApiError(mutationError).clientMessage)
     },
   })
 
   const rotateMutation = useMutation({
-    mutationFn: (clientId: string) => rotateClientAppSecret(tenantSlug, clientId),
+    mutationFn: (clientId: string) =>
+      rotateClientAppSecret(tenantSlug, clientId, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-app-rotate-secret-${tenantSlug}-${clientId}`,
+      }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: CLIENT_APP_QUERY_KEYS.all(tenantSlug) })
       setRotatedSecret(data.client_secret)
+    },
+    onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('rotacion de secret')
+        return
+      }
+      toast.error(getAppApiError(mutationError).clientMessage)
     },
   })
 

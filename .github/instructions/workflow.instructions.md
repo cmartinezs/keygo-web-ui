@@ -64,6 +64,15 @@ Después de cada cambio, verificar los siguientes puntos en orden:
 - [ ] Los handlers MSW respetan el shape `BaseResponse<T>` y el schema de `api-docs.json`.
 - [ ] Los endpoints pendientes están marcados con `// ⏳ pendiente` y tienen handler MSW.
 
+### Carga, render y resiliencia de red (obligatorio)
+- [ ] Se distinguió explícitamente entre: carga de página/render crítico, carga local de componente y llamadas backend.
+- [ ] Render crítico de página protegido contra pantalla en blanco (bootstrap/routing) con estrategia no intrusiva.
+- [ ] Componentes con `isLoading`, `isError` y `data` resueltos localmente (skeleton/spinner/error), sin bloquear toda la UI por cargas parciales.
+- [ ] Requests con timeout explícito por endpoint crítico.
+- [ ] GET críticos con retry controlado (intervalo y tope de intentos documentados en el flujo).
+- [ ] Mutaciones críticas (POST/PUT/PATCH/DELETE) sin auto-retry cuando no exista garantía backend de idempotencia.
+- [ ] Reintentos o recuperaciones en background que impactan UI visible notifican al usuario (toast o estado explícito).
+
 ### Seguridad
 - [ ] No hay `client_secret` en código del browser.
 - [ ] No se loggea ningún token o claim sensible en consola.
@@ -129,6 +138,8 @@ Si durante la implementación se descubre un patrón, convención o restricción
    para que sea fácil de identificar y revisar.
 
 3. Informar al usuario qué se añadió y en qué archivo.
+
+**[Aprendido]** Toda implementación con datos debe documentar y aplicar la separación entre render de página, render de componente y resiliencia de llamadas backend; no es opcional ni dependiente de la pantalla.
 
 ---
 

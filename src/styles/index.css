@@ -3,6 +3,9 @@
 /* Tailwind v4 — class-based dark mode scoped to .dark on <html> */
 @variant dark (&:where(.dark, .dark *));
 
+/* Tailwind v4 — class-based high contrast mode scoped to .high-contrast on <html> */
+@variant high-contrast (&:where(.high-contrast, .high-contrast *));
+
 html, body, #root {
   height: 100%;
 }
@@ -10,4 +13,38 @@ html, body, #root {
 body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
   margin: 0;
+}
+
+html.high-contrast {
+  color-scheme: dark;
+}
+
+html.high-contrast body {
+  background-color: #000;
+  color: #fff;
+}
+
+html.high-contrast :is(h1, h2, h3, h4, h5, h6, p, span, small, strong, label, li, dt, dd, button, input, textarea, select) {
+  color: #fff !important;
+}
+
+html.high-contrast :is(button, input, textarea, select, [role='button']) {
+  background-color: #000 !important;
+  border-color: #fff !important;
+}
+
+html.high-contrast a {
+  color: #67e8f9 !important;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+html.high-contrast * {
+  border-color: #fff !important;
+}
+
+html.high-contrast :focus-visible {
+  outline: 3px solid #facc15 !important;
+  outline-offset: 2px;
 }

@@ -17,6 +17,7 @@ import type {
   VerifyContractEmailRequest,
   CreateAppPlanRequest,
 } from '@/types/billing'
+import type { RequestOptions } from './requestOptions'
 
 // ── Query keys ────────────────────────────────────────────────────────────────
 export const BILLING_QUERY_KEYS = {
@@ -43,9 +44,14 @@ const contractsBase = `${API_V1}/billing/contracts`
 export async function getBillingCatalog(
   tenantSlug: string = TENANT,
   clientId: string = CLIENT_ID,
+  options?: RequestOptions,
 ): Promise<AppPlan[]> {
   const res = await apiClient.get<BaseResponse<AppPlan[]>>(
     `${billingBase(tenantSlug, clientId)}/catalog`,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+    },
   )
   return unwrapResponseData(res.data, 'No se pudo obtener el catalogo de planes')
 }
@@ -71,10 +77,18 @@ export async function getBillingCatalogPlan(
  */
 export async function createBillingContract(
   request: CreateContractRequest,
+  options?: RequestOptions,
 ): Promise<AppContract> {
   const res = await apiClient.post<BaseResponse<AppContract>>(
     contractsBase,
     request,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
   )
   return unwrapResponseData(res.data, 'No se pudo iniciar el contrato de suscripcion')
 }
@@ -86,10 +100,18 @@ export async function createBillingContract(
 export async function verifyContractEmail(
   contractId: string,
   request: VerifyContractEmailRequest,
+  options?: RequestOptions,
 ): Promise<AppContract> {
   const res = await apiClient.post<BaseResponse<AppContract>>(
     `${contractsBase}/${contractId}/verify-email`,
     request,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
   )
   return unwrapResponseData(res.data, 'No se pudo verificar el codigo de email')
 }
@@ -100,9 +122,18 @@ export async function verifyContractEmail(
  */
 export async function mockApprovePayment(
   contractId: string,
+  options?: RequestOptions,
 ): Promise<AppContract> {
   const res = await apiClient.post<BaseResponse<AppContract>>(
     `${contractsBase}/${contractId}/mock-approve-payment`,
+    undefined,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
   )
   return unwrapResponseData(res.data, 'No se pudo aprobar el pago de prueba')
 }
@@ -114,9 +145,18 @@ export async function mockApprovePayment(
  */
 export async function activateBillingContract(
   contractId: string,
+  options?: RequestOptions,
 ): Promise<AppContract> {
   const res = await apiClient.post<BaseResponse<AppContract>>(
     `${contractsBase}/${contractId}/activate`,
+    undefined,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
   )
   return unwrapResponseData(res.data, 'No se pudo activar el contrato')
 }
@@ -127,9 +167,14 @@ export async function activateBillingContract(
  */
 export async function getBillingContract(
   contractId: string,
+  options?: RequestOptions,
 ): Promise<AppContract> {
   const res = await apiClient.get<BaseResponse<AppContract>>(
     `${contractsBase}/${contractId}`,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+    },
   )
   return unwrapResponseData(res.data, 'No se pudo recuperar el contrato')
 }
@@ -155,8 +200,21 @@ export async function resumeContractOnboarding(
  * verification code to the contractor's email.  Public endpoint.
  * ⏳ Pending backend implementation.
  */
-export async function resendContractVerificationEmail(contractId: string): Promise<void> {
-  await apiClient.post(`${contractsBase}/${contractId}/resend-verification`)
+export async function resendContractVerificationEmail(
+  contractId: string,
+  options?: RequestOptions,
+): Promise<void> {
+  await apiClient.post(
+    `${contractsBase}/${contractId}/resend-verification`,
+    undefined,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
 }
 
 // ── Subscription (authenticated) ──────────────────────────────────────────────

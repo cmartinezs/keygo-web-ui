@@ -111,7 +111,7 @@ Backend API
 ```
 Zustand
   ├─ useTokenStore    ← tokens en memoria, roles, lifecycle de sesión
-  └─ useThemeStore    ← preferencia de tema (light/dark/system)
+  └─ useThemeStore    ← preferencia de tema (light/dark/high-contrast/system)
 ```
 
 ---
@@ -219,14 +219,20 @@ Zustand
   ```js
   (function () {
     var p = localStorage.getItem('keygo-theme') || 'system'
+    var highContrast = p === 'high-contrast'
     var dark = p === 'dark' || (p === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+    if (highContrast) {
+      document.documentElement.classList.add('high-contrast')
+      document.documentElement.classList.add('dark')
+      return
+    }
     if (dark) document.documentElement.classList.add('dark')
   })()
   ```
 - `<div id="root">` — punto de montaje de React.
 - Dentro de `#root` existe un fallback visual (`#kg-boot`) que evita pantalla en blanco antes de que React quede montado.
 
-**Integración:** El script inline aplica `.dark` a `<html>` **antes de que React monte**, eliminando el flash de tema incorrecto (FOCT). `useThemeStore` lee el mismo `localStorage.getItem('keygo-theme')` en su inicialización, quedando sincronizado.
+**Integración:** El script inline aplica `.dark` o `.high-contrast` a `<html>` **antes de que React monte**, eliminando el flash de tema incorrecto (FOCT). `useThemeStore` lee el mismo `localStorage.getItem('keygo-theme')` en su inicialización, quedando sincronizado.
 
 **Decisión de diseño:** La inicialización del tema debe ocurrir sincrónicamente en el HTML, no en un `useEffect`, porque los effects corren tras el primer render y causarían parpadeo visual.
 
@@ -264,7 +270,7 @@ Zustand
 
 **Construcción:**
 - Define todas las rutas con `<Routes>` de React Router 7.
-- Expone una ruta pública adicional `/developers` para la documentación de integración.
+- Expone rutas públicas adicionales `/developers` (documentación) y `/logout` (cierre de sesión seguro).
 - Unifica toda el area autenticada en `/dashboard` (misma ruta para todos los roles).
 - Mantiene rutas legacy (`/home` y `/admin/*`) como redirecciones a `/dashboard` para compatibilidad.
 - Monta `<BlockingErrorModal />` globalmente junto a `<Toaster />`, fuera de `<Routes>`, para que se renderice sobre cualquier pantalla activa.
@@ -287,6 +293,7 @@ Zustand
 | `/` | `LandingPage` | Pública |
 | `/developers` | `DeveloperDocsPage` | Pública |
 | `/login` | `LoginPage` | Pública |
+| `/logout` | `LogoutPage` | Pública |
 | `/subscribe` | `NewContractPage` | Pública |
 | `/subscribe/resume` | `Navigate -> /subscribe?resume=1` | Pública |
 | `/register` | `UserRegisterPage` | Pública |
@@ -337,6 +344,7 @@ Zustand
 ```css
 @import "tailwindcss";                          /* Tailwind v4 */
 @variant dark (&:where(.dark, .dark *));        /* Modo oscuro basado en clase */
+@variant high-contrast (&:where(.high-contrast, .high-contrast *));
 html, body, #root { height: 100%; }            /* Layouts full-height */
 body { font-family: Inter, ui-sans-serif, … }  /* Fuente base */
 ```
@@ -344,6 +352,7 @@ body { font-family: Inter, ui-sans-serif, … }  /* Fuente base */
 **Integración:**
 - Importado en `src/main.tsx`.
 - La variante `dark` es class-based (`.dark` en `<html>`) — sincronizada con el script inline de `index.html` y con `applyTheme()` en `useThemeStore`.
+- La variante `high-contrast` es class-based (`.high-contrast` en `<html>`) y agrega overrides globales para texto, bordes, enlaces y foco visible.
 - `height: 100%` en `#root` es requerido por `AdminLayout` que usa `h-screen`.
 
 **Deuda técnica:** Inter está declarada como fuente primaria pero no se importa explícitamente (Google Fonts o Fontsource). Si el OS no la tiene instalada, cae al fallback `ui-sans-serif`.
@@ -363,9 +372,12 @@ interface TokenState {
   idToken: string | null
   refreshToken: string | null
   roles: AppRole[]
+  activeRole: AppRole | null
 }
 // Acciones: setTokens(...), clearTokens()
 ```
+
+`setTokens` inicializa `activeRole` usando la jerarquia de privilegios (`ADMIN` > `ADMIN_TENANT` > `USER_TENANT`). `setActiveRole` permite cambiar el contexto de trabajo solo a roles incluidos en `roles`.
 
 `clearTokens` también llama a `sessionStorage.removeItem(SESSION_KEY)` — acoplamiento controlado al ciclo de vida del token de refresco.
 
@@ -373,7 +385,7 @@ interface TokenState {
 - `src/api/client.ts` → lee `accessToken` via `getState()` en el interceptor de Axios.
 - `src/auth/roleGuard.tsx` → lee `accessToken` y `roles` para autorización.
 - `src/auth/refresh.ts` → llama `setTokens()` via `getState()` (fuera de React).
-- `src/hooks/useCurrentUser.ts` → lee `idToken`.
+- `src/hooks/useCurrentUser.ts` → lee `idToken`, `roles` y `activeRole`.
 - `src/layouts/AdminLayout.tsx` → llama `clearTokens()` en logout.
 
 **Decisión de diseño:** Tokens en memoria (Zustand) protegidos de ataques XSS — un script malicioso no puede leer `localStorage`. El `refreshToken` en sesión (`sessionStorage`) es el único dato que persiste entre recargas; su alcance es por pestaña, lo que limita el daño de un token robado.
@@ -406,7 +418,7 @@ interface TokenState {
 **Construcción:**
 - Cache de instancias `RemoteJWKSet` por `tenantSlug` (singleton por pestaña).
 - `verifyIdToken(idToken, tenantSlug)` — llama `jwtVerify` de `jose` con `algorithms: ['RS256']`.
-- `extractRoles(claims)` — filtra los roles del JWT contra `APP_ROLES`; roles desconocidos son descartados silenciosamente.
+- `extractRoles(claims)` — valida que el claim `roles` sea una lista, elimina duplicados (case-insensitive) y filtra contra `APP_ROLES`.
 
 **Integración:**
 - `src/pages/login/LoginPage.tsx` → verifica el `id_token` tras el intercambio de código.
@@ -452,11 +464,12 @@ interface TokenState {
 - Con token → renderiza `children ?? <Outlet />`.
 
 `RoleGuard({ roles, redirectTo?, children? })`:
-- Lee `accessToken` + `roles` del store.
+- Lee `accessToken` + `roles` + `activeRole` del store.
 - Sin token → `/login`.
-- Sin rol requerido → `redirectTo ?? '/login'`.
+- Si existe `activeRole`, autoriza contra ese rol activo (modo contexto de trabajo).
+- Sin rol requerido en ese contexto → `redirectTo ?? '/login'`.
 - Con rol apropiado → `children ?? <Outlet />`.
-- La lógica es `roles.some(r => userRoles.includes(r))` — unión (OR), no intersección (AND).
+- Sin `activeRole`, usa fallback por membresia (`roles.some(r => userRoles.includes(r))`).
 
 **Integración:** Usado en `src/App.tsx` para proteger `/admin/*` con `RoleGuard roles={['ADMIN']}`.
 
@@ -588,6 +601,45 @@ apiClient.interceptors.request.use(config => {
 
 ---
 
+### `requestOptions.ts`
+
+**Propósito:** Tipo compartido de opciones de request para toda la capa API.
+
+**Construcción:**
+- Define un único `RequestOptions` reutilizable por módulos de API:
+  - `signal?: AbortSignal`
+  - `timeoutMs?: number`
+  - `idempotencyKey?: string`
+
+**Integración:** `auth.ts`, `billing.ts`, `dashboard.ts`, `tenants.ts`, `users.ts`, `clientApps.ts`, `memberships.ts`, `account.ts`.
+
+**Decisión de diseño:** eliminar interfaces duplicadas de opciones de request para aplicar DRY y evitar divergencia entre dominios.
+
+---
+
+### `src/config/network.ts` y `src/lib/network/recovery.ts`
+
+**Propósito:** centralizar política de red y utilidades de recuperación para queries GET y notificaciones de timeout en mutaciones.
+
+**Construcción:**
+- `src/config/network.ts` define constantes compartidas:
+  - `NETWORK_REQUEST_TIMEOUT_MS`
+  - `NETWORK_RETRY_DELAY_MS`
+  - `NETWORK_MAX_RETRIES`
+- `src/lib/network/recovery.ts` expone utilidades:
+  - `isRequestTimeout(error)`
+  - `buildMutationTimeoutMessage(actionLabel, options?)`
+  - `notifyMutationTimeout(actionLabel, options?)`
+  - `buildTimeoutStateMessage(actionLabel, options?)`
+  - `waitForAbortableDelay(ms, signal)`
+  - `runGetWithRecovery({ signal, label, query, timeoutMs, retryDelayMs, maxRetries })`
+
+**Integración:** usado por páginas de admin, tenant, user, landing, login y register para aplicar la misma estrategia de timeout/retry y mensajes de timeout sin duplicar lógica ni textos.
+
+**Decisión de diseño:** extraer boilerplate repetido de `try/catch + retry + delay + abort` desde componentes de página a una utilidad única y testeable.
+
+---
+
 ### `auth.ts`
 
 **Propósito:** Funciones del flujo OAuth2/PKCE — autorización, login, intercambio de tokens y refresh.
@@ -629,11 +681,11 @@ Todas usan `authClient` (con `withCredentials: true`) para que la cookie `JSESSI
 Funciones:
 | Función | Método | Endpoint | Notas |
 |---------|--------|----------|-------|
-| `listTenants(params?)` | GET | `/api/v1/tenants` | Soporta filtros y paginación |
-| `getTenant(slug)` | GET | `/api/v1/tenants/{slug}` | — |
-| `createTenant(data)` | POST | `/api/v1/tenants` | — |
-| `suspendTenant(slug)` | PUT | `/api/v1/tenants/{slug}/suspend` | — |
-| `activateTenant(slug)` | — | ⏳ pendiente T-033 | Mock de 500ms |
+| `listTenants(params?, options?)` | GET | `/api/v1/tenants` | Soporta filtros, paginación, `signal` y `timeoutMs` |
+| `getTenant(slug, options?)` | GET | `/api/v1/tenants/{slug}` | Soporta `signal` y `timeoutMs` |
+| `createTenant(data, options?)` | POST | `/api/v1/tenants` | Soporta `timeoutMs` y `X-Idempotency-Key` opcional |
+| `suspendTenant(slug, options?)` | PUT | `/api/v1/tenants/{slug}/suspend` | Soporta `timeoutMs` y `X-Idempotency-Key` opcional |
+| `activateTenant(slug, options?)` | PUT | `/api/v1/tenants/{slug}/activate` | Soporta `timeoutMs` y `X-Idempotency-Key` opcional |
 
 **Integración:**
 - `src/pages/admin/TenantsPage.tsx` → `listTenants`, `TENANT_QUERY_KEYS.list`.
@@ -642,23 +694,50 @@ Funciones:
 
 **Decisión de diseño:** Query keys jerárquicas permiten invalidaciones inteligentes — `['tenants']` invalida todo, `['tenants', 'list', params]` solo la lista paginada actual.
 
+**Estrategia de resiliencia:** las funciones GET aceptan cancelación/timeout para recovery controlado en UI; las mutaciones exponen timeout explícito y header de idempotencia opcional, manteniendo la política de no auto-retry en operaciones críticas.
+
 ---
 
 ### `users.ts`
 
-**Propósito:** Registro de usuarios finales de un tenant.
+**Propósito:** Gestión de usuarios del tenant (ADMIN/ADMIN_TENANT) y registro público por app.
 
 **Construcción:**
-```ts
-export interface RegisterUserRequest {
-  username: string; email: string; password: string;
-  firstName?: string; lastName?: string;
-}
-export async function registerUser(tenantSlug, clientId, data): Promise<void>
-// POST /api/v1/tenants/{tenantSlug}/apps/{clientId}/register
-```
+- Exponer `USER_QUERY_KEYS` para lista/detalle.
+- Endpoints de gestión:
+  - `listUsers(tenantSlug, options?)`
+  - `getUser(tenantSlug, userId, options?)`
+  - `createUser(tenantSlug, data, options?)`
+  - `updateUser(tenantSlug, userId, data, options?)`
+  - `resetUserPassword(tenantSlug, userId, data, options?)`
+- Registro público:
+  - `registerUser(tenantSlug, clientId, data)`
 
-**Deuda técnica:** Valida `res.data.success` en lugar de `res.data.data` — diferente al patrón del resto de módulos de API. Puede ser un bug latente según el contrato real del backend.
+`options` soporta `signal`, `timeoutMs` e `idempotencyKey` (este último en mutaciones).
+
+**Integración:**
+- `src/pages/dashboard/tenant/TenantUsersPage.tsx` consume lista + mutaciones de gestión.
+- Flujo de registro público consume `registerUser(...)`.
+
+**Decisión de diseño:** separar registro público del CRUD interno permite aplicar políticas de seguridad y resiliencia distintas por contexto.
+
+---
+
+### `clientApps.ts`, `memberships.ts` y `account.ts`
+
+**Propósito:** módulos de dominio para administración de apps, memberships y perfil de cuenta autenticada.
+
+**Construcción (actualización 2026-04-02):**
+- Se agregó `RequestOptions` en funciones de lectura/escritura para soportar:
+  - `signal` (cancelación por React Query),
+  - `timeoutMs` (timeout explícito por request),
+  - `idempotencyKey` opcional en mutaciones críticas.
+- Esto permite que las páginas apliquen recovery de GET (timeout + retry controlado) sin mezclar lógica de resiliencia dentro del módulo API.
+
+**Integración:**
+- `TenantAppsPage`, `TenantMembershipsPage`, `UserActivityPage`, `UserMyAccessPage` y `UserProfilePage` ahora invocan estos módulos con opciones de resiliencia explícitas.
+
+**Decisión de diseño:** mantener la capa API agnóstica de UI (sin toasts ni decisiones de retry), delegando en contenedores de página la estrategia de recuperación visible al usuario.
 
 ---
 
@@ -1017,15 +1096,79 @@ function useRateLimit(formKey: string) {
 
 **Integración:**
 - `src/main.tsx`: se usa durante `restoreSession()` dentro de `AppBootstrap`.
-- `src/App.tsx`: se usa para actividad global de red detectada por TanStack Query.
+- `src/App.tsx`: se activa de forma condicional cuando coinciden dos señales: ventana de render crítico por cambio de ruta y red lenta sostenida.
 
 **Decisión de diseño:** Centralizar la experiencia de espera en una sola pieza evita crear loaders por pantalla y mantiene consistencia visual.
 
-**Estrategia:** Activación contextual en dos niveles: bootstrap (inmediata) y red global (con delay).
+**Estrategia:** Activación contextual en dos niveles: bootstrap (inmediata) y render crítico con red lenta (`> 5_000 ms`).
+
+**Implementación actual (Fase 1 y 2):**
+- `src/App.tsx` mantiene una ventana de asentamiento de ruta (`ROUTE_SETTLING_WINDOW_MS = 1200`).
+- Solo durante esa ventana se evalúa la red como candidata a escalar loader global.
+- Si `isFetching`/`isMutating` se mantienen activos por más de `SLOW_REQUEST_THRESHOLD_MS = 5000`, se muestra el overlay.
+- Si la vista ya está asentada, el loader global no interfiere en llamadas de fondo.
 
 **Puntos de mejora / deuda técnica conocida:**
 - Separar en modo bloqueante/no bloqueante para polling en background.
 - Integrar señales de Axios si se incorporan requests fuera de TanStack Query.
+
+#### Contrato técnico aprobado (Paso 0) — Orquestación de loader global
+
+Estado: **Aprobado el 2026-04-02**.
+
+**Objetivo técnico:** el loader global deja de depender de toda actividad de red y pasa a activarse solo en operaciones críticas para render visible.
+
+**Reglas base aprobadas:**
+- No mostrar loader global cuando la vista ya tiene contenido útil renderizado.
+- Respetar loaders locales existentes; el global solo escala si hay degradación real de UX.
+- Umbral de visibilidad global: `> 5_000 ms` en llamada crítica sin resolución.
+- Umbral de timeout duro: `> 10_000 ms` para abortar la llamada.
+- Post-timeout: toast + espera de `5_000 ms` + retry automático.
+- Límite de retries automáticos por operación: `3`.
+- Al agotar retries: detener cadena automática y notificar con toast final.
+
+**Alcance de implementación previsto (fases siguientes):**
+- `src/App.tsx`: activación condicional del overlay (no por tráfico global bruto).
+- `src/main.tsx`: mantener bootstrap inmediato solo para fase de restauración de sesión.
+- `src/api/client.ts`: soporte consistente de abort/cancel en llamadas críticas.
+- Hooks/containers críticos (por ejemplo registro/planes): marcar operaciones críticas para render y aplicar política timeout/retry.
+
+**Estado de implementación progresiva (2026-04-02):**
+- Fase 3 y 4 se aplicaron primero al flujo crítico de catálogo de planes en `src/pages/register/NewContractPage.tsx`.
+- `getBillingCatalog` ahora acepta opciones de `signal` y `timeoutMs` en `src/api/billing.ts`.
+- Política activa en este flujo: timeout por intento a 10s, espera de 5s entre intentos y máximo 3 reintentos automáticos.
+- Al agotar reintentos, se detiene la cadena automática y se notifica al usuario por toast.
+- Se extendió la misma política al lookup de contrato por ID (`getBillingContract`) en el mismo flujo.
+- Decisión de seguridad de rollout: el auto-retry se limita por ahora a operaciones idempotentes (GET) para evitar efectos colaterales en operaciones POST sensibles (creación, verificación, activación).
+- Operaciones POST críticas del flujo (`createBillingContract`, `verifyContractEmail`, `resendContractVerificationEmail`, `mockApprovePayment`, `activateBillingContract`) quedaron con timeout de 10s por intento, sin reintento automático.
+- Estas funciones también aceptan `RequestOptions` (`timeoutMs`, `signal`) para futuras extensiones controladas.
+- Se extendió la política al módulo de autenticación en `src/api/auth.ts` y `src/pages/login/LoginPage.tsx`.
+- `authorize` usa timeout de 10s y retry automático controlado en UI (5s entre intentos, máximo 3).
+- `login` y `exchangeToken` usan timeout de 10s sin retry automático.
+- Se agregó soporte opcional de `idempotencyKey` en `RequestOptions` para operaciones POST de billing/auth; cuando el backend lo soporte, permite deduplicación segura de intentos repetidos.
+- Fase 5 extendida a vistas críticas de administración:
+  - `src/pages/admin/DashboardPage.tsx` (GET dashboard con timeout/retry controlado)
+  - `src/pages/admin/TenantsPage.tsx` (GET listado con timeout/retry controlado)
+
+**Estado de validación (Fase 6):**
+- Validación técnica continua ejecutada con `npm run lint` tras cada iteración relevante.
+- Política aplicada y consistente en flujos críticos actuales:
+  - GET críticos: timeout 10s + retry automático 5s + máximo 3
+  - POST críticos: timeout 10s + retry manual (sin auto-retry)
+- Se mantiene pendiente una validación E2E formal transversal cuando se complete la adopción en el resto de vistas de tenant/user.
+
+**Estado actual de backend sobre idempotencia (importante):**
+- El backend **aún no soporta** deduplicación transaccional basada en header `X-Idempotency-Key`.
+- En consecuencia, el frontend envía ese header como preparación de contrato futuro, pero hoy debe considerarse un **hint sin efecto garantizado**.
+- Por esta razón se mantiene la regla de seguridad: auto-retry solo en operaciones idempotentes (GET) y sin auto-retry en POST críticos.
+
+**Por qué se mantiene esta decisión:**
+- Sin idempotencia real en backend, reintentar POST puede provocar efectos duplicados (por ejemplo, doble creación o doble transición de estado).
+- El timeout en POST protege UX y evita bloqueos largos, pero el reintento queda bajo control explícito del usuario.
+- Esta estrategia minimiza riesgo funcional mientras se espera soporte backend definitivo.
+
+**Condición para habilitar auto-retry en POST en el futuro:**
+- Confirmación backend de soporte efectivo para `X-Idempotency-Key` (persistencia de clave, ventana temporal, deduplicación por operación y respuesta consistente para replays).
 
 ### `BlockingErrorModal.tsx`
 
@@ -1038,7 +1181,7 @@ function useRateLimit(formKey: string) {
 `NoRoleContent({ error, actions, onAction })` — contenido específico para `kind === 'NO_ROLE'`:
 - Hace `useQuery` a `GET /api/v1/tenants/{slug}/account/profile` (no requiere rol) para obtener `username` y `email` reales del backend, sobreescribiendo los hints del token que pudieran ser `N/D`.
 - Muestra el código de referencia `KG-NO-ROLE`, datos de diagnóstico y los botones de acción.
-- Botón copiar: escribe un bloque de texto `clave=valor` en el portapapeles vía `navigator.clipboard.writeText`.
+- Botón copiar: escribe un bloque de texto `clave=valor` en el portapapeles vía `navigator.clipboard.writeText`. La acción `logout` redirige a `/logout` para centralizar el cierre de sesión.
 - Botones configurables: renderiza acciones definidas en `error.actions` (o acciones por defecto) y delega la ejecución al handler `onAction` del padre.
 
 `BlockingErrorModal()` — contenedor del modal:
@@ -1186,11 +1329,16 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 | `mobileOpen` | boolean | Sidebar abierto en móvil (cajón) |
 | `dropdownOpen` | boolean | Menú de usuario abierto |
 
+**Selector de rol activo (header):**
+- Dropdown nativo con los roles presentes en el claim `roles`.
+- Al cambiar rol: actualiza `activeRole` en `tokenStore` y navega a `/dashboard` para refrescar contenido y permisos visibles.
+- Sidebar, etiqueta de rol y guards quedan sincronizados con el rol seleccionado.
+
 **Effects:**
 - Cierra el cajón móvil al cambiar de ruta (`location.pathname`).
 - Cierra el dropdown de usuario al hacer click fuera (`mousedown` en `document`).
 
-**Flujo de logout:** `clearTokens()` → `navigate('/login', { replace: true })`.
+**Flujo de logout:** `navigate('/logout', { replace: true })` desde la UI. La ruta `/logout` centraliza `clearError()` + `clearTokens()` y redirige a `/login`.
 
 **Estructura DOM:**
 ```
@@ -1236,7 +1384,7 @@ div.flex.h-screen
 | `FeaturesSection.tsx` | Grid de 6 feature cards | Array de datos inline |
 | `HowItWorksSection.tsx` | 3 pasos del flujo de auth | Array de datos inline |
 | `RolesSection.tsx` | Tarjetas de los 3 roles | Mapeados desde `AppRole` values |
-| `PricingSection.tsx` | Grid de plan cards en modo display | Carga el catálogo de billing en diferido al entrar en viewport (IntersectionObserver + `enabled` en `useQuery`) |
+| `PricingSection.tsx` | Grid de plan cards en modo display | Carga diferida del catálogo con `IntersectionObserver` + `useQuery`, timeout de 10s y retry automático controlado (5s, máximo 3) |
 | `DevelopersSection.tsx` | Recursos para devs | Enlaza la guía pública de integración y deja solo SDKs como pendiente |
 | `CTASection.tsx` | Footer con CTA final y copyright | Año dinámico: `new Date().getFullYear()` |
 
@@ -1294,6 +1442,14 @@ initMutation.isSuccess                                  → LoginForm
 
 **Deuda técnica:** el dashboard compartido mantiene tarjetas de resumen con placeholders en roles no ADMIN. Falta conectar metricas especificas por rol.
 
+**`LogoutPage.tsx`**
+
+**Propósito:** ruta de salida segura para cerrar sesión incluso en estados inconsistentes de contexto (por ejemplo, rol activo no asentado).
+
+**Construcción:** al montar, ejecuta `clearError()` del `blockingErrorStore` y `clearTokens()` del `tokenStore`, luego redirige con `Navigate` a `/login`.
+
+**Integración:** se expone como ruta pública `/logout` en `App.tsx` y es usada por acciones de cierre de sesión desde `AdminLayout` y `BlockingErrorModal`.
+
 ---
 
 ### 10.2.1 Dashboard compartido por rol — `src/pages/dashboard/`
@@ -1303,7 +1459,7 @@ initMutation.isSuccess                                  → LoginForm
 **Propósito:** punto de entrada comun de `/dashboard`. Decide el contenido principal segun rol conservando el mismo layout visual.
 
 **Construcción:**
-- Resuelve rol primario (`ADMIN`, `ADMIN_TENANT`, `USER_TENANT`) desde `useCurrentUser()`.
+- Resuelve el rol de vista desde `activeRole` (seleccionado por el usuario en el header) y usa rol primario como fallback.
 - Si es `ADMIN`, renderiza `AdminDashboardPage` completo.
 - Si es `ADMIN_TENANT` o `USER_TENANT`, renderiza resumen inicial con tarjetas base y secciones pendientes.
 
@@ -1334,10 +1490,12 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:**
 - Usa `useCurrentUser().tenantSlug` (fallback `TENANT`) para resolver el scope del tenant.
 - Lectura: consulta `listUsers(...)` con `useQuery` y `USER_QUERY_KEYS.all(...)`; renderiza tabla.
+- Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para la carga inicial/listado.
 - Escritura: `useMutation` para `createUser(...)` y `resetUserPassword(...)`.
   - Modal "Crear usuario" con formulario Zod validado (username, email, password requeridos; nombre/apellido opcionales).
   - Botón "Resetear contraseña" en cada fila abre modal de entrada segura.
   - Invalidación de cache de usuarios tras éxito de mutación.
+- Resiliencia mutaciones: timeout explícito (10s) sin auto-retry para crear/editar/resetear contraseña.
 
 **Integración:** ruta `/dashboard/tenant/users` protegida por `RoleGuard` con `ADMIN_TENANT`.
 
@@ -1351,10 +1509,12 @@ initMutation.isSuccess                                  → LoginForm
 
 **Construcción:**
 - Lectura: consulta `listClientApps(...)` con `CLIENT_APP_QUERY_KEYS.all(...)`; renderiza tabla.
+- Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3).
 - Escritura: `useMutation` para `createClientApp(...)` y `rotateClientAppSecret(...)`.
   - Modal "Crear aplicación" con formulario completo: nombre, descripción, tipo (PUBLIC/CONFIDENTIAL), grants (múltiple), redirect_uris, scopes.
   - Botón "Rotar secret" en cada fila abre confirmación y luego muestra nuevo secret con opción copiar (one-time display).
   - Invalidación de cache tras éxito.
+- Resiliencia mutaciones: timeout explícito (10s) sin auto-retry para crear app y rotar secret.
 
 **Integración:** ruta `/dashboard/tenant/apps` protegida por `RoleGuard` con `ADMIN_TENANT`.
 
@@ -1370,10 +1530,12 @@ initMutation.isSuccess                                  → LoginForm
 - Lectura: carga usuarios (`listUsers`) y apps (`listClientApps`) del tenant; permite seleccionar usuario con dropdown.
   - Carga memberships por usuario usando `listMembershipsByUser(...)`.
   - Resuelve nombre de app desde mapa `client_app_id` → `name`.
+- Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) en usuarios, apps, memberships y roles.
 - Escritura: `useMutation` para `createMembership(...)` y `revokeMembership(...)`.
   - Modal "Crear membership" con selección de usuario, app, y roles (con checkboxes dinámicas cargadas por app).
   - Botón "Revocar" en cada fila con confirmación; elimina membership inmediatamente.
   - Invalidación de cache tras éxito.
+- Resiliencia mutaciones: timeout explícito (10s) sin auto-retry para crear/revocar membership.
 
 **Integración:** ruta `/dashboard/tenant/memberships` protegida por `RoleGuard` con `ADMIN_TENANT`.
 
@@ -1406,6 +1568,7 @@ initMutation.isSuccess                                  → LoginForm
 - Usa `useCurrentUser()` para resolver `tenantSlug` y `sub` del usuario.
 - Consulta memberships con `listMembershipsByUser(...)` y apps con `listClientApps(...)`.
 - Resuelve `client_app_id` a nombre de app para renderizar tabla de accesos.
+- Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para memberships y apps.
 
 **Integración:** ruta `/dashboard/user/my-access` protegida por `RoleGuard` con `USER_TENANT`.
 
@@ -1420,6 +1583,7 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:**
 - Lee ultimo login desde claim `iat` del `idToken`.
 - Usa memberships ordenadas por `created_at` para construir linea de tiempo de eventos de acceso.
+- Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para memberships y apps.
 
 **Integración:** ruta `/dashboard/user/activity` protegida por `RoleGuard` con `USER_TENANT`.
 
@@ -1449,6 +1613,7 @@ initMutation.isSuccess                                  → LoginForm
 - Query `getProfile(...)` con `ACCOUNT_QUERY_KEYS.profile(...)`.
 - Formulario RHF + Zod para campos de perfil.
 - Mutacion `updateProfile(...)` con invalidacion de cache y feedback por toast.
+- Resiliencia: GET de perfil con timeout (10s) + retry automático controlado (5s, máximo 3); PATCH de actualización con timeout explícito (10s) sin auto-retry.
 
 **Integración:** ruta `/dashboard/user/profile` protegida por `RoleGuard` con `USER_TENANT`.
 

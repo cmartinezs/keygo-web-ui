@@ -205,7 +205,7 @@ export function BlockingErrorModal() {
     if (action.kind === 'logout') {
       clearError()
       clearTokens()
-      navigate('/login', { replace: true })
+      navigate('/logout', { replace: true })
     }
   }
 

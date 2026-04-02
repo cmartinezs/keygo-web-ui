@@ -3,12 +3,23 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { TENANT } from '@/api/client'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { listUsers, USER_QUERY_KEYS } from '@/api/users'
 import { listClientApps, CLIENT_APP_QUERY_KEYS, listAppRoles } from '@/api/clientApps'
 import { listMembershipsByUser, createMembership, revokeMembership, MEMBERSHIP_QUERY_KEYS, type CreateMembershipRequest } from '@/api/memberships'
 import { getAppApiError } from '@/api/errorNormalizer'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import {
+  isRequestTimeout,
+  notifyMutationTimeout,
+  runGetWithRecovery,
+} from '@/lib/network/recovery'
 
 const STATUS_LABEL: Record<string, string> = {
   ACTIVE: 'Activa',
@@ -35,26 +46,80 @@ export default function TenantMembershipsPage() {
 
   const usersQuery = useQuery({
     queryKey: USER_QUERY_KEYS.all(tenantSlug),
-    queryFn: () => listUsers(tenantSlug),
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'usuarios',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+        listUsers(tenantSlug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+      }),
+    retry: false,
   })
 
   const appsQuery = useQuery({
     queryKey: CLIENT_APP_QUERY_KEYS.all(tenantSlug),
-    queryFn: () => listClientApps(tenantSlug),
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'aplicaciones',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+        listClientApps(tenantSlug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+      }),
+    retry: false,
   })
 
   const selectedUserId = manualSelectedUserId || usersQuery.data?.[0]?.id || ''
 
   const membershipsQuery = useQuery({
     queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, selectedUserId),
-    queryFn: () => listMembershipsByUser(tenantSlug, selectedUserId),
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'memberships',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+        listMembershipsByUser(tenantSlug, selectedUserId, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+      }),
     enabled: selectedUserId.length > 0,
+    retry: false,
   })
 
   const appRolesQuery = useQuery({
     queryKey: ['app-roles', tenantSlug, selectedAppForRoles],
-    queryFn: () => (selectedAppForRoles ? listAppRoles(tenantSlug, selectedAppForRoles) : Promise.resolve([])),
+    queryFn: ({ signal }) =>
+      (selectedAppForRoles
+        ? runGetWithRecovery({
+            signal,
+            label: 'roles de aplicacion',
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+            retryDelayMs: NETWORK_RETRY_DELAY_MS,
+            maxRetries: NETWORK_MAX_RETRIES,
+            query: () =>
+            listAppRoles(tenantSlug, selectedAppForRoles, {
+              signal,
+              timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+            }),
+          })
+        : Promise.resolve([])),
     enabled: selectedAppForRoles.length > 0,
+    retry: false,
   })
 
   const appNameById = new Map((appsQuery.data ?? []).map((app) => [app.id, app.name]))
@@ -65,20 +130,44 @@ export default function TenantMembershipsPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: (data: CreateMembershipRequest) => createMembership(tenantSlug, data),
+    mutationFn: (data: CreateMembershipRequest) =>
+      createMembership(tenantSlug, data, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-membership-create-${tenantSlug}-${data.user_id}-${data.client_app_id}`,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, createForm.getValues().user_id) })
       createForm.reset()
       setSelectedAppForRoles('')
       setIsCreateOpen(false)
+      toast.success('Membership creada correctamente')
+    },
+    onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('creacion de membership')
+        return
+      }
+      toast.error(getAppApiError(mutationError).clientMessage)
     },
   })
 
   const revokeMutation = useMutation({
-    mutationFn: (membershipId: string) => revokeMembership(tenantSlug, membershipId),
+    mutationFn: (membershipId: string) =>
+      revokeMembership(tenantSlug, membershipId, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-membership-revoke-${tenantSlug}-${membershipId}`,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, selectedUserId) })
       setRevokeConfirmId(null)
+      toast.success('Membership revocada correctamente')
+    },
+    onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('revocacion de membership')
+        return
+      }
+      toast.error(getAppApiError(mutationError).clientMessage)
     },
   })
 

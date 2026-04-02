@@ -98,6 +98,11 @@ Tres planes disponibles, cada uno con un botón "Contratar" que lleva al asisten
 | **Business** | 49 €/mes | Usuarios, tenants y apps ilimitados, SSO, soporte prioritario, SLA 99,9 %. |
 | **On-Premise** | A medida | Instalación propia, integración LDAP/AD, acceso al código fuente, soporte incluido. |
 
+Comportamiento en red lenta (carga diferida del catalogo):
+- La sección carga planes al entrar en viewport (no bloquea el render inicial de la landing).
+- Si la consulta supera 10 segundos, se aborta ese intento y se reintenta automáticamente cada 5 segundos (máximo 3).
+- Si se agotan los reintentos automáticos, se informa el fallo y se mantiene opción de reintento desde el bloque local.
+
 #### Sección Desarrolladores (`#developers`)
 
 Recursos para integradores:
@@ -119,11 +124,19 @@ Sección de cierre con dos acciones: "Contratar ahora" (→ `/subscribe`) e "Ini
 
 Permite autenticarse mediante el flujo OAuth2 Authorization Code + PKCE. El proceso es seguro: nunca se envían credenciales en texto plano desde el navegador.
 
+Ruta de salida segura:
+- `/logout` — limpia la sesión en memoria (tokens y estado bloqueante) y redirige a `/login`. Sirve como salida directa ante contextos de sesión inconsistentes.
+
 #### Flujo paso a paso
 
 0. **Pantalla de carga global** (automática, previa a cualquier ruta) — Al abrir o recargar la aplicación, se muestra una capa de carga visual mientras se valida o restaura la sesión. Evita que el usuario vea la pantalla en blanco en conexiones lentas.
 
 1. **Preparación de sesión** (automática, invisible) — La aplicación establece un canal seguro con el servidor. Se muestra un spinner animado ("Preparando sesión segura…"). Si falla, se muestra un mensaje descriptivo con opción de reintentar.
+
+  Comportamiento en red lenta (implementación actual):
+  - Cada intento de preparación tiene timeout de 10 segundos.
+  - Si expira, la app reintenta automáticamente cada 5 segundos, con un máximo de 3 intentos.
+  - Al agotarse los intentos automáticos, el usuario puede reintentar manualmente.
 
 2. **Formulario de credenciales:**
    - Campo **email o nombre de usuario**.
@@ -136,6 +149,10 @@ Permite autenticarse mediante el flujo OAuth2 Authorization Code + PKCE. El proc
   - `ADMIN_TENANT` → `/dashboard`
   - `USER_TENANT` → `/dashboard`
   - **Sin rol compatible en JWT** → modal de asistencia bloqueante (se superpone a la pantalla actual)
+
+    Comportamiento en red lenta para autenticación/token:
+    - Las operaciones de login e intercambio de token usan timeout de 10 segundos por intento.
+    - No se aplican reintentos automáticos en estos pasos; el usuario conserva control de reintento manual.
 
 #### Caso especial: login exitoso sin rol compatible
 
@@ -164,9 +181,23 @@ La pantalla muestra:
 
 #### Comportamiento ante cargas lentas en cualquier pantalla
 
-- Si una vista tarda en cargar datos por red, la aplicación muestra un loader global con mensaje de espera.
-- El loader aparece solo cuando la espera supera un umbral breve (para evitar parpadeos en cargas rápidas).
-- Mientras el loader está activo, el usuario recibe feedback visual y evita percibir una pantalla vacía.
+- El loader global no se muestra por cualquier llamada de red; solo escala cuando la vista está en una ventana de renderización crítica (por ejemplo, transición de ruta).
+- Si la red responde antes de 5 segundos, el loader global no aparece.
+- Si una operación crítica supera 5 segundos durante la ventana de renderización, aparece el loader global.
+- Si la vista ya tiene contenido útil en pantalla, el loader global no interviene para cargas de fondo.
+
+#### Contrato funcional aprobado (Paso 0) — Loader global
+
+Estado: **Aprobado el 2026-04-02**.
+
+- El loader global solo interviene cuando la renderización de la vista está afectada (pantalla sin contenido útil o bloqueada para continuar).
+- Si la vista ya cargó contenido útil, el loader global no debe mostrarse.
+- Si un componente ya tiene loader local, el loader global no debe aparecer en cargas normales.
+- Umbral de intervención global: si una llamada crítica de backend supera **5 segundos**, se permite mostrar loader global.
+- Umbral de corte: si la misma llamada supera **10 segundos**, se debe abortar la solicitud en curso.
+- Al abortar por timeout: mostrar toast, esperar **5 segundos** y reintentar automáticamente.
+- Política de reintento automático: máximo **3 reintentos** por operación.
+- Si se agotan los 3 reintentos: detener nuevos intentos automáticos y mostrar toast final de fallo.
 
 #### Protección de seguridad
 
@@ -194,6 +225,11 @@ Las tarjetas se cargan dinámicamente desde la API (`GET /billing/catalog`). Cad
 - Precio formateado con divisa, días de prueba y lista de beneficios (entitlements).
 
 Acción: "Continuar →" habilitado al seleccionar una tarjeta.
+
+Comportamiento en red lenta (implementación actual):
+- Si la carga del catálogo supera 10 segundos, la app corta la solicitud de ese intento.
+- Al cortar por timeout, se muestra una notificación y se reintenta automáticamente luego de 5 segundos.
+- Se realizan hasta 3 reintentos automáticos; si todos fallan, se detienen y se notifica al usuario.
 
 #### Paso 2 — Datos del suscriptor
 
@@ -226,6 +262,16 @@ Acciones: "← Atrás", "Continuar →".
 - Al confirmar: llama a `POST /billing/contracts/{id}/verify-email`.
 - Desde este mismo paso se puede **retomar una contratación existente** ingresando el ID de contrato, sin salir de `/subscribe`.
 - Si el contrato ya quedó en pago pendiente/listo para activar, el asistente avanza directamente al paso 5.
+
+Comportamiento en red lenta al retomar contrato por ID:
+- Si la consulta del contrato supera 10 segundos, ese intento se corta por timeout.
+- Tras timeout se muestra notificación y se reintenta en 5 segundos.
+- Se permiten hasta 3 reintentos automáticos antes de detenerse y notificar fallo final.
+
+Comportamiento en operaciones de confirmación (crear contrato, verificar código, reenviar código, aprobar/activar):
+- Cada intento tiene timeout de 10 segundos.
+- Si se supera el tiempo, se informa al usuario y no se ejecutan reintentos automáticos.
+- El usuario mantiene control para reintentar manualmente desde la misma pantalla.
 
 #### Paso 5 — Pago
 
@@ -304,7 +350,11 @@ El panel de administrador incluye una **barra lateral de navegación** y una **c
 
 - **Menú hamburgesa** (solo móvil) — abre/cierra el sidebar como cajón lateral.
 - **Buscador** (escritorio) — decorativo en esta versión, muestra `⌘K`.
-- **Selector de tema:** Sistema / Claro / Oscuro (la preferencia persiste entre sesiones).
+- **Selector de rol activo** (dropdown):
+  - Muestra solo los roles incluidos en el claim `roles` del usuario autenticado.
+  - Permite cambiar el rol de trabajo en el momento.
+  - Al cambiarlo, la UI vuelve a `/dashboard` y se refrescan menú, vistas y permisos visibles según el rol seleccionado.
+- **Selector de tema:** Sistema / Claro / Oscuro / Alto contraste (la preferencia persiste entre sesiones).
 - **Botón de notificaciones** — decorativo en esta versión.
 - **Menú de usuario** (clic en el avatar):
   - Información del usuario (avatar, nombre, rol).
@@ -319,6 +369,11 @@ En pantallas pequeñas, la barra lateral se convierte en un cajón desplegable q
 ---
 
 ### 2.1 Dashboard — Panel de control
+
+Comportamiento en red lenta (implementación actual):
+- Si la carga del dashboard supera 10 segundos, se corta ese intento por timeout.
+- La aplicación reintenta automáticamente cada 5 segundos, hasta 3 veces.
+- Si no se logra respuesta tras los 3 reintentos, se detiene la secuencia automática y se informa al usuario.
 
 **Ruta:** `/dashboard`
 
@@ -352,6 +407,11 @@ Vista agregada en tiempo real de toda la plataforma, obtenida en una única llam
 ---
 
 ### 2.2 Gestión de Tenants
+
+Comportamiento en red lenta (listado principal):
+- Si el listado de tenants supera 10 segundos, se corta ese intento por timeout.
+- Se reintenta automáticamente cada 5 segundos, hasta 3 intentos.
+- Si se agotan los intentos, se notifica el fallo y el usuario puede volver a intentar manualmente.
 
 **Ruta:** `/dashboard/tenants` (solo rol `ADMIN`)
 
@@ -414,6 +474,12 @@ En pantallas pequeñas, la lista ocupa toda la pantalla. Al seleccionar un tenan
 - Las acciones de suspender/reactivar notifican el resultado mediante mensajes toast (éxito o error).
 - La acción de reactivar muestra una advertencia de que es un mock hasta que el backend implemente el endpoint T-033.
 
+Comportamiento en red lenta:
+- La carga del detalle del tenant usa timeout de 10 segundos por intento.
+- Ante timeout, se reintenta automáticamente cada 5 segundos, con máximo 3 intentos.
+- Si se agotan los reintentos automáticos, se informa al usuario y queda disponible reintento manual.
+- Las acciones de suspender/reactivar usan timeout de 10 segundos sin reintento automático.
+
 ---
 
 ### 2.4 Crear un Tenant
@@ -437,6 +503,10 @@ Una nota informativa explica que el slug se derivará del nombre y que los usuar
 - **"Crear tenant"** → envía el formulario. Durante la creación se muestra spinner ("Creando…").
   - **Éxito:** toast de confirmación y redirección automática al detalle del nuevo tenant.
   - **Error:** toast con el mensaje de error.
+
+Comportamiento en red lenta:
+- La creación usa timeout de 10 segundos por intento.
+- No se aplican reintentos automáticos en esta operación; el usuario controla el reintento manual.
 
 ---
 
@@ -467,6 +537,10 @@ Gestión completa de usuarios del tenant con operaciones de lectura y escritura:
 - **Crear usuario:** botón "+Crear usuario" abre modal con formulario (username, email, password requeridos; nombre y apellido opcionales)
 - **Resetear contraseña:** botón en cada fila permite establecer nueva contraseña
 
+Comportamiento en red lenta:
+- La carga de usuarios (GET) usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- Las operaciones de crear/editar/resetear contraseña usan timeout de 10 segundos sin auto-retry.
+
 ### 3.3 Aplicaciones del tenant
 
 **Ruta:** `/dashboard/tenant/apps`
@@ -479,6 +553,10 @@ Gestión de aplicaciones client del tenant con lectura y escritura:
 **Escritura:**
 - **Crear aplicación:** botón "+Crear aplicación" abre modal con formulario (nombre requerido; tipo, grants requeridos; descripción, redirect_uris, scopes opcionales)
 - **Rotar secret:** botón en cada fila permite generar nuevo client_secret; muestra el nuevo secret una sola vez con opción copiar
+
+Comportamiento en red lenta:
+- La carga de aplicaciones (GET) usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- Crear aplicación y rotar secret usan timeout de 10 segundos sin auto-retry.
 
 ### 3.4 Memberships por usuario
 
@@ -493,6 +571,10 @@ Gestión de asignaciones usuario-app (memberships) con lectura y escritura:
 **Escritura:**
 - **Crear membership:** botón "+Crear membership" abre modal para seleccionar usuario, aplicación y roles; crea la asignación
 - **Revocar membership:** botón en cada fila con confirmación; elimina la asignación inmediatamente
+
+Comportamiento en red lenta:
+- Las cargas GET de usuarios, aplicaciones, memberships y roles usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- Crear/revocar membership usa timeout de 10 segundos sin reintento automático.
 
 ---
 
@@ -519,6 +601,9 @@ Muestra las asignaciones de acceso del usuario autenticado:
 - Roles asignados
 - Fecha de asignacion
 
+Comportamiento en red lenta:
+- Las consultas de accesos y aplicaciones usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+
 ### 4.3 Actividad
 
 **Ruta:** `/dashboard/user/activity`
@@ -526,6 +611,9 @@ Muestra las asignaciones de acceso del usuario autenticado:
 Muestra actividad reciente de la cuenta:
 - Ultimo inicio de sesion (desde token)
 - Linea de tiempo de asignaciones de acceso por aplicacion
+
+Comportamiento en red lenta:
+- Las consultas de actividad (memberships/apps) usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 
 ### 4.4 Sesiones
 
@@ -547,6 +635,10 @@ Formulario self-service para actualizar perfil:
 - Fecha de nacimiento
 - Sitio web
 - URL de foto de perfil
+
+Comportamiento en red lenta:
+- La carga del perfil usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- Guardar cambios usa timeout de 10 segundos sin auto-retry.
 
 ---
 

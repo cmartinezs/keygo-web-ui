@@ -1467,6 +1467,22 @@ export async function logout() {
 
 ## 13. Interceptores HTTP y manejo de errores
 
+### 13.0. Estado contractual de idempotencia (backend pendiente)
+
+> **Importante (2026-04-02):** el backend actual **aún no implementa deduplicación efectiva** basada en `X-Idempotency-Key`.
+
+Implicancias para frontend:
+- El frontend puede enviar `X-Idempotency-Key` como preparación de compatibilidad futura, pero hoy debe tratarse como **header no vinculante**.
+- Mientras no exista soporte backend confirmado, el frontend mantiene esta política:
+  - **GET idempotentes:** timeout + reintento automático controlado.
+  - **POST críticos:** timeout por intento + notificación + reintento manual (sin reintento automático).
+
+Razón:
+- Sin deduplicación en servidor, reintentar POST automáticamente puede generar operaciones duplicadas o transiciones inconsistentes.
+
+Condición para habilitar auto-retry en POST:
+- Soporte backend documentado para `X-Idempotency-Key` (persistencia de clave, ventana de deduplicación, replay consistente de respuesta y contrato técnico publicado).
+
 ### 13.1. Cliente Axios unificado
 
 ```typescript
