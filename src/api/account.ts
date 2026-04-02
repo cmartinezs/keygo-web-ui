@@ -20,6 +20,12 @@ import type {
   LinkAccountConnectionRequest,
   LinkAccountConnectionResult,
   UnlinkAccountConnectionResult,
+  WireChangePasswordRequest,
+  WireAccountSessionData,
+  WireRevokeSessionResult,
+  WireNotificationPreferencesData,
+  WireUpdateNotificationPreferencesRequest,
+  WireUserAccessData,
 } from '@/types/user'
 import { unwrapResponseData } from './response'
 import type { RequestOptions } from './requestOptions'
@@ -50,6 +56,67 @@ const linkConnectionUrl = (tenantSlug: string, provider: string) =>
   `${connectionsUrl(tenantSlug)}/${encodeURIComponent(provider)}/link`
 const connectionUrl = (tenantSlug: string, connectionId: string) =>
   `${connectionsUrl(tenantSlug)}/${encodeURIComponent(connectionId)}`
+
+// ── Mappers (boundary wire ↔ internal) ────────────────────────────────────────
+// Convierten entre el formato camelCase del backend y los DTOs snake_case internos.
+// Solo se usan dentro de este módulo; nunca exponer al exterior.
+
+function toWireChangePassword(req: ChangePasswordRequest): WireChangePasswordRequest {
+  return { currentPassword: req.current_password, newPassword: req.new_password }
+}
+
+function fromWireSession(wire: WireAccountSessionData): AccountSessionData {
+  return {
+    session_id: wire.sessionId,
+    status: wire.status,
+    browser: wire.browser,
+    os: wire.os,
+    device_type: wire.deviceType,
+    ip_address: wire.ipAddress,
+    created_at: wire.createdAt,
+    last_accessed_at: wire.lastAccessedAt,
+    expires_at: wire.expiresAt,
+    is_current: wire.isCurrent,
+  }
+}
+
+function fromWireRevokeSession(wire: WireRevokeSessionResult): RevokeAccountSessionResult {
+  return { session_id: wire.sessionId, already_closed: wire.alreadyClosed }
+}
+
+function fromWireNotificationPreferences(
+  wire: WireNotificationPreferencesData,
+): NotificationPreferencesData {
+  return {
+    security_alerts_email: wire.securityAlertsEmail,
+    security_alerts_in_app: wire.securityAlertsInApp,
+    billing_alerts_email: wire.billingAlertsEmail,
+    product_updates_email: wire.productUpdatesEmail,
+    weekly_digest: wire.weeklyDigest,
+  }
+}
+
+function toWireUpdateNotificationPreferences(
+  req: UpdateNotificationPreferencesRequest,
+): WireUpdateNotificationPreferencesRequest {
+  return {
+    ...(req.security_alerts_email !== undefined && { securityAlertsEmail: req.security_alerts_email }),
+    ...(req.security_alerts_in_app !== undefined && { securityAlertsInApp: req.security_alerts_in_app }),
+    ...(req.billing_alerts_email !== undefined && { billingAlertsEmail: req.billing_alerts_email }),
+    ...(req.product_updates_email !== undefined && { productUpdatesEmail: req.product_updates_email }),
+    ...(req.weekly_digest !== undefined && { weeklyDigest: req.weekly_digest }),
+  }
+}
+
+function fromWireUserAccess(wire: WireUserAccessData): AccountAccessData {
+  return {
+    app_id: wire.clientAppId,
+    app_name: wire.clientAppName,
+    membership_id: wire.membershipId,
+    status: wire.status,
+    roles: wire.roles,
+  }
+}
 
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 
@@ -101,7 +168,7 @@ export async function changePassword(
 ): Promise<ChangePasswordResult> {
   const res = await apiClient.post<BaseResponse<ChangePasswordResult>>(
     changePasswordUrl(tenantSlug),
-    data,
+    toWireChangePassword(data),
     {
       signal: options?.signal,
       timeout: options?.timeoutMs,
@@ -121,11 +188,11 @@ export async function getSessions(
   tenantSlug: string,
   options?: RequestOptions,
 ): Promise<AccountSessionData[]> {
-  const res = await apiClient.get<BaseResponse<AccountSessionData[]>>(sessionsUrl(tenantSlug), {
+  const res = await apiClient.get<BaseResponse<WireAccountSessionData[]>>(sessionsUrl(tenantSlug), {
     signal: options?.signal,
     timeout: options?.timeoutMs,
   })
-  return unwrapResponseData(res.data, 'Error al obtener sesiones activas')
+  return unwrapResponseData(res.data, 'Error al obtener sesiones activas').map(fromWireSession)
 }
 
 /**
@@ -137,14 +204,14 @@ export async function revokeSession(
   sessionId: string,
   options?: RequestOptions,
 ): Promise<RevokeAccountSessionResult> {
-  const res = await apiClient.delete<BaseResponse<RevokeAccountSessionResult>>(
+  const res = await apiClient.delete<BaseResponse<WireRevokeSessionResult>>(
     sessionUrl(tenantSlug, sessionId),
     {
       signal: options?.signal,
       timeout: options?.timeoutMs,
     },
   )
-  return unwrapResponseData(res.data, 'Error al cerrar la sesion seleccionada')
+  return fromWireRevokeSession(unwrapResponseData(res.data, 'Error al cerrar la sesion seleccionada'))
 }
 
 /**
@@ -155,14 +222,16 @@ export async function getNotificationPreferences(
   tenantSlug: string,
   options?: RequestOptions,
 ): Promise<NotificationPreferencesData> {
-  const res = await apiClient.get<BaseResponse<NotificationPreferencesData>>(
+  const res = await apiClient.get<BaseResponse<WireNotificationPreferencesData>>(
     notificationPreferencesUrl(tenantSlug),
     {
       signal: options?.signal,
       timeout: options?.timeoutMs,
     },
   )
-  return unwrapResponseData(res.data, 'Error al obtener preferencias de notificacion')
+  return fromWireNotificationPreferences(
+    unwrapResponseData(res.data, 'Error al obtener preferencias de notificacion'),
+  )
 }
 
 /**
@@ -174,9 +243,9 @@ export async function updateNotificationPreferences(
   data: UpdateNotificationPreferencesRequest,
   options?: RequestOptions,
 ): Promise<NotificationPreferencesData> {
-  const res = await apiClient.patch<BaseResponse<NotificationPreferencesData>>(
+  const res = await apiClient.patch<BaseResponse<WireNotificationPreferencesData>>(
     notificationPreferencesUrl(tenantSlug),
-    data,
+    toWireUpdateNotificationPreferences(data),
     {
       signal: options?.signal,
       timeout: options?.timeoutMs,
@@ -185,7 +254,9 @@ export async function updateNotificationPreferences(
         : undefined,
     },
   )
-  return unwrapResponseData(res.data, 'Error al actualizar preferencias de notificacion')
+  return fromWireNotificationPreferences(
+    unwrapResponseData(res.data, 'Error al actualizar preferencias de notificacion'),
+  )
 }
 
 /**
@@ -196,11 +267,11 @@ export async function getAccountAccess(
   tenantSlug: string,
   options?: RequestOptions,
 ): Promise<AccountAccessData[]> {
-  const res = await apiClient.get<BaseResponse<AccountAccessData[]>>(accessUrl(tenantSlug), {
+  const res = await apiClient.get<BaseResponse<WireUserAccessData[]>>(accessUrl(tenantSlug), {
     signal: options?.signal,
     timeout: options?.timeoutMs,
   })
-  return unwrapResponseData(res.data, 'Error al obtener permisos de acceso')
+  return unwrapResponseData(res.data, 'Error al obtener permisos de acceso').map(fromWireUserAccess)
 }
 
 /**

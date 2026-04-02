@@ -16,39 +16,16 @@ import {
   NETWORK_REQUEST_TIMEOUT_MS,
   NETWORK_RETRY_DELAY_MS,
 } from '@/config/network'
+import { ChangePasswordForm } from './ChangePasswordForm'
+import { ConnectionsPanel } from './ConnectionsPanel'
+import { NotificationsPreferencesForm } from './NotificationsPreferencesForm'
+import { SessionsList } from './SessionsList'
 
 type SettingsTab = 'security' | 'notifications' | 'connections' | 'billing'
 
 interface SettingsTabOption {
   key: SettingsTab
   label: string
-}
-
-function PendingFeatureCard({
-  title,
-  body,
-  requiredEndpoint,
-  badgeLabel,
-}: {
-  title: string
-  body: string
-  requiredEndpoint: string
-  badgeLabel: string
-}) {
-  return (
-    <article className="rounded-xl border border-dashed border-slate-300 bg-white p-4 dark:border-white/20 dark:bg-slate-900">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{title}</h3>
-        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-          {badgeLabel}
-        </span>
-      </div>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{body}</p>
-      <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-        Endpoint requerido: <span className="font-mono">{requiredEndpoint}</span>
-      </p>
-    </article>
-  )
 }
 
 function formatCurrency(amount: number, currency: string, locale: string): string {
@@ -270,18 +247,8 @@ export default function AccountSettingsPage() {
         hidden={activeTab !== 'security'}
         className="space-y-4"
       >
-        <PendingFeatureCard
-          title="Cambio de contrasena"
-          body="Permite actualizar la contrasena de la cuenta con validacion de politica y verificacion de contrasena actual."
-          requiredEndpoint="POST /api/v1/tenants/{tenantSlug}/account/change-password"
-          badgeLabel={t('common.comingSoon')}
-        />
-        <PendingFeatureCard
-          title="Sesiones activas"
-          body="Lista de dispositivos y capacidad de cierre remoto de sesiones para proteccion de cuenta."
-          requiredEndpoint="GET/DELETE /api/v1/tenants/{tenantSlug}/account/sessions[/sessionId]"
-          badgeLabel={t('common.comingSoon')}
-        />
+        <ChangePasswordForm />
+        <SessionsList />
       </section>
 
       <section
@@ -291,12 +258,7 @@ export default function AccountSettingsPage() {
         hidden={activeTab !== 'notifications'}
         className="space-y-4"
       >
-        <PendingFeatureCard
-          title="Preferencias de notificaciones"
-          body="Configura alertas de seguridad, facturacion y novedades por canal (email e in-app)."
-          requiredEndpoint="GET/PATCH /api/v1/tenants/{tenantSlug}/account/notification-preferences"
-          badgeLabel={t('common.comingSoon')}
-        />
+        <NotificationsPreferencesForm />
       </section>
 
       <section
@@ -306,12 +268,7 @@ export default function AccountSettingsPage() {
         hidden={activeTab !== 'connections'}
         className="space-y-4"
       >
-        <PendingFeatureCard
-          title="Conexiones externas"
-          body="Gestiona proveedores vinculados para login y desconexion de cuentas externas."
-          requiredEndpoint="GET/POST/DELETE /api/v1/tenants/{tenantSlug}/account/connections"
-          badgeLabel={t('common.comingSoon')}
-        />
+        <ConnectionsPanel />
       </section>
 
       <section

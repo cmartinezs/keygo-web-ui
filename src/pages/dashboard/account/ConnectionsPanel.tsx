@@ -1,0 +1,246 @@
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import { TENANT } from '@/api/client'
+import {
+  ACCOUNT_QUERY_KEYS,
+  getAccountConnections,
+  linkAccountConnection,
+  unlinkAccountConnection,
+} from '@/api/account'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import { getAppApiError } from '@/api/errorNormalizer'
+import {
+  isRequestTimeout,
+  notifyMutationTimeout,
+  runGetWithRecovery,
+} from '@/lib/network/recovery'
+import type { AccountConnectionData } from '@/types/user'
+import {
+  DangerActionButton,
+  ErrorMessage,
+  LoadingMessage,
+  PanelCard,
+  PrimaryActionButton,
+} from './AccountPanelPrimitives'
+
+const SUPPORTED_PROVIDERS = ['google', 'github', 'microsoft'] as const
+
+type SupportedProvider = (typeof SUPPORTED_PROVIDERS)[number]
+
+function formatDateSafe(value: string | null | undefined, locale: string): string {
+  if (!value) return '-'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '-'
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
+
+function normalizeProvider(provider: string): string {
+  return provider.trim().toLowerCase()
+}
+
+function ConnectionItem({
+  connection,
+  locale,
+  onUnlink,
+  isUnlinking,
+}: {
+  connection: AccountConnectionData
+  locale: string
+  onUnlink: (connectionId: string) => void
+  isUnlinking: boolean
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <li className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-900">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white capitalize">
+            {connection.provider || '-'}
+          </p>
+          <dl className="mt-2 grid grid-cols-1 gap-y-1 text-xs sm:grid-cols-2 sm:gap-x-4">
+            <div>
+              <dt className="text-slate-500 dark:text-slate-400">{t('accountConnections.status')}</dt>
+              <dd className="text-slate-900 dark:text-white">{connection.status || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500 dark:text-slate-400">{t('accountConnections.providerUserId')}</dt>
+              <dd className="truncate text-slate-900 dark:text-white">{connection.provider_user_id || '-'}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500 dark:text-slate-400">{t('accountConnections.linkedAt')}</dt>
+              <dd className="text-slate-900 dark:text-white">{formatDateSafe(connection.linked_at, locale)}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500 dark:text-slate-400">{t('accountConnections.lastUsedAt')}</dt>
+              <dd className="text-slate-900 dark:text-white">{formatDateSafe(connection.last_used_at, locale)}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <DangerActionButton
+          onClick={() => onUnlink(connection.id)}
+          pending={isUnlinking}
+          disabled={isUnlinking || !connection.id}
+          label={t('accountConnections.unlink')}
+          pendingLabel={t('accountConnections.unlinking')}
+        />
+      </div>
+    </li>
+  )
+}
+
+export function ConnectionsPanel() {
+  const { t, i18n } = useTranslation()
+  const user = useCurrentUser()
+  const tenantSlug = user?.tenantSlug ?? TENANT
+  const queryClient = useQueryClient()
+  const [providerToLink, setProviderToLink] = useState<SupportedProvider>('google')
+
+  const connectionsQuery = useQuery({
+    queryKey: ACCOUNT_QUERY_KEYS.connections(tenantSlug),
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'conexiones externas',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () => getAccountConnections(tenantSlug, { signal, timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
+      }),
+    retry: false,
+  })
+
+  const linkMutation = useMutation({
+    mutationFn: (provider: SupportedProvider) =>
+      linkAccountConnection(
+        tenantSlug,
+        provider,
+        {},
+        {
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          idempotencyKey: `kg-account-link-${tenantSlug}-${provider}-${user?.sub ?? 'anonymous'}`,
+        },
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEYS.connections(tenantSlug) })
+      toast.success(t('accountConnections.linkSuccess'))
+    },
+    onError: (error) => {
+      if (isRequestTimeout(error)) {
+        notifyMutationTimeout('vinculacion de conexion externa')
+        return
+      }
+      toast.error(getAppApiError(error).clientMessage)
+    },
+  })
+
+  const unlinkMutation = useMutation({
+    mutationFn: (connectionId: string) =>
+      unlinkAccountConnection(tenantSlug, connectionId, { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEYS.connections(tenantSlug) })
+      toast.success(t('accountConnections.unlinkSuccess'))
+    },
+    onError: (error) => {
+      if (isRequestTimeout(error)) {
+        notifyMutationTimeout('desvinculacion de conexion externa')
+        return
+      }
+      toast.error(getAppApiError(error).clientMessage)
+    },
+  })
+
+  const linkedProviders = useMemo(
+    () => new Set((connectionsQuery.data ?? []).map((c) => normalizeProvider(c.provider))),
+    [connectionsQuery.data],
+  )
+
+  const linkOptions = useMemo(
+    () => SUPPORTED_PROVIDERS.filter((provider) => !linkedProviders.has(provider)),
+    [linkedProviders],
+  )
+
+  return (
+    <PanelCard
+      title={t('accountConnections.title')}
+      subtitle={t('accountConnections.subtitle')}
+      badge={(
+        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+          {t('accountConnections.temporaryBadge')}
+        </span>
+      )}
+    >
+
+      <p className="mt-3 rounded-lg border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+        {t('accountConnections.temporaryHint')}
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 p-3 dark:border-white/10">
+        <div className="min-w-[220px] flex-1">
+          <label htmlFor="provider-to-link" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-200">
+            {t('accountConnections.providerToLink')}
+          </label>
+          <select
+            id="provider-to-link"
+            value={providerToLink}
+            onChange={(event) => setProviderToLink(event.target.value as SupportedProvider)}
+            disabled={linkMutation.isPending || linkOptions.length === 0}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/20 dark:bg-slate-800 dark:text-white"
+          >
+            {linkOptions.length === 0 ? (
+              <option value={providerToLink}>{t('accountConnections.noProviderAvailable')}</option>
+            ) : (
+              linkOptions.map((provider) => (
+                <option key={provider} value={provider}>
+                  {provider}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+        <PrimaryActionButton
+          onClick={() => linkMutation.mutate(providerToLink)}
+          disabled={linkMutation.isPending || linkOptions.length === 0}
+          pending={linkMutation.isPending}
+          label={t('accountConnections.link')}
+          pendingLabel={t('accountConnections.linking')}
+        />
+      </div>
+
+      <div className="mt-5">
+        {connectionsQuery.isLoading ? <LoadingMessage message={t('accountConnections.loading')} /> : null}
+
+        {connectionsQuery.isError ? <ErrorMessage message={t('accountConnections.loadError')} /> : null}
+
+        {!connectionsQuery.isLoading && !connectionsQuery.isError ? (
+          (connectionsQuery.data?.length ?? 0) === 0 ? (
+            <p className="text-sm text-slate-600 dark:text-slate-400">{t('accountConnections.empty')}</p>
+          ) : (
+            <ul aria-label={t('accountConnections.listAria')} className="space-y-3">
+              {(connectionsQuery.data ?? []).map((connection, index) => {
+                const key = connection.id?.trim() || `connection-${index}-${connection.provider}`
+                return (
+                  <ConnectionItem
+                    key={key}
+                    connection={connection}
+                    locale={i18n.language}
+                    onUnlink={(connectionId) => unlinkMutation.mutate(connectionId)}
+                    isUnlinking={unlinkMutation.isPending && unlinkMutation.variables === connection.id}
+                  />
+                )
+              })}
+            </ul>
+          )
+        ) : null}
+      </div>
+    </PanelCard>
+  )
+}

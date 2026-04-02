@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { ACCOUNT_QUERY_KEYS, getProfile, updateProfile } from '@/api/account'
+import { ACCOUNT_QUERY_KEYS, getAccountAccess, getProfile, updateProfile } from '@/api/account'
 import { TENANT } from '@/api/client'
 import { getAppApiError } from '@/api/errorNormalizer'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
@@ -77,9 +77,30 @@ export default function UserProfilePage() {
     })
   }
 
+  async function fetchAccessWithRecovery(signal: AbortSignal) {
+    return runGetWithRecovery({
+      signal,
+      label: t('userDashboardProfile.recovery.accessLabel'),
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        getAccountAccess(tenantSlug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const profileQuery = useQuery({
     queryKey: ACCOUNT_QUERY_KEYS.profile(tenantSlug),
     queryFn: ({ signal }) => fetchProfileWithRecovery(signal),
+    retry: false,
+  })
+
+  const accessQuery = useQuery({
+    queryKey: ACCOUNT_QUERY_KEYS.access(tenantSlug),
+    queryFn: ({ signal }) => fetchAccessWithRecovery(signal),
     retry: false,
   })
 
@@ -359,15 +380,61 @@ export default function UserProfilePage() {
             role="tabpanel"
             aria-labelledby="account-tab-access"
             hidden={activeTab !== 'access'}
-            className="rounded-xl border border-dashed border-slate-300 bg-white p-6 dark:border-white/20 dark:bg-slate-900"
+            className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-slate-900"
           >
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('userDashboardProfile.access.title')}</h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              {t('userDashboardProfile.access.body')}
-            </p>
-            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              {t('userDashboardProfile.access.requiredEndpointLabel')} GET /api/v1/tenants/{'{tenantSlug}'}/account/access
-            </p>
+
+            {accessQuery.isLoading ? (
+              <div role="status" aria-live="polite" className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                {t('userDashboardProfile.access.loading')}
+              </div>
+            ) : null}
+
+            {accessQuery.isError ? (
+              <div role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+                {accessQuery.error instanceof Error
+                  ? accessQuery.error.message
+                  : t('userDashboardProfile.access.errorFallback')}
+              </div>
+            ) : null}
+
+            {!accessQuery.isLoading && !accessQuery.isError ? (
+              (accessQuery.data?.length ?? 0) === 0 ? (
+                <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{t('userDashboardProfile.access.empty')}</p>
+              ) : (
+                <ul aria-label={t('userDashboardProfile.access.listAria')} className="mt-4 space-y-3">
+                  {(accessQuery.data ?? []).map((membership, index) => {
+                    const itemKey = membership.membership_id || `${membership.app_id}-${index}`
+                    return (
+                      <li
+                        key={itemKey}
+                        className="rounded-lg border border-slate-200 p-4 dark:border-white/10"
+                      >
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{membership.app_name || '-'}</p>
+                        <dl className="mt-2 grid grid-cols-1 gap-y-1 text-xs sm:grid-cols-3 sm:gap-x-3">
+                          <div>
+                            <dt className="text-slate-500 dark:text-slate-400">{t('userDashboardProfile.access.membershipId')}</dt>
+                            <dd className="text-slate-900 dark:text-white truncate">{membership.membership_id || '-'}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-slate-500 dark:text-slate-400">{t('userDashboardProfile.access.status')}</dt>
+                            <dd className="text-slate-900 dark:text-white">{membership.status || '-'}</dd>
+                          </div>
+                          <div>
+                            <dt className="text-slate-500 dark:text-slate-400">{t('userDashboardProfile.access.roles')}</dt>
+                            <dd className="text-slate-900 dark:text-white">
+                              {membership.roles.length > 0
+                                ? membership.roles.join(', ')
+                                : t('userDashboardProfile.access.noRoles')}
+                            </dd>
+                          </div>
+                        </dl>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )
+            ) : null}
           </section>
 
           <section

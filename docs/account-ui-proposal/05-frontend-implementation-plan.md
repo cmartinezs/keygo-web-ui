@@ -1,8 +1,8 @@
 # Plan de Implementacion Frontend - Account RFC
 
 Fecha: 2026-04-02
-Estado general: En ejecucion
-Estado fase actual: Fase 2 completada
+Estado general: Completado
+Estado fase actual: Fase 12 completada
 
 ## 1. Objetivo
 
@@ -102,66 +102,215 @@ Implementado en:
 
 ### Fase 3 - Tipos y mapeo
 
-1. Ampliar src/types/user.ts con DTOs de account faltantes.
+Estado: Completada
+
+1. Corregir DTOs internos para alinear con contrato OpenAPI real:
+   - `RevokeAccountSessionResult`: corregido de `{ revoked }` a `{ session_id, already_closed }`.
+   - `NotificationPreferencesData`: eliminados `billing_alerts_in_app`, `product_updates_in_app`; agregado `weekly_digest`.
+   - `UpdateNotificationPreferencesRequest`: mismos cambios.
+   - `AccountAccessData`: corregido conforme a `UserAccessData` de OpenAPI (`app_id`, `app_name`, `membership_id`, `status`, `roles: string[]`).
+   - `AccountAccessRoleData`: eliminado (no existe en contrato real).
+2. Agregar tipos wire (camelCase) en seccion dedicada de `src/types/user.ts`:
+   - `WireChangePasswordRequest`, `WireAccountSessionData`, `WireRevokeSessionResult`,
+     `WireNotificationPreferencesData`, `WireUpdateNotificationPreferencesRequest`, `WireUserAccessData`.
+3. Agregar funciones mapper privadas en `src/api/account.ts`:
+   - `toWireChangePassword`, `fromWireSession`, `fromWireRevokeSession`,
+     `fromWireNotificationPreferences`, `toWireUpdateNotificationPreferences`, `fromWireUserAccess`.
+4. Actualizar funciones de API para aplicar mappers en el boundary:
+   - `changePassword`, `getSessions`, `revokeSession`, `getNotificationPreferences`,
+     `updateNotificationPreferences`, `getAccountAccess`.
+
+Implementado en:
+
+1. [src/api/account.ts](../../src/api/account.ts)
+2. [src/types/user.ts](../../src/types/user.ts)
+
+
 2. Implementar mapeadores explicitos request/response en boundary API.
 3. Evitar parsing/manual mapping en componentes UI.
 
 ### Fase 4 - MSW temporal de connections
 
-1. Crear infraestructura de mocks account en src/mocks.
-2. Implementar handlers para list/link/unlink connections.
-3. Etiquetar con comentario de pendiente backend.
+Estado: Completada
+
+1. Instalado `msw@2` como devDependency.
+2. Creada infraestructura en `src/mocks/`:
+   - `handlers.ts` — 3 handlers (GET list, POST link, DELETE unlink) con datos semilla.
+   - `browser.ts` — Service Worker para interceptar en navegador.
+   - `server.ts` — Instancia Node para interceptar en tests.
+3. Agregada variable `VITE_MOCK_CONNECTIONS` (bool, default=false) a `src/config/env.ts`.
+4. `src/main.tsx` llama `prepareMocks()` antes del render; solo activa el worker si
+   `env.MOCK_CONNECTIONS && env.DEV`.
+5. Ejecutado `npx msw init public/` — archivo `mockServiceWorker.js` generado en `public/`.
+6. Todos los handlers marcados con `⏳ pendiente backend (F-042)`.
+
+Implementado en:
+
+1. [src/mocks/handlers.ts](../../src/mocks/handlers.ts)
+2. [src/mocks/browser.ts](../../src/mocks/browser.ts)
+3. [src/mocks/server.ts](../../src/mocks/server.ts)
+4. [src/config/env.ts](../../src/config/env.ts)
+5. [src/main.tsx](../../src/main.tsx)
 
 ### Fase 5 - UI Security tab
 
-1. Reemplazar placeholders por:
-   1. Formulario cambio de contrasena.
-   2. Listado de sesiones activas.
-   3. Revocacion remota de sesion.
-2. Manejo local de loading/error/data.
-3. Accesibilidad keyboard-first y roles ARIA.
+Estado: Completada
+
+1. Agregadas claves i18n `accountSecurity.*` en `es-CL.json` y `en-US.json` (38 claves).
+2. Creado `ChangePasswordForm.tsx` — formulario con Zod + RHF, 3 campos de contraseña con toggle,
+   submit con `useMutation` de `changePassword`, feedback toast en éxito y error, ARIA completo.
+3. Creado `SessionsList.tsx` — bloque autónomo con `useQuery(getSessions)` + `useMutation(revokeSession)`,
+   `SessionCard` para cada sesión, badge de sesión actual, revocación remota, accesibilidad keyboard-first.
+4. Reemplazados los 2 `PendingFeatureCard` del panel `security` por `<ChangePasswordForm />` y `<SessionsList />`.
+
+Implementado en:
+
+1. [src/pages/dashboard/account/ChangePasswordForm.tsx](../../src/pages/dashboard/account/ChangePasswordForm.tsx)
+2. [src/pages/dashboard/account/SessionsList.tsx](../../src/pages/dashboard/account/SessionsList.tsx)
+3. [src/pages/dashboard/account/AccountSettingsPage.tsx](../../src/pages/dashboard/account/AccountSettingsPage.tsx)
+4. [src/i18n/locales/es-CL.json](../../src/i18n/locales/es-CL.json)
+5. [src/i18n/locales/en-US.json](../../src/i18n/locales/en-US.json)
 
 ### Fase 6 - UI Notifications tab
 
-1. Implementar lectura y edicion de preferencias.
-2. Feedback de mutaciones con toast.
-3. Validaciones de formulario y mensajes de error claros.
+Estado: Completada
+
+1. Creado `NotificationsPreferencesForm.tsx` con lectura (`useQuery`) y edicion (`useMutation`) de
+   `notification-preferences`, usando `runGetWithRecovery` para GET y timeout explicito de red.
+2. Implementado formulario accesible con 5 toggles mapeados al contrato real:
+   - `security_alerts_email`
+   - `security_alerts_in_app`
+   - `billing_alerts_email`
+   - `product_updates_email`
+   - `weekly_digest`
+3. Feedback de mutaciones con toast:
+   - exito: `accountNotifications.saveSuccess`
+   - timeout: `notifyMutationTimeout(...)`
+   - error API: `getAppApiError(error).clientMessage`
+4. Reemplazado placeholder de tab `notifications` por `<NotificationsPreferencesForm />`.
+5. Agregadas claves i18n `accountNotifications.*` en `es-CL` y `en-US`.
+
+Implementado en:
+
+1. [src/pages/dashboard/account/NotificationsPreferencesForm.tsx](../../src/pages/dashboard/account/NotificationsPreferencesForm.tsx)
+2. [src/pages/dashboard/account/AccountSettingsPage.tsx](../../src/pages/dashboard/account/AccountSettingsPage.tsx)
+3. [src/i18n/locales/es-CL.json](../../src/i18n/locales/es-CL.json)
+4. [src/i18n/locales/en-US.json](../../src/i18n/locales/en-US.json)
 
 ### Fase 7 - UI Connections tab (temporal)
 
-1. Habilitar flujo parcial sobre MSW.
-2. Dejar señalizacion explicita de dependencia backend.
-3. Estructura preparada para swap a backend real sin rehacer UI.
+Estado: Completada
+
+1. Creado `ConnectionsPanel.tsx` con flujo completo temporal:
+   - `getAccountConnections` (listado)
+   - `linkAccountConnection` (vincular proveedor)
+   - `unlinkAccountConnection` (desvincular)
+2. Integrado con `runGetWithRecovery` para GET y timeout explicito para mutaciones.
+3. Señalización explícita de dependencia backend pendiente (`F-042`) en la UI:
+   - badge `Temporal MSW`
+   - mensaje contextual de contrato pendiente.
+4. Reemplazado placeholder de tab `connections` por `<ConnectionsPanel />`.
+5. Añadidas claves i18n `accountConnections.*` en `es-CL` y `en-US`.
+
+Implementado en:
+
+1. [src/pages/dashboard/account/ConnectionsPanel.tsx](../../src/pages/dashboard/account/ConnectionsPanel.tsx)
+2. [src/pages/dashboard/account/AccountSettingsPage.tsx](../../src/pages/dashboard/account/AccountSettingsPage.tsx)
+3. [src/i18n/locales/es-CL.json](../../src/i18n/locales/es-CL.json)
+4. [src/i18n/locales/en-US.json](../../src/i18n/locales/en-US.json)
 
 ### Fase 8 - UserProfile access wiring
 
-1. Conectar tab access a endpoint account/access.
-2. Estados locales robustos (loading/error/empty/data).
-3. Mantener continuidad visual sin bloquear pantalla completa.
+Estado: Completada
+
+1. Conectado tab `access` de `UserProfilePage` al endpoint real `getAccountAccess(...)`.
+2. Implementados estados locales robustos:
+   - loading (`role=\"status\"`, `aria-live=\"polite\"`)
+   - error (`role=\"alert\"`)
+   - empty
+   - data list con `membership`, `status` y `roles`.
+3. Se mantiene continuidad visual: la carga/error del panel Access no bloquea el resto de la página.
+4. Agregadas claves i18n para Access (`loading`, `errorFallback`, `empty`, `listAria`, etc.) en `es-CL` y `en-US`.
+
+Implementado en:
+
+1. [src/pages/dashboard/user/UserProfilePage.tsx](../../src/pages/dashboard/user/UserProfilePage.tsx)
+2. [src/i18n/locales/es-CL.json](../../src/i18n/locales/es-CL.json)
+3. [src/i18n/locales/en-US.json](../../src/i18n/locales/en-US.json)
 
 ### Fase 9 - Reutilizacion y arquitectura
 
-1. Extraer presentacionales reutilizables cuando exista repeticion.
-2. Mantener patron Container/Presenter.
-3. Evitar duplicacion de logica entre tabs.
+Estado: Completada
+
+1. Extraídos presentacionales compartidos en `AccountPanelPrimitives.tsx`:
+   - `PanelCard`
+   - `LoadingMessage`
+   - `ErrorMessage`
+   - `PrimaryActionButton`
+   - `DangerActionButton`
+2. Aplicados en módulos de settings para reducir duplicación visual:
+   - `NotificationsPreferencesForm.tsx`
+   - `ConnectionsPanel.tsx`
+   - `SessionsList.tsx`
+3. Se preserva patrón Container/Presenter:
+   - lógica de datos (query/mutation) permanece en cada contenedor.
+   - primitives solo encapsulan presentación y estados visuales repetidos.
+
+Implementado en:
+
+1. [src/pages/dashboard/account/AccountPanelPrimitives.tsx](../../src/pages/dashboard/account/AccountPanelPrimitives.tsx)
+2. [src/pages/dashboard/account/NotificationsPreferencesForm.tsx](../../src/pages/dashboard/account/NotificationsPreferencesForm.tsx)
+3. [src/pages/dashboard/account/ConnectionsPanel.tsx](../../src/pages/dashboard/account/ConnectionsPanel.tsx)
+4. [src/pages/dashboard/account/SessionsList.tsx](../../src/pages/dashboard/account/SessionsList.tsx)
 
 ### Fase 10 - Tests
 
-1. Tests de capa API account.
-2. Tests de pages account/profile.
-3. Casos para flujo connections con MSW.
+Estado: Completada
+
+1. Agregada suite unitaria `src/api/account.test.ts` (7 casos) para validar:
+   - `ACCOUNT_QUERY_KEYS`.
+   - Mapeo request `changePassword` (snake_case -> camelCase).
+   - Mapeo response `getSessions` (camelCase -> snake_case).
+   - Mapeo response `revokeSession`.
+   - Mapeo bidireccional de `notification-preferences`.
+   - Mapeo de `account/access`.
+   - Encoding correcto de rutas `link/unlink` en `connections` temporal.
+2. Los tests mockean `apiClient` y `tenantUrl` con Vitest (`vi.hoisted + vi.mock`) para aislamiento total de red.
+3. Ejecución validada: `vitest run src/api/account.test.ts` -> 7/7 passing.
+
+Implementado en:
+
+1. [src/api/account.test.ts](../../src/api/account.test.ts)
 
 ### Fase 11 - Verificacion integral
 
-1. Lint y tests.
-2. Verificacion manual de rutas account.
-3. Validacion de resiliencia (timeout/retry) y accesibilidad.
+Estado: Completada
+
+1. Verificacion de calidad automatizada:
+   - `npm run lint` -> OK.
+   - `npm run test` -> 8 files / 30 tests passing.
+   - `npm run build` -> build de produccion exitoso.
+2. Verificacion de rutas account por inspeccion de router:
+   - `/dashboard/account`
+   - `/dashboard/account/settings`
+   - redirect legacy `/dashboard/user/sessions` -> `/dashboard/account/settings?tab=security`
+3. Validacion de resiliencia/accesibilidad por inspeccion de codigo:
+   - GET criticos en account usan `runGetWithRecovery` + timeout/retry.
+   - estados locales de carga/error con `role="status"` y `role="alert"` en panels account/profile.
+
+Nota: la validacion manual visual de UI en navegador no se ejecuto en esta fase desde CLI.
 
 ### Fase 12 - Documentacion y cierre
 
-1. Actualizar docs/FUNCTIONAL_GUIDE.md.
-2. Actualizar docs/TECHNICAL_GUIDE.md.
-3. Registrar fuera de alcance en docs/BACKLOG.md si aplica.
+Estado: Completada
+
+1. `docs/FUNCTIONAL_GUIDE.md` actualizado para reflejar estado real de Account:
+   - tab Access en `/dashboard/account` ya conectado a backend.
+   - tabs de settings (seguridad/notificaciones/conexiones) documentadas como implementadas.
+2. `docs/TECHNICAL_GUIDE.md` actualizado para sincronizar deuda técnica y evitar referencias obsoletas a placeholders ya removidos.
+3. `docs/BACKLOG.md` actualizado con mejora fuera de alcance detectada en verificación integral:
+   - optimización de chunks/bundle en build de producción.
+4. Cierre de ciclo validado con lint + test + build en Fase 11.
 
 ## 5. Dependencias y orden
 

@@ -1571,6 +1571,23 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 
 **Decision de diseno:** Mantener DTOs en un unico modulo de tipos del dominio para preservar trazabilidad y evitar `any` o `Record<string, unknown>` en endpoints criticos.
 
+### `src/api/account.test.ts`
+
+**Proposito:** validar la capa API de `account.ts` en aislamiento, asegurando contratos de mapeo internos/wire y construccion correcta de endpoints.
+
+**Cobertura actual (7 tests):**
+- Query keys de account.
+- `changePassword`: payload snake_case -> camelCase.
+- `getSessions`: wire -> DTO interno.
+- `revokeSession`: wire -> DTO interno.
+- `notification-preferences`: mapeo bidireccional request/response.
+- `getAccountAccess`: wire `UserAccessData` -> `AccountAccessData`.
+- `connections`: encoding de `provider` y `connectionId` en rutas.
+
+**Estrategia de test:**
+- Mock de `apiClient` y `tenantUrl` usando `vi.hoisted(...)` + `vi.mock(...)` para evitar dependencias de red.
+- Verificacion explicita de argumentos de llamada (`url`, `body`, `timeout`, headers de idempotencia).
+
 |-------|-------|
 | Plataforma | Dashboard, Tenants, Apps, Usuarios |
 | Accesos & Registro | Accesos, Registro |
@@ -1626,7 +1643,7 @@ div.flex.h-screen
 **Deuda técnica:**
 - Buscador en el header es solo decorativo.
 - Campana de notificaciones sin funcionalidad.
-- Configuración de cuenta depende de endpoints backend aún pendientes para tabs de seguridad/notificaciones/conexiones.
+- Configuración de cuenta mantiene dependencia contractual pendiente solo en conexiones externas (`F-042`) y actividad de cuenta.
 - Sin keyboard navigation completa en ThemeToggle (solo focus ring).
 
 **Regla de UX aplicada:** los selectores deben reutilizar el primitive compartido `Dropdown` (via `SelectDropdown`) para consistencia visual y de interacción; incluye selector de idioma en cabecera y en `AccountSettingsPage`.
@@ -1881,7 +1898,8 @@ initMutation.isSuccess                                  → LoginForm
 - Tabs accesibles (`role="tablist"`, `role="tab"`, `role="tabpanel"`) para separar estados de UI sin overlays globales.
 - Tab **Perfil** con formulario RHF + Zod para campos editables.
 - Mutacion `updateProfile(...)` con invalidacion de cache y feedback por toast.
-- Tabs **Accesos** y **Actividad** quedan preparadas como placeholders backend-driven.
+- Tab **Accesos** conectada a `getAccountAccess(...)` con estados locales (`loading/error/empty/data`).
+- Tab **Actividad** se mantiene como placeholder backend-driven.
 - Resiliencia: GET de perfil con timeout (10s) + retry automático controlado (5s, máximo 3); PATCH de actualización con timeout explícito (10s) sin auto-retry.
 - i18n con `react-i18next` usando claves `userDashboardProfile.*` para tabs, labels, placeholders, carga/error y toasts.
 - Schema Zod se construye con mensajes localizados (`invalidProfileUrl`) para mantener validación consistente por idioma.
@@ -1893,7 +1911,6 @@ initMutation.isSuccess                                  → LoginForm
 **Decisión de diseño:** centralizar cuenta personal en una única ruta reduce duplicidad entre sidebar y dropdown, y desacopla "mi cuenta" de rutas específicas por rol.
 
 **Puntos de mejora / deuda técnica conocida:**
-- tab de accesos depende de endpoint self-service (`/account/access`).
 - tab de actividad depende de endpoint de timeline self-service.
 
 **`AccountSettingsPage.tsx`**
@@ -1905,7 +1922,16 @@ initMutation.isSuccess                                  → LoginForm
 - Lectura de `?tab=` para compatibilidad con rutas legacy (por ejemplo redirección desde `/dashboard/user/sessions`).
 - El bloque de idioma incluye helper explicativo de fuente de detección (`navigator.languages`) y estado de preferencia (automático/manual).
 - Se incorpora CTA hacia el centro de FAQs del sistema (`/dashboard/faq`) para mantener la vista de settings enfocada en configuración.
-- Seguridad/notificaciones/conexiones se muestran como módulos en estado "Próximamente" con contrato backend explícito.
+- Seguridad implementada con módulos dedicados:
+  - `ChangePasswordForm.tsx`: RHF + Zod + `changePassword(...)`.
+  - `SessionsList.tsx`: `getSessions(...)` + `revokeSession(...)` con revocación remota.
+- Notificaciones implementadas con `NotificationsPreferencesForm.tsx`:
+  - `getNotificationPreferences(...)` + `updateNotificationPreferences(...)`.
+  - Estado local de carga/error/guardado y toast de feedback.
+- Conexiones implementadas con `ConnectionsPanel.tsx` sobre endpoints temporales MSW:
+  - `getAccountConnections(...)`, `linkAccountConnection(...)`, `unlinkAccountConnection(...)`.
+  - Selector de proveedor, lista de conexiones y acciones de vincular/desvincular.
+  - Indicadores explícitos en UI de dependencia contractual pendiente (`F-042`).
 - Facturación conectada a endpoints reales (`getActiveSubscription`, `listInvoices`) para `ADMIN_TENANT`.
 - Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para suscripción e invoices.
 
@@ -1917,8 +1943,21 @@ initMutation.isSuccess                                  → LoginForm
 **Decisión de diseño:** separar "Mi cuenta" de "Configuración de cuenta" evita sobrecargar una sola página y permite habilitar módulos backend en forma incremental.
 
 **Puntos de mejora / deuda técnica conocida:**
-- faltan endpoints de seguridad de cuenta (change-password, sessions remotas) para reemplazar placeholders.
-- faltan endpoints de notificaciones y conexiones para completar UX de settings.
+- Migrar `ConnectionsPanel.tsx` del contrato temporal MSW al contrato OpenAPI oficial cuando backend publique `F-042`.
+- Falta conectar la tab de actividad de `UserProfilePage` a un endpoint backend self-service cuando el contrato esté disponible.
+
+**`AccountPanelPrimitives.tsx`**
+
+**Propósito:** centralizar primitives presentacionales del dominio Account Settings para evitar duplicación de estilos y estructura entre tabs.
+
+**Construcción:**
+- `PanelCard` para contenedor uniforme de módulo (título/subtítulo/badge opcional).
+- `LoadingMessage` y `ErrorMessage` para estados async locales consistentes.
+- `PrimaryActionButton` y `DangerActionButton` para acciones CTA repetidas.
+
+**Integración:** reutilizado por `NotificationsPreferencesForm.tsx`, `ConnectionsPanel.tsx` y `SessionsList.tsx`.
+
+**Decisión de diseño:** mantener separación estricta entre presentación reutilizable y lógica de datos por componente para respetar patrón Container/Presenter.
 
 **`FaqCenterPage.tsx`**
 

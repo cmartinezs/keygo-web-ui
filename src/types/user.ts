@@ -97,7 +97,8 @@ export interface AccountSessionData {
 
 /** Respuesta de DELETE /tenants/{slug}/account/sessions/{sessionId} */
 export interface RevokeAccountSessionResult {
-  revoked: boolean
+  session_id: string
+  already_closed: boolean
 }
 
 /** Preferencias de notificacion del usuario autenticado */
@@ -105,9 +106,8 @@ export interface NotificationPreferencesData {
   security_alerts_email: boolean
   security_alerts_in_app: boolean
   billing_alerts_email: boolean
-  billing_alerts_in_app: boolean
   product_updates_email: boolean
-  product_updates_in_app: boolean
+  weekly_digest: boolean
 }
 
 /** Request de PATCH /tenants/{slug}/account/notification-preferences */
@@ -115,23 +115,18 @@ export interface UpdateNotificationPreferencesRequest {
   security_alerts_email?: boolean
   security_alerts_in_app?: boolean
   billing_alerts_email?: boolean
-  billing_alerts_in_app?: boolean
   product_updates_email?: boolean
-  product_updates_in_app?: boolean
+  weekly_digest?: boolean
 }
 
-/** Rol efectivo de una app dentro del endpoint /account/access */
-export interface AccountAccessRoleData {
-  role_code: string
-  role_name: string
-}
-
-/** Membresia por app dentro del endpoint /account/access */
+/** Membresia y roles por aplicacion en GET /tenants/{slug}/account/access */
 export interface AccountAccessData {
   app_id: string
-  app_code: string
   app_name: string
-  roles: AccountAccessRoleData[]
+  membership_id: string
+  status: string
+  /** Lista de codigos de rol ('ADMIN', 'VIEWER', etc.) */
+  roles: string[]
 }
 
 /** Conexion externa vinculada (temporal hasta contrato OpenAPI oficial) */
@@ -159,6 +154,63 @@ export interface LinkAccountConnectionResult {
 /** Respuesta de DELETE /account/connections/{connectionId} (temporal) */
 export interface UnlinkAccountConnectionResult {
   unlinked: boolean
+}
+
+// ── Wire types — formato exacto del backend (camelCase) ───────────────────────
+// Usados solo en src/api/account.ts como tipos intermedios de Axios.
+// Nunca exponer fuera del módulo API.
+
+/** Wire: POST /account/change-password — body enviado al backend */
+export interface WireChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
+
+/** Wire: GET /account/sessions — cada elemento de la lista */
+export interface WireAccountSessionData {
+  sessionId: string
+  status: string
+  browser: string
+  os: string
+  deviceType: string
+  ipAddress: string
+  createdAt: string
+  lastAccessedAt: string
+  expiresAt: string
+  isCurrent: boolean
+}
+
+/** Wire: DELETE /account/sessions/{sessionId} — respuesta del backend */
+export interface WireRevokeSessionResult {
+  sessionId: string
+  alreadyClosed: boolean
+}
+
+/** Wire: GET /account/notification-preferences — respuesta del backend */
+export interface WireNotificationPreferencesData {
+  securityAlertsEmail: boolean
+  securityAlertsInApp: boolean
+  billingAlertsEmail: boolean
+  productUpdatesEmail: boolean
+  weeklyDigest: boolean
+}
+
+/** Wire: PATCH /account/notification-preferences — body enviado al backend */
+export interface WireUpdateNotificationPreferencesRequest {
+  securityAlertsEmail?: boolean
+  securityAlertsInApp?: boolean
+  billingAlertsEmail?: boolean
+  productUpdatesEmail?: boolean
+  weeklyDigest?: boolean
+}
+
+/** Wire: GET /account/access — cada elemento de la lista (= UserAccessData en OpenAPI) */
+export interface WireUserAccessData {
+  clientAppId: string
+  clientAppName: string
+  membershipId: string
+  status: string
+  roles: string[]
 }
 
 // ── Self-registration  ────────────────────────────────────────────────────────

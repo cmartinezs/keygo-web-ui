@@ -1,4 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/api/client', () => ({
+  API_V1: 'http://localhost:8080/keygo-server/api/v1',
+}))
+
 import { extractRoles } from './jwksVerify'
 import type { KeyGoJwtClaims } from '@/types/auth'
 

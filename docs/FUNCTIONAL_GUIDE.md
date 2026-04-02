@@ -658,7 +658,7 @@ Comportamiento:
 Vista unificada de cuenta personal (todos los roles autenticados) con tabs:
 - **Resumen:** identidad base, estado, tenant y rol activo.
 - **Perfil:** formulario self-service para actualizar perfil.
-- **Accesos:** placeholder preparado para endpoint self-service de accesos.
+- **Accesos:** listado real de memberships/roles por aplicación (self-service).
 - **Actividad:** placeholder preparado para timeline de actividad de cuenta.
 
 Campos editables en la tab Perfil:
@@ -670,11 +670,12 @@ Campos editables en la tab Perfil:
 - URL de foto de perfil
 
 Idioma de interfaz:
-- Tabs, resumen, labels de formulario, placeholders backend y mensajes de carga/error se muestran en el idioma activo.
+- Tabs, resumen, labels de formulario y mensajes de carga/error se muestran en el idioma activo.
 - La validacion del campo URL de foto de perfil y el toast de guardado tambien se localizan por idioma activo.
 
 Comportamiento en red lenta:
 - La carga del perfil usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- La carga de accesos usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 - Guardar cambios usa timeout de 10 segundos sin auto-retry.
 
 Compatibilidad:
@@ -685,9 +686,9 @@ Compatibilidad:
 **Ruta:** `/dashboard/account/settings`
 
 Vista de configuraciones personales y operativas por tabs:
-- **Seguridad:** cambio de contraseña y sesiones (pendiente backend).
-- **Notificaciones:** preferencias por canal/tipo (pendiente backend).
-- **Conexiones:** gestión de cuentas externas (pendiente backend).
+- **Seguridad:** cambio de contraseña y gestión de sesiones activas/remotas.
+- **Notificaciones:** preferencias por canal/tipo (correo, in-app, digest semanal).
+- **Conexiones:** gestión de cuentas externas implementada en modo temporal con MSW (pendiente contrato backend oficial F-042).
 - **Facturacion:** suscripción y facturas para rol `ADMIN_TENANT` (datos reales); para otros roles se muestra acceso restringido.
 
 Idioma de interfaz (nuevo):
@@ -734,8 +735,8 @@ Las siguientes funcionalidades están planificadas pero aún no están disponibl
 | Reactivación de tenants | Detalle de tenant | Mock; endpoint T-033 pendiente en backend |
 | Registro de usuarios (paso 2) | `/register` | Formulario parcialmente implementado |
 | Panel Administrador de Tenant | `/dashboard` + `/dashboard/tenant/*` | Usuarios, Apps y Memberships implementados; faltan métricas y sesiones avanzadas |
-| Panel de Usuario | `/dashboard` + `/dashboard/user/*` + `/dashboard/account*` | Mi acceso y actividad implementados; cuenta/configuración migradas a rutas unificadas |
-| Seguridad de cuenta (change-password/sesiones remotas) | `/dashboard/account/settings` | UI implementada; backend pendiente según RFC |
+| Panel de Usuario | `/dashboard` + `/dashboard/user/*` + `/dashboard/account*` | Mi acceso implementado en tab Access; actividad queda como placeholder backend-driven |
+| Seguridad de cuenta (change-password/sesiones remotas) | `/dashboard/account/settings` | Implementada (cambio de contraseña y revocación remota de sesiones) |
 | Buscador global | Cabecera admin | Decorativo, sin funcionalidad |
 | Notificaciones | Cabecera admin | Decorativo, sin funcionalidad |
 | Portal de documentación | Landing › Desarrolladores | Marcado "Próximamente" |

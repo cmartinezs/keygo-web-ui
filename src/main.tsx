@@ -10,6 +10,14 @@ import { env } from './config/env'
 import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
 import './i18n/config'
 
+// ⏳ pendiente backend (F-042) — Activa MSW para conexiones externas cuando
+// VITE_MOCK_CONNECTIONS=true. Solo opera en modo desarrollo.
+async function prepareMocks(): Promise<void> {
+  if (!env.MOCK_CONNECTIONS || !env.DEV) return
+  const { worker } = await import('./mocks/browser')
+  await worker.start({ onUnhandledRequest: 'bypass' })
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -48,12 +56,14 @@ function AppBootstrap() {
   return <App />
 }
 
-createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AppBootstrap />
-      </BrowserRouter>
-    </QueryClientProvider>
-  </React.StrictMode>
-)
+prepareMocks().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AppBootstrap />
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
+  )
+})

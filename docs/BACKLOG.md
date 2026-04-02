@@ -212,6 +212,13 @@ Actualizado automáticamente por el agente al final de cada implementación.
 
 > No bloquean funcionalidad actual pero mejoran mantenibilidad, DX o UX.
 
+### [MEJORA] Optimización de bundle/chunks en build de producción
+- **Detectado en:** `npm run build` (warning Vite/Rollup por chunks > 500 kB)
+- **Descripción:** Implementar code-splitting por ruta o por módulo (dynamic `import()` + `manualChunks`) para reducir tamaño de chunks principales y mejorar tiempo de carga inicial.
+- **Evidencia reciente:** `dist/assets/index-*.js` ~1.8 MB (gzip ~563 kB).
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-04-02
+
 ### [MEJORA] Instalar y configurar shadcn/ui
 - **Detectado en:** `src/pages/login/LoginPage.tsx`, `src/pages/register/`
 - **Descripción:** Los componentes de formulario usan Tailwind puro con clases repetidas. Instalar shadcn/ui (`Button`, `Input`, `Label`, `Card`, `Select`, `Checkbox`) para consistencia con el sistema de diseño definido en las instrucciones. Migrar login y pasos del contrato.

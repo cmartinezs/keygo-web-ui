@@ -9,6 +9,13 @@ const envSchema = z.object({
   // Número de reintentos automáticos para queries fallidas y reconexión en login.
   // Cuando se agotan, se muestra un botón de reintento manual.  Default: 2.
   VITE_QUERY_RETRY_COUNT: z.coerce.number().int().min(0).default(2),
+  // Activa MSW (Mock Service Worker) para endpoints temporales sin contrato backend.
+  // Usar solo en desarrollo: VITE_MOCK_CONNECTIONS=true npm run dev
+  VITE_MOCK_CONNECTIONS: z
+    .string()
+    .transform((v) => v === 'true')
+    .optional()
+    .default('false'),
 })
 
 const parsedEnv = envSchema.safeParse(import.meta.env)
@@ -27,6 +34,7 @@ export const env = Object.freeze({
   REDIRECT_URI: parsedEnv.data.VITE_REDIRECT_URI,
   TURNSTILE_SITE_KEY: parsedEnv.data.VITE_TURNSTILE_SITE_KEY,
   QUERY_RETRY_COUNT: parsedEnv.data.VITE_QUERY_RETRY_COUNT,
+  MOCK_CONNECTIONS: parsedEnv.data.VITE_MOCK_CONNECTIONS,
   DEV: import.meta.env.DEV,
   PROD: import.meta.env.PROD,
 })
