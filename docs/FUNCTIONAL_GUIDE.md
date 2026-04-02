@@ -2,7 +2,7 @@
 
 > **Audiencia:** usuario final, product owner o cualquier persona que quiera entender qué puede hacer con la aplicación, sin necesidad de conocimiento técnico.
 >
-> **Última actualización:** 2026-04-01
+> **Última actualización:** 2026-04-02
 
 ---
 
@@ -652,6 +652,13 @@ Vista de configuraciones personales y operativas por tabs:
 - **Notificaciones:** preferencias por canal/tipo (pendiente backend).
 - **Conexiones:** gestión de cuentas externas (pendiente backend).
 - **Facturacion:** suscripción y facturas para rol `ADMIN_TENANT` (datos reales); para otros roles se muestra acceso restringido.
+
+Idioma de interfaz (nuevo):
+- Se incorpora selector de idioma en la misma vista de configuración.
+- Idiomas disponibles en esta fase: `es-CL` y `en-US`.
+- Comportamiento por defecto: si el usuario no define preferencia manual, la app toma la configuración del dispositivo cliente.
+- Si el usuario cambia idioma manualmente, la preferencia queda guardada en el navegador y prevalece en futuras sesiones de ese dispositivo.
+- Existe acción para volver al modo automático (idioma del dispositivo).
 
 Comportamiento en red lenta:
 - Suscripción y facturas usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).

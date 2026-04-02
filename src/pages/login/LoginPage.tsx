@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, Link } from 'react-router-dom'
 import { decodeJwt } from 'jose'
+import { useTranslation } from 'react-i18next'
 import { authorize, login, exchangeToken } from '@/api/auth'
 import { getAppApiError } from '@/api/errorNormalizer'
 import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/auth/pkce'
@@ -28,6 +29,7 @@ import {
   buildMutationTimeoutMessage,
   isRequestTimeout,
 } from '@/lib/network/recovery'
+import { i18n } from '@/i18n/config'
 import type { AppRole } from '@/types/roles'
 import type { AuthorizeData } from '@/types/auth'
 
@@ -38,12 +40,17 @@ const AUTH_MAX_RETRIES = NETWORK_MAX_RETRIES
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
-const loginSchema = z.object({
-  emailOrUsername: z.string().min(1, 'El usuario o correo es requerido'),
-  password: z.string().min(1, 'La contraseña es requerida'),
-})
+function createLoginSchema() {
+  return z.object({
+    emailOrUsername: z.string().min(1, i18n.t('auth.errors.usernameRequired')),
+    password: z.string().min(1, i18n.t('auth.errors.passwordRequired')),
+  })
+}
 
-type LoginFormValues = z.infer<typeof loginSchema>
+type LoginFormValues = {
+  emailOrUsername: string
+  password: string
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -63,21 +70,21 @@ function extractAuthorizeError(error: unknown): { message: string; retryable: bo
 
   if (appError.code === 'RESOURCE_NOT_FOUND') {
     return {
-      message: 'La aplicación o el tenant no están disponibles. Contacta al administrador.',
+      message: i18n.t('auth.errors.missingAppOrTenant'),
       retryable: false,
     }
   }
 
   if (appError.code === 'BUSINESS_RULE_VIOLATION') {
     return {
-      message: 'El acceso está suspendido temporalmente. Contacta al administrador.',
+      message: i18n.t('auth.errors.accessSuspended'),
       retryable: false,
     }
   }
 
   if (appError.code === 'INVALID_INPUT') {
     return {
-      message: 'Error de configuración de la aplicación. Contacta al administrador.',
+      message: i18n.t('auth.errors.appConfigError'),
       retryable: false,
     }
   }
@@ -96,31 +103,31 @@ function extractLoginError(error: unknown): { message: string; sessionExpired: b
   const appError = getAppApiError(error)
 
   if (appError.code === 'AUTHENTICATION_REQUIRED') {
-    return { message: 'Credenciales incorrectas. Vuelve a intentarlo.', sessionExpired: false }
+    return { message: i18n.t('auth.errors.invalidCredentials'), sessionExpired: false }
   }
 
   if (appError.code === 'BUSINESS_RULE_VIOLATION') {
     return {
-      message: 'Tu cuenta no tiene acceso a esta aplicación.',
+      message: i18n.t('auth.errors.accountNoAccess'),
       sessionExpired: false,
     }
   }
 
   if (appError.code === 'EMAIL_NOT_VERIFIED') {
     return {
-      message: 'Correo pendiente de verificación. Revisa tu bandeja de entrada.',
+      message: i18n.t('auth.errors.emailPending'),
       sessionExpired: false,
     }
   }
 
   if (appError.code === 'RESOURCE_NOT_FOUND') {
-    return { message: 'Usuario no encontrado.', sessionExpired: false }
+    return { message: i18n.t('auth.errors.userNotFound'), sessionExpired: false }
   }
 
   // INVALID_INPUT in this step -> no prior session; Pasos 0-1 must be re-run
   if (appError.code === 'INVALID_INPUT') {
     return {
-      message: 'Tu sesión de inicio expiró. Por favor, vuelve a intentarlo.',
+      message: i18n.t('auth.errors.sessionExpired'),
       sessionExpired: true,
     }
   }
@@ -132,6 +139,7 @@ function extractLoginError(error: unknown): { message: string; sessionExpired: b
 
 /** Shown while Pasos 0-1 are running (before the user sees anything interactive). */
 function InitLoadingState() {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center gap-4 py-10" role="status" aria-live="polite">
       <svg
@@ -147,7 +155,7 @@ function InitLoadingState() {
           d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
         />
       </svg>
-      <p className="text-slate-400 text-sm">Preparando sesión segura…</p>
+      <p className="text-slate-400 text-sm">{t('auth.initLoading')}</p>
     </div>
   )
 }
@@ -161,6 +169,7 @@ interface InitErrorStateProps {
 
 /** Shown when Paso 1 fails (tenant not found, suspended, bad config, network error). */
 function InitErrorState({ message, retryable, onRetry, onGoHome }: InitErrorStateProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center gap-5 py-10" role="alert">
       <svg
@@ -184,14 +193,14 @@ function InitErrorState({ message, retryable, onRetry, onGoHome }: InitErrorStat
             onClick={onRetry}
             className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
-            Reintentar ahora
+            {t('common.retryNow')}
           </button>
         )}
         <button
           onClick={onGoHome}
           className="flex-1 border border-white/20 hover:border-white/40 hover:bg-white/5 text-slate-300 text-sm font-medium py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-white/30"
         >
-          Volver más tarde
+          {t('common.comeBackLater')}
         </button>
       </div>
     </div>
@@ -213,6 +222,8 @@ interface LoginFormProps {
  * `isReiniting` is true while Pasos 0-1 are re-running after a session expiry.
  */
 function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLocked, remainingSeconds }: LoginFormProps) {
+  const { t } = useTranslation()
+  const loginSchema = useMemo(() => createLoginSchema(), [])
   const {
     register,
     handleSubmit,
@@ -237,9 +248,9 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
   return (
     <>
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold text-white">Iniciar sesión</h1>
+        <h1 className="text-2xl font-bold text-white">{t('auth.title')}</h1>
         <p className="text-slate-400 text-sm mt-1">
-          {clientName ? `Accediendo a ${clientName}` : 'Accede con tus credenciales'}
+          {clientName ? t('auth.subtitleWithClient', { clientName }) : t('auth.subtitleDefault')}
         </p>
       </div>
 
@@ -250,7 +261,7 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
-          Reiniciando sesión…
+          {t('auth.restartingSession')}
         </div>
       )}
 
@@ -273,8 +284,7 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
             />
           </svg>
           <span>
-            Demasiados intentos fallidos. Espera{' '}
-            <strong>{remainingSeconds} s</strong> antes de volver a intentarlo.
+            {t('auth.lockout', { seconds: remainingSeconds })}
           </span>
         </div>
       )}
@@ -307,7 +317,7 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="emailOrUsername" className="text-sm font-medium text-slate-300">
-            Correo electrónico o usuario
+            {t('auth.usernameOrEmail')}
           </label>
           <input
             id="emailOrUsername"
@@ -325,7 +335,7 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="password" className="text-sm font-medium text-slate-300">
-            Contraseña
+            {t('auth.password')}
           </label>
           <div className="relative">
             <input
@@ -339,7 +349,7 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
             />
             <button
               type="button"
-              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
               aria-pressed={showPassword}
               onClick={() => setShowPassword((current) => !current)}
               disabled={isDisabled}
@@ -401,10 +411,10 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
                   d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                 />
               </svg>
-              Autenticando…
+              {t('auth.authenticating')}
             </>
           ) : (
-            'Iniciar sesión'
+            t('auth.submit')
           )}
         </button>
       </form>
@@ -428,6 +438,7 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
  *    Pasos 0-1 are re-run automatically before the user retries.
  */
 export default function LoginPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { accessToken, idToken, roles, setTokens } = useTokenStore()
   const { setError } = useBlockingErrorStore()
@@ -572,7 +583,7 @@ export default function LoginPage() {
         const isNetwork = appError.httpStatus === undefined
         toast.error(
           isNetwork
-            ? 'Error de conexión al procesar el acceso. Por favor, intenta de nuevo.'
+            ? t('auth.errors.networkAfterLogin')
             : appError.clientMessage,
         )
         initMutation.mutate()
@@ -582,10 +593,10 @@ export default function LoginPage() {
       // phase === 'login': error from POST /account/login
       const { sessionExpired } = extractLoginError(error)
       if (sessionExpired) {
-        toast.warning('Tu sesión expiró. Reconectando…')
+        toast.warning(t('auth.errors.sessionExpiredReconnecting'))
         initMutation.mutate()
       } else if (appError.retryable) {
-        toast.warning('No se pudo conectar. Reconectando…')
+        toast.warning(t('auth.errors.cannotConnectReconnecting'))
         initMutation.mutate()
       } else {
         // Credential error (wrong password, account suspended, etc.) — count against rate limit
@@ -618,11 +629,11 @@ export default function LoginPage() {
       autoRetryCountRef.current += 1
       const remaining = AUTH_MAX_RETRIES - autoRetryCountRef.current
       isAutoRetryingRef.current = true
-      const toastId = toast.loading('Intentando reconectar…')
+      const toastId = toast.loading(t('auth.errors.reconnecting'))
       setTimeout(() => {
         initMutation.mutate(undefined, {
           onSuccess: () => {
-            toast.success('Conexión restablecida', { id: toastId })
+            toast.success(t('auth.errors.connectionRestored'), { id: toastId })
           },
           onError: (error) => {
             setTimeout(() => {
@@ -634,9 +645,9 @@ export default function LoginPage() {
                 return
               }
               if (remaining > 0) {
-                toast.error('Sin conexión. Reintentando en 5 s…', { id: toastId })
+                toast.error(t('auth.errors.connectionRetryIn5'), { id: toastId })
               } else {
-                toast.error('Sin conexión. Usa el botón para reintentar manualmente.', { id: toastId })
+                toast.error(t('auth.errors.connectionManualRetry'), { id: toastId })
               }
             }, 800)
           },
@@ -644,7 +655,7 @@ export default function LoginPage() {
       }, 600)
     }, AUTH_RETRY_DELAY_MS)
     return () => clearInterval(id)
-  }, [initMutation])
+  }, [initMutation, t])
 
   // Derived state
   const loginError = loginMutation.error ? extractLoginError(loginMutation.error) : null
@@ -745,12 +756,12 @@ export default function LoginPage() {
         {/* Footer — only when form is visible */}
         {initMutation.isSuccess && (
           <p className="text-center text-slate-500 text-xs mt-6">
-            ¿Aún no tienes cuenta?{' '}
+            {t('auth.registerPrompt')}{' '}
             <Link
               to="/register"
               className="text-indigo-400 hover:text-indigo-300 transition-colors"
             >
-              Regístrate
+              {t('auth.registerCta')}
             </Link>
           </p>
         )}
@@ -758,7 +769,7 @@ export default function LoginPage() {
 
       {/* Copyright */}
       <footer className="absolute bottom-3 left-0 right-0 text-center text-xs text-slate-600" role="contentinfo">
-        © {new Date().getFullYear()} KeyGo — All Rights Reserved
+        © {new Date().getFullYear()} KeyGo - {t('auth.copyright')}
       </footer>
     </div>
   )

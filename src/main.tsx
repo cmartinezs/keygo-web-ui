@@ -2,11 +2,13 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import App from './App'
 import './styles/index.css'
 import { restoreSession } from './auth/refresh'
 import { env } from './config/env'
 import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
+import './i18n/config'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,6 +20,7 @@ const queryClient = new QueryClient({
 })
 
 function AppBootstrap() {
+  const { t } = useTranslation()
   const [isBootstrapping, setIsBootstrapping] = React.useState(true)
 
   React.useEffect(() => {
@@ -36,8 +39,8 @@ function AppBootstrap() {
         active
         skipDelays
         zIndexClassName="z-50"
-        title="Iniciando KeyGo"
-        description="Estamos validando tu sesion para cargar la aplicacion de forma segura."
+        title={t('common.bootTitle')}
+        description={t('common.bootDescription')}
       />
     )
   }

@@ -2,7 +2,7 @@
 
 > **Audiencia:** desarrollador que hereda o extiende el proyecto. Asume conocimiento de React, TypeScript y OAuth2.
 >
-> **Última actualización:** 2026-04-01
+> **Última actualización:** 2026-04-02
 
 ---
 
@@ -112,6 +112,12 @@ Backend API
 Zustand
   ├─ useTokenStore    ← tokens en memoria, roles, lifecycle de sesión
   └─ useThemeStore    ← preferencia de tema (light/dark/high-contrast/system)
+
+i18n (react-i18next + i18next)
+  ├─ src/i18n/config.ts         ← inicializa i18n + detección de idioma
+  ├─ src/i18n/useLocale.ts      ← hook para leer/cambiar locale
+  ├─ src/i18n/constants.ts      ← locales soportados y clave de persistencia
+  └─ src/i18n/locales/*.json    ← catálogos de traducción
 ```
 
 ---
@@ -175,6 +181,9 @@ Zustand
 | `zustand` | ^5 | Estado global en memoria |
 | `axios` | ^1.4 | Cliente HTTP |
 | `jose` | ^5 | Verificación JWT / JWKS (RS256) |
+| `i18next` | ^26 | Motor i18n y resolución de idioma |
+| `react-i18next` | ^17 | Integración i18n con React |
+| `i18next-browser-languagedetector` | ^8 | Detección de idioma por navegador/localStorage |
 | `react-hook-form` | ^7.72 | Estado de formularios |
 | `zod` | ^4.3 | Validación de schemas |
 | `sonner` | ^2 | Notificaciones toast |
@@ -214,7 +223,10 @@ Zustand
 **Propósito:** Documento HTML raíz.
 
 **Construcción:**
-- `lang="es"` — idioma del documento.
+- Script inline que define `document.documentElement.lang` antes del primer paint usando prioridad:
+  1. `localStorage['keygo-locale']` (preferencia manual)
+  2. `navigator.languages[0]` / `navigator.language` (dispositivo)
+  3. fallback `es-CL`
 - Script **inline síncrono** de tema antes del primer paint:
   ```js
   (function () {
@@ -232,7 +244,7 @@ Zustand
 - `<div id="root">` — punto de montaje de React.
 - Dentro de `#root` existe un fallback visual (`#kg-boot`) que evita pantalla en blanco antes de que React quede montado.
 
-**Integración:** El script inline aplica `.dark` o `.high-contrast` a `<html>` **antes de que React monte**, eliminando el flash de tema incorrecto (FOCT). `useThemeStore` lee el mismo `localStorage.getItem('keygo-theme')` en su inicialización, quedando sincronizado.
+**Integración:** El script inline aplica idioma y clases de tema sobre `<html>` **antes de que React monte**, eliminando flash de idioma/tema incorrecto. `useThemeStore` y `useLocale` leen las mismas claves de `localStorage` durante inicialización.
 
 **Decisión de diseño:** La inicialización del tema debe ocurrir sincrónicamente en el HTML, no en un `useEffect`, porque los effects corren tras el primer render y causarían parpadeo visual.
 
@@ -248,7 +260,8 @@ Zustand
 
 **Construcción:**
 1. Crea `QueryClient` con configuración por defecto.
-2. Monta React inmediatamente con `StrictMode` + `QueryClientProvider` + `BrowserRouter`.
+2. Inicializa i18n importando `src/i18n/config.ts`.
+3. Monta React inmediatamente con `StrictMode` + `QueryClientProvider` + `BrowserRouter`.
 3. Usa `AppBootstrap` para ejecutar `restoreSession()` dentro de un `useEffect`.
 4. Mientras `restoreSession()` está en progreso, renderiza `GlobalLoaderOverlay` en modo inmediato.
 5. Al finalizar `restoreSession()` (éxito o error), muestra `App`.
@@ -257,6 +270,7 @@ Zustand
 - `restoreSession` → `src/auth/refresh.ts`
 - `QueryClientProvider` → disponible para todos los `useQuery`/`useMutation` del árbol
 - `BrowserRouter` → habilita `useNavigate`, `useLocation`, etc.
+- `react-i18next` → traducción de mensajes de bootstrap (`common.bootTitle`, `common.bootDescription`).
 
 **Decisión de diseño:** "render-first + bootstrap gate" — la app monta de inmediato para evitar pantalla en blanco, pero el contenido funcional queda detrás de `AppBootstrap` hasta completar restauración de sesión.
 
@@ -1104,6 +1118,68 @@ function useRateLimit(formKey: string) {
 **Integración:** Usado en `src/layouts/AdminLayout.tsx` (ThemeToggle en el header).
 
 **Decisión de diseño:** El store lee `localStorage` sincrónicamente en el momento de importación del módulo, garantizando coherencia con el script inline de `index.html` que ya aplicó el tema antes del primer paint.
+
+---
+
+### `src/i18n/constants.ts`
+
+**Propósito:** Fuente única de verdad para locales soportados, locale por defecto y clave de persistencia en `localStorage`.
+
+**Construcción:**
+- `SUPPORTED_LOCALES = ['es-CL', 'en-US']`
+- `DEFAULT_LOCALE = 'es-CL'`
+- `LOCALE_STORAGE_KEY = 'keygo-locale'`
+
+**Integración:** Consumido por `config.ts`, `localeUtils.ts` y `useLocale.ts`.
+
+**Decisión de diseño:** Evitar strings duplicados y reducir errores al agregar nuevos idiomas.
+
+---
+
+### `src/i18n/localeUtils.ts`
+
+**Propósito:** Normalización y resolución de locale BCP-47 para garantizar que la app siempre opere con locales soportados.
+
+**Construcción:**
+- `normalizeLocale(value)` mapea variantes (`es-*`, `en-*`) a locales canónicos soportados.
+- `resolveDeviceLocale()` obtiene idioma del dispositivo con fallback seguro.
+
+**Integración:** Usado por `config.ts`, `useLocale.ts` y utilidades de formato.
+
+**Decisión de diseño:** Mantener la lógica de fallback fuera de componentes para minimizar acoplamiento.
+
+---
+
+### `src/i18n/config.ts`
+
+**Propósito:** Inicializar i18n en una sola instancia global.
+
+**Construcción:**
+- Registra `LanguageDetector` + `initReactI18next`.
+- Configura recursos locales (`es-CL`, `en-US`).
+- Detección por prioridad: `localStorage` luego `navigator`.
+- Fallback global: `es-CL`.
+
+**Integración:** Importado en `src/main.tsx` para inicialización temprana.
+
+**Decisión de diseño:** Solución de ecosistema madura (react-i18next) en lugar de implementación custom.
+
+**Puntos de mejora / deuda técnica conocida:** En fase futura se evaluará carga lazy por namespace para optimizar bundle inicial.
+
+---
+
+### `src/i18n/useLocale.ts`
+
+**Propósito:** Hook de acceso al locale activo y acciones de cambio/restablecimiento automático.
+
+**Construcción:**
+- Expone `locale`, `setLocale`, `resetToDeviceLocale`, `supportedLocales`, `isAutoDetected`.
+- Sincroniza `document.documentElement.lang` cuando cambia idioma.
+- Persiste selección manual en `localStorage`.
+
+**Integración:** Consumido en `AccountSettingsPage` para selector de idioma y modo automático.
+
+**Decisión de diseño:** API simple y desacoplada del resto de stores globales (sin duplicar fuente de verdad con Zustand).
 
 ---
 

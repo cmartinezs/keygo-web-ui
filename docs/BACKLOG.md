@@ -138,6 +138,12 @@ Actualizado automáticamente por el agente al final de cada implementación.
 
 > Features completas que están en el roadmap pero no son bloqueantes inmediatas.
 
+## [MEJORA] Sincronización de idioma por perfil backend (fase 2 i18n)
+- **Detectado en:** `src/pages/dashboard/account/AccountSettingsPage.tsx` (selector local) y `src/i18n/useLocale.ts` (persistencia localStorage)
+- **Descripción:** Actualmente la preferencia de idioma se guarda solo en navegador. Implementar persistencia server-side usando `profile.locale` para mantener idioma entre dispositivos y sesiones cruzadas.
+- **Prioridad sugerida:** Media
+- **Fecha:** 2026-04-02
+
 ### [FEATURE] Endpoint de sesiones y actividad para USER_TENANT
 - **Detectado en:** `src/pages/dashboard/user/UserSessionsPage.tsx`, `src/pages/dashboard/user/UserActivityPage.tsx`
 - **Descripción:** Actualmente la vista de sesiones y actividad de usuario se construye con metadata local de JWT + memberships. Se requiere endpoint backend dedicado para listar sesiones por dispositivo/IP, cierres de sesion remotos y eventos de auditoria por usuario final.

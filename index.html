@@ -8,6 +8,21 @@
     <script>
       (function () {
         try {
+          var supportedLocales = ['es-CL', 'en-US']
+          var normalizeLocale = function (value) {
+            if (!value || typeof value !== 'string') return 'es-CL'
+            var normalized = value.trim()
+            if (supportedLocales.indexOf(normalized) >= 0) return normalized
+            var lower = normalized.toLowerCase()
+            if (lower.startsWith('es')) return 'es-CL'
+            if (lower.startsWith('en')) return 'en-US'
+            return 'es-CL'
+          }
+
+          var persistedLocale = localStorage.getItem('keygo-locale')
+          var browserLocale = (navigator.languages && navigator.languages[0]) || navigator.language || 'es-CL'
+          document.documentElement.lang = normalizeLocale(persistedLocale || browserLocale)
+
           var p = localStorage.getItem('keygo-theme') || 'system'
           var highContrast = p === 'high-contrast'
           var dark = p === 'dark' || (p === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)

@@ -1,4 +1,6 @@
 import type { AppPlan, AppPlanEntitlement, BillingPeriod } from '@/types/billing'
+import { i18n } from '@/i18n/config'
+import { normalizeLocale } from '@/i18n/localeUtils'
 
 export type PlanId = 'free' | 'personal' | 'team' | 'business' | 'flex' | 'enterprise' | 'starter' | 'on-premise'
 
@@ -15,8 +17,9 @@ export interface PlanInfo {
   highlighted: boolean
 }
 
-export function formatCurrencyPrice(amount: number, currency: string): string {
-  return new Intl.NumberFormat('es-MX', {
+export function formatCurrencyPrice(amount: number, currency: string, locale?: string): string {
+  const resolvedLocale = normalizeLocale(locale ?? i18n.resolvedLanguage ?? i18n.language)
+  return new Intl.NumberFormat(resolvedLocale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 0,

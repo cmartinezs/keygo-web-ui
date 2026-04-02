@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import LandingPage from './pages/landing/LandingPage'
 import DeveloperDocsPage from './pages/developers/DeveloperDocsPage'
 import LoginPage from './pages/login/LoginPage'
@@ -31,6 +32,7 @@ const SLOW_REQUEST_THRESHOLD_MS = 5000
 const ROUTE_SETTLING_WINDOW_MS = 1200
 
 export default function App() {
+  const { t } = useTranslation()
   const location = useLocation()
   const isFetching = useIsFetching()
   const isMutating = useIsMutating()
@@ -143,8 +145,8 @@ export default function App() {
       <GlobalLoaderOverlay
         active={shouldShowGlobalLoader}
         skipDelays
-        title="Cargando contenido"
-        description="La vista esta tardando mas de lo esperado. Estamos trabajando para mostrarla."
+        title={t('common.loading')}
+        description={t('common.slowLoading')}
       />
       <BlockingErrorModal />
     </>
