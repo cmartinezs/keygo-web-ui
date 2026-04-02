@@ -352,9 +352,12 @@ El panel de administrador incluye una **barra lateral de navegación** y una **c
 - **Buscador** (escritorio) — decorativo en esta versión, muestra `⌘K`.
 - **Selector de rol activo** (dropdown):
   - Muestra solo los roles incluidos en el claim `roles` del usuario autenticado.
+  - Al desplegarse, oculta el rol que ya esta seleccionado para evitar duplicidad visual.
   - Permite cambiar el rol de trabajo en el momento.
   - Al cambiarlo, la UI vuelve a `/dashboard` y se refrescan menú, vistas y permisos visibles según el rol seleccionado.
 - **Selector de tema:** Sistema / Claro / Oscuro / Alto contraste (la preferencia persiste entre sesiones).
+  - Al desplegarse, oculta la opcion actualmente seleccionada.
+  - En estado cerrado, el valor seleccionado se muestra con color destacado para mejorar la lectura del contexto activo.
 - **Botón de notificaciones** — decorativo en esta versión.
 - **Menú de usuario** (clic en el avatar):
   - Información del usuario (avatar, nombre, rol).

@@ -1305,7 +1305,9 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 
 **Componentes privados internos:**
 - Iconos SVG inline (`IconKey`, `IconDashboard`, `IconBuilding`, `IconApps`, `IconUsers`, `IconShield`, `IconClipboard`, `IconKeySmall`, `IconClock`, `IconTicket`, `IconCloud`, etc.) — sin dependencia de librería de iconos.
-- `ThemeToggle` — dropdown de tema con cierre por click exterior y `role="listbox"`.
+- `Dropdown<T>` — componente reutilizable para selectores del header con cierre por click exterior y `role="listbox"`.
+- `ThemeToggle` y `RoleSwitcher` — wrappers que consumen `Dropdown<T>` para mapear opciones de tema/rol.
+- `useDropdown` — hook interno que centraliza `open/close`, toggle y click-outside para cualquier menú desplegable del layout.
 - `UserAvatar` — genera iniciales desde `displayName` para el avatar circular.
 
 **Sidebar por rol:**
@@ -1330,13 +1332,15 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 | `dropdownOpen` | boolean | Menú de usuario abierto |
 
 **Selector de rol activo (header):**
-- Dropdown nativo con los roles presentes en el claim `roles`.
+- Implementado sobre `Dropdown<T>` con los roles presentes en el claim `roles`.
+- Configurado con `hideSelectedOption=true` para no repetir el rol activo dentro del menu desplegado.
+- Configurado con `selectedValueClassName` para destacar visualmente el rol activo en el trigger cerrado.
 - Al cambiar rol: actualiza `activeRole` en `tokenStore` y navega a `/dashboard` para refrescar contenido y permisos visibles.
 - Sidebar, etiqueta de rol y guards quedan sincronizados con el rol seleccionado.
 
 **Effects:**
 - Cierra el cajón móvil al cambiar de ruta (`location.pathname`).
-- Cierra el dropdown de usuario al hacer click fuera (`mousedown` en `document`).
+- El cierre por click fuera de todos los dropdowns del header se resuelve en `useDropdown` (sin listeners duplicados en `AdminLayout`).
 
 **Flujo de logout:** `navigate('/logout', { replace: true })` desde la UI. La ruta `/logout` centraliza `clearError()` + `clearTokens()` y redirige a `/login`.
 
@@ -1358,6 +1362,7 @@ div.flex.h-screen
 - `useTheme` → ThemeToggle.
 - `useTokenStore.clearTokens` → logout.
 - `SidebarMenu` (`src/components/dashboard/SidebarMenu.tsx`) → render del menu parametrizable.
+- Menú de usuario, selector de rol y selector de tema comparten el mismo primitive `Dropdown`.
 - `AdminLayout` es el `element` del route `/dashboard` en `App.tsx`.
 
 **Decisión de diseño:** Iconos SVG inline para evitar una dependencia de librería de iconos. La consistencia visual se logra usando siempre el mismo tamaño (`w-5 h-5`) y `aria-hidden="true"`.

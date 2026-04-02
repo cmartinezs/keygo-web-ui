@@ -100,6 +100,14 @@ export function useTenantUsers(tenantSlug: string) {
 
 Si el mismo bloque JSX o la misma lógica aparece en dos lugares, refactorizar en un componente o hook compartido. Registrar en el backlog si el refactor está fuera del scope actual.
 
+### Dropdowns unificados
+
+- Todo dropdown nuevo o modificado debe construirse sobre el componente base `Dropdown` (y hooks asociados), evitando estados `open/close` duplicados por pantalla.
+- Los casos de selector (ej: rol, tema) deben usar un wrapper configurado (ej: `SelectDropdown`) en vez de reescribir markup y lógica.
+- Los menús de acciones (ej: menú de usuario) deben declararse por configuración de ítems y reutilizar el mismo primitive `Dropdown`.
+
+**[Aprendido]** Estandarizar dropdowns en un primitive único (`Dropdown`) + configuración declarativa reduce deuda de accesibilidad y evita inconsistencias de comportamiento entre menús y selectores.
+
 ---
 
 ## Patrones de diseño y composición
