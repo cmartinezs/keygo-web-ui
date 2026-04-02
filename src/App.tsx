@@ -18,6 +18,7 @@ import UserMyAccessPage from './pages/dashboard/user/UserMyAccessPage'
 import UserActivityPage from './pages/dashboard/user/UserActivityPage'
 import UserProfilePage from './pages/dashboard/user/UserProfilePage'
 import AccountSettingsPage from './pages/dashboard/account/AccountSettingsPage'
+import FaqCenterPage from './pages/dashboard/FaqCenterPage'
 import { AuthGuard, RoleGuard } from './auth/roleGuard'
 import AdminLayout from './layouts/AdminLayout'
 import TenantsPage from './pages/admin/TenantsPage'
@@ -100,6 +101,8 @@ export default function App() {
           {/* Account sections (all authenticated roles) */}
           <Route path="account" element={<UserProfilePage />} />
           <Route path="account/settings" element={<AccountSettingsPage />} />
+          <Route path="faq" element={<FaqCenterPage />} />
+          <Route path="account/faq" element={<Navigate to="/dashboard/faq" replace />} />
 
           {/* Admin-only sections */}
           <Route element={<RoleGuard roles={['ADMIN']} redirectTo="/dashboard" />}>

@@ -1,8 +1,14 @@
 import { useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LOCALE_LABELS, LOCALE_STORAGE_KEY, SUPPORTED_LOCALES } from './constants'
+import { LOCALE_LABELS, SUPPORTED_LOCALES } from './constants'
 import { i18n } from './config'
-import { normalizeLocale, resolveDeviceLocale } from './localeUtils'
+import {
+  clearStoredManualLocale,
+  getStoredManualLocale,
+  normalizeLocale,
+  persistManualLocale,
+  resolveDeviceLocale,
+} from './localeUtils'
 
 interface LocaleOption {
   value: string
@@ -28,12 +34,12 @@ export function useLocale() {
 
   async function setLocale(nextLocale: string) {
     if (!SUPPORTED_LOCALES.includes(nextLocale as (typeof SUPPORTED_LOCALES)[number])) return
-    localStorage.setItem(LOCALE_STORAGE_KEY, nextLocale)
+    persistManualLocale(nextLocale as (typeof SUPPORTED_LOCALES)[number])
     await i18n.changeLanguage(nextLocale)
   }
 
   async function resetToDeviceLocale() {
-    localStorage.removeItem(LOCALE_STORAGE_KEY)
+    clearStoredManualLocale()
     await i18n.changeLanguage(resolveDeviceLocale())
   }
 
@@ -42,6 +48,6 @@ export function useLocale() {
     setLocale,
     resetToDeviceLocale,
     supportedLocales,
-    isAutoDetected: localStorage.getItem(LOCALE_STORAGE_KEY) === null,
+    isAutoDetected: getStoredManualLocale() === null,
   }
 }

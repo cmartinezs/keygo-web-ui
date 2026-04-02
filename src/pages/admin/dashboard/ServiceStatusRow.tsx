@@ -1,4 +1,5 @@
 import type { PlatformDashboardData } from '@/types/dashboard'
+import { useTranslation } from 'react-i18next'
 import { StatCard } from './DashboardPrimitives'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -44,16 +45,18 @@ interface ServiceStatusRowProps {
 }
 
 export function ServiceStatusRow({ service, activeSigningKey }: ServiceStatusRowProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      <StatCard label="Servicio" value={service?.name} icon={<IconServer />} highlight />
-      <StatCard label="Entorno" value={service?.environment} icon={<IconGlobe />} highlight />
-      <StatCard label="Versión" value={service?.version} icon={<IconTag />} highlight />
+      <StatCard label={t('adminDashboard.serviceRow.service')} value={service?.name} icon={<IconServer />} highlight />
+      <StatCard label={t('adminDashboard.serviceRow.environment')} value={service?.environment} icon={<IconGlobe />} highlight />
+      <StatCard label={t('adminDashboard.serviceRow.version')} value={service?.version} icon={<IconTag />} highlight />
       <div className="bg-white dark:bg-slate-900 border border-indigo-400 dark:border-indigo-500/60 rounded-xl p-5 flex flex-col gap-2 transition-colors">
         <div className="flex items-center gap-1.5">
           <span className="text-amber-500"><IconKey /></span>
           <span className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-widest">
-            Clave activa
+            {t('adminDashboard.serviceRow.activeSigningKey')}
           </span>
         </div>
         {activeSigningKey
@@ -63,7 +66,10 @@ export function ServiceStatusRow({ service, activeSigningKey }: ServiceStatusRow
                 {activeSigningKey.kid}
               </span>
               <span className="text-xs text-slate-500 dark:text-slate-400">
-                {activeSigningKey.algorithm} · {activeSigningKey.age_days}d
+                {t('adminDashboard.serviceRow.keyMeta', {
+                  algorithm: activeSigningKey.algorithm,
+                  days: activeSigningKey.age_days,
+                })}
               </span>
             </>
           )

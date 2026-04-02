@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { listMembershipsByUser, MEMBERSHIP_QUERY_KEYS } from '@/api/memberships'
 import { listClientApps, CLIENT_APP_QUERY_KEYS } from '@/api/clientApps'
 import { TENANT } from '@/api/client'
@@ -10,23 +11,24 @@ import {
 } from '@/config/network'
 import { runGetWithRecovery } from '@/lib/network/recovery'
 
-const STATUS_LABEL: Record<string, string> = {
-  ACTIVE: 'Activo',
-  SUSPENDED: 'Suspendido',
-  PENDING: 'Pendiente',
-}
-
 export default function UserMyAccessPage() {
+  const { t, i18n } = useTranslation()
   const currentUser = useCurrentUser()
   const tenantSlug = currentUser?.tenantSlug ?? TENANT
   const userId = currentUser?.sub ?? ''
+
+  const statusLabel: Record<string, string> = {
+    ACTIVE: t('userDashboardMyAccess.status.ACTIVE'),
+    SUSPENDED: t('userDashboardMyAccess.status.SUSPENDED'),
+    PENDING: t('userDashboardMyAccess.status.PENDING'),
+  }
 
   const membershipsQuery = useQuery({
     queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, userId),
     queryFn: ({ signal }) =>
       runGetWithRecovery({
         signal,
-        label: 'tus accesos',
+        label: t('userDashboardMyAccess.recovery.membershipsLabel'),
         timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
         retryDelayMs: NETWORK_RETRY_DELAY_MS,
         maxRetries: NETWORK_MAX_RETRIES,
@@ -45,7 +47,7 @@ export default function UserMyAccessPage() {
     queryFn: ({ signal }) =>
       runGetWithRecovery({
         signal,
-        label: 'aplicaciones',
+        label: t('userDashboardMyAccess.recovery.appsLabel'),
         timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
         retryDelayMs: NETWORK_RETRY_DELAY_MS,
         maxRetries: NETWORK_MAX_RETRIES,
@@ -64,19 +66,19 @@ export default function UserMyAccessPage() {
   return (
     <div className="mx-auto max-w-screen-xl space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mi acceso</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('userDashboardMyAccess.title')}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Aplicaciones y roles asignados a tu cuenta en el tenant {tenantSlug}.
+          {t('userDashboardMyAccess.subtitle', { tenantSlug })}
         </p>
       </header>
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
-          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Asignaciones</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardMyAccess.assignments')}</p>
           <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{membershipsQuery.data?.length ?? 0}</p>
         </article>
         <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
-          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Accesos activos</p>
+          <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardMyAccess.activeAccess')}</p>
           <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">{activeCount}</p>
         </article>
       </section>
@@ -87,7 +89,7 @@ export default function UserMyAccessPage() {
           aria-live="polite"
           className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-white/10 dark:bg-slate-900 dark:text-slate-400"
         >
-          Cargando tus accesos...
+          {t('userDashboardMyAccess.loading')}
         </div>
       ) : null}
 
@@ -100,20 +102,20 @@ export default function UserMyAccessPage() {
             ? membershipsQuery.error.message
             : appsQuery.error instanceof Error
               ? appsQuery.error.message
-              : 'No fue posible cargar tus accesos.'}
+              : t('userDashboardMyAccess.errorFallback')}
         </div>
       ) : null}
 
       {!membershipsQuery.isLoading && !membershipsQuery.isError ? (
         <section className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-slate-900">
           <table className="w-full min-w-[760px] text-sm">
-            <caption className="sr-only">Listado de accesos por aplicacion</caption>
+            <caption className="sr-only">{t('userDashboardMyAccess.tableCaption')}</caption>
             <thead>
               <tr className="border-b border-slate-200 text-left text-slate-500 dark:border-white/10 dark:text-slate-400">
-                <th className="px-4 py-3 font-semibold">Aplicacion</th>
-                <th className="px-4 py-3 font-semibold">Estado</th>
-                <th className="px-4 py-3 font-semibold">Roles</th>
-                <th className="px-4 py-3 font-semibold">Asignada</th>
+                <th className="px-4 py-3 font-semibold">{t('userDashboardMyAccess.columns.application')}</th>
+                <th className="px-4 py-3 font-semibold">{t('userDashboardMyAccess.columns.status')}</th>
+                <th className="px-4 py-3 font-semibold">{t('userDashboardMyAccess.columns.roles')}</th>
+                <th className="px-4 py-3 font-semibold">{t('userDashboardMyAccess.columns.assignedAt')}</th>
               </tr>
             </thead>
             <tbody>
@@ -123,13 +125,13 @@ export default function UserMyAccessPage() {
                     {appNameById.get(membership.client_app_id) ?? membership.client_app_id}
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {STATUS_LABEL[membership.status] ?? membership.status}
+                    {statusLabel[membership.status] ?? membership.status}
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                     {membership.role_ids.length > 0 ? membership.role_ids.join(', ') : '-'}
                   </td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    {new Date(membership.created_at).toLocaleString('es-CL')}
+                    {new Date(membership.created_at).toLocaleString(i18n.resolvedLanguage ?? i18n.language)}
                   </td>
                 </tr>
               ))}
@@ -138,7 +140,7 @@ export default function UserMyAccessPage() {
 
           {(membershipsQuery.data?.length ?? 0) === 0 ? (
             <p className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">
-              No tienes accesos asignados en este tenant.
+              {t('userDashboardMyAccess.empty')}
             </p>
           ) : null}
         </section>

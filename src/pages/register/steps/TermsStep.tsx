@@ -6,8 +6,11 @@ import { PolicyModal } from '@/components/PolicyModal'
 import { TermsOfServiceContent } from '@/components/TermsOfServiceContent'
 import { PrivacyPolicyContent } from '@/components/PrivacyPolicyContent'
 import { env } from '@/config/env'
+import { i18n } from '@/i18n/config'
+import { normalizeLocale } from '@/i18n/localeUtils'
 
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
+const ACTIVE_LOCALE = normalizeLocale(i18n.resolvedLanguage ?? i18n.language)
 
 const PERIOD_LABELS: Record<string, string> = {
   MONTHLY: '/mes',
@@ -42,7 +45,7 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
     ? 'A medida · contactar'
     : !billingOption || billingOption.base_price === 0
       ? 'Gratis'
-      : `${new Intl.NumberFormat('es-MX', { style: 'currency', currency: version.currency, minimumFractionDigits: 0 }).format(billingOption.base_price)}${PERIOD_LABELS[billingOption.billing_period] ?? ''}`
+    : `${new Intl.NumberFormat(ACTIVE_LOCALE, { style: 'currency', currency: version.currency, minimumFractionDigits: 0 }).format(billingOption.base_price)}${PERIOD_LABELS[billingOption.billing_period] ?? ''}`
 
   return (
     <div className="flex flex-col gap-6">

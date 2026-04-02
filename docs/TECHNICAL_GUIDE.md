@@ -246,6 +246,8 @@ i18n (react-i18next + i18next)
 
 **Integración:** El script inline aplica idioma y clases de tema sobre `<html>` **antes de que React monte**, eliminando flash de idioma/tema incorrecto. `useThemeStore` y `useLocale` leen las mismas claves de `localStorage` durante inicialización.
 
+**Debug operacional:** si se abre la app con `?debug-locale=1`, el bootstrap expone y loguea `window.__kgLocaleDebug` para inspeccionar `navigator.language`, `navigator.languages`, locale persistido y locale resuelto antes del montaje de React.
+
 **Decisión de diseño:** La inicialización del tema debe ocurrir sincrónicamente en el HTML, no en un `useEffect`, porque los effects corren tras el primer render y causarían parpadeo visual.
 
 **Estrategia de carga inicial:** El fallback de `#kg-boot` da feedback inmediato en conexiones lentas o cuando el bundle tarda en hidratar.
@@ -1143,10 +1145,12 @@ function useRateLimit(formKey: string) {
 **Construcción:**
 - `normalizeLocale(value)` mapea variantes (`es-*`, `en-*`) a locales canónicos soportados.
 - `resolveDeviceLocale()` obtiene idioma del dispositivo con fallback seguro.
+- `getStoredManualLocale()` solo acepta `localStorage` cuando la fuente fue marcada explícitamente como manual.
+- `resolveInitialLocale()` prioriza preferencia manual valida; si no existe, usa idioma del dispositivo.
 
 **Integración:** Usado por `config.ts`, `useLocale.ts` y utilidades de formato.
 
-**Decisión de diseño:** Mantener la lógica de fallback fuera de componentes para minimizar acoplamiento.
+**Decisión de diseño:** Mantener la lógica de fallback fuera de componentes para minimizar acoplamiento y evitar que la detección automática contamine la persistencia manual.
 
 ---
 
@@ -1180,6 +1184,36 @@ function useRateLimit(formKey: string) {
 **Integración:** Consumido en `AccountSettingsPage` para selector de idioma y modo automático.
 
 **Decisión de diseño:** API simple y desacoplada del resto de stores globales (sin duplicar fuente de verdad con Zustand).
+
+---
+
+### `src/i18n/adminDashboardI18n.test.ts`
+
+**Propósito:** Validar regresiones de internacionalización en el dashboard admin.
+
+**Construcción:**
+- Verifica resolución de claves `adminDashboard.*` en `es-CL`.
+- Verifica cambio de idioma en runtime a `en-US` con `i18n.changeLanguage(...)`.
+- Restaura el idioma original al finalizar para evitar acoplamiento entre tests.
+
+**Integración:** Ejecutado por Vitest junto al resto de tests unitarios (`npm test`).
+
+**Decisión de diseño:** Cobertura ligera y estable sin dependencias de render UI (asserts directos sobre el motor i18n).
+
+---
+
+### `src/i18n/userDashboardI18n.test.ts`
+
+**Propósito:** Validar regresiones de internacionalización en paginas de usuario del dashboard (`my-access`, `account`, `sessions`).
+
+**Construcción:**
+- Verifica resolución de claves `userDashboardMyAccess.*`, `userDashboardProfile.*` y `userDashboardSessions.*` en `es-CL`.
+- Verifica cambio de idioma en runtime a `en-US` para mismas claves.
+- Restaura idioma original al finalizar para evitar side effects entre tests.
+
+**Integración:** Ejecutado por Vitest junto al resto de tests unitarios (`npm test`).
+
+**Decisión de diseño:** Prueba de bajo acoplamiento enfocada en consistencia de catálogos y switch runtime sin montar componentes.
 
 ---
 
@@ -1241,6 +1275,8 @@ function useRateLimit(formKey: string) {
 - Soporta `selectedValueClassName` para estilizar el valor seleccionado en trigger cerrado.
 
 **Integración:** Usado en `src/layouts/AdminLayout.tsx` para `ThemeToggle` y `RoleSwitcher`.
+
+**i18n:** Cuando no existen opciones para seleccionar, el componente usa la clave `common.noMoreOptions` para mostrar el estado vacío en el idioma activo.
 
 **Decisión de diseño:** Separar el caso "selector" del primitive general permite configuración por props sin repetir JSX ni handlers.
 
@@ -1470,6 +1506,7 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 - Iconos SVG inline (`IconKey`, `IconDashboard`, `IconBuilding`, `IconApps`, `IconUsers`, `IconShield`, `IconClipboard`, `IconKeySmall`, `IconClock`, `IconTicket`, `IconCloud`, etc.) — sin dependencia de librería de iconos.
 - `Dropdown<T>` — componente reutilizable para selectores del header con cierre por click exterior y `role="listbox"`.
 - `ThemeToggle` y `RoleSwitcher` — wrappers que consumen `Dropdown<T>` para mapear opciones de tema/rol.
+- `LanguageSwitcher` — wrapper del selector de idioma en cabecera con iconos de bandera (`es-CL`, `en-US`).
 - `useDropdown` — hook interno que centraliza `open/close`, toggle y click-outside para cualquier menú desplegable del layout.
 - `UserAvatar` — genera iniciales desde `displayName` para el avatar circular.
 
@@ -1523,9 +1560,12 @@ div.flex.h-screen
 **Integración:**
 - `useCurrentUser` → nombre + iniciales + rol del usuario en sidebar y dropdown.
 - `useTheme` → ThemeToggle.
+- `react-i18next` → textos de navegación, etiquetas de rol/tema, aria-labels y acciones del menú de usuario.
 - `useTokenStore.clearTokens` → logout.
 - `SidebarMenu` (`src/components/dashboard/SidebarMenu.tsx`) → render del menu parametrizable.
 - Menú de usuario, selector de rol y selector de tema comparten el mismo primitive `Dropdown`.
+- Selector de idioma de cabecera también reutiliza el mismo primitive via `SelectDropdown`.
+- `useLocale` (`src/i18n/useLocale.ts`) alimenta el idioma actual, opciones soportadas y el cambio de idioma.
 - `AdminLayout` es el `element` del route `/dashboard` en `App.tsx`.
 
 **Decisión de diseño:** Iconos SVG inline para evitar una dependencia de librería de iconos. La consistencia visual se logra usando siempre el mismo tamaño (`w-5 h-5`) y `aria-hidden="true"`.
@@ -1535,6 +1575,8 @@ div.flex.h-screen
 - Campana de notificaciones sin funcionalidad.
 - Configuración de cuenta depende de endpoints backend aún pendientes para tabs de seguridad/notificaciones/conexiones.
 - Sin keyboard navigation completa en ThemeToggle (solo focus ring).
+
+**Regla de UX aplicada:** los selectores deben reutilizar el primitive compartido `Dropdown` (via `SelectDropdown`) para consistencia visual y de interacción; incluye selector de idioma en cabecera y en `AccountSettingsPage`.
 
 ---
 
@@ -1724,7 +1766,7 @@ initMutation.isSuccess                                  → LoginForm
 
 **Decisión de diseño:** separar estructura de menu (datos) de la presentacion para mantener sidebars parametrizables.
 
-**Puntos de mejora / deuda técnica conocida:** internacionalizar labels y extraer iconografia a modulo compartido.
+**Puntos de mejora / deuda técnica conocida:** extraer iconografia a modulo compartido.
 
 ### 10.2.4 User tenant pages reales — `src/pages/dashboard/user/`
 
@@ -1737,6 +1779,8 @@ initMutation.isSuccess                                  → LoginForm
 - Consulta memberships con `listMembershipsByUser(...)` y apps con `listClientApps(...)`.
 - Resuelve `client_app_id` a nombre de app para renderizar tabla de accesos.
 - Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para memberships y apps.
+- i18n con `react-i18next` usando claves `userDashboardMyAccess.*` para encabezado, tabla, estados y mensajes de carga/error/vacio.
+- Formatea `created_at` con `toLocaleString(i18n.language)` para respetar locale activo.
 
 **Integración:** ruta `/dashboard/user/my-access` protegida por `RoleGuard` con `USER_TENANT`.
 
@@ -1766,6 +1810,8 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:**
 - Decodifica `accessToken` e `idToken` para mostrar emision, expiracion y TTL estimado.
 - Muestra disponibilidad de `refreshToken` en `sessionStorage` (via store en memoria + persistencia parcial).
+- i18n con `react-i18next` usando claves `userDashboardSessions.*` en titulos, labels y estado de persistencia.
+- Fechas de token se formatean con locale activo (`i18n.resolvedLanguage ?? i18n.language`).
 
 **Integración:** ruta `/dashboard/user/sessions` protegida por `RoleGuard` con `USER_TENANT`.
 
@@ -1784,6 +1830,8 @@ initMutation.isSuccess                                  → LoginForm
 - Mutacion `updateProfile(...)` con invalidacion de cache y feedback por toast.
 - Tabs **Accesos** y **Actividad** quedan preparadas como placeholders backend-driven.
 - Resiliencia: GET de perfil con timeout (10s) + retry automático controlado (5s, máximo 3); PATCH de actualización con timeout explícito (10s) sin auto-retry.
+- i18n con `react-i18next` usando claves `userDashboardProfile.*` para tabs, labels, placeholders, carga/error y toasts.
+- Schema Zod se construye con mensajes localizados (`invalidProfileUrl`) para mantener validación consistente por idioma.
 
 **Integración:**
 - Ruta principal: `/dashboard/account` (autenticada para todos los roles).
@@ -1802,6 +1850,8 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:**
 - Tabs accesibles con estado local para segmentar cada bloque de configuración.
 - Lectura de `?tab=` para compatibilidad con rutas legacy (por ejemplo redirección desde `/dashboard/user/sessions`).
+- El bloque de idioma incluye helper explicativo de fuente de detección (`navigator.languages`) y estado de preferencia (automático/manual).
+- Se incorpora CTA hacia el centro de FAQs del sistema (`/dashboard/faq`) para mantener la vista de settings enfocada en configuración.
 - Seguridad/notificaciones/conexiones se muestran como módulos en estado "Próximamente" con contrato backend explícito.
 - Facturación conectada a endpoints reales (`getActiveSubscription`, `listInvoices`) para `ADMIN_TENANT`.
 - Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para suscripción e invoices.
@@ -1816,6 +1866,28 @@ initMutation.isSuccess                                  → LoginForm
 **Puntos de mejora / deuda técnica conocida:**
 - faltan endpoints de seguridad de cuenta (change-password, sessions remotas) para reemplazar placeholders.
 - faltan endpoints de notificaciones y conexiones para completar UX de settings.
+
+**`FaqCenterPage.tsx`**
+
+**Propósito:** centralizar preguntas frecuentes de todo el sistema en una página única que evolucione junto con nuevas funcionalidades.
+
+**Construcción:**
+- Página standalone con tabs accesibles (`tablist`, `tab`, `tabpanel`) alineadas con los menús del sidebar según rol activo.
+- Cada tab contiene FAQs en formato accordion (`details/summary`) ordenadas de simple a avanzado.
+- El contenido se modela por configuración (`FAQ_TABS_BY_ROLE`) para soportar crecimiento orgánico por módulo del sistema.
+- Buscador local (`type=search`) para filtrar por texto en pregunta/respuesta dentro de la pestaña visible, con estado vacío accesible.
+- Header con nota explícita de crecimiento orgánico para guiar mantenimiento y expansión del contenido.
+
+**Integración:**
+- Ruta protegida para usuarios autenticados: `/dashboard/faq`.
+- Compatibilidad legacy: `/dashboard/account/faq` redirige a `/dashboard/faq`.
+- Entrada en navegación lateral y menú de usuario desde `AdminLayout`.
+- CTA de acceso desde `AccountSettingsPage`.
+
+**Decisión de diseño:** centralizar FAQs en una sola ruta transversal evita fragmentación por pantalla y mejora descubribilidad de ayuda contextual por rol.
+
+**Puntos de mejora / deuda técnica conocida:**
+- En próximas iteraciones se puede versionar el contenido por feature flag para mostrar FAQs solo cuando un módulo esté habilitado en backend.
 
 ---
 
@@ -1891,6 +1963,7 @@ const { data, isLoading, isError, refetch, isFetching } = useQuery({
 
 - Header con selector de rango (Hoy / 7 días / 30 días, estado local) + botón Actualizar + Acciones rápidas.
 - 6 filas semánticas, cada una en un `<section aria-labelledby>` con su skeleton y componente de datos.
+- Internacionalización completa del módulo con `react-i18next` usando claves `adminDashboard.*`.
 
 **Sub-componentes (`src/pages/admin/dashboard/`):**
 
@@ -1905,6 +1978,12 @@ const { data, isLoading, isError, refetch, isFetching } = useQuery({
 | `OnboardingHealthRow.tsx` | Fila 6: 4 métricas de salud de onboarding |
 
 **Integración:** `getPlatformDashboard`, `DASHBOARD_QUERY_KEYS` (api/dashboard.ts) · tipos en `types/dashboard.ts`.
+
+**i18n:**
+- `DashboardPage.tsx` traduce encabezado, selector de rango, acciones, error global y títulos de secciones.
+- `DashboardPrimitives.tsx` traduce etiquetas de desglose (`active/pending/suspended`).
+- `ServiceStatusRow.tsx`, `IamCoreRow.tsx`, `SecurityRow.tsx`, `PendingAndActivityRow.tsx`, `RankingsRow.tsx` y `OnboardingHealthRow.tsx` consumen `adminDashboard.*` para evitar hardcodes.
+- `RankingsRow.tsx` formatea cantidades con `toLocaleString(i18n.language)` para coherencia numérica por idioma.
 
 **Decisión de diseño:** Un único endpoint agrega todos los datos para evitar waterfalls. El selector de rango es local hasta que el backend soporte parámetros de filtro temporal.
 
@@ -1941,6 +2020,8 @@ const { data, isLoading } = useQuery({
 
 **Integración:** `listTenants`, `TENANT_QUERY_KEYS` (api/tenants.ts), rutas anidadas via `<Outlet>`.
 
+**i18n:** filtros, estados, placeholders, mensajes de vacío/error, paginación y labels ARIA se resuelven con `react-i18next` (`adminTenants.*`).
+
 ---
 
 ### 10.7 Admin — Detalle de Tenant
@@ -1968,6 +2049,8 @@ Acciones condicionadas por `TenantStatus`:
 
 **Integración:** `getTenant`, `suspendTenant`, `activateTenant`, `TENANT_QUERY_KEYS` (api/tenants.ts), `useQueryClient` para invalidaciones.
 
+**i18n:** toasts, confirmación de suspensión, labels de metadata y acciones se resuelven con `react-i18next` (`adminTenantDetail.*`).
+
 ---
 
 ### 10.8 Admin — Crear Tenant
@@ -1992,6 +2075,8 @@ const mutation = useMutation({
 ```
 
 **Integración:** `createTenant`, `TENANT_QUERY_KEYS` (api/tenants.ts), `useNavigate`, `useQueryClient`.
+
+**i18n:** schema de validación (Zod), textos de formulario y toasts de resultado usan claves `adminTenantCreate.*` para respetar idioma activo.
 
 ---
 

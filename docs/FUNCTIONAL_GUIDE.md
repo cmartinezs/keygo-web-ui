@@ -144,6 +144,10 @@ Ruta de salida segura:
    - Si está configurado: widget de verificación **Turnstile** (Cloudflare) para protección anti-bot.
    - Botón "Iniciar sesión".
 
+Idioma de interfaz en login:
+- Los textos del flujo de login se renderizan en el idioma activo de la app.
+- Si no hay selección manual previa, login usa el idioma detectado del dispositivo.
+
 3. **Autenticación y redirección** (automática, invisible) — Las credenciales se validan, se obtienen los tokens de sesión y el usuario es llevado automáticamente al área correspondiente a su rol:
   - `ADMIN` → `/dashboard`
   - `ADMIN_TENANT` → `/dashboard`
@@ -355,6 +359,10 @@ El panel de administrador incluye una **barra lateral de navegación** y una **c
   - Al desplegarse, oculta el rol que ya esta seleccionado para evitar duplicidad visual.
   - Permite cambiar el rol de trabajo en el momento.
   - Al cambiarlo, la UI vuelve a `/dashboard` y se refrescan menú, vistas y permisos visibles según el rol seleccionado.
+- **Selector de idioma** (dropdown con bandera):
+  - Disponible en la cabecera para cambio rapido de idioma en cualquier pantalla autenticada.
+  - Permite alternar entre `es-CL` y `en-US`.
+  - El cambio impacta inmediatamente toda la interfaz del dashboard.
 - **Selector de tema:** Sistema / Claro / Oscuro / Alto contraste (la preferencia persiste entre sesiones).
   - Al desplegarse, oculta la opcion actualmente seleccionada.
   - En estado cerrado, el valor seleccionado se muestra con color destacado para mejorar la lectura del contexto activo.
@@ -390,6 +398,9 @@ Vista agregada en tiempo real de toda la plataforma, obtenida en una única llam
 - **Botón Actualizar:** re-ejecuta la query; durante la carga muestra un icono giratorio.
 - **Botón Acciones rápidas:** (pendiente de contenido)
 
+Idioma de interfaz:
+- Todos los textos del dashboard admin (encabezado, botones, títulos de sección, tarjetas y estados vacíos) se renderizan con el idioma activo (`es-CL` o `en-US`).
+
 #### Filas de datos
 
 | Fila | Sección | Descripción |
@@ -398,7 +409,7 @@ Vista agregada en tiempo real de toda la plataforma, obtenida en una única llam
 | 2 | Núcleo IAM | 4 tarjetas: Tenants, Usuarios, Apps, Memberships — cada una con desglose active / pending / suspended |
 | 3 | Seguridad | 4 tarjetas: Sesiones, Refresh Tokens, Auth Codes, Alertas |
 | 4 | Gestión y actividad | Dos columnas: Pendientes de gestión (izquierda), Actividad reciente (derecha) |
-| 5 | Rankings | Top tenants por usuarios (izquierda), Top apps por accesos (derecha) |
+| 5 | Rankings | Top tenants por usuarios (izquierda), Top apps por memberships (derecha) |
 | 6 | Salud de onboarding | 4 tarjetas: Pendientes de verificación, Verificaciones expiradas, Registros recientes, Verificaciones exitosas |
 
 #### Estados de carga
@@ -419,6 +430,9 @@ Comportamiento en red lenta (listado principal):
 **Ruta:** `/dashboard/tenants` (solo rol `ADMIN`)
 
 Vista de dos paneles (lista + detalle) para administrar todas las organizaciones registradas en la plataforma.
+
+Idioma de interfaz:
+- Los textos de lista, filtros, estados, paginacion y acciones se renderizan en el idioma activo (`es-CL` o `en-US`).
 
 #### Panel izquierdo — Lista de tenants
 
@@ -451,6 +465,9 @@ En pantallas pequeñas, la lista ocupa toda la pantalla. Al seleccionar un tenan
 ### 2.3 Detalle de un Tenant
 
 **Ruta:** `/dashboard/tenants/:slug`
+
+Idioma de interfaz:
+- Estados, etiquetas de informacion, confirmaciones y botones de accion usan el idioma activo.
 
 #### Qué ve el usuario
 
@@ -490,6 +507,9 @@ Comportamiento en red lenta:
 **Ruta:** `/dashboard/tenants/new`
 
 Formulario simple para registrar una nueva organización en la plataforma.
+
+Idioma de interfaz:
+- Labels, hints, validaciones y mensajes de exito/error del formulario usan el idioma activo.
 
 #### Campos del formulario
 
@@ -604,6 +624,10 @@ Muestra las asignaciones de acceso del usuario autenticado:
 - Roles asignados
 - Fecha de asignacion
 
+Idioma de interfaz:
+- Esta vista usa el idioma activo para titulo, subtitulo, columnas, estados y mensajes de carga/error/vacio.
+- Las fechas de asignacion se formatean segun locale activo (`es-CL` o `en-US`).
+
 Comportamiento en red lenta:
 - Las consultas de accesos y aplicaciones usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 
@@ -617,6 +641,15 @@ Muestra actividad reciente de la cuenta:
 
 Comportamiento en red lenta:
 - Las consultas de actividad (memberships/apps) usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+
+### 4.6 Idioma y navegación del dashboard
+
+**Ruta base:** `/dashboard`
+
+Comportamiento:
+- El shell autenticado (menú lateral, cabecera y menú de usuario) utiliza el idioma activo de i18n.
+- El selector de idioma en configuración de cuenta impacta inmediatamente la navegación del dashboard.
+- El modo automático mantiene el idioma del dispositivo; la selección manual se conserva en el navegador.
 
 ### 4.4 Mi cuenta
 
@@ -635,6 +668,10 @@ Campos editables en la tab Perfil:
 - Fecha de nacimiento
 - Sitio web
 - URL de foto de perfil
+
+Idioma de interfaz:
+- Tabs, resumen, labels de formulario, placeholders backend y mensajes de carga/error se muestran en el idioma activo.
+- La validacion del campo URL de foto de perfil y el toast de guardado tambien se localizan por idioma activo.
 
 Comportamiento en red lenta:
 - La carga del perfil usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
@@ -659,12 +696,32 @@ Idioma de interfaz (nuevo):
 - Comportamiento por defecto: si el usuario no define preferencia manual, la app toma la configuración del dispositivo cliente.
 - Si el usuario cambia idioma manualmente, la preferencia queda guardada en el navegador y prevalece en futuras sesiones de ese dispositivo.
 - Existe acción para volver al modo automático (idioma del dispositivo).
+- Se muestra una ayuda contextual que aclara que el modo automático usa `navigator.languages` del navegador.
+- Se incorpora acceso directo hacia una página dedicada de FAQs para resolver dudas sin recargar la vista de configuración.
+- Regla de implementación: los selectores de la app deben reutilizar el componente `Dropdown` compartido (via `SelectDropdown`) para mantener consistencia de UX.
 
 Comportamiento en red lenta:
 - Suscripción y facturas usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 
 Compatibilidad:
 - La ruta legacy `/dashboard/user/sessions` redirige a `/dashboard/account/settings?tab=security`.
+
+### 4.6 FAQs del sistema
+
+**Ruta:** `/dashboard/faq`
+
+Centro de ayuda incremental para guiar al usuario con preguntas frecuentes de todo el sistema.
+
+Estado actual:
+- Incluye contenidos por menú principal del dashboard (según rol), no solo de cuenta.
+- Se organiza en pestañas alineadas al menú sidebar visible para el rol activo.
+- Dentro de cada pestaña, las preguntas se ordenan de menor a mayor complejidad para facilitar onboarding y auto-soporte.
+- Incluye buscador local para filtrar preguntas y respuestas por palabra clave dentro de cada pestaña.
+- Está diseñada para crecer orgánicamente a medida que se habiliten nuevas funcionalidades.
+
+Acceso:
+- Disponible para cualquier usuario autenticado.
+- Accesible desde el sidebar, menú de usuario y desde Configuración de cuenta.
 
 ---
 

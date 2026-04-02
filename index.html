@@ -7,8 +7,25 @@
     <!-- Theme init: run synchronously before paint to avoid flash -->
     <script>
       (function () {
+        var debugLocale = window.location.search.indexOf('debug-locale=1') >= 0
+
         try {
           var supportedLocales = ['es-CL', 'en-US']
+          var localeStorageKey = 'keygo-locale'
+          var localeSourceStorageKey = 'keygo-locale-source'
+          var manualLocaleSource = 'manual'
+          var safeStorageGet = function (key) {
+            try {
+              return localStorage.getItem(key)
+            } catch (_error) {
+              return null
+            }
+          }
+          var safeStorageRemove = function (key) {
+            try {
+              localStorage.removeItem(key)
+            } catch (_error) {}
+          }
           var normalizeLocale = function (value) {
             if (!value || typeof value !== 'string') return 'es-CL'
             var normalized = value.trim()
@@ -19,9 +36,30 @@
             return 'es-CL'
           }
 
-          var persistedLocale = localStorage.getItem('keygo-locale')
+          var persistedLocale = safeStorageGet(localeStorageKey)
+          var persistedLocaleSource = safeStorageGet(localeSourceStorageKey)
+          if (persistedLocaleSource !== manualLocaleSource) {
+            persistedLocale = null
+            safeStorageRemove(localeStorageKey)
+            safeStorageRemove(localeSourceStorageKey)
+          }
           var browserLocale = (navigator.languages && navigator.languages[0]) || navigator.language || 'es-CL'
-          document.documentElement.lang = normalizeLocale(persistedLocale || browserLocale)
+          var resolvedLocale = normalizeLocale(persistedLocale || browserLocale)
+          document.documentElement.lang = resolvedLocale
+
+          window.__kgLocaleDebug = {
+            supportedLocales: supportedLocales.slice(),
+            persistedLocale: persistedLocale,
+            persistedLocaleSource: persistedLocaleSource,
+            navigatorLanguages: navigator.languages ? Array.prototype.slice.call(navigator.languages) : [],
+            navigatorLanguage: navigator.language || null,
+            browserLocale: browserLocale,
+            resolvedLocale: resolvedLocale,
+          }
+
+          if (debugLocale) {
+            console.info('[keygo-locale-bootstrap]', window.__kgLocaleDebug)
+          }
 
           var p = localStorage.getItem('keygo-theme') || 'system'
           var highContrast = p === 'high-contrast'
@@ -32,7 +70,11 @@
             return
           }
           if (dark) document.documentElement.classList.add('dark')
-        } catch (e) {}
+        } catch (e) {
+          if (debugLocale) {
+            console.error('[keygo-locale-bootstrap:error]', e)
+          }
+        }
       })()
     </script>
     <style>

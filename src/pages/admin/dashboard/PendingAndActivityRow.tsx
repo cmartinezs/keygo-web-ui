@@ -1,4 +1,5 @@
 import type { PendingActionItem, ActivityItem } from '@/types/dashboard'
+import { useTranslation } from 'react-i18next'
 
 // ── Pending Actions ───────────────────────────────────────────────────────────
 
@@ -19,10 +20,12 @@ function PendingActionRow({ item }: { item: PendingActionItem }) {
 }
 
 function PendingActionsList({ items }: PendingActionsListProps) {
+  const { t } = useTranslation()
+
   if (!items || items.length === 0) {
     return (
       <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center italic">
-        Sin pendientes
+        {t('adminDashboard.pendingActivity.noPending')}
       </p>
     )
   }
@@ -54,10 +57,12 @@ function ActivityRow({ item }: { item: ActivityItem }) {
 }
 
 function RecentActivityList({ items }: RecentActivityListProps) {
+  const { t } = useTranslation()
+
   if (!items || items.length === 0) {
     return (
       <p className="text-sm text-slate-400 dark:text-slate-500 py-6 text-center italic">
-        Sin actividad reciente
+        {t('adminDashboard.pendingActivity.noRecentActivity')}
       </p>
     )
   }
@@ -78,15 +83,17 @@ interface PendingAndActivityRowProps {
 }
 
 export function PendingAndActivityRow({ pendingActions, recentActivity }: PendingAndActivityRowProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-3">Pendientes de gestión</h3>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-3">{t('adminDashboard.pendingActivity.pendingManagement')}</h3>
         <PendingActionsList items={pendingActions} />
       </div>
 
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-3">Actividad reciente</h3>
+        <h3 className="text-sm font-semibold text-slate-800 dark:text-white mb-3">{t('adminDashboard.pendingActivity.recentActivity')}</h3>
         <RecentActivityList items={recentActivity} />
       </div>
     </div>

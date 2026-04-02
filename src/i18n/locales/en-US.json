@@ -12,6 +12,7 @@
     "userMenu": "User menu",
     "myAccount": "My account",
     "accountSettings": "Account settings",
+    "faq": "FAQs",
     "logout": "Sign out",
     "retryNow": "Retry now",
     "comeBackLater": "Come back later",
@@ -19,7 +20,9 @@
     "status": "Status",
     "loadingSubscription": "Loading subscription...",
     "loadingInvoices": "Loading invoices...",
-    "notDefined": "Not defined"
+    "notDefined": "Not defined",
+    "noMoreOptions": "No more options",
+    "admin": "Admin"
   },
   "theme": {
     "system": "System",
@@ -32,7 +35,10 @@
   },
   "roles": {
     "activeRole": "Active role",
-    "role": "Role"
+    "role": "Role",
+    "adminGlobal": "Global Administrator",
+    "adminTenant": "Tenant Administrator",
+    "userTenant": "Tenant User"
   },
   "auth": {
     "title": "Sign in",
@@ -103,9 +109,31 @@
     "billing": "Billing",
     "languageTitle": "Interface language",
     "languageDescription": "By default, the device language is used. If changed manually, it is kept in this browser.",
+    "languageAutoHelper": "Automatic mode uses the language reported by your browser (navigator.languages).",
     "languageAuto": "Automatic mode (device)",
     "languageManual": "Manual selection active",
     "saveLocalOnly": "Preference saved locally in this browser.",
+    "faqCtaTitle": "System help center",
+    "faqCtaBody": "Review system-wide FAQs on a single page organized by sidebar menu.",
+    "faqCtaAction": "Go to FAQs",
+    "faqTitle": "Frequently asked questions",
+    "faqSubtitle": "Quick answers about language and local preferences.",
+    "faq": {
+      "items": {
+        "autoDetection": {
+          "question": "How is the language selected when I do not set it manually?",
+          "answer": "The app uses the first available language in navigator.languages. If it matches Spanish, es-CL is applied; if it matches English, en-US is applied."
+        },
+        "manualOverride": {
+          "question": "What happens if I choose a language manually?",
+          "answer": "That preference is stored in this browser and takes priority until you click 'Automatic mode (device)'."
+        },
+        "browserConfig": {
+          "question": "Why do I see Spanish if my operating system is in English?",
+          "answer": "Automatic mode reads your browser web-language preferences, which may differ from the browser UI language or your operating system language."
+        }
+      }
+    },
     "billingRestricted": "This section is available for roles with tenant administration permissions.",
     "currentSubscription": "Current subscription",
     "recentInvoices": "Recent invoices",
@@ -119,5 +147,358 @@
     "autoRenewInactive": "Inactive",
     "issueDate": "Issue",
     "dueDate": "Due"
+  },
+  "systemFaq": {
+    "title": "System FAQs",
+    "subtitle": "Quick guide for the KeyGo system, organized by sidebar menu.",
+    "orderNote": "Inside each tab, questions are ordered from the simplest to the most advanced.",
+    "growthNote": "This help center is updated organically as the system adds new functionality.",
+    "sectionTitle": "Questions by module",
+    "tabsAria": "FAQ tabs by system menu",
+    "searchLabel": "Search in frequently asked questions",
+    "searchPlaceholder": "Search by keyword...",
+    "searchHelp": "Filters by text in questions and answers inside each tab.",
+    "noResults": "No results found for this search in this tab.",
+    "backToSettings": "Back to account settings",
+    "items": {
+      "platformOverview": {
+        "question": "What is the Platform section for?",
+        "answer": "It centralizes the global view of tenants, applications, and users for general administration."
+      },
+      "platformTenants": {
+        "question": "Where do I manage tenants?",
+        "answer": "From the Tenants option in the Platform menu, where you can review details, status, and administrative actions."
+      },
+      "platformAppsUsers": {
+        "question": "How are Apps and Users related in Platform?",
+        "answer": "Apps and Users represent the system catalog and actors. Effective relationships are managed through access/memberships by role."
+      },
+      "accessAuditOverview": {
+        "question": "What is included in Access and audit?",
+        "answer": "It includes views for access control and traceability of relevant system events."
+      },
+      "accessAuditDifference": {
+        "question": "What is the difference between Access and Audit?",
+        "answer": "Access shows operational permission state; Audit focuses on historical traceability and action tracking."
+      },
+      "securitySessions": {
+        "question": "What do I see in Security > Sessions?",
+        "answer": "A summary of active/expired sessions to monitor authentication activity."
+      },
+      "securityTokens": {
+        "question": "When should I review Tokens or Signing Keys?",
+        "answer": "When you need to validate cryptographic status and the lifecycle of system security credentials."
+      },
+      "systemApi": {
+        "question": "What is System > API for?",
+        "answer": "It provides backend operational information and general status of related services."
+      },
+      "systemSlowLoading": {
+        "question": "What happens if a view is slow to load?",
+        "answer": "The system applies timeouts and controlled recovery to preserve UI continuity and show clear status feedback."
+      },
+      "organizationOverview": {
+        "question": "What can I do in My organization?",
+        "answer": "Manage users and applications for your tenant from a central view designed for the ADMIN_TENANT role."
+      },
+      "organizationUsersApps": {
+        "question": "In what order should I configure Users and Apps?",
+        "answer": "Define applications first, then assign users/memberships to keep permissions consistent from the start."
+      },
+      "accessMemberships": {
+        "question": "What are Memberships?",
+        "answer": "They are access assignments between user, tenant, and application that define effective permissions."
+      },
+      "accessSessions": {
+        "question": "Why review Sessions inside Access?",
+        "answer": "It helps verify authentication activity and detect abnormal behavior early."
+      },
+      "homeOverview": {
+        "question": "What can I find in Home as a tenant user?",
+        "answer": "A quick summary of your enabled views and direct access to My access and Activity."
+      },
+      "homeMyAccess": {
+        "question": "How do I review my current permissions?",
+        "answer": "In My access you can see the applications and roles assigned to your account inside the tenant."
+      },
+      "accountWhereChangeLanguage": {
+        "question": "Where can I change the interface language?",
+        "answer": "You can change it from Account settings or from the language selector in the dashboard top bar."
+      },
+      "accountLanguageAutoDetection": {
+        "question": "How is the language selected when I do not set it manually?",
+        "answer": "The app uses the first available language in navigator.languages. If it matches Spanish, es-CL is applied; if it matches English, en-US is applied."
+      },
+      "accountLanguageBrowserConfig": {
+        "question": "Why do I see Spanish if my operating system is in English?",
+        "answer": "Automatic mode reads your browser web-language preferences, which may differ from the browser UI language or your operating system language."
+      }
+    }
+  },
+  "accountFaq": {
+    "title": "Account FAQs",
+    "subtitle": "Short answers to help you get the most out of your account settings.",
+    "orderNote": "Questions are ordered from the simplest to the most advanced.",
+    "growthNote": "This page will be updated organically as we add new functionality.",
+    "sectionTitle": "Available questions",
+    "listAria": "Account frequently asked questions list",
+    "backToSettings": "Back to account settings",
+    "categories": {
+      "languageBasics": "Language: basics",
+      "languageAdvanced": "Language: advanced cases"
+    },
+    "items": {
+      "whereChangeLanguage": {
+        "question": "Where can I change the interface language?",
+        "answer": "You can change it from Account settings or from the language selector in the dashboard top bar."
+      },
+      "autoDetection": {
+        "question": "How is the language selected when I do not set it manually?",
+        "answer": "The app uses the first available language in navigator.languages. If it matches Spanish, es-CL is applied; if it matches English, en-US is applied."
+      },
+      "manualOverride": {
+        "question": "What happens if I choose a language manually?",
+        "answer": "That preference is stored in this browser and takes priority until you click 'Automatic mode (device)'."
+      },
+      "browserConfig": {
+        "question": "Why do I see Spanish if my operating system is in English?",
+        "answer": "Automatic mode reads your browser web-language preferences, which may differ from the browser UI language or your operating system language."
+      }
+    }
+  },
+  "adminTenants": {
+    "title": "Tenants",
+    "new": "New",
+    "searchPlaceholder": "Search by name...",
+    "searchAria": "Search tenant by name",
+    "errorLoad": "Error loading tenants.",
+    "noSearchResults": "No results for this search.",
+    "noCategory": "There are no tenants in this category.",
+    "emptyTitle": "Select a tenant",
+    "emptyBody": "Choose a tenant from the list to view details, or create a new one to get started.",
+    "newTenant": "New tenant",
+    "pagination": "{{total}} tenants - p. {{page}}/{{totalPages}}",
+    "pagePrevious": "Previous page",
+    "pageNext": "Next page",
+    "mobileBack": "Tenants",
+    "status": {
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "PENDING": "Pending"
+    },
+    "filters": {
+      "ALL": "All",
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "PENDING": "Pending"
+    }
+  },
+  "adminTenantDetail": {
+    "slugRequired": "Tenant slug required",
+    "suspendSuccess": "Tenant suspended successfully.",
+    "suspendError": "Could not suspend tenant. Try again.",
+    "activateSuccess": "Tenant activated successfully.",
+    "activateError": "Could not activate tenant.",
+    "confirmSuspend": "Suspend tenant \"{{name}}\"? Users will no longer be able to sign in.",
+    "loadError": "Could not load tenant.",
+    "backToList": "Back to list",
+    "ownerEmailLabel": "Owner email",
+    "createdOn": "Created on",
+    "actions": "Actions",
+    "viewAsTenantAdmin": "View as tenant admin",
+    "suspending": "Suspending...",
+    "suspend": "Suspend tenant",
+    "activating": "Activating...",
+    "reactivate": "Reactivate tenant",
+    "id": "ID",
+    "slug": "Slug",
+    "status": {
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "PENDING": "Pending"
+    }
+  },
+  "adminTenantCreate": {
+    "nameRequired": "Name is required.",
+    "nameMax": "Name cannot be longer than 255 characters.",
+    "ownerEmailRequired": "Owner email is required.",
+    "ownerEmailInvalid": "Enter a valid email.",
+    "createdSuccess": "Tenant \"{{name}}\" created successfully.",
+    "createError": "Error creating tenant. Try again.",
+    "backAria": "Back to list",
+    "title": "New Tenant",
+    "subtitle": "Create a new organization in the KeyGo platform.",
+    "orgNameLabel": "Organization name",
+    "orgNameHint": "The tenant slug is generated automatically from the name.",
+    "orgNamePlaceholder": "Ex: Acme Corporation",
+    "ownerEmailLabel": "Owner email",
+    "ownerEmailHint": "It will be used as primary contact and first access.",
+    "ownerEmailPlaceholder": "owner@company.com",
+    "infoNote": "The tenant slug (used in URLs and APIs) will be derived automatically from the name. You can configure users and applications after creation.",
+    "cancel": "Cancel",
+    "creating": "Creating...",
+    "create": "Create tenant"
+  },
+  "adminDashboard": {
+    "title": "Control panel",
+    "subtitle": "Global view of the KeyGo platform · real-time data",
+    "refreshedToast": "Panel refreshed",
+    "refreshAria": "Refresh dashboard",
+    "refresh": "Refresh",
+    "quickActions": "Quick actions",
+    "loadError": "Could not load the control panel. Check your connection and try again.",
+    "range": {
+      "today": "Today",
+      "sevenDays": "7 days",
+      "thirtyDays": "30 days"
+    },
+    "sections": {
+      "serviceStatus": "Operational status",
+      "iamCore": "IAM core",
+      "security": "Security",
+      "managementAndActivity": "Management and activity",
+      "rankings": "Rankings",
+      "onboardingHealth": "Onboarding health"
+    },
+    "serviceRow": {
+      "service": "Service",
+      "environment": "Environment",
+      "version": "Version",
+      "activeSigningKey": "Active key",
+      "keyMeta": "{{algorithm}} · {{days}}d"
+    },
+    "iamCards": {
+      "tenants": "Tenants",
+      "users": "Users",
+      "apps": "Apps",
+      "memberships": "Memberships"
+    },
+    "breakdown": {
+      "active": "Active",
+      "pending": "Pending",
+      "suspended": "Suspended"
+    },
+    "securityRow": {
+      "sessions": "Sessions",
+      "expired": "Expired",
+      "refreshTokens": "Refresh Tokens",
+      "revoked": "Revoked",
+      "authCodes": "Auth Codes",
+      "used": "Used",
+      "alerts": "Alerts",
+      "critical": "Critical"
+    },
+    "pendingActivity": {
+      "pendingManagement": "Pending management",
+      "recentActivity": "Recent activity",
+      "noPending": "No pending items",
+      "noRecentActivity": "No recent activity"
+    },
+    "rankings": {
+      "topTenantsByUsers": "Top tenants by users",
+      "topAppsByMemberships": "Top apps by memberships",
+      "noData": "No data",
+      "usersLabel": "users",
+      "membersLabel": "members"
+    },
+    "onboarding": {
+      "pendingVerification": "Pending verification",
+      "expiredVerifications": "Expired verifications",
+      "recentRegistrations": "Recent registrations",
+      "recentVerifications": "Recent verifications"
+    }
+  },
+  "userDashboardMyAccess": {
+    "title": "My access",
+    "subtitle": "Applications and roles assigned to your account in tenant {{tenantSlug}}.",
+    "assignments": "Assignments",
+    "activeAccess": "Active access",
+    "loading": "Loading your access...",
+    "errorFallback": "Could not load your access.",
+    "tableCaption": "Access list by application",
+    "columns": {
+      "application": "Application",
+      "status": "Status",
+      "roles": "Roles",
+      "assignedAt": "Assigned"
+    },
+    "empty": "You do not have access assigned in this tenant.",
+    "status": {
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "PENDING": "Pending"
+    },
+    "recovery": {
+      "membershipsLabel": "your access",
+      "appsLabel": "applications"
+    }
+  },
+  "userDashboardProfile": {
+    "title": "My account",
+    "subtitle": "Review your identity data and manage your personal profile information.",
+    "sectionsAria": "My account sections",
+    "tabsAria": "My account tabs",
+    "tabs": {
+      "summary": "Summary",
+      "profile": "Profile",
+      "access": "Access",
+      "activity": "Activity"
+    },
+    "loading": "Loading profile...",
+    "errorFallback": "Could not load your profile.",
+    "summary": {
+      "title": "Account summary",
+      "fullName": "Name",
+      "email": "Email",
+      "username": "Username",
+      "status": "Status",
+      "tenant": "Tenant",
+      "activeRole": "Active role"
+    },
+    "form": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "phone": "Phone",
+      "locale": "Locale",
+      "zoneinfo": "Timezone",
+      "birthdate": "Birthdate",
+      "website": "Website",
+      "profilePictureUrl": "Profile picture URL",
+      "saving": "Saving...",
+      "saveChanges": "Save changes"
+    },
+    "access": {
+      "title": "Access",
+      "body": "This view will show your assigned applications and roles when the backend publishes the self-service endpoint.",
+      "requiredEndpointLabel": "Required endpoint:"
+    },
+    "activity": {
+      "title": "Activity",
+      "body": "The account activity timeline will be integrated here when there is a backend contract for self-service consumption."
+    },
+    "toasts": {
+      "updated": "Profile updated successfully"
+    },
+    "validation": {
+      "invalidProfileUrl": "Valid URL"
+    },
+    "recovery": {
+      "profileLabel": "profile"
+    }
+  },
+  "userDashboardSessions": {
+    "title": "Sessions",
+    "subtitle": "Active session information for {{userName}}.",
+    "defaultUser": "user",
+    "accessToken": "Access token",
+    "idToken": "ID token",
+    "issuedAt": "Issued",
+    "expiresAt": "Expires",
+    "ttl": "Estimated TTL",
+    "ttlValue": "{{minutes}} min",
+    "notAvailable": "Not available.",
+    "available": "Available",
+    "persistenceTitle": "Session persistence",
+    "persistenceBody": "Refresh token in sessionStorage: {{availability}}."
   }
 }

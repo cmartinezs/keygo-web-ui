@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next'
+
 // ── Shared UI primitives for the admin dashboard ─────────────────────────────
 
 // ── StatCard ─────────────────────────────────────────────────────────────────
@@ -47,6 +49,8 @@ interface BreakdownCardProps {
 }
 
 export function BreakdownCard({ label, icon, total, active, pending, suspended }: BreakdownCardProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5 flex flex-col gap-3 hover:border-indigo-400 dark:hover:border-indigo-500/40 transition-colors">
       <div className="flex items-center gap-2">
@@ -57,9 +61,9 @@ export function BreakdownCard({ label, icon, total, active, pending, suspended }
       </div>
       <span className="text-2xl font-bold text-slate-900 dark:text-white">{total ?? '—'}</span>
       <div className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-white/5 pt-2">
-        <BreakdownRow label="Activos" value={active} color="text-emerald-500" />
-        <BreakdownRow label="Pendientes" value={pending} color="text-amber-500" />
-        <BreakdownRow label="Suspendidos" value={suspended} color="text-red-500" />
+        <BreakdownRow label={t('adminDashboard.breakdown.active')} value={active} color="text-emerald-500" />
+        <BreakdownRow label={t('adminDashboard.breakdown.pending')} value={pending} color="text-amber-500" />
+        <BreakdownRow label={t('adminDashboard.breakdown.suspended')} value={suspended} color="text-red-500" />
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useOutlet, NavLink } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { listTenants, TENANT_QUERY_KEYS } from '@/api/tenants'
 import {
   NETWORK_MAX_RETRIES,
@@ -35,18 +36,13 @@ const STATUS_STYLES: Record<TenantStatus, string> = {
   SUSPENDED: 'bg-red-500/10 text-red-600 dark:text-red-400',
   PENDING: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
 }
-const STATUS_LABELS: Record<TenantStatus, string> = {
-  ACTIVE: 'Activo',
-  SUSPENDED: 'Suspendido',
-  PENDING: 'Pendiente',
-}
-
 function StatusBadge({ status }: { status: TenantStatus }) {
+  const { t } = useTranslation()
   return (
     <span
       className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${STATUS_STYLES[status]}`}
     >
-      {STATUS_LABELS[status]}
+      {t(`adminTenants.status.${status}`)}
     </span>
   )
 }
@@ -54,7 +50,8 @@ function StatusBadge({ status }: { status: TenantStatus }) {
 // ── Tenant list item ──────────────────────────────────────────────────────────
 
 function TenantListItem({ tenant }: { tenant: TenantData }) {
-  const date = new Date(tenant.created_at).toLocaleDateString('es-CL', {
+  const { i18n } = useTranslation()
+  const date = new Date(tenant.created_at).toLocaleDateString(i18n.resolvedLanguage ?? i18n.language, {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -109,6 +106,7 @@ function ListSkeleton() {
 // ── Empty state (right panel) ─────────────────────────────────────────────────
 
 function TenantsEmptyState({ onNew }: { onNew: () => void }) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-4 p-10 text-center">
       <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
@@ -129,10 +127,10 @@ function TenantsEmptyState({ onNew }: { onNew: () => void }) {
       </div>
       <div>
         <h2 className="text-base font-semibold text-slate-800 dark:text-white">
-          Selecciona un tenant
+          {t('adminTenants.emptyTitle')}
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-xs">
-          Elige un tenant de la lista para ver su detalle, o crea uno nuevo para comenzar.
+          {t('adminTenants.emptyBody')}
         </p>
       </div>
       <button
@@ -142,7 +140,7 @@ function TenantsEmptyState({ onNew }: { onNew: () => void }) {
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
         </svg>
-        Nuevo tenant
+        {t('adminTenants.newTenant')}
       </button>
     </div>
   )
@@ -152,12 +150,7 @@ function TenantsEmptyState({ onNew }: { onNew: () => void }) {
 
 type FilterStatus = 'ALL' | TenantStatus
 
-const FILTER_TABS: { value: FilterStatus; label: string }[] = [
-  { value: 'ALL', label: 'Todos' },
-  { value: 'ACTIVE', label: 'Activos' },
-  { value: 'SUSPENDED', label: 'Suspendidos' },
-  { value: 'PENDING', label: 'Pendientes' },
-]
+const FILTER_TABS: FilterStatus[] = ['ALL', 'ACTIVE', 'SUSPENDED', 'PENDING']
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -196,6 +189,7 @@ function IconChevronRight() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TenantsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const outlet = useOutlet()
 
@@ -257,13 +251,13 @@ export default function TenantsPage() {
         {/* Panel header */}
         <div className="px-4 pt-4 pb-3 border-b border-slate-200 dark:border-white/10 shrink-0">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-base font-bold text-slate-900 dark:text-white">Tenants</h1>
+            <h1 className="text-base font-bold text-slate-900 dark:text-white">{t('adminTenants.title')}</h1>
             <button
               onClick={() => navigate('new')}
               className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
             >
               <IconPlus />
-              Nuevo
+              {t('adminTenants.new')}
             </button>
           </div>
 
@@ -272,11 +266,11 @@ export default function TenantsPage() {
             <IconSearch />
             <input
               type="search"
-              placeholder="Buscar por nombre…"
+              placeholder={t('adminTenants.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 bg-transparent text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none min-w-0"
-              aria-label="Buscar tenant por nombre"
+              aria-label={t('adminTenants.searchAria')}
             />
             {isFetching && (
               <svg className="w-3.5 h-3.5 animate-spin text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -291,15 +285,15 @@ export default function TenantsPage() {
         <div className="flex border-b border-slate-200 dark:border-white/10 shrink-0 overflow-x-auto">
           {FILTER_TABS.map((tab) => (
             <button
-              key={tab.value}
-              onClick={() => setFilter(tab.value)}
+              key={tab}
+              onClick={() => setFilter(tab)}
               className={`px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
-                filter === tab.value
+                filter === tab
                   ? 'text-indigo-600 dark:text-indigo-400 border-indigo-500'
                   : 'text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-700 dark:hover:text-slate-200'
               }`}
             >
-              {tab.label}
+              {t(`adminTenants.filters.${tab}`)}
             </button>
           ))}
         </div>
@@ -310,15 +304,15 @@ export default function TenantsPage() {
 
           {isError && (
             <div className="px-4 py-6 text-center text-sm text-red-500 dark:text-red-400">
-              Error al cargar tenants.
+              {t('adminTenants.errorLoad')}
             </div>
           )}
 
           {!isLoading && !isError && tenants.length === 0 && (
             <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
               {debouncedSearch
-                ? 'Sin resultados para la búsqueda.'
-                : 'No hay tenants en esta categoría.'}
+                ? t('adminTenants.noSearchResults')
+                : t('adminTenants.noCategory')}
             </div>
           )}
 
@@ -331,14 +325,18 @@ export default function TenantsPage() {
         {totalPages > 1 && (
           <div className="shrink-0 border-t border-slate-200 dark:border-white/10 px-3 py-2 flex items-center justify-between gap-2">
             <span className="text-[10px] text-slate-400 dark:text-slate-500">
-              {totalElements} tenants · p.&nbsp;{page + 1}/{totalPages}
+              {t('adminTenants.pagination', {
+                total: totalElements,
+                page: page + 1,
+                totalPages,
+              })}
             </span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
                 disabled={page === 0}
                 className="w-6 h-6 flex items-center justify-center rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                aria-label="Página anterior"
+                aria-label={t('adminTenants.pagePrevious')}
               >
                 <IconChevronLeft />
               </button>
@@ -346,7 +344,7 @@ export default function TenantsPage() {
                 onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={page >= totalPages - 1}
                 className="w-6 h-6 flex items-center justify-center rounded text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                aria-label="Página siguiente"
+                aria-label={t('adminTenants.pageNext')}
               >
                 <IconChevronRight />
               </button>
@@ -368,7 +366,7 @@ export default function TenantsPage() {
               className="flex items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
             >
               <IconChevronLeft />
-              Tenants
+              {t('adminTenants.mobileBack')}
             </button>
           </div>
         )}

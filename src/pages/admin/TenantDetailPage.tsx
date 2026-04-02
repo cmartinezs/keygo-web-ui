@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { getTenant, suspendTenant, activateTenant, TENANT_QUERY_KEYS } from '@/api/tenants'
 import { toast } from 'sonner'
 import {
@@ -21,16 +22,11 @@ const STATUS_STYLES: Record<TenantStatus, string> = {
   SUSPENDED: 'bg-red-500/10 text-red-600 dark:text-red-400',
   PENDING: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
 }
-const STATUS_LABELS: Record<TenantStatus, string> = {
-  ACTIVE: 'Activo',
-  SUSPENDED: 'Suspendido',
-  PENDING: 'Pendiente',
-}
-
 function StatusBadge({ status }: { status: TenantStatus }) {
+  const { t } = useTranslation()
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${STATUS_STYLES[status]}`}>
-      {STATUS_LABELS[status]}
+      {t(`adminTenantDetail.status.${status}`)}
     </span>
   )
 }
@@ -75,12 +71,13 @@ function DetailSkeleton() {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function TenantDetailPage() {
+  const { t, i18n } = useTranslation()
   const { slug } = useParams<{ slug: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   async function fetchTenantWithRecovery(signal: AbortSignal) {
-    if (!slug) throw new Error('Tenant slug requerido')
+    if (!slug) throw new Error(t('adminTenantDetail.slugRequired'))
 
     return runGetWithRecovery({
       signal,
@@ -106,7 +103,7 @@ export default function TenantDetailPage() {
   const suspendMutation = useMutation({
     mutationFn: () => suspendTenant(slug!, { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
     onSuccess: () => {
-      toast.success('Tenant suspendido correctamente.')
+      toast.success(t('adminTenantDetail.suspendSuccess'))
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.detail(slug!) })
     },
@@ -115,14 +112,14 @@ export default function TenantDetailPage() {
         notifyMutationTimeout('suspension')
         return
       }
-      toast.error('No se pudo suspender el tenant. Intenta de nuevo.')
+      toast.error(t('adminTenantDetail.suspendError'))
     },
   })
 
   const activateMutation = useMutation({
     mutationFn: () => activateTenant(slug!, { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
     onSuccess: () => {
-      toast.success('Tenant activado correctamente.')
+      toast.success(t('adminTenantDetail.activateSuccess'))
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.all })
       queryClient.invalidateQueries({ queryKey: TENANT_QUERY_KEYS.detail(slug!) })
     },
@@ -131,12 +128,12 @@ export default function TenantDetailPage() {
         notifyMutationTimeout('activacion')
         return
       }
-      toast.error('No se pudo activar el tenant.')
+      toast.error(t('adminTenantDetail.activateError'))
     },
   })
 
   const handleSuspend = () => {
-    if (confirm(`¿Suspender el tenant "${tenant?.name}"? Los usuarios no podrán autenticarse.`)) {
+    if (confirm(t('adminTenantDetail.confirmSuspend', { name: tenant?.name ?? '' }))) {
       suspendMutation.mutate()
     }
   }
@@ -152,13 +149,13 @@ export default function TenantDetailPage() {
           </svg>
         </div>
         <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          {error instanceof Error ? error.message : 'No se pudo cargar el tenant.'}
+          {error instanceof Error ? error.message : t('adminTenantDetail.loadError')}
         </p>
         <button
           onClick={() => navigate('/dashboard/tenants')}
           className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
         >
-          Volver a la lista
+          {t('adminTenantDetail.backToList')}
         </button>
       </div>
     )
@@ -166,7 +163,7 @@ export default function TenantDetailPage() {
 
   if (!tenant) return null
 
-  const createdDate = new Date(tenant.created_at).toLocaleDateString('es-CL', {
+  const createdDate = new Date(tenant.created_at).toLocaleDateString(i18n.resolvedLanguage ?? i18n.language, {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -190,15 +187,15 @@ export default function TenantDetailPage() {
 
       {/* Info card */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <InfoRow label="ID" value={<code className="text-xs text-slate-500 dark:text-slate-400 font-mono break-all">{tenant.id}</code>} />
-        <InfoRow label="Slug" value={<code className="text-xs font-mono text-indigo-600 dark:text-indigo-400">{tenant.slug}</code>} />
-        <InfoRow label="Email del propietario" value={tenant.owner_email ?? '—'} />
-        <InfoRow label="Creado el" value={createdDate} />
+        <InfoRow label={t('adminTenantDetail.id')} value={<code className="text-xs text-slate-500 dark:text-slate-400 font-mono break-all">{tenant.id}</code>} />
+        <InfoRow label={t('adminTenantDetail.slug')} value={<code className="text-xs font-mono text-indigo-600 dark:text-indigo-400">{tenant.slug}</code>} />
+        <InfoRow label={t('adminTenantDetail.ownerEmailLabel')} value={tenant.owner_email ?? '-'} />
+        <InfoRow label={t('adminTenantDetail.createdOn')} value={createdDate} />
       </div>
 
       {/* Actions */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Acciones</h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t('adminTenantDetail.actions')}</h3>
 
         <div className="flex flex-wrap gap-3">
           {/* Jump to tenant admin */}
@@ -209,7 +206,7 @@ export default function TenantDetailPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
             </svg>
-            Ver como admin de tenant
+            {t('adminTenantDetail.viewAsTenantAdmin')}
           </button>
 
           {/* Suspend — only when ACTIVE */}
@@ -222,7 +219,7 @@ export default function TenantDetailPage() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
               </svg>
-              {suspendMutation.isPending ? 'Suspendiendo…' : 'Suspender tenant'}
+              {suspendMutation.isPending ? t('adminTenantDetail.suspending') : t('adminTenantDetail.suspend')}
             </button>
           )}
 
@@ -236,7 +233,7 @@ export default function TenantDetailPage() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {activateMutation.isPending ? 'Activando…' : 'Reactivar tenant'}
+              {activateMutation.isPending ? t('adminTenantDetail.activating') : t('adminTenantDetail.reactivate')}
             </button>
           )}
         </div>

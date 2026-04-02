@@ -1,7 +1,10 @@
 import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption } from '@/types/billing'
 import { env } from '@/config/env'
+import { i18n } from '@/i18n/config'
+import { normalizeLocale } from '@/i18n/localeUtils'
 
 const IS_DEV = env.DEV
+const ACTIVE_LOCALE = normalizeLocale(i18n.resolvedLanguage ?? i18n.language)
 
 interface PaymentStepProps {
   plan: AppPlan
@@ -18,7 +21,7 @@ export function PaymentStep({ plan, version, billingOption, isProcessing, error,
     ? 'A medida · contactar'
     : !billingOption || billingOption.base_price === 0
       ? 'Gratis'
-      : new Intl.NumberFormat('es-MX', {
+      : new Intl.NumberFormat(ACTIVE_LOCALE, {
           style: 'currency',
           currency: version.currency,
           minimumFractionDigits: 0,

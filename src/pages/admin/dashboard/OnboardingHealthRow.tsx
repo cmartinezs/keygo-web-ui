@@ -1,4 +1,5 @@
 import type { RegistrationSummary } from '@/types/dashboard'
+import { useTranslation } from 'react-i18next'
 
 // ── Sub-card ──────────────────────────────────────────────────────────────────
 
@@ -28,25 +29,27 @@ interface OnboardingHealthRowProps {
 }
 
 export function OnboardingHealthRow({ registration }: OnboardingHealthRowProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <OnboardingStat
-        label="Pendientes de verificación"
+        label={t('adminDashboard.onboarding.pendingVerification')}
         value={registration?.pending_email_verifications}
         color="text-amber-500"
       />
       <OnboardingStat
-        label="Verificaciones expiradas"
+        label={t('adminDashboard.onboarding.expiredVerifications')}
         value={registration?.expired_pending_verifications}
         color="text-red-500"
       />
       <OnboardingStat
-        label="Registros recientes"
+        label={t('adminDashboard.onboarding.recentRegistrations')}
         value={registration?.recent_registrations}
         color="text-slate-900 dark:text-white"
       />
       <OnboardingStat
-        label="Verificaciones recientes"
+        label={t('adminDashboard.onboarding.recentVerifications')}
         value={registration?.recent_verifications}
         color="text-emerald-500"
       />

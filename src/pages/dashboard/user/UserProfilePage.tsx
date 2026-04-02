@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { ACCOUNT_QUERY_KEYS, getProfile, updateProfile } from '@/api/account'
@@ -18,40 +19,53 @@ import {
   notifyMutationTimeout,
   runGetWithRecovery,
 } from '@/lib/network/recovery'
+import { i18n } from '@/i18n/config'
 import type { UpdateUserProfileRequest } from '@/types/user'
 
 type AccountTab = 'summary' | 'profile' | 'access' | 'activity'
 
-const ACCOUNT_TABS: Array<{ key: AccountTab; label: string }> = [
-  { key: 'summary', label: 'Resumen' },
-  { key: 'profile', label: 'Perfil' },
-  { key: 'access', label: 'Accesos' },
-  { key: 'activity', label: 'Actividad' },
-]
+function createProfileSchema() {
+  return z.object({
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    phone_number: z.string().optional(),
+    locale: z.string().optional(),
+    zoneinfo: z.string().optional(),
+    website: z.string().optional(),
+    birthdate: z.string().optional(),
+    profile_picture_url: z.string().url(i18n.t('userDashboardProfile.validation.invalidProfileUrl')).or(z.literal('')),
+  })
+}
 
-const profileSchema = z.object({
-  first_name: z.string().optional(),
-  last_name: z.string().optional(),
-  phone_number: z.string().optional(),
-  locale: z.string().optional(),
-  zoneinfo: z.string().optional(),
-  website: z.string().optional(),
-  birthdate: z.string().optional(),
-  profile_picture_url: z.string().url('URL valida').or(z.literal('')),
-})
-
-type ProfileFormData = z.infer<typeof profileSchema>
+type ProfileFormData = {
+  first_name?: string
+  last_name?: string
+  phone_number?: string
+  locale?: string
+  zoneinfo?: string
+  website?: string
+  birthdate?: string
+  profile_picture_url?: string
+}
 
 export default function UserProfilePage() {
+  const { t } = useTranslation()
   const currentUser = useCurrentUser()
   const tenantSlug = currentUser?.tenantSlug ?? TENANT
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<AccountTab>('summary')
+  const profileSchema = createProfileSchema()
+  const accountTabs: Array<{ key: AccountTab; label: string }> = [
+    { key: 'summary', label: t('userDashboardProfile.tabs.summary') },
+    { key: 'profile', label: t('userDashboardProfile.tabs.profile') },
+    { key: 'access', label: t('userDashboardProfile.tabs.access') },
+    { key: 'activity', label: t('userDashboardProfile.tabs.activity') },
+  ]
 
   async function fetchProfileWithRecovery(signal: AbortSignal) {
     return runGetWithRecovery({
       signal,
-      label: 'perfil',
+      label: t('userDashboardProfile.recovery.profileLabel'),
       timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
       retryDelayMs: NETWORK_RETRY_DELAY_MS,
       maxRetries: NETWORK_MAX_RETRIES,
@@ -106,7 +120,7 @@ export default function UserProfilePage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEYS.profile(tenantSlug) })
-      toast.success('Perfil actualizado correctamente')
+      toast.success(t('userDashboardProfile.toasts.updated'))
     },
     onError: (mutationError) => {
       if (isRequestTimeout(mutationError)) {
@@ -120,18 +134,18 @@ export default function UserProfilePage() {
   return (
     <div className="mx-auto max-w-screen-xl space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Mi cuenta</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t('userDashboardProfile.title')}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Revisa tus datos de identidad y administra la informacion de tu perfil personal.
+          {t('userDashboardProfile.subtitle')}
         </p>
       </header>
 
       <section
-        aria-label="Secciones de mi cuenta"
+        aria-label={t('userDashboardProfile.sectionsAria')}
         className="rounded-xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-slate-900"
       >
-        <div role="tablist" aria-label="Tabs de mi cuenta" className="flex flex-wrap gap-2">
-          {ACCOUNT_TABS.map((tab) => (
+        <div role="tablist" aria-label={t('userDashboardProfile.tabsAria')} className="flex flex-wrap gap-2">
+          {accountTabs.map((tab) => (
             <button
               key={tab.key}
               id={`account-tab-${tab.key}`}
@@ -158,7 +172,7 @@ export default function UserProfilePage() {
           aria-live="polite"
           className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 dark:border-white/10 dark:bg-slate-900 dark:text-slate-400"
         >
-          Cargando perfil...
+          {t('userDashboardProfile.loading')}
         </div>
       ) : null}
 
@@ -167,7 +181,7 @@ export default function UserProfilePage() {
           role="alert"
           className="rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
         >
-          {profileQuery.error instanceof Error ? profileQuery.error.message : 'No fue posible cargar tu perfil.'}
+          {profileQuery.error instanceof Error ? profileQuery.error.message : t('userDashboardProfile.errorFallback')}
         </div>
       ) : null}
 
@@ -180,32 +194,32 @@ export default function UserProfilePage() {
             hidden={activeTab !== 'summary'}
             className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-slate-900"
           >
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Resumen de cuenta</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('userDashboardProfile.summary.title')}</h2>
             <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Nombre</dt>
+                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardProfile.summary.fullName')}</dt>
                 <dd className="text-sm font-medium text-slate-900 dark:text-white">
                   {profileQuery.data?.first_name ?? '-'} {profileQuery.data?.last_name ?? ''}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Email</dt>
+                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardProfile.summary.email')}</dt>
                 <dd className="text-sm font-medium text-slate-900 dark:text-white">{profileQuery.data?.email ?? '-'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Usuario</dt>
+                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardProfile.summary.username')}</dt>
                 <dd className="text-sm font-medium text-slate-900 dark:text-white">{profileQuery.data?.username ?? '-'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Estado</dt>
+                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardProfile.summary.status')}</dt>
                 <dd className="text-sm font-medium text-slate-900 dark:text-white">{profileQuery.data?.status ?? '-'}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Tenant</dt>
+                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardProfile.summary.tenant')}</dt>
                 <dd className="text-sm font-medium text-slate-900 dark:text-white">{tenantSlug}</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Rol activo</dt>
+                <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardProfile.summary.activeRole')}</dt>
                 <dd className="text-sm font-medium text-slate-900 dark:text-white">{currentUser?.activeRole ?? '-'}</dd>
               </div>
             </dl>
@@ -224,7 +238,7 @@ export default function UserProfilePage() {
               <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2" disabled={updateMutation.isPending}>
                 <div>
                   <label htmlFor="first_name" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Nombre
+                    {t('userDashboardProfile.form.firstName')}
                   </label>
                   <input
                     id="first_name"
@@ -236,7 +250,7 @@ export default function UserProfilePage() {
 
                 <div>
                   <label htmlFor="last_name" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Apellido
+                    {t('userDashboardProfile.form.lastName')}
                   </label>
                   <input
                     id="last_name"
@@ -248,7 +262,7 @@ export default function UserProfilePage() {
 
                 <div>
                   <label htmlFor="phone_number" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Telefono
+                    {t('userDashboardProfile.form.phone')}
                   </label>
                   <input
                     id="phone_number"
@@ -260,7 +274,7 @@ export default function UserProfilePage() {
 
                 <div>
                   <label htmlFor="locale" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Locale
+                    {t('userDashboardProfile.form.locale')}
                   </label>
                   <input
                     id="locale"
@@ -272,7 +286,7 @@ export default function UserProfilePage() {
 
                 <div>
                   <label htmlFor="zoneinfo" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Zona horaria
+                    {t('userDashboardProfile.form.zoneinfo')}
                   </label>
                   <input
                     id="zoneinfo"
@@ -284,7 +298,7 @@ export default function UserProfilePage() {
 
                 <div>
                   <label htmlFor="birthdate" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Fecha de nacimiento
+                    {t('userDashboardProfile.form.birthdate')}
                   </label>
                   <input
                     id="birthdate"
@@ -296,7 +310,7 @@ export default function UserProfilePage() {
 
                 <div className="sm:col-span-2">
                   <label htmlFor="website" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    Sitio web
+                    {t('userDashboardProfile.form.website')}
                   </label>
                   <input
                     id="website"
@@ -308,7 +322,7 @@ export default function UserProfilePage() {
 
                 <div className="sm:col-span-2">
                   <label htmlFor="profile_picture_url" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    URL foto de perfil
+                    {t('userDashboardProfile.form.profilePictureUrl')}
                   </label>
                   <input
                     id="profile_picture_url"
@@ -332,7 +346,9 @@ export default function UserProfilePage() {
                   disabled={updateMutation.isPending}
                   className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 >
-                  {updateMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
+                  {updateMutation.isPending
+                    ? t('userDashboardProfile.form.saving')
+                    : t('userDashboardProfile.form.saveChanges')}
                 </button>
               </div>
             </form>
@@ -345,12 +361,12 @@ export default function UserProfilePage() {
             hidden={activeTab !== 'access'}
             className="rounded-xl border border-dashed border-slate-300 bg-white p-6 dark:border-white/20 dark:bg-slate-900"
           >
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Accesos</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('userDashboardProfile.access.title')}</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Esta vista mostrara tus aplicaciones y roles asignados cuando el backend publique el endpoint de autoconsulta.
+              {t('userDashboardProfile.access.body')}
             </p>
             <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-              Endpoint requerido: GET /api/v1/tenants/{'{tenantSlug}'}/account/access
+              {t('userDashboardProfile.access.requiredEndpointLabel')} GET /api/v1/tenants/{'{tenantSlug}'}/account/access
             </p>
           </section>
 
@@ -361,9 +377,9 @@ export default function UserProfilePage() {
             hidden={activeTab !== 'activity'}
             className="rounded-xl border border-dashed border-slate-300 bg-white p-6 dark:border-white/20 dark:bg-slate-900"
           >
-            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Actividad</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('userDashboardProfile.activity.title')}</h2>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Aqui se integrara la linea de tiempo de actividad de cuenta cuando exista contrato backend para consumo self-service.
+              {t('userDashboardProfile.activity.body')}
             </p>
           </section>
         </>

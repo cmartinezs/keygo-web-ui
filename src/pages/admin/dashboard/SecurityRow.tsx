@@ -1,4 +1,5 @@
 import type { SecuritySummary } from '@/types/dashboard'
+import { useTranslation } from 'react-i18next'
 import { SecurityCard } from './DashboardPrimitives'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -42,6 +43,7 @@ interface SecurityRowProps {
 }
 
 export function SecurityRow({ security }: SecurityRowProps) {
+  const { t } = useTranslation()
   const c = security?.counts
   const alertTotal = security?.alerts.length
   const criticalAlerts = security?.alerts.filter((a) => a.level === 'CRITICAL').length
@@ -49,34 +51,34 @@ export function SecurityRow({ security }: SecurityRowProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <SecurityCard
-        label="Sesiones"
+        label={t('adminDashboard.securityRow.sessions')}
         icon={<IconClock />}
         total={c?.active_sessions}
-        subLabel="Expiradas"
+        subLabel={t('adminDashboard.securityRow.expired')}
         subValue={c?.expired_sessions}
         subColor="text-slate-400"
       />
       <SecurityCard
-        label="Refresh Tokens"
+        label={t('adminDashboard.securityRow.refreshTokens')}
         icon={<IconRefresh />}
         total={c?.active_refresh_tokens}
-        subLabel="Revocados"
+        subLabel={t('adminDashboard.securityRow.revoked')}
         subValue={c?.revoked_refresh_tokens}
         subColor="text-red-500"
       />
       <SecurityCard
-        label="Auth Codes"
+        label={t('adminDashboard.securityRow.authCodes')}
         icon={<IconCode />}
         total={c?.pending_authorization_codes}
-        subLabel="Usados"
+        subLabel={t('adminDashboard.securityRow.used')}
         subValue={c?.used_authorization_codes}
         subColor="text-slate-400"
       />
       <SecurityCard
-        label="Alertas"
+        label={t('adminDashboard.securityRow.alerts')}
         icon={<IconBell />}
         total={alertTotal}
-        subLabel="Críticas"
+        subLabel={t('adminDashboard.securityRow.critical')}
         subValue={criticalAlerts}
         subColor="text-red-500"
       />

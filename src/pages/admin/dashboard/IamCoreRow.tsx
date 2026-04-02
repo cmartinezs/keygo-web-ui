@@ -1,4 +1,5 @@
 import type { CountSummary, AppSummary, MembershipSummary } from '@/types/dashboard'
+import { useTranslation } from 'react-i18next'
 import { BreakdownCard } from './DashboardPrimitives'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -45,10 +46,12 @@ interface IamCoreRowProps {
 }
 
 export function IamCoreRow({ tenants, users, apps, memberships }: IamCoreRowProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <BreakdownCard
-        label="Tenants"
+        label={t('adminDashboard.iamCards.tenants')}
         icon={<IconBuilding />}
         total={tenants?.total}
         active={tenants?.active}
@@ -56,7 +59,7 @@ export function IamCoreRow({ tenants, users, apps, memberships }: IamCoreRowProp
         suspended={tenants?.suspended}
       />
       <BreakdownCard
-        label="Usuarios"
+        label={t('adminDashboard.iamCards.users')}
         icon={<IconUsers />}
         total={users?.total}
         active={users?.active}
@@ -64,7 +67,7 @@ export function IamCoreRow({ tenants, users, apps, memberships }: IamCoreRowProp
         suspended={users?.suspended}
       />
       <BreakdownCard
-        label="Apps"
+        label={t('adminDashboard.iamCards.apps')}
         icon={<IconApps />}
         total={apps?.total}
         active={apps?.active}
@@ -72,7 +75,7 @@ export function IamCoreRow({ tenants, users, apps, memberships }: IamCoreRowProp
         suspended={apps?.suspended}
       />
       <BreakdownCard
-        label="Memberships"
+        label={t('adminDashboard.iamCards.memberships')}
         icon={<IconLink />}
         total={memberships?.total}
         active={memberships?.active}

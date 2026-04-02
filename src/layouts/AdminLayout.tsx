@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useTokenStore } from '@/auth/tokenStore'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemePreference } from '@/hooks/useTheme'
+import type { SupportedLocale } from '@/i18n/constants'
+import { useLocale } from '@/i18n/useLocale'
 import { Dropdown } from '@/components/Dropdown'
 import { SelectDropdown } from '@/components/SelectDropdown'
 import { SidebarMenu } from '@/components/dashboard/SidebarMenu'
 import type { SidebarMenuSection } from '@/components/dashboard/SidebarMenu'
 import type { DropdownOption } from '@/types/dropdown'
-import { APP_ROLE_LABELS, resolvePrimaryRole } from '@/types/roles'
+import { resolvePrimaryRole } from '@/types/roles'
 import type { AppRole } from '@/types/roles'
 
 // ── Icons (inline SVG) ───────────────────────────────────────────────────────
@@ -181,16 +184,71 @@ function IconSettings() {
   )
 }
 
+function IconFaq() {
+  return (
+    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9a3.75 3.75 0 117.265 1.2c0 2.625-3.743 3.375-3.743 3.375" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 17.25h.008v.008H12v-.008z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+}
+
+function IconFlagChile() {
+  return (
+    <svg className="w-4 h-4 shrink-0 rounded-sm" viewBox="0 0 20 14" aria-hidden="true">
+      <rect width="20" height="7" fill="#ffffff" />
+      <rect y="7" width="20" height="7" fill="#d52b1e" />
+      <rect width="8" height="7" fill="#0039a6" />
+      <path d="M4 1.4l.67 1.99h2.1L5.08 4.6l.65 1.99L4 5.36 2.27 6.59l.65-1.99L1.23 3.39h2.1L4 1.4z" fill="#ffffff" />
+    </svg>
+  )
+}
+
+function IconFlagUs() {
+  return (
+    <svg className="w-4 h-4 shrink-0 rounded-sm" viewBox="0 0 20 14" aria-hidden="true">
+      <rect width="20" height="14" fill="#ffffff" />
+      <rect y="0" width="20" height="1.2" fill="#b22234" />
+      <rect y="2.4" width="20" height="1.2" fill="#b22234" />
+      <rect y="4.8" width="20" height="1.2" fill="#b22234" />
+      <rect y="7.2" width="20" height="1.2" fill="#b22234" />
+      <rect y="9.6" width="20" height="1.2" fill="#b22234" />
+      <rect y="12" width="20" height="1.2" fill="#b22234" />
+      <rect width="8.6" height="6.8" fill="#3c3b6e" />
+      <circle cx="1.4" cy="1.2" r="0.35" fill="#ffffff" />
+      <circle cx="3" cy="1.2" r="0.35" fill="#ffffff" />
+      <circle cx="4.6" cy="1.2" r="0.35" fill="#ffffff" />
+      <circle cx="6.2" cy="1.2" r="0.35" fill="#ffffff" />
+      <circle cx="2.2" cy="2.2" r="0.35" fill="#ffffff" />
+      <circle cx="3.8" cy="2.2" r="0.35" fill="#ffffff" />
+      <circle cx="5.4" cy="2.2" r="0.35" fill="#ffffff" />
+      <circle cx="7" cy="2.2" r="0.35" fill="#ffffff" />
+      <circle cx="1.4" cy="3.2" r="0.35" fill="#ffffff" />
+      <circle cx="3" cy="3.2" r="0.35" fill="#ffffff" />
+      <circle cx="4.6" cy="3.2" r="0.35" fill="#ffffff" />
+      <circle cx="6.2" cy="3.2" r="0.35" fill="#ffffff" />
+      <circle cx="2.2" cy="4.2" r="0.35" fill="#ffffff" />
+      <circle cx="3.8" cy="4.2" r="0.35" fill="#ffffff" />
+      <circle cx="5.4" cy="4.2" r="0.35" fill="#ffffff" />
+      <circle cx="7" cy="4.2" r="0.35" fill="#ffffff" />
+      <circle cx="1.4" cy="5.2" r="0.35" fill="#ffffff" />
+      <circle cx="3" cy="5.2" r="0.35" fill="#ffffff" />
+      <circle cx="4.6" cy="5.2" r="0.35" fill="#ffffff" />
+      <circle cx="6.2" cy="5.2" r="0.35" fill="#ffffff" />
+    </svg>
+  )
+}
+
 // ── Theme toggle ──────────────────────────────────────────────────────────────
 
-const THEME_META: Record<ThemePreference, { icon: React.ReactNode; label: string }> = {
+const THEME_META: Record<ThemePreference, { icon: React.ReactNode }> = {
   system: {
     icon: (
       <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
     ),
-    label: 'Sistema',
   },
   light: {
     icon: (
@@ -198,7 +256,6 @@ const THEME_META: Record<ThemePreference, { icon: React.ReactNode; label: string
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
       </svg>
     ),
-    label: 'Claro',
   },
   dark: {
     icon: (
@@ -206,7 +263,6 @@ const THEME_META: Record<ThemePreference, { icon: React.ReactNode; label: string
         <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
       </svg>
     ),
-    label: 'Oscuro',
   },
   'high-contrast': {
     icon: (
@@ -214,11 +270,28 @@ const THEME_META: Record<ThemePreference, { icon: React.ReactNode; label: string
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m9-9H3" />
       </svg>
     ),
-    label: 'Alto contraste',
   },
 }
 
 const THEME_OPTIONS: ThemePreference[] = ['system', 'light', 'dark', 'high-contrast']
+
+const THEME_LABEL_KEYS: Record<ThemePreference, string> = {
+  system: 'theme.system',
+  light: 'theme.light',
+  dark: 'theme.dark',
+  'high-contrast': 'theme.highContrast',
+}
+
+const ROLE_LABEL_KEYS: Record<AppRole, string> = {
+  ADMIN: 'roles.adminGlobal',
+  ADMIN_TENANT: 'roles.adminTenant',
+  USER_TENANT: 'roles.userTenant',
+}
+
+const LOCALE_ICONS: Record<SupportedLocale, React.ReactNode> = {
+  'es-CL': <IconFlagChile />,
+  'en-US': <IconFlagUs />,
+}
 
 interface ThemeToggleProps {
   value: ThemePreference
@@ -226,9 +299,10 @@ interface ThemeToggleProps {
 }
 
 function ThemeToggle({ value, onChange }: ThemeToggleProps) {
+  const { t } = useTranslation()
   const options: DropdownOption<ThemePreference>[] = THEME_OPTIONS.map((p) => ({
     value: p,
-    label: THEME_META[p].label,
+    label: t(THEME_LABEL_KEYS[p]),
     icon: THEME_META[p].icon,
   }))
 
@@ -237,9 +311,9 @@ function ThemeToggle({ value, onChange }: ThemeToggleProps) {
       value={value}
       onChange={onChange}
       options={options}
-      label="Tema"
+      label={t('common.theme')}
       icon={THEME_META[value].icon}
-      ariaLabel={`Tema: ${THEME_META[value].label}`}
+      ariaLabel={`${t('common.theme')}: ${t(THEME_LABEL_KEYS[value])}`}
       hideSelectedOption
       selectedValueClassName="text-indigo-600 dark:text-indigo-400"
     />
@@ -260,9 +334,10 @@ const ROLE_ICONS: Record<AppRole, React.ReactNode> = {
 }
 
 function RoleSwitcher({ value, availableRoles, onChange }: RoleSwitcherProps) {
+  const { t } = useTranslation()
   const options: DropdownOption<AppRole>[] = availableRoles.map((role) => ({
     value: role,
-    label: APP_ROLE_LABELS[role],
+    label: t(ROLE_LABEL_KEYS[role]),
     icon: ROLE_ICONS[role],
   }))
 
@@ -271,9 +346,41 @@ function RoleSwitcher({ value, availableRoles, onChange }: RoleSwitcherProps) {
       value={value}
       onChange={onChange}
       options={options}
-      label="Rol"
-      ariaLabel="Rol activo"
+      label={t('roles.role')}
+      ariaLabel={t('roles.activeRole')}
       icon={ROLE_ICONS[value]}
+      hideSelectedOption
+      selectedValueClassName="text-indigo-600 dark:text-indigo-400"
+    />
+  )
+}
+
+interface LanguageSwitcherProps {
+  value: SupportedLocale
+  options: Array<{ value: string; label: string }>
+  onChange: (locale: SupportedLocale) => void
+}
+
+function LanguageSwitcher({ value, options, onChange }: LanguageSwitcherProps) {
+  const { t } = useTranslation()
+
+  const localeOptions: DropdownOption<SupportedLocale>[] = options.map((option) => {
+    const localeValue = option.value as SupportedLocale
+    return {
+      value: localeValue,
+      label: option.label,
+      icon: LOCALE_ICONS[localeValue],
+    }
+  })
+
+  return (
+    <SelectDropdown
+      value={value}
+      onChange={onChange}
+      options={localeOptions}
+      label={t('common.language')}
+      icon={LOCALE_ICONS[value]}
+      ariaLabel={t('common.language')}
       hideSelectedOption
       selectedValueClassName="text-indigo-600 dark:text-indigo-400"
     />
@@ -299,87 +406,94 @@ function UserAvatar({ name }: { name: string }) {
   )
 }
 
-const SIDEBAR_BY_ROLE: Record<AppRole, SidebarMenuSection[]> = {
-  ADMIN: [
+function createSidebarByRole(t: (key: string) => string): Record<AppRole, SidebarMenuSection[]> {
+  return {
+    ADMIN: [
     {
-      label: 'Plataforma',
+      label: t('dashboard.platform'),
       items: [
-        { to: '/dashboard', icon: <IconDashboard />, label: 'Dashboard' },
-        { to: '/dashboard/tenants', icon: <IconBuilding />, label: 'Tenants' },
-        { to: '/dashboard/feature/apps', icon: <IconApps />, label: 'Apps' },
-        { to: '/dashboard/feature/users', icon: <IconUsers />, label: 'Usuarios' },
+        { to: '/dashboard', icon: <IconDashboard />, label: t('dashboard.dashboard') },
+        { to: '/dashboard/tenants', icon: <IconBuilding />, label: t('dashboard.tenants') },
+        { to: '/dashboard/feature/apps', icon: <IconApps />, label: t('dashboard.apps') },
+        { to: '/dashboard/feature/users', icon: <IconUsers />, label: t('dashboard.users') },
       ],
     },
     {
-      label: 'Accesos y registro',
+      label: t('dashboard.accessAndAudit'),
       items: [
-        { to: '/dashboard/feature/access', icon: <IconShield />, label: 'Accesos' },
-        { to: '/dashboard/feature/audit', icon: <IconClipboard />, label: 'Registro' },
+        { to: '/dashboard/feature/access', icon: <IconShield />, label: t('dashboard.access') },
+        { to: '/dashboard/feature/audit', icon: <IconClipboard />, label: t('dashboard.audit') },
       ],
     },
     {
-      label: 'Seguridad',
+      label: t('dashboard.security'),
       items: [
-        { to: '/dashboard/feature/signing-keys', icon: <IconKeySmall />, label: 'Claves de firma' },
-        { to: '/dashboard/feature/sessions', icon: <IconClock />, label: 'Sesiones' },
-        { to: '/dashboard/feature/tokens', icon: <IconTicket />, label: 'Tokens' },
+        { to: '/dashboard/feature/signing-keys', icon: <IconKeySmall />, label: t('dashboard.signingKeys') },
+        { to: '/dashboard/feature/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
+        { to: '/dashboard/feature/tokens', icon: <IconTicket />, label: t('dashboard.tokens') },
       ],
     },
     {
-      label: 'Sistema',
+      label: t('dashboard.system'),
       items: [
-        { to: '/dashboard/feature/api', icon: <IconCloud />, label: 'API' },
-        { to: '/dashboard/account/settings', icon: <IconSettings />, label: 'Configuracion de cuenta' },
-        { to: '/dashboard/account', icon: <IconUser />, label: 'Mi cuenta' },
-      ],
-    },
-  ],
-  ADMIN_TENANT: [
-    {
-      label: 'Mi organizacion',
-      items: [
-        { to: '/dashboard', icon: <IconDashboard />, label: 'Dashboard' },
-        { to: '/dashboard/tenant/users', icon: <IconUsers />, label: 'Usuarios' },
-        { to: '/dashboard/tenant/apps', icon: <IconApps />, label: 'Apps' },
-      ],
-    },
-    {
-      label: 'Accesos',
-      items: [
-        { to: '/dashboard/tenant/memberships', icon: <IconShield />, label: 'Memberships' },
-        { to: '/dashboard/feature/sessions', icon: <IconClock />, label: 'Sesiones' },
-      ],
-    },
-    {
-      label: 'Cuenta',
-      items: [
-        { to: '/dashboard/account', icon: <IconUser />, label: 'Mi cuenta' },
-        { to: '/dashboard/account/settings', icon: <IconSettings />, label: 'Configuracion de cuenta' },
+        { to: '/dashboard/feature/api', icon: <IconCloud />, label: t('dashboard.api') },
+        { to: '/dashboard/account/settings', icon: <IconSettings />, label: t('common.accountSettings') },
+        { to: '/dashboard/faq', icon: <IconFaq />, label: t('common.faq') },
+        { to: '/dashboard/account', icon: <IconUser />, label: t('common.myAccount') },
       ],
     },
   ],
-  USER_TENANT: [
+    ADMIN_TENANT: [
     {
-      label: 'Inicio',
+      label: t('dashboard.myOrganization'),
       items: [
-        { to: '/dashboard', icon: <IconDashboard />, label: 'Dashboard' },
-        { to: '/dashboard/user/my-access', icon: <IconShield />, label: 'Mi acceso' },
-        { to: '/dashboard/user/activity', icon: <IconClipboard />, label: 'Actividad' },
+        { to: '/dashboard', icon: <IconDashboard />, label: t('dashboard.dashboard') },
+        { to: '/dashboard/tenant/users', icon: <IconUsers />, label: t('dashboard.users') },
+        { to: '/dashboard/tenant/apps', icon: <IconApps />, label: t('dashboard.apps') },
       ],
     },
     {
-      label: 'Cuenta',
+      label: t('dashboard.access'),
       items: [
-        { to: '/dashboard/account', icon: <IconUser />, label: 'Mi cuenta' },
-        { to: '/dashboard/account/settings', icon: <IconSettings />, label: 'Configuracion de cuenta' },
+        { to: '/dashboard/tenant/memberships', icon: <IconShield />, label: t('dashboard.memberships') },
+        { to: '/dashboard/feature/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
+      ],
+    },
+    {
+      label: t('dashboard.account'),
+      items: [
+        { to: '/dashboard/account', icon: <IconUser />, label: t('common.myAccount') },
+        { to: '/dashboard/account/settings', icon: <IconSettings />, label: t('common.accountSettings') },
+        { to: '/dashboard/faq', icon: <IconFaq />, label: t('common.faq') },
       ],
     },
   ],
+    USER_TENANT: [
+    {
+      label: t('dashboard.home'),
+      items: [
+        { to: '/dashboard', icon: <IconDashboard />, label: t('dashboard.dashboard') },
+        { to: '/dashboard/user/my-access', icon: <IconShield />, label: t('dashboard.myAccess') },
+        { to: '/dashboard/user/activity', icon: <IconClipboard />, label: t('dashboard.activity') },
+      ],
+    },
+    {
+      label: t('dashboard.account'),
+      items: [
+        { to: '/dashboard/account', icon: <IconUser />, label: t('common.myAccount') },
+        { to: '/dashboard/account/settings', icon: <IconSettings />, label: t('common.accountSettings') },
+        { to: '/dashboard/faq', icon: <IconFaq />, label: t('common.faq') },
+      ],
+    },
+  ],
+  }
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 
 export default function AdminLayout() {
+  const { t } = useTranslation()
+  const { locale, setLocale, supportedLocales } = useLocale()
   const roles = useTokenStore((s) => s.roles)
   const activeRole = useTokenStore((s) => s.activeRole)
   const setActiveRole = useTokenStore((s) => s.setActiveRole)
@@ -414,10 +528,18 @@ export default function AdminLayout() {
     navigate('/dashboard/account/settings')
   }
 
-  const displayName = user?.displayName ?? 'Admin'
+  function handleOpenAccountFaq() {
+    navigate('/dashboard/faq')
+  }
+
+  function handleLocaleChange(nextLocale: SupportedLocale) {
+    void setLocale(nextLocale)
+  }
+
+  const displayName = user?.displayName ?? t('common.admin')
   const sidebarRole = activeRole ?? resolvePrimaryRole(roles) ?? 'USER_TENANT'
-  const roleLabel = APP_ROLE_LABELS[sidebarRole]
-  const sidebarSections = SIDEBAR_BY_ROLE[sidebarRole]
+  const roleLabel = t(ROLE_LABEL_KEYS[sidebarRole])
+  const sidebarSections = createSidebarByRole(t)[sidebarRole]
 
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
@@ -453,7 +575,7 @@ export default function AdminLayout() {
           {/* Collapse toggle: desktop only */}
           <button
             onClick={() => setCollapsed((c) => !c)}
-            aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
+            aria-label={collapsed ? t('theme.expandMenu') : t('theme.collapseMenu')}
             className={`hidden md:flex shrink-0 w-8 h-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 ${collapsed ? 'mx-auto' : 'mr-2'}`}
           >
             {collapsed ? <IconChevronRight /> : <IconChevronLeft />}
@@ -490,7 +612,7 @@ export default function AdminLayout() {
           {/* Hamburger — mobile only */}
           <button
             onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Abrir menú"
+            aria-label={t('theme.openMenu')}
             className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 shrink-0"
           >
             <IconHamburger />
@@ -499,7 +621,7 @@ export default function AdminLayout() {
           {/* Search — hidden on mobile */}
           <div className="hidden min-[550px]:flex items-center gap-2 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 w-64">
             <IconSearch />
-            <span className="text-sm text-slate-400 select-none">Buscar…</span>
+            <span className="text-sm text-slate-400 select-none">{t('common.search')}...</span>
             <kbd className="ml-auto text-[10px] text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-white/20 rounded px-1">⌘K</kbd>
           </div>
 
@@ -515,20 +637,26 @@ export default function AdminLayout() {
             />
           )}
 
+          <LanguageSwitcher
+            value={locale as SupportedLocale}
+            options={supportedLocales}
+            onChange={handleLocaleChange}
+          />
+
           {/* Theme toggle + Notifications */}
           <ThemeToggle value={preference} onChange={setPreference} />
 
           {/* Notifications */}
           <button
             className="relative w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
-            aria-label="Notificaciones"
+            aria-label={t('common.notifications')}
           >
             <IconBell />
           </button>
 
           {/* User menu */}
           <Dropdown
-            ariaLabel="Menú de usuario"
+            ariaLabel={t('common.userMenu')}
             panelRole="menu"
             panelClassName="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
             trigger={({ open, toggle }) => (
@@ -537,7 +665,7 @@ export default function AdminLayout() {
                 className="flex items-center gap-2.5 rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
                 aria-haspopup="menu"
                 aria-expanded={open}
-                aria-label="Abrir menú de usuario"
+                aria-label={t('common.userMenu')}
               >
                 <UserAvatar name={displayName} />
                 <div className="text-left hidden min-[550px]:block">
@@ -562,8 +690,9 @@ export default function AdminLayout() {
             {/* Menu items */}
             <div className="py-1" role="none">
               {[
-                { key: 'account', label: 'Mi cuenta', icon: <IconUser />, onClick: handleOpenAccount },
-                { key: 'settings', label: 'Configuración de cuenta', icon: <IconSettings />, onClick: handleOpenAccountSettings },
+                { key: 'account', label: t('common.myAccount'), icon: <IconUser />, onClick: handleOpenAccount },
+                { key: 'settings', label: t('common.accountSettings'), icon: <IconSettings />, onClick: handleOpenAccountSettings },
+                { key: 'faq', label: t('common.faq'), icon: <IconFaq />, onClick: handleOpenAccountFaq },
               ].map((item) => (
                 <button
                   key={item.key}
@@ -585,7 +714,7 @@ export default function AdminLayout() {
                 className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors"
               >
                 <IconLogout />
-                Cerrar sesión
+                {t('common.logout')}
               </button>
             </div>
           </Dropdown>

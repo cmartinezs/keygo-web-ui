@@ -1,4 +1,5 @@
 import { Dropdown } from '@/components/Dropdown'
+import { useTranslation } from 'react-i18next'
 import type { SelectDropdownProps } from '@/types/dropdown'
 
 export function SelectDropdown<T extends string>({
@@ -11,6 +12,7 @@ export function SelectDropdown<T extends string>({
   hideSelectedOption = false,
   selectedValueClassName,
 }: SelectDropdownProps<T>) {
+  const { t } = useTranslation()
   const current = options.find((option) => option.value === value)
   const menuOptions = hideSelectedOption
     ? options.filter((option) => option.value !== value)
@@ -47,7 +49,7 @@ export function SelectDropdown<T extends string>({
           <ul>
             {menuOptions.length === 0 && (
               <li className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400" aria-hidden="true">
-                Sin mas opciones
+                {t('common.noMoreOptions')}
               </li>
             )}
 
