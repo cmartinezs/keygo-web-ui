@@ -1,11 +1,14 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useTokenStore } from '@/auth/tokenStore'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemePreference } from '@/hooks/useTheme'
+import { Dropdown } from '@/components/Dropdown'
+import { SelectDropdown } from '@/components/SelectDropdown'
 import { SidebarMenu } from '@/components/dashboard/SidebarMenu'
 import type { SidebarMenuSection } from '@/components/dashboard/SidebarMenu'
+import type { DropdownOption } from '@/types/dropdown'
 import { APP_ROLE_LABELS, resolvePrimaryRole } from '@/types/roles'
 import type { AppRole } from '@/types/roles'
 
@@ -175,172 +178,6 @@ function IconSettings() {
       <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
-  )
-}
-
-// ── Generic Dropdown (interfaz uniforme para selectores) ─────────────────────
-//
-// NORMAS DE COMPONENTES SELECTORES:
-// 1. Todos los dropdowns deben usar el componente reutilizable <Dropdown<T>>
-// 2. Props estándar: `value`, `onChange`, `options`, `label`, `ariaLabel`
-// 3. Evitar duplicación de lógica: open/close, click-outside, estilos, a11y
-// 4. Si necesitas un selector personalizado, extender <Dropdown> no crear uno nuevo
-// 5. Los selectores deben tener iconos opcionales para claridad visual
-// 6. El componente wrapper (ej: ThemeToggle, RoleSwitcher) solo maneja transformación
-//    de data y delega UI al Dropdown
-//
-// Estructura típica de un wrapper:
-//   1. Recibe props unificadas (value, onChange)
-//   2. Construye array de DropdownOption<T>
-//   3. Delega al Dropdown con options + label + ariaLabel
-//
-
-interface DropdownOption<T> {
-  value: T
-  label: string
-  icon?: React.ReactNode
-}
-
-interface DropdownProps {
-  ariaLabel: string
-  trigger: (params: { open: boolean; toggle: () => void }) => React.ReactNode
-  panelClassName?: string
-  panelRole?: 'listbox' | 'menu'
-  children: React.ReactNode | ((params: { close: () => void }) => React.ReactNode)
-}
-
-function useDropdown() {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  function toggle() {
-    setOpen((value) => !value)
-  }
-
-  function close() {
-    setOpen(false)
-  }
-
-  return { open, ref, toggle, close }
-}
-
-function Dropdown({
-  ariaLabel,
-  trigger,
-  panelClassName = 'absolute right-0 top-full mt-2 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50',
-  panelRole = 'menu',
-  children,
-}: DropdownProps) {
-  const { open, ref, toggle, close } = useDropdown()
-
-  return (
-    <div className="relative" ref={ref}>
-      {trigger({ open, toggle })}
-
-      {open && (
-        <div role={panelRole} aria-label={ariaLabel} className={panelClassName}>
-          {typeof children === 'function' ? children({ close }) : children}
-        </div>
-      )}
-    </div>
-  )
-}
-
-interface SelectDropdownProps<T> {
-  value: T
-  onChange: (value: T) => void
-  options: DropdownOption<T>[]
-  label: string
-  icon?: React.ReactNode
-  ariaLabel: string
-  hideSelectedOption?: boolean
-  selectedValueClassName?: string
-}
-
-function SelectDropdown<T extends string>({
-  value,
-  onChange,
-  options,
-  label,
-  icon,
-  ariaLabel,
-  hideSelectedOption = false,
-  selectedValueClassName,
-}: SelectDropdownProps<T>) {
-  const current = options.find((o) => o.value === value)
-  const menuOptions = hideSelectedOption
-    ? options.filter((o) => o.value !== value)
-    : options
-
-  return (
-    <Dropdown
-      ariaLabel={ariaLabel}
-      panelRole="listbox"
-      trigger={({ open, toggle }) => (
-        <button
-          onClick={toggle}
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          aria-label={ariaLabel}
-          className="flex items-center gap-1.5 h-9 px-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-800 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 text-sm font-medium"
-        >
-          {icon}
-          <span className={current && selectedValueClassName ? selectedValueClassName : ''}>{current?.label ?? label}</span>
-          <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-      )}
-    >
-      {({ close }) => {
-        function select(v: T) {
-          onChange(v)
-          close()
-        }
-
-        return (
-          <ul>
-        {menuOptions.length === 0 && (
-          <li className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400" aria-hidden="true">
-            Sin mas opciones
-          </li>
-        )}
-
-        {menuOptions.map((o) => {
-          const active = value === o.value
-          return (
-            <li key={o.value} role="option" aria-selected={active}>
-              <button
-                onClick={() => select(o.value)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
-                  active
-                    ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 font-semibold'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'
-                }`}
-              >
-                {o.icon}
-                {o.label}
-                {active && (
-                  <svg className="w-3.5 h-3.5 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </button>
-            </li>
-          )
-        })}
-          </ul>
-        )
-      }}
-    </Dropdown>
   )
 }
 

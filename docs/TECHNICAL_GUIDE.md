@@ -897,6 +897,44 @@ export type AppRole = (typeof APP_ROLES)[number]
 
 ---
 
+### `dropdown.ts`
+
+**Propósito:** Tipos compartidos para primitives de dropdown (`Dropdown` y `SelectDropdown`) y su API declarativa.
+
+**Tipos clave:**
+```ts
+export interface DropdownProps {
+  ariaLabel: string
+  trigger: (params: DropdownTriggerParams) => ReactNode
+  panelClassName?: string
+  panelRole?: 'listbox' | 'menu'
+  children: ReactNode | ((params: DropdownChildrenParams) => ReactNode)
+}
+
+export interface DropdownOption<T extends string> {
+  value: T
+  label: string
+  icon?: ReactNode
+}
+
+export interface SelectDropdownProps<T extends string> {
+  value: T
+  onChange: (value: T) => void
+  options: DropdownOption<T>[]
+  label: string
+  icon?: ReactNode
+  ariaLabel: string
+  hideSelectedOption?: boolean
+  selectedValueClassName?: string
+}
+```
+
+**Integración:** Consumido por `src/components/Dropdown.tsx`, `src/components/SelectDropdown.tsx` y `src/layouts/AdminLayout.tsx`.
+
+**Decisión de diseño:** Extraer tipos de UI compartida evita re-definir interfaces dentro de layouts y mejora la reutilización entre menús/selectores.
+
+---
+
 ### `dashboard.ts`
 
 **Propósito:** Tipos del endpoint agregado del panel de control de la plataforma.
@@ -1066,6 +1104,22 @@ function useRateLimit(formKey: string) {
 
 ---
 
+### `useDropdown.ts`
+
+**Propósito:** Hook reusable para controlar el ciclo de vida de dropdowns (open/close, toggle y cierre por click fuera).
+
+**Construcción:**
+- Mantiene estado local `open`.
+- Expone `ref` para delimitar el contenedor interactivo.
+- Registra `mousedown` en `document` para cerrar cuando el click ocurre fuera del `ref`.
+- Expone helpers `toggle()` y `close()` para consumo declarativo desde primitives.
+
+**Integración:** Consumido por `src/components/Dropdown.tsx`. Indirectamente usado por `ThemeToggle`, `RoleSwitcher` y menú de usuario en `src/layouts/AdminLayout.tsx`.
+
+**Decisión de diseño:** Centralizar esta lógica evita listeners duplicados por pantalla y mantiene consistencia de comportamiento entre dropdowns.
+
+---
+
 ### `useTurnstile.ts`
 
 **Propósito:** Integración con Cloudflare Turnstile CAPTCHA.
@@ -1082,6 +1136,36 @@ function useRateLimit(formKey: string) {
 ---
 
 ## 8. Componentes reutilizables — `src/components/`
+
+### `Dropdown.tsx`
+
+**Propósito:** Primitive base para cualquier menú desplegable del proyecto con API declarativa por `trigger` + `children`.
+
+**Construcción:**
+- Usa `useDropdown` para estado y cierre por click exterior.
+- Permite `panelRole` (`menu` o `listbox`) y `panelClassName` configurable.
+- Renderiza `children` estático o render function con acceso a `close()`.
+
+**Integración:** Base de `SelectDropdown.tsx` y del menú de usuario en `AdminLayout`.
+
+**Decisión de diseño:** Unificar primitives de dropdown evita repetir lógica de interacción y baja deuda de accesibilidad.
+
+---
+
+### `SelectDropdown.tsx`
+
+**Propósito:** Wrapper especializado para selectores (rol, tema, etc.) construido sobre `Dropdown`.
+
+**Construcción:**
+- Recibe opciones tipadas (`DropdownOption<T>`) y controla selección por `value` + `onChange`.
+- Soporta `hideSelectedOption` para ocultar el valor activo dentro del panel.
+- Soporta `selectedValueClassName` para estilizar el valor seleccionado en trigger cerrado.
+
+**Integración:** Usado en `src/layouts/AdminLayout.tsx` para `ThemeToggle` y `RoleSwitcher`.
+
+**Decisión de diseño:** Separar el caso "selector" del primitive general permite configuración por props sin repetir JSX ni handlers.
+
+---
 
 ### `GlobalLoaderOverlay.tsx`
 

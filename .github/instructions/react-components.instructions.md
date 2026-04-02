@@ -106,7 +106,15 @@ Si el mismo bloque JSX o la misma lógica aparece en dos lugares, refactorizar e
 - Los casos de selector (ej: rol, tema) deben usar un wrapper configurado (ej: `SelectDropdown`) en vez de reescribir markup y lógica.
 - Los menús de acciones (ej: menú de usuario) deben declararse por configuración de ítems y reutilizar el mismo primitive `Dropdown`.
 
+### Un archivo por definición compartida
+
+- Todo componente reutilizable debe vivir en su propio archivo dentro de `src/components/`.
+- Todo hook reutilizable debe vivir en su propio archivo dentro de `src/hooks/`.
+- Los tipos e interfaces reutilizados por más de un módulo deben extraerse a `src/types/` (o submódulo de tipos) y evitarse en archivos contenedores grandes.
+- Si una pantalla necesita helpers locales no reutilizables, pueden quedar en el archivo de la pantalla, pero al primer segundo uso se deben extraer.
+
 **[Aprendido]** Estandarizar dropdowns en un primitive único (`Dropdown`) + configuración declarativa reduce deuda de accesibilidad y evita inconsistencias de comportamiento entre menús y selectores.
+**[Aprendido]** Separar componentes, hooks y tipos compartidos por archivo reduce sobrecarga cognitiva y evita duplicación accidental al escalar el proyecto.
 
 ---
 
