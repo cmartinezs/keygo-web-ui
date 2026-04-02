@@ -1220,7 +1220,7 @@ div.flex.h-screen
 | `FeaturesSection.tsx` | Grid de 6 feature cards | Array de datos inline |
 | `HowItWorksSection.tsx` | 3 pasos del flujo de auth | Array de datos inline |
 | `RolesSection.tsx` | Tarjetas de los 3 roles | Mapeados desde `AppRole` values |
-| `PricingSection.tsx` | Grid de plan cards en modo display | Usa `PlanCard` + `PLANS` |
+| `PricingSection.tsx` | Grid de plan cards en modo display | Carga el catálogo de billing en diferido al entrar en viewport (IntersectionObserver + `enabled` en `useQuery`) |
 | `DevelopersSection.tsx` | Recursos para devs | Enlaza la guía pública de integración y deja solo SDKs como pendiente |
 | `CTASection.tsx` | Footer con CTA final y copyright | Año dinámico: `new Date().getFullYear()` |
 

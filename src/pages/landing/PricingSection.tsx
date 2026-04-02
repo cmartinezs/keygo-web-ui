@@ -1,19 +1,51 @@
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { PlanCatalogGrid } from '@/components/PlanCatalogGrid'
 import { getBillingCatalog, BILLING_QUERY_KEYS } from '@/api/billing'
 import { TENANT, CLIENT_ID } from '@/api/client'
 
 export function PricingSection() {
+  const sectionRef = useRef<HTMLElement | null>(null)
+  const [shouldLoadPlans, setShouldLoadPlans] = useState(false)
+
+  useEffect(() => {
+    if (shouldLoadPlans) return
+    const element = sectionRef.current
+    if (!element) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const isVisible = entries.some((entry) => entry.isIntersecting)
+        if (isVisible) {
+          setShouldLoadPlans(true)
+          observer.disconnect()
+        }
+      },
+      {
+        root: null,
+        rootMargin: '200px 0px',
+        threshold: 0.1,
+      },
+    )
+
+    observer.observe(element)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [shouldLoadPlans])
+
   const { data: rawPlans = [], isLoading, isError, refetch } = useQuery({
     queryKey: BILLING_QUERY_KEYS.catalog(TENANT, CLIENT_ID),
     queryFn: () => getBillingCatalog(),
+    enabled: shouldLoadPlans,
     staleTime: 1000 * 60 * 10,
   })
 
   const plans = rawPlans.filter((p) => p.is_public && p.status === 'ACTIVE')
 
   return (
-    <section id="pricing" className="py-24 bg-slate-50 px-4">
+    <section ref={sectionRef} id="pricing" className="py-24 bg-slate-50 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <span className="text-indigo-600 text-sm font-semibold uppercase tracking-widest">

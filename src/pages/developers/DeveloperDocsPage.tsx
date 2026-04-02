@@ -481,8 +481,10 @@ interface EndpointIoTabsProps {
 }
 
 function EndpointIoTabs({ endpointKey, queryParams, requestBody, response }: EndpointIoTabsProps) {
-  const hasRequest = Boolean(queryParams || requestBody)
-  const [activeTab, setActiveTab] = useState<EndpointIoTab>(hasRequest ? 'request' : 'response')
+  const shouldShowRequest = Boolean(queryParams || requestBody)
+  const [manuallySelectedTab, setManuallySelectedTab] = useState<EndpointIoTab | null>(null)
+  const activeTab = manuallySelectedTab ?? (shouldShowRequest ? 'request' : 'response')
+  
   const baseId = `endpoint-${endpointKey.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}`
   const requestTabId = `${baseId}-tab-request`
   const responseTabId = `${baseId}-tab-response`
@@ -496,14 +498,14 @@ function EndpointIoTabs({ endpointKey, queryParams, requestBody, response }: End
         aria-label="Detalle de request y response"
         className="inline-flex rounded-xl border border-white/10 bg-slate-900/60 p-1"
       >
-        {hasRequest ? (
+        {shouldShowRequest ? (
           <button
             id={requestTabId}
             role="tab"
             type="button"
             aria-selected={activeTab === 'request'}
             aria-controls={requestPanelId}
-            onClick={() => setActiveTab('request')}
+            onClick={() => setManuallySelectedTab('request')}
             className={`rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
               activeTab === 'request'
                 ? 'bg-indigo-500 text-white'
@@ -520,7 +522,7 @@ function EndpointIoTabs({ endpointKey, queryParams, requestBody, response }: End
           type="button"
           aria-selected={activeTab === 'response'}
           aria-controls={responsePanelId}
-          onClick={() => setActiveTab('response')}
+          onClick={() => setManuallySelectedTab('response')}
           className={`rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
             activeTab === 'response' ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
           }`}
@@ -529,7 +531,7 @@ function EndpointIoTabs({ endpointKey, queryParams, requestBody, response }: End
         </button>
       </div>
 
-      {hasRequest ? (
+      {shouldShowRequest ? (
         <div
           id={requestPanelId}
           role="tabpanel"
@@ -573,12 +575,7 @@ function EndpointIoTabs({ endpointKey, queryParams, requestBody, response }: End
         className="space-y-4"
       >
         <section className="grid gap-3 border-t border-white/10 pt-4 lg:grid-cols-2 lg:items-start">
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Response format: {response.format}
-            </p>
             <FieldTable title="Response - campos" fields={response.fields} />
-          </div>
           <div className="space-y-3">
             {response.examples.map(({ label, payload }) => (
               <JsonPanel key={label} title={`Response - ${label}`} data={payload} />
@@ -658,6 +655,7 @@ function EndpointCatalogTabs({ endpoints }: EndpointCatalogTabsProps) {
         </dl>
 
         <EndpointIoTabs
+          key={activeEndpoint.path}
           endpointKey={activeEndpoint.path}
           queryParams={activeEndpoint.queryParams}
           requestBody={activeEndpoint.requestBody}
