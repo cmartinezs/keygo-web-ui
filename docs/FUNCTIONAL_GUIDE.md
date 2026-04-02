@@ -618,20 +618,17 @@ Muestra actividad reciente de la cuenta:
 Comportamiento en red lenta:
 - Las consultas de actividad (memberships/apps) usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 
-### 4.4 Sesiones
+### 4.4 Mi cuenta
 
-**Ruta:** `/dashboard/user/sessions`
+**Ruta:** `/dashboard/account`
 
-Muestra detalle de la sesion activa:
-- Emision y expiracion de access token
-- Emision y expiracion de id token
-- Estado del refresh token en sessionStorage
+Vista unificada de cuenta personal (todos los roles autenticados) con tabs:
+- **Resumen:** identidad base, estado, tenant y rol activo.
+- **Perfil:** formulario self-service para actualizar perfil.
+- **Accesos:** placeholder preparado para endpoint self-service de accesos.
+- **Actividad:** placeholder preparado para timeline de actividad de cuenta.
 
-### 4.5 Mi cuenta
-
-**Ruta:** `/dashboard/user/profile`
-
-Formulario self-service para actualizar perfil:
+Campos editables en la tab Perfil:
 - Nombre y apellido
 - Telefono
 - Locale y zona horaria
@@ -642,6 +639,25 @@ Formulario self-service para actualizar perfil:
 Comportamiento en red lenta:
 - La carga del perfil usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 - Guardar cambios usa timeout de 10 segundos sin auto-retry.
+
+Compatibilidad:
+- La ruta legacy `/dashboard/user/profile` redirige a `/dashboard/account`.
+
+### 4.5 Configuración de cuenta
+
+**Ruta:** `/dashboard/account/settings`
+
+Vista de configuraciones personales y operativas por tabs:
+- **Seguridad:** cambio de contraseña y sesiones (pendiente backend).
+- **Notificaciones:** preferencias por canal/tipo (pendiente backend).
+- **Conexiones:** gestión de cuentas externas (pendiente backend).
+- **Facturacion:** suscripción y facturas para rol `ADMIN_TENANT` (datos reales); para otros roles se muestra acceso restringido.
+
+Comportamiento en red lenta:
+- Suscripción y facturas usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+
+Compatibilidad:
+- La ruta legacy `/dashboard/user/sessions` redirige a `/dashboard/account/settings?tab=security`.
 
 ---
 
@@ -654,9 +670,8 @@ Las siguientes funcionalidades están planificadas pero aún no están disponibl
 | Reactivación de tenants | Detalle de tenant | Mock; endpoint T-033 pendiente en backend |
 | Registro de usuarios (paso 2) | `/register` | Formulario parcialmente implementado |
 | Panel Administrador de Tenant | `/dashboard` + `/dashboard/tenant/*` | Usuarios, Apps y Memberships implementados; faltan métricas y sesiones avanzadas |
-| Panel de Usuario | `/dashboard` + `/dashboard/user/*` | Mi acceso, actividad, sesiones y perfil implementados |
-| Mi perfil | Menú de usuario (admin) | Botón presente, sin navegación |
-| Configuración de cuenta | Menú de usuario (admin) | Botón presente, sin navegación |
+| Panel de Usuario | `/dashboard` + `/dashboard/user/*` + `/dashboard/account*` | Mi acceso y actividad implementados; cuenta/configuración migradas a rutas unificadas |
+| Seguridad de cuenta (change-password/sesiones remotas) | `/dashboard/account/settings` | UI implementada; backend pendiente según RFC |
 | Buscador global | Cabecera admin | Decorativo, sin funcionalidad |
 | Notificaciones | Cabecera admin | Decorativo, sin funcionalidad |
 | Portal de documentación | Landing › Desarrolladores | Marcado "Próximamente" |

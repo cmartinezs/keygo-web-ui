@@ -272,7 +272,8 @@ Zustand
 - Define todas las rutas con `<Routes>` de React Router 7.
 - Expone rutas públicas adicionales `/developers` (documentación) y `/logout` (cierre de sesión seguro).
 - Unifica toda el area autenticada en `/dashboard` (misma ruta para todos los roles).
-- Mantiene rutas legacy (`/home` y `/admin/*`) como redirecciones a `/dashboard` para compatibilidad.
+- Expone rutas compartidas de cuenta para todos los roles: `/dashboard/account` y `/dashboard/account/settings`.
+- Mantiene rutas legacy (`/home`, `/admin/*`, `/dashboard/user/profile`, `/dashboard/user/sessions`) como redirecciones de compatibilidad.
 - Monta `<BlockingErrorModal />` globalmente junto a `<Toaster />`, fuera de `<Routes>`, para que se renderice sobre cualquier pantalla activa.
 - Usa `useIsFetching()` y `useIsMutating()` para detectar actividad global de red en TanStack Query.
 - Muestra `<GlobalLoaderOverlay />` mientras existan cargas o mutaciones activas (si no hay error bloqueante).
@@ -299,6 +300,8 @@ Zustand
 | `/register` | `UserRegisterPage` | Pública |
 | `/dashboard` | `AuthGuard` → `AdminLayout` → `DashboardHomePage` | Autenticada |
 | `/dashboard/feature/:featureId` | `FeaturePlaceholderPage` | Autenticada |
+| `/dashboard/account` | `UserProfilePage` | Autenticada |
+| `/dashboard/account/settings` | `AccountSettingsPage` | Autenticada |
 | `/dashboard/tenants` | `TenantsPage` | `ADMIN` |
 | `/dashboard/tenants/new` | `TenantCreatePage` (outlet) | `ADMIN` |
 | `/dashboard/tenants/:slug` | `TenantDetailPage` (outlet) | `ADMIN` |
@@ -307,8 +310,8 @@ Zustand
 | `/dashboard/tenant/memberships` | `TenantMembershipsPage` | `ADMIN_TENANT` |
 | `/dashboard/user/my-access` | `UserMyAccessPage` | `USER_TENANT` |
 | `/dashboard/user/activity` | `UserActivityPage` | `USER_TENANT` |
-| `/dashboard/user/sessions` | `UserSessionsPage` | `USER_TENANT` |
-| `/dashboard/user/profile` | `UserProfilePage` | `USER_TENANT` |
+| `/dashboard/user/sessions` | `Navigate -> /dashboard/account/settings?tab=security` | `USER_TENANT` (legacy) |
+| `/dashboard/user/profile` | `Navigate -> /dashboard/account` | `USER_TENANT` (legacy) |
 | `/home` | `Navigate to /dashboard` | Pública (legacy) |
 | `/admin/*` | `Navigate to /dashboard` | Pública (legacy) |
 | `*` | `Navigate to="/login"` | — |
@@ -1454,7 +1457,7 @@ div.flex.h-screen
 **Deuda técnica:**
 - Buscador en el header es solo decorativo.
 - Campana de notificaciones sin funcionalidad.
-- "Mi perfil" y "Configuración" en el dropdown no navegan a ningún lado.
+- Configuración de cuenta depende de endpoints backend aún pendientes para tabs de seguridad/notificaciones/conexiones.
 - Sin keyboard navigation completa en ThemeToggle (solo focus ring).
 
 ---
@@ -1696,19 +1699,47 @@ initMutation.isSuccess                                  → LoginForm
 
 **`UserProfilePage.tsx`**
 
-**Propósito:** gestion self-service del perfil del usuario autenticado.
+**Propósito:** vista unificada de **Mi cuenta** para todos los roles autenticados, con tabs de resumen, perfil, accesos y actividad.
 
 **Construcción:**
-- Query `getProfile(...)` con `ACCOUNT_QUERY_KEYS.profile(...)`.
-- Formulario RHF + Zod para campos de perfil.
+- Query `getProfile(...)` con `ACCOUNT_QUERY_KEYS.profile(...)` para hidratar resumen y formulario.
+- Tabs accesibles (`role="tablist"`, `role="tab"`, `role="tabpanel"`) para separar estados de UI sin overlays globales.
+- Tab **Perfil** con formulario RHF + Zod para campos editables.
 - Mutacion `updateProfile(...)` con invalidacion de cache y feedback por toast.
+- Tabs **Accesos** y **Actividad** quedan preparadas como placeholders backend-driven.
 - Resiliencia: GET de perfil con timeout (10s) + retry automático controlado (5s, máximo 3); PATCH de actualización con timeout explícito (10s) sin auto-retry.
 
-**Integración:** ruta `/dashboard/user/profile` protegida por `RoleGuard` con `USER_TENANT`.
+**Integración:**
+- Ruta principal: `/dashboard/account` (autenticada para todos los roles).
+- Ruta legacy: `/dashboard/user/profile` redirige a `/dashboard/account`.
 
-**Decisión de diseño:** reutilizar modulo `src/api/account.ts` para mantener separacion clara entre perfiles propios y gestion admin de usuarios.
+**Decisión de diseño:** centralizar cuenta personal en una única ruta reduce duplicidad entre sidebar y dropdown, y desacopla "mi cuenta" de rutas específicas por rol.
 
-**Puntos de mejora / deuda técnica conocida:** agregar validaciones de formato locales por campo (telefono, locale y zoneinfo).
+**Puntos de mejora / deuda técnica conocida:**
+- tab de accesos depende de endpoint self-service (`/account/access`).
+- tab de actividad depende de endpoint de timeline self-service.
+
+**`AccountSettingsPage.tsx`**
+
+**Propósito:** concentrar la configuración de cuenta en una única vista con tabs de seguridad, notificaciones, conexiones y facturación.
+
+**Construcción:**
+- Tabs accesibles con estado local para segmentar cada bloque de configuración.
+- Lectura de `?tab=` para compatibilidad con rutas legacy (por ejemplo redirección desde `/dashboard/user/sessions`).
+- Seguridad/notificaciones/conexiones se muestran como módulos en estado "Próximamente" con contrato backend explícito.
+- Facturación conectada a endpoints reales (`getActiveSubscription`, `listInvoices`) para `ADMIN_TENANT`.
+- Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para suscripción e invoices.
+
+**Integración:**
+- Ruta principal: `/dashboard/account/settings` (autenticada para todos los roles).
+- Render condicional por rol: la tab de facturación muestra datos solo para `ADMIN_TENANT`.
+- Rutas legacy: `/dashboard/user/sessions` redirige a `/dashboard/account/settings?tab=security`.
+
+**Decisión de diseño:** separar "Mi cuenta" de "Configuración de cuenta" evita sobrecargar una sola página y permite habilitar módulos backend en forma incremental.
+
+**Puntos de mejora / deuda técnica conocida:**
+- faltan endpoints de seguridad de cuenta (change-password, sessions remotas) para reemplazar placeholders.
+- faltan endpoints de notificaciones y conexiones para completar UX de settings.
 
 ---
 

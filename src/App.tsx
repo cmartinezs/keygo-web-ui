@@ -15,8 +15,8 @@ import TenantAppsPage from './pages/dashboard/tenant/TenantAppsPage'
 import TenantMembershipsPage from './pages/dashboard/tenant/TenantMembershipsPage'
 import UserMyAccessPage from './pages/dashboard/user/UserMyAccessPage'
 import UserActivityPage from './pages/dashboard/user/UserActivityPage'
-import UserSessionsPage from './pages/dashboard/user/UserSessionsPage'
 import UserProfilePage from './pages/dashboard/user/UserProfilePage'
+import AccountSettingsPage from './pages/dashboard/account/AccountSettingsPage'
 import { AuthGuard, RoleGuard } from './auth/roleGuard'
 import AdminLayout from './layouts/AdminLayout'
 import TenantsPage from './pages/admin/TenantsPage'
@@ -95,6 +95,10 @@ export default function App() {
           <Route index element={<DashboardHomePage />} />
           <Route path="feature/:featureId" element={<FeaturePlaceholderPage />} />
 
+          {/* Account sections (all authenticated roles) */}
+          <Route path="account" element={<UserProfilePage />} />
+          <Route path="account/settings" element={<AccountSettingsPage />} />
+
           {/* Admin-only sections */}
           <Route element={<RoleGuard roles={['ADMIN']} redirectTo="/dashboard" />}>
             <Route path="tenants" element={<TenantsPage />}>
@@ -114,8 +118,8 @@ export default function App() {
           <Route element={<RoleGuard roles={['USER_TENANT']} redirectTo="/dashboard" />}>
             <Route path="user/my-access" element={<UserMyAccessPage />} />
             <Route path="user/activity" element={<UserActivityPage />} />
-            <Route path="user/sessions" element={<UserSessionsPage />} />
-            <Route path="user/profile" element={<UserProfilePage />} />
+            <Route path="user/sessions" element={<Navigate to="/dashboard/account/settings?tab=security" replace />} />
+            <Route path="user/profile" element={<Navigate to="/dashboard/account" replace />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

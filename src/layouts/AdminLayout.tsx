@@ -329,8 +329,8 @@ const SIDEBAR_BY_ROLE: Record<AppRole, SidebarMenuSection[]> = {
       label: 'Sistema',
       items: [
         { to: '/dashboard/feature/api', icon: <IconCloud />, label: 'API' },
-        { to: '/dashboard/feature/settings', icon: <IconSettings />, label: 'Configuracion' },
-        { to: '/dashboard/feature/profile', icon: <IconUser />, label: 'Mi cuenta' },
+        { to: '/dashboard/account/settings', icon: <IconSettings />, label: 'Configuracion de cuenta' },
+        { to: '/dashboard/account', icon: <IconUser />, label: 'Mi cuenta' },
       ],
     },
   ],
@@ -353,8 +353,8 @@ const SIDEBAR_BY_ROLE: Record<AppRole, SidebarMenuSection[]> = {
     {
       label: 'Cuenta',
       items: [
-        { to: '/dashboard/feature/profile', icon: <IconUser />, label: 'Mi cuenta' },
-        { to: '/dashboard/feature/settings', icon: <IconSettings />, label: 'Configuracion' },
+        { to: '/dashboard/account', icon: <IconUser />, label: 'Mi cuenta' },
+        { to: '/dashboard/account/settings', icon: <IconSettings />, label: 'Configuracion de cuenta' },
       ],
     },
   ],
@@ -370,8 +370,8 @@ const SIDEBAR_BY_ROLE: Record<AppRole, SidebarMenuSection[]> = {
     {
       label: 'Cuenta',
       items: [
-        { to: '/dashboard/user/sessions', icon: <IconClock />, label: 'Sesiones' },
-        { to: '/dashboard/user/profile', icon: <IconUser />, label: 'Mi cuenta' },
+        { to: '/dashboard/account', icon: <IconUser />, label: 'Mi cuenta' },
+        { to: '/dashboard/account/settings', icon: <IconSettings />, label: 'Configuracion de cuenta' },
       ],
     },
   ],
@@ -404,6 +404,14 @@ export default function AdminLayout() {
   function handleRoleChange(nextRole: AppRole) {
     setActiveRole(nextRole)
     navigate('/dashboard', { replace: true })
+  }
+
+  function handleOpenAccount() {
+    navigate('/dashboard/account')
+  }
+
+  function handleOpenAccountSettings() {
+    navigate('/dashboard/account/settings')
   }
 
   const displayName = user?.displayName ?? 'Admin'
@@ -554,12 +562,13 @@ export default function AdminLayout() {
             {/* Menu items */}
             <div className="py-1" role="none">
               {[
-                { key: 'profile', label: 'Mi perfil', icon: <IconUser /> },
-                { key: 'settings', label: 'Configuración', icon: <IconSettings /> },
+                { key: 'account', label: 'Mi cuenta', icon: <IconUser />, onClick: handleOpenAccount },
+                { key: 'settings', label: 'Configuración de cuenta', icon: <IconSettings />, onClick: handleOpenAccountSettings },
               ].map((item) => (
                 <button
                   key={item.key}
                   role="menuitem"
+                  onClick={item.onClick}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-colors text-left"
                 >
                   {item.icon}
