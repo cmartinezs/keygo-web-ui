@@ -6,6 +6,7 @@ export interface CurrentUser {
   email?: string
   username?: string
   displayName?: string
+  tenantSlug?: string
   roles: string[]
 }
 
@@ -22,10 +23,12 @@ export function useCurrentUser(): CurrentUser | null {
     const email = typeof claims.email === 'string' ? claims.email : undefined
     const username =
       typeof claims.preferred_username === 'string' ? claims.preferred_username : undefined
+    const tenantSlug =
+      typeof claims.tenant_slug === 'string' ? claims.tenant_slug : undefined
     const sub = typeof claims.sub === 'string' ? claims.sub : ''
     const displayName = username ?? email ?? sub
 
-    return { sub, email, username, displayName, roles }
+    return { sub, email, username, displayName, tenantSlug, roles }
   } catch {
     return null
   }

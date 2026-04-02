@@ -342,7 +342,7 @@ export default function TenantsPage() {
         {outlet && (
           <div className="min-[550px]:hidden flex items-center gap-2 px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-white/10 shrink-0">
             <button
-              onClick={() => navigate('/admin/tenants')}
+              onClick={() => navigate('/dashboard/tenants')}
               className="flex items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
             >
               <IconChevronLeft />

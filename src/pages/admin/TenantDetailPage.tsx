@@ -115,7 +115,7 @@ export default function TenantDetailPage() {
           {error instanceof Error ? error.message : 'No se pudo cargar el tenant.'}
         </p>
         <button
-          onClick={() => navigate('/admin/tenants')}
+          onClick={() => navigate('/dashboard/tenants')}
           className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
         >
           Volver a la lista

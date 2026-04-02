@@ -85,7 +85,7 @@ export default function TenantCreatePage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => navigate('/admin/tenants')}
+          onClick={() => navigate('/dashboard/tenants')}
           className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
           aria-label="Volver a la lista"
         >
@@ -149,7 +149,7 @@ export default function TenantCreatePage() {
         <div className="flex items-center justify-end gap-3 pt-1">
           <button
             type="button"
-            onClick={() => navigate('/admin/tenants')}
+            onClick={() => navigate('/dashboard/tenants')}
             disabled={isBusy}
             className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
           >

@@ -36,10 +36,10 @@ type LoginFormValues = z.infer<typeof loginSchema>
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveRedirectPath(roles: AppRole[]): string {
-  if (roles.includes('ADMIN')) return '/admin/dashboard'
-  if (roles.includes('ADMIN_TENANT')) return '/tenant-admin/dashboard'
+  if (roles.includes('ADMIN')) return '/dashboard'
+  if (roles.includes('ADMIN_TENANT')) return '/dashboard'
   if (roles.includes('USER_TENANT')) return '/dashboard'
-  return '/'
+  return '/dashboard'
 }
 
 /**
@@ -209,6 +209,7 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
 
   const honeypot = useHoneypot()
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const loginError = error ? extractLoginError(error) : null
   // Suppress the error banner while we are automatically re-initializing
@@ -314,15 +315,45 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
           <label htmlFor="password" className="text-sm font-medium text-slate-300">
             Contraseña
           </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            disabled={isDisabled}
-            className="w-full bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition disabled:opacity-50"
-            placeholder="••••••••"
-            {...register('password')}
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              disabled={isDisabled}
+              className="w-full bg-slate-900/60 border border-white/10 rounded-lg px-4 py-2.5 pr-12 text-white placeholder-slate-500 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition disabled:opacity-50"
+              placeholder="••••••••"
+              {...register('password')}
+            />
+            <button
+              type="button"
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              aria-pressed={showPassword}
+              onClick={() => setShowPassword((current) => !current)}
+              disabled={isDisabled}
+              className="absolute inset-y-0 right-0 z-10 flex w-11 items-center justify-center rounded-r-lg border-l border-white/10 bg-slate-900/60 text-slate-300 transition-colors hover:bg-slate-800/80 hover:text-white focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:opacity-50"
+            >
+              {showPassword ? (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10.584 10.587A2 2 0 0012 14a2 2 0 001.414-.586M9.88 5.094A9.76 9.76 0 0112 4.8c4.12 0 7.66 2.55 9.12 6.2a9.58 9.58 0 01-3.62 4.5M6.72 6.72A9.56 9.56 0 002.88 11c.8 2 2.24 3.72 4.02 4.94A9.72 9.72 0 0012 17.2c1.12 0 2.2-.18 3.22-.5"
+                  />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2.88 11c1.46-3.65 5-6.2 9.12-6.2s7.66 2.55 9.12 6.2c-1.46 3.65-5 6.2-9.12 6.2S4.34 14.65 2.88 11z"
+                  />
+                  <circle cx="12" cy="11" r="3" />
+                </svg>
+              )}
+            </button>
+          </div>
           {errors.password && (
             <p className="text-xs text-red-400">{errors.password.message}</p>
           )}
@@ -533,9 +564,10 @@ export default function LoginPage() {
 
   // Run Pasos 0-1 once on mount (user has not interacted yet)
   useEffect(() => {
+    if (accessToken) return
     initMutation.mutate()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [accessToken])
 
   // While in error state, retry automatically up to env.QUERY_RETRY_COUNT times (every 10 s).
   // Each new error episode resets the counter. Once exhausted, only the manual retry button works.

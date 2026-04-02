@@ -1,0 +1,387 @@
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { z } from 'zod'
+import { TENANT } from '@/api/client'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { listUsers, USER_QUERY_KEYS } from '@/api/users'
+import { listClientApps, CLIENT_APP_QUERY_KEYS, listAppRoles } from '@/api/clientApps'
+import { listMembershipsByUser, createMembership, revokeMembership, MEMBERSHIP_QUERY_KEYS, type CreateMembershipRequest } from '@/api/memberships'
+import { getAppApiError } from '@/api/errorNormalizer'
+
+const STATUS_LABEL: Record<string, string> = {
+  ACTIVE: 'Activa',
+  SUSPENDED: 'Suspendida',
+  PENDING: 'Pendiente',
+}
+
+const CreateMembershipSchema = z.object({
+  user_id: z.string().min(1, 'Usuario requerido'),
+  client_app_id: z.string().min(1, 'Aplicación requerida'),
+  role_codes: z.array(z.string()).min(1, 'Selecciona al menos un rol'),
+})
+
+type CreateMembershipFormData = z.infer<typeof CreateMembershipSchema>
+
+export default function TenantMembershipsPage() {
+  const user = useCurrentUser()
+  const tenantSlug = user?.tenantSlug ?? TENANT
+  const queryClient = useQueryClient()
+  const [manualSelectedUserId, setManualSelectedUserId] = useState<string>('')
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [selectedAppForRoles, setSelectedAppForRoles] = useState<string>('')
+  const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null)
+
+  const usersQuery = useQuery({
+    queryKey: USER_QUERY_KEYS.all(tenantSlug),
+    queryFn: () => listUsers(tenantSlug),
+  })
+
+  const appsQuery = useQuery({
+    queryKey: CLIENT_APP_QUERY_KEYS.all(tenantSlug),
+    queryFn: () => listClientApps(tenantSlug),
+  })
+
+  const selectedUserId = manualSelectedUserId || usersQuery.data?.[0]?.id || ''
+
+  const membershipsQuery = useQuery({
+    queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, selectedUserId),
+    queryFn: () => listMembershipsByUser(tenantSlug, selectedUserId),
+    enabled: selectedUserId.length > 0,
+  })
+
+  const appRolesQuery = useQuery({
+    queryKey: ['app-roles', tenantSlug, selectedAppForRoles],
+    queryFn: () => (selectedAppForRoles ? listAppRoles(tenantSlug, selectedAppForRoles) : Promise.resolve([])),
+    enabled: selectedAppForRoles.length > 0,
+  })
+
+  const appNameById = new Map((appsQuery.data ?? []).map((app) => [app.id, app.name]))
+
+  const createForm = useForm<CreateMembershipFormData>({
+    resolver: zodResolver(CreateMembershipSchema),
+    defaultValues: { user_id: '', client_app_id: '', role_codes: [] },
+  })
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMembershipRequest) => createMembership(tenantSlug, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, createForm.getValues().user_id) })
+      createForm.reset()
+      setSelectedAppForRoles('')
+      setIsCreateOpen(false)
+    },
+  })
+
+  const revokeMutation = useMutation({
+    mutationFn: (membershipId: string) => revokeMembership(tenantSlug, membershipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, selectedUserId) })
+      setRevokeConfirmId(null)
+    },
+  })
+
+  return (
+    <div className="max-w-screen-xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Memberships</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Asignaciones usuario-app para el tenant {tenantSlug}.
+          </p>
+        </header>
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          + Crear membership
+        </button>
+      </div>
+
+      {usersQuery.isError && (
+        <div role="alert" className="rounded-xl border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {usersQuery.error instanceof Error ? usersQuery.error.message : 'No se pudieron cargar los usuarios del tenant.'}
+        </div>
+      )}
+
+      {!usersQuery.isError && (
+        <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 space-y-4">
+          <label htmlFor="membership-user" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+            Usuario a revisar
+          </label>
+          <select
+            id="membership-user"
+            className="w-full max-w-lg rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-800 dark:text-slate-100"
+            value={selectedUserId}
+            onChange={(event) => setManualSelectedUserId(event.target.value)}
+            disabled={usersQuery.isLoading || (usersQuery.data?.length ?? 0) === 0}
+          >
+            {(usersQuery.data ?? []).map((tenantUser) => (
+              <option key={tenantUser.id} value={tenantUser.id}>
+                {tenantUser.username} ({tenantUser.email})
+              </option>
+            ))}
+          </select>
+
+          {usersQuery.isLoading && (
+            <p role="status" aria-live="polite" className="text-sm text-slate-500 dark:text-slate-400">Cargando usuarios...</p>
+          )}
+
+          {!usersQuery.isLoading && (usersQuery.data?.length ?? 0) === 0 && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">No existen usuarios para consultar memberships.</p>
+          )}
+        </section>
+      )}
+
+      {membershipsQuery.isError && (
+        <div role="alert" className="rounded-xl border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {membershipsQuery.error instanceof Error ? membershipsQuery.error.message : 'No se pudieron cargar las memberships.'}
+        </div>
+      )}
+
+      {selectedUserId && !membershipsQuery.isError && (
+        <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 overflow-x-auto">
+          {membershipsQuery.isLoading ? (
+            <p role="status" aria-live="polite" className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">Cargando memberships...</p>
+          ) : (
+            <table className="w-full min-w-[820px] text-sm">
+              <caption className="sr-only">Listado de memberships por usuario</caption>
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-white/10 text-left text-slate-500 dark:text-slate-400">
+                  <th className="px-4 py-3 font-semibold">App</th>
+                  <th className="px-4 py-3 font-semibold">Estado</th>
+                  <th className="px-4 py-3 font-semibold">Roles asignados</th>
+                  <th className="px-4 py-3 font-semibold">Creada</th>
+                  <th className="px-4 py-3 font-semibold">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(membershipsQuery.data ?? []).map((membership) => (
+                  <tr key={membership.id} className="border-b border-slate-100 dark:border-white/5">
+                    <td className="px-4 py-3 text-slate-800 dark:text-slate-100">
+                      {appNameById.get(membership.client_app_id) ?? membership.client_app_id}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {STATUS_LABEL[membership.status] ?? membership.status}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {membership.role_ids.length > 0 ? membership.role_ids.join(', ') : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
+                      {new Date(membership.created_at).toLocaleString('es-CL')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => setRevokeConfirmId(membership.id)}
+                        className="px-3 py-1 text-xs bg-red-200 dark:bg-red-700/30 text-red-800 dark:text-red-200 rounded hover:bg-red-300 dark:hover:bg-red-700/50 transition-colors"
+                      >
+                        Revocar
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {!membershipsQuery.isLoading && (membershipsQuery.data?.length ?? 0) === 0 && (
+            <p className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No hay memberships para el usuario seleccionado.</p>
+          )}
+        </section>
+      )}
+
+      {/* Modal: Crear membership */}
+      {isCreateOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-membership-title"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsCreateOpen(false) }}
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md my-8">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/10">
+              <h2 id="create-membership-title" className="text-lg font-bold text-slate-900 dark:text-white">Crear membership</h2>
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
+                aria-label="Cerrar"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={createForm.handleSubmit((data) => createMutation.mutate(data))} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              {createMutation.isError && (
+                <div className="rounded-lg border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">
+                  {getAppApiError(createMutation.error)?.clientMessage || 'Error al crear membership'}
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="user_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Usuario *
+                </label>
+                <select
+                  id="user_id"
+                  {...createForm.register('user_id')}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                  disabled={createMutation.isPending || usersQuery.isLoading}
+                >
+                  <option value="">-- Selecciona un usuario --</option>
+                  {(usersQuery.data ?? []).map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.username} ({u.email})
+                    </option>
+                  ))}
+                </select>
+                {createForm.formState.errors.user_id && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{createForm.formState.errors.user_id.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="client_app_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                  Aplicación *
+                </label>
+                <select
+                  id="client_app_id"
+                  {...createForm.register('client_app_id')}
+                  onChange={(e) => {
+                    createForm.setValue('client_app_id', e.target.value)
+                    setSelectedAppForRoles(e.target.value)
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                  disabled={createMutation.isPending || appsQuery.isLoading}
+                >
+                  <option value="">-- Selecciona una aplicación --</option>
+                  {(appsQuery.data ?? []).map((app) => (
+                    <option key={app.id} value={app.id}>
+                      {app.name}
+                    </option>
+                  ))}
+                </select>
+                {createForm.formState.errors.client_app_id && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{createForm.formState.errors.client_app_id.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                  Roles *
+                </label>
+                {appRolesQuery.isLoading && <p className="text-xs text-slate-500">Cargando roles...</p>}
+                {appRolesQuery.isError && <p className="text-xs text-red-600">Error al cargar roles</p>}
+                {appRolesQuery.data && appRolesQuery.data.length === 0 && (
+                  <p className="text-xs text-slate-500">La aplicación no tiene roles definidos</p>
+                )}
+                <div className="space-y-2">
+                  {(appRolesQuery.data ?? []).map((role) => (
+                    <label key={role.id} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        value={role.code}
+                        onChange={(e) => {
+                          const current = createForm.getValues('role_codes')
+                          if (e.target.checked) {
+                            createForm.setValue('role_codes', [...current, role.code])
+                          } else {
+                            createForm.setValue('role_codes', current.filter((r) => r !== role.code))
+                          }
+                        }}
+                        className="rounded border-slate-300 text-indigo-600"
+                        disabled={createMutation.isPending}
+                      />
+                      <span className="text-slate-700 dark:text-slate-200">{role.display_name || role.code}</span>
+                    </label>
+                  ))}
+                </div>
+                {createForm.formState.errors.role_codes && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{createForm.formState.errors.role_codes.message}</p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={createMutation.isPending}
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 rounded-lg transition-colors"
+                >
+                  {createMutation.isPending ? 'Creando...' : 'Crear'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Confirmar revoke */}
+      {revokeConfirmId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="revoke-title"
+          onClick={(e) => { if (e.target === e.currentTarget) setRevokeConfirmId(null) }}
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/10">
+              <h2 id="revoke-title" className="text-lg font-bold text-slate-900 dark:text-white">Revocar membership</h2>
+              <button
+                type="button"
+                onClick={() => setRevokeConfirmId(null)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
+                aria-label="Cerrar"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {revokeMutation.isError && (
+                <div className="rounded-lg border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">
+                  {getAppApiError(revokeMutation.error)?.clientMessage || 'Error al revocar membership'}
+                </div>
+              )}
+
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                ¿Estás seguro de que deseas revocar este membership? El usuario perderá acceso a la aplicación inmediatamente.
+              </p>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRevokeConfirmId(null)}
+                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => revokeMutation.mutate(revokeConfirmId)}
+                  disabled={revokeMutation.isPending}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 rounded-lg transition-colors"
+                >
+                  {revokeMutation.isPending ? 'Revocando...' : 'Revocar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

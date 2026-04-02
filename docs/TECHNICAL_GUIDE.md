@@ -265,10 +265,13 @@ Zustand
 **Construcción:**
 - Define todas las rutas con `<Routes>` de React Router 7.
 - Expone una ruta pública adicional `/developers` para la documentación de integración.
+- Unifica toda el area autenticada en `/dashboard` (misma ruta para todos los roles).
+- Mantiene rutas legacy (`/home` y `/admin/*`) como redirecciones a `/dashboard` para compatibilidad.
 - Monta `<BlockingErrorModal />` globalmente junto a `<Toaster />`, fuera de `<Routes>`, para que se renderice sobre cualquier pantalla activa.
 - Usa `useIsFetching()` y `useIsMutating()` para detectar actividad global de red en TanStack Query.
 - Muestra `<GlobalLoaderOverlay />` mientras existan cargas o mutaciones activas (si no hay error bloqueante).
-- Wrap de rutas `/admin/*` con `<RoleGuard roles={['ADMIN']}>` + `<AdminLayout>`.
+- Usa `<AuthGuard>` + `<AdminLayout>` para el shell comun del dashboard.
+- Encapsula rutas exclusivas de `ADMIN` con `<RoleGuard roles={['ADMIN']} redirectTo="/dashboard" />`.
 - Rutas anidadas de tenant (`/:slug` y `/new`) como hijos de `TenantsPage` (patrón master-detail con `<Outlet>`).
 - `<Toaster>` de `sonner` con tema dark y posición `bottom-right`.
 - Catch-all `*` redirige a `/login`.
@@ -287,14 +290,23 @@ Zustand
 | `/subscribe` | `NewContractPage` | Pública |
 | `/subscribe/resume` | `Navigate -> /subscribe?resume=1` | Pública |
 | `/register` | `UserRegisterPage` | Pública |
-| `/admin` | `RoleGuard` → `AdminLayout` | `ADMIN` |
-| `/admin/dashboard` | `AdminDashboardPage` | — |
-| `/admin/tenants` | `TenantsPage` | — |
-| `/admin/tenants/new` | `TenantCreatePage` (outlet) | — |
-| `/admin/tenants/:slug` | `TenantDetailPage` (outlet) | — |
+| `/dashboard` | `AuthGuard` → `AdminLayout` → `DashboardHomePage` | Autenticada |
+| `/dashboard/feature/:featureId` | `FeaturePlaceholderPage` | Autenticada |
+| `/dashboard/tenants` | `TenantsPage` | `ADMIN` |
+| `/dashboard/tenants/new` | `TenantCreatePage` (outlet) | `ADMIN` |
+| `/dashboard/tenants/:slug` | `TenantDetailPage` (outlet) | `ADMIN` |
+| `/dashboard/tenant/users` | `TenantUsersPage` | `ADMIN_TENANT` |
+| `/dashboard/tenant/apps` | `TenantAppsPage` | `ADMIN_TENANT` |
+| `/dashboard/tenant/memberships` | `TenantMembershipsPage` | `ADMIN_TENANT` |
+| `/dashboard/user/my-access` | `UserMyAccessPage` | `USER_TENANT` |
+| `/dashboard/user/activity` | `UserActivityPage` | `USER_TENANT` |
+| `/dashboard/user/sessions` | `UserSessionsPage` | `USER_TENANT` |
+| `/dashboard/user/profile` | `UserProfilePage` | `USER_TENANT` |
+| `/home` | `Navigate to /dashboard` | Pública (legacy) |
+| `/admin/*` | `Navigate to /dashboard` | Pública (legacy) |
 | `*` | `Navigate to="/login"` | — |
 
-**Deuda técnica:** Sin rutas para `ADMIN_TENANT` ni `USER_TENANT`. Sin página 404. `Home.tsx` no está conectado al router. La ruta `/access/no-role` fue eliminada al migrar a modal bloqueante.
+**Deuda técnica:** `ADMIN_TENANT` y `USER_TENANT` tienen modulos reales conectados. Sin pagina 404 dedicada. La ruta `/access/no-role` fue eliminada al migrar a modal bloqueante. Falta: editar usuario existente, desactivar app, editar roles de membership, filtros avanzados por app y endpoint dedicado de sesiones por dispositivo.
 
 **Deuda técnica adicional:** El loader global depende de TanStack Query. Si aparecen llamadas HTTP fuera de Query, deben añadirse al mecanismo global para mantener comportamiento consistente.
 
@@ -902,7 +914,7 @@ function useCurrentUser(): CurrentUser | null {
 }
 ```
 
-**Integración:** Usado en `src/layouts/AdminLayout.tsx` para mostrar nombre, iniciales y rol en sidebar y header.
+**Integración:** Usado en `src/layouts/AdminLayout.tsx` para mostrar nombre, iniciales y rol en sidebar y header. También expone `tenantSlug` para páginas tenant-scoped en `/dashboard/tenant/*`.
 
 **Decisión de diseño:** `decodeJwt` (sin verify) es suficiente aquí porque: el token ya fue verificado criptográficamente en `jwksVerify.ts` al recibirlo, y este hook es solo para display — no para decisiones de seguridad.
 
@@ -1144,18 +1156,21 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 
 ### `AdminLayout.tsx`
 
-**Propósito:** Shell de la interfaz del administrador global — estructura persistente (sidebar + header) con `<Outlet>` para el contenido de cada página.
+**Propósito:** Shell compartido del dashboard para todos los roles autenticados — estructura persistente (sidebar + header) con `<Outlet>`.
 
 **Construcción:**
 
 **Componentes privados internos:**
 - Iconos SVG inline (`IconKey`, `IconDashboard`, `IconBuilding`, `IconApps`, `IconUsers`, `IconShield`, `IconClipboard`, `IconKeySmall`, `IconClock`, `IconTicket`, `IconCloud`, etc.) — sin dependencia de librería de iconos.
 - `ThemeToggle` — dropdown de tema con cierre por click exterior y `role="listbox"`.
-- `NavSection` — título de grupo en el sidebar (separador visual cuando colapsado).
-- `NavItem` — wrapper de `NavLink` con estilos de ítem activo y soporte de modo colapsado (solo icono).
 - `UserAvatar` — genera iniciales desde `displayName` para el avatar circular.
 
-**Grupos de navegación actuales:**
+**Sidebar por rol:**
+- La constante `SIDEBAR_BY_ROLE` define secciones e items para `ADMIN`, `ADMIN_TENANT` y `USER_TENANT`.
+- El rol primario se calcula con `resolvePrimaryRole(...)` a partir de `useCurrentUser()`.
+- La renderizacion del menu se delega al componente generico `SidebarMenu`.
+
+**Grupos de navegación actuales (ejemplo ADMIN):**
 
 | Grupo | Items |
 |-------|-------|
@@ -1194,7 +1209,8 @@ div.flex.h-screen
 - `useCurrentUser` → nombre + iniciales + rol del usuario en sidebar y dropdown.
 - `useTheme` → ThemeToggle.
 - `useTokenStore.clearTokens` → logout.
-- `AdminLayout` es el `element` del route `/admin` en `App.tsx`.
+- `SidebarMenu` (`src/components/dashboard/SidebarMenu.tsx`) → render del menu parametrizable.
+- `AdminLayout` es el `element` del route `/dashboard` en `App.tsx`.
 
 **Decisión de diseño:** Iconos SVG inline para evitar una dependencia de librería de iconos. La consistencia visual se logra usando siempre el mismo tamaño (`w-5 h-5`) y `aria-hidden="true"`.
 
@@ -1241,7 +1257,7 @@ div.flex.h-screen
 Componentes privados:
 - `InitLoadingState` — spinner durante inicialización.
 - `InitErrorState` — error con opción de retry.
-- `LoginForm` — formulario de credenciales con honeypot, Turnstile, rate limiting.
+- `LoginForm` — formulario de credenciales con honeypot, Turnstile, rate limiting y toggle mostrar/ocultar contraseña (botón tipo ojo con `aria-label` dinámico).
 
 Helpers privados:
 - `resolveRedirectPath(roles)` — mapea rol → ruta post-login.
@@ -1274,7 +1290,171 @@ initMutation.isSuccess                                  → LoginForm
 
 **Actualización relevante:** La captura de errores dejó de depender de parseo manual del envelope Axios y ahora usa `getAppApiError(...)` (código, mensaje y retryabilidad) para mantener consistencia con el contrato OpenAPI de `ErrorResponse`. La lógica de reintento/reconexión en `onError` también usa `retryable` y `httpStatus` normalizados.
 
-**Deuda técnica:** `resolveRedirectPath` referencia rutas (`/tenant-admin/dashboard`, `/dashboard`) que aún no existen en el router.
+**Actualización relevante:** `resolveRedirectPath` ahora mapea todos los roles a `/dashboard` (ruta unificada). Además, el efecto de inicialización de login evita ejecutar `authorize()` cuando ya existe `accessToken`, previniendo ciclos de autorización si la navegación retorna a `/login`.
+
+**Deuda técnica:** el dashboard compartido mantiene tarjetas de resumen con placeholders en roles no ADMIN. Falta conectar metricas especificas por rol.
+
+---
+
+### 10.2.1 Dashboard compartido por rol — `src/pages/dashboard/`
+
+**`DashboardHomePage.tsx`**
+
+**Propósito:** punto de entrada comun de `/dashboard`. Decide el contenido principal segun rol conservando el mismo layout visual.
+
+**Construcción:**
+- Resuelve rol primario (`ADMIN`, `ADMIN_TENANT`, `USER_TENANT`) desde `useCurrentUser()`.
+- Si es `ADMIN`, renderiza `AdminDashboardPage` completo.
+- Si es `ADMIN_TENANT` o `USER_TENANT`, renderiza resumen inicial con tarjetas base y secciones pendientes.
+
+**Integración:** se monta como `index` route de `/dashboard` en `src/App.tsx`.
+
+**Decisión de diseño:** reutilizar el dashboard admin existente para `ADMIN` y aplicar el mismo esqueleto visual para los otros roles, sin duplicar layout.
+
+**Puntos de mejora / deuda técnica conocida:** conectar tarjetas de rol a endpoints reales (metricas tenant y actividad de usuario).
+
+**`FeaturePlaceholderPage.tsx`**
+
+**Propósito:** pantalla temporal para entradas de sidebar aun no implementadas.
+
+**Construcción:** usa `featureId` en URL para resolver titulo visible y mostrar estado de modulo pendiente.
+
+**Integración:** se monta en `/dashboard/feature/:featureId`.
+
+**Decisión de diseño:** evita 404 internas y permite validar navegacion por rol sin bloquear el flujo.
+
+**Puntos de mejora / deuda técnica conocida:** reemplazar cada `featureId` por su pagina real conforme se implemente.
+
+### 10.2.2 Admin tenant pages reales — `src/pages/dashboard/tenant/`
+
+**`TenantUsersPage.tsx`**
+
+**Propósito:** gestión completa de usuarios del tenant (lectura + escritura) para rol `ADMIN_TENANT`.
+
+**Construcción:**
+- Usa `useCurrentUser().tenantSlug` (fallback `TENANT`) para resolver el scope del tenant.
+- Lectura: consulta `listUsers(...)` con `useQuery` y `USER_QUERY_KEYS.all(...)`; renderiza tabla.
+- Escritura: `useMutation` para `createUser(...)` y `resetUserPassword(...)`.
+  - Modal "Crear usuario" con formulario Zod validado (username, email, password requeridos; nombre/apellido opcionales).
+  - Botón "Resetear contraseña" en cada fila abre modal de entrada segura.
+  - Invalidación de cache de usuarios tras éxito de mutación.
+
+**Integración:** ruta `/dashboard/tenant/users` protegida por `RoleGuard` con `ADMIN_TENANT`.
+
+**Decisión de diseño:** modales inline con estado local para mantener UI y lógica en un archivo; validación con Zod + react-hook-form para consistencia con el resto del proyecto.
+
+**Puntos de mejora / deuda técnica conocida:** editar perfil de usuario (nombre, apellido, teléfono), cambiar estado (suspender/activar).
+
+**`TenantAppsPage.tsx`**
+
+**Propósito:** gestión completa de client apps del tenant (lectura + escritura) para rol `ADMIN_TENANT`.
+
+**Construcción:**
+- Lectura: consulta `listClientApps(...)` con `CLIENT_APP_QUERY_KEYS.all(...)`; renderiza tabla.
+- Escritura: `useMutation` para `createClientApp(...)` y `rotateClientAppSecret(...)`.
+  - Modal "Crear aplicación" con formulario completo: nombre, descripción, tipo (PUBLIC/CONFIDENTIAL), grants (múltiple), redirect_uris, scopes.
+  - Botón "Rotar secret" en cada fila abre confirmación y luego muestra nuevo secret con opción copiar (one-time display).
+  - Invalidación de cache tras éxito.
+
+**Integración:** ruta `/dashboard/tenant/apps` protegida por `RoleGuard` con `ADMIN_TENANT`.
+
+**Decisión de diseño:** `useFieldArray` para agregar/quitar grants dinámicamente; modal separada para rotar secret con UX segura (copia al clipboard).
+
+**Puntos de mejora / deuda técnica conocida:** editar app existente (nombre, descripción, grants), desactivar app, agregar/remover redirect_uris desde detalle.
+
+**`TenantMembershipsPage.tsx`**
+
+**Propósito:** gestión completa de memberships usuario-app (lectura + escritura) para rol `ADMIN_TENANT`.
+
+**Construcción:**
+- Lectura: carga usuarios (`listUsers`) y apps (`listClientApps`) del tenant; permite seleccionar usuario con dropdown.
+  - Carga memberships por usuario usando `listMembershipsByUser(...)`.
+  - Resuelve nombre de app desde mapa `client_app_id` → `name`.
+- Escritura: `useMutation` para `createMembership(...)` y `revokeMembership(...)`.
+  - Modal "Crear membership" con selección de usuario, app, y roles (con checkboxes dinámicas cargadas por app).
+  - Botón "Revocar" en cada fila con confirmación; elimina membership inmediatamente.
+  - Invalidación de cache tras éxito.
+
+**Integración:** ruta `/dashboard/tenant/memberships` protegida por `RoleGuard` con `ADMIN_TENANT`.
+
+**Decisión de diseño:** query `listAppRoles` condicional para cargar roles sólo cuando se selecciona app; checkboxes para selección múltiple de roles sin complejidad de multi-select.
+
+**Puntos de mejora / deuda técnica conocida:** filtro de memberships por app, editar roles de membership existente, suspender/reactivar membership.
+
+### 10.2.3 Sidebar parametrizable — `src/components/dashboard/SidebarMenu.tsx`
+
+**Propósito:** componente de menu lateral generico reutilizable para cualquier rol.
+
+**Construcción:**
+- Recibe `sections` (lista de secciones y items), estado `collapsed` y callback `onNavigate`.
+- Renderiza `NavLink` con estilos activos/inactivos comunes.
+- Soporta modo colapsado con separadores visuales.
+
+**Integración:** consumido por `src/layouts/AdminLayout.tsx`, que inyecta configuraciones de menu por rol.
+
+**Decisión de diseño:** separar estructura de menu (datos) de la presentacion para mantener sidebars parametrizables.
+
+**Puntos de mejora / deuda técnica conocida:** internacionalizar labels y extraer iconografia a modulo compartido.
+
+### 10.2.4 User tenant pages reales — `src/pages/dashboard/user/`
+
+**`UserMyAccessPage.tsx`**
+
+**Propósito:** visibilidad de accesos efectivos del usuario autenticado en su tenant.
+
+**Construcción:**
+- Usa `useCurrentUser()` para resolver `tenantSlug` y `sub` del usuario.
+- Consulta memberships con `listMembershipsByUser(...)` y apps con `listClientApps(...)`.
+- Resuelve `client_app_id` a nombre de app para renderizar tabla de accesos.
+
+**Integración:** ruta `/dashboard/user/my-access` protegida por `RoleGuard` con `USER_TENANT`.
+
+**Decisión de diseño:** reutilizar APIs de memberships y apps ya existentes para evitar endpoint adicional de agregacion.
+
+**Puntos de mejora / deuda técnica conocida:** mostrar nombres de rol funcionales (hoy se muestran ids/codigos).
+
+**`UserActivityPage.tsx`**
+
+**Propósito:** mostrar actividad reciente de acceso del usuario.
+
+**Construcción:**
+- Lee ultimo login desde claim `iat` del `idToken`.
+- Usa memberships ordenadas por `created_at` para construir linea de tiempo de eventos de acceso.
+
+**Integración:** ruta `/dashboard/user/activity` protegida por `RoleGuard` con `USER_TENANT`.
+
+**Decisión de diseño:** sin endpoint dedicado de auditoria para USER_TENANT, se expone actividad util usando datos ya disponibles y verificables.
+
+**Puntos de mejora / deuda técnica conocida:** migrar a endpoint de auditoria real cuando backend lo exponga.
+
+**`UserSessionsPage.tsx`**
+
+**Propósito:** exponer estado de la sesion activa del usuario.
+
+**Construcción:**
+- Decodifica `accessToken` e `idToken` para mostrar emision, expiracion y TTL estimado.
+- Muestra disponibilidad de `refreshToken` en `sessionStorage` (via store en memoria + persistencia parcial).
+
+**Integración:** ruta `/dashboard/user/sessions` protegida por `RoleGuard` con `USER_TENANT`.
+
+**Decisión de diseño:** dar visibilidad de sesion sin crear endpoint nuevo; utiliza metadata JWT local.
+
+**Puntos de mejora / deuda técnica conocida:** agregar sesion por dispositivo/IP cuando exista endpoint backend.
+
+**`UserProfilePage.tsx`**
+
+**Propósito:** gestion self-service del perfil del usuario autenticado.
+
+**Construcción:**
+- Query `getProfile(...)` con `ACCOUNT_QUERY_KEYS.profile(...)`.
+- Formulario RHF + Zod para campos de perfil.
+- Mutacion `updateProfile(...)` con invalidacion de cache y feedback por toast.
+
+**Integración:** ruta `/dashboard/user/profile` protegida por `RoleGuard` con `USER_TENANT`.
+
+**Decisión de diseño:** reutilizar modulo `src/api/account.ts` para mantener separacion clara entre perfiles propios y gestion admin de usuarios.
+
+**Puntos de mejora / deuda técnica conocida:** agregar validaciones de formato locales por campo (telefono, locale y zoneinfo).
 
 ---
 
@@ -1477,24 +1657,27 @@ const mutation = useMutation({
 ### Añadir una nueva página de admin
 
 1. Crear `src/pages/admin/MiPagina.tsx` con `export default MiPagina`.
-2. Añadir la ruta en `src/App.tsx` dentro del bloque `/admin`:
+2. Añadir la ruta en `src/App.tsx` dentro del bloque `/dashboard` y protegida por `RoleGuard` de admin:
    ```tsx
-   <Route path="mi-ruta" element={<MiPagina />} />
+  <Route element={<RoleGuard roles={['ADMIN']} redirectTo="/dashboard" />}>
+    <Route path="mi-ruta" element={<MiPagina />} />
+  </Route>
    ```
-3. Añadir `NavItem` en `src/layouts/AdminLayout.tsx` con el icono y la ruta.
+3. Añadir item en `SIDEBAR_BY_ROLE.ADMIN` dentro de `src/layouts/AdminLayout.tsx`.
 4. Si necesita datos: crear función en `src/api/` y los tipos en `src/types/`.
 5. Actualizar `docs/FUNCTIONAL_GUIDE.md` y este archivo.
 
 ### Añadir el área ADMIN_TENANT
 
-1. Crear `src/layouts/TenantAdminLayout.tsx` (clonar `AdminLayout` adaptando la nav).
-2. Crear `src/pages/tenant-admin/` con las páginas necesarias.
-3. Añadir en `App.tsx`:
+1. Crear la página en `src/pages/dashboard/`.
+2. Añadir la ruta bajo `/dashboard`.
+3. Registrar el item de menu en `SIDEBAR_BY_ROLE.ADMIN_TENANT` dentro de `src/layouts/AdminLayout.tsx`.
+4. Si la ruta debe ser exclusiva, envolver con `RoleGuard roles={['ADMIN_TENANT']}`.
+5. Ejemplo:
    ```tsx
-   <Route path="/tenant-admin" element={<RoleGuard roles={['ADMIN_TENANT']}><TenantAdminLayout /></RoleGuard>}>
-     <Route index element={<Navigate to="dashboard" />} />
-     <Route path="dashboard" element={<TenantDashboardPage />} />
-   </Route>
+  <Route element={<RoleGuard roles={['ADMIN_TENANT']} redirectTo="/dashboard" />}>
+    <Route path="tenant-report" element={<TenantReportPage />} />
+  </Route>
    ```
 
 ### Añadir un endpoint real donde hay un mock
@@ -1543,7 +1726,7 @@ Crear `src/mocks/handlers.ts` con `http.get/post(...)` de MSW respetando el shap
 | 10 | `src/hooks/useRateLimit.ts` | `setInterval` no se limpia en unmount | Baja |
 | 11 | `src/styles/index.css` | Fuente `Inter` no importada explícitamente | Baja |
 | 12 | `src/main.tsx` | `QueryClient` sin configuración global (staleTime, retry) | Baja |
-| 13 | `src/App.tsx` | Sin rutas para `ADMIN_TENANT` y `USER_TENANT` | Media |
+| 13 | `src/pages/dashboard/tenant/*` + `src/pages/dashboard/user/*` | Modulos reales para ADMIN_TENANT y USER_TENANT implementados; faltan: endpoint de sesiones por dispositivo, auditoria de actividad dedicada, editar usuario, desactivar app, editar roles membership, filtros avanzados | Media |
 | 14 | `src/App.tsx` | Sin página 404 (catch-all va a `/login`) | Baja |
 | 15 | `src/pages/admin/DashboardPage.tsx` | Selector de rango (Hoy/7d/30d) es solo estado visual — no se envía al backend | Baja |
 | 16 | `src/pages/landing/LandingNav.tsx` | Sin menú de navegación en móvil | Baja |

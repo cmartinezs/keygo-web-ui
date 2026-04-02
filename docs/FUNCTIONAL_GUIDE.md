@@ -127,14 +127,14 @@ Permite autenticarse mediante el flujo OAuth2 Authorization Code + PKCE. El proc
 
 2. **Formulario de credenciales:**
    - Campo **email o nombre de usuario**.
-   - Campo **contraseña**.
+  - Campo **contraseña** con control de visibilidad (icono de ojo para mostrar/ocultar).
    - Si está configurado: widget de verificación **Turnstile** (Cloudflare) para protección anti-bot.
    - Botón "Iniciar sesión".
 
 3. **Autenticación y redirección** (automática, invisible) — Las credenciales se validan, se obtienen los tokens de sesión y el usuario es llevado automáticamente al área correspondiente a su rol:
-   - `ADMIN` → `/admin/dashboard`
-   - `ADMIN_TENANT` → `/tenant-admin/dashboard` _(en construcción)_
-   - `USER_TENANT` → `/dashboard` _(en construcción)_
+  - `ADMIN` → `/dashboard`
+  - `ADMIN_TENANT` → `/dashboard`
+  - `USER_TENANT` → `/dashboard`
   - **Sin rol compatible en JWT** → modal de asistencia bloqueante (se superpone a la pantalla actual)
 
 #### Caso especial: login exitoso sin rol compatible
@@ -320,7 +320,7 @@ En pantallas pequeñas, la barra lateral se convierte en un cajón desplegable q
 
 ### 2.1 Dashboard — Panel de control
 
-**Ruta:** `/admin/dashboard`
+**Ruta:** `/dashboard`
 
 Vista agregada en tiempo real de toda la plataforma, obtenida en una única llamada al endpoint `GET /api/v1/admin/platform/dashboard`.
 
@@ -353,13 +353,13 @@ Vista agregada en tiempo real de toda la plataforma, obtenida en una única llam
 
 ### 2.2 Gestión de Tenants
 
-**Ruta:** `/admin/tenants`
+**Ruta:** `/dashboard/tenants` (solo rol `ADMIN`)
 
 Vista de dos paneles (lista + detalle) para administrar todas las organizaciones registradas en la plataforma.
 
 #### Panel izquierdo — Lista de tenants
 
-- **Botón "Nuevo"** → navega al formulario de creación de tenant (`/admin/tenants/new`).
+- **Botón "Nuevo"** → navega al formulario de creación de tenant (`/dashboard/tenants/new`).
 - **Buscador** (debounce de 350 ms): filtra por nombre de tenant, consulta al servidor en tiempo real.
 - **Pestañas de filtro por estado:** Todos / Activo / Suspendido / Pendiente.
 - **Lista paginada** (20 tenants por página) — cada ítem muestra:
@@ -387,7 +387,7 @@ En pantallas pequeñas, la lista ocupa toda la pantalla. Al seleccionar un tenan
 
 ### 2.3 Detalle de un Tenant
 
-**Ruta:** `/admin/tenants/:slug`
+**Ruta:** `/dashboard/tenants/:slug`
 
 #### Qué ve el usuario
 
@@ -418,7 +418,7 @@ En pantallas pequeñas, la lista ocupa toda la pantalla. Al seleccionar un tenan
 
 ### 2.4 Crear un Tenant
 
-**Ruta:** `/admin/tenants/new`
+**Ruta:** `/dashboard/tenants/new`
 
 Formulario simple para registrar una nueva organización en la plataforma.
 
@@ -433,7 +433,7 @@ Una nota informativa explica que el slug se derivará del nombre y que los usuar
 
 #### Acciones
 
-- **"Cancelar"** → vuelve a `/admin/tenants` (deshabilitado mientras se crea).
+- **"Cancelar"** → vuelve a `/dashboard/tenants` (deshabilitado mientras se crea).
 - **"Crear tenant"** → envía el formulario. Durante la creación se muestra spinner ("Creando…").
   - **Éxito:** toast de confirmación y redirección automática al detalle del nuevo tenant.
   - **Error:** toast con el mensaje de error.
@@ -442,16 +442,57 @@ Una nota informativa explica que el slug se derivará del nombre y que los usuar
 
 ## 3. Panel de Administrador de Tenant (ADMIN_TENANT)
 
-**Ruta base:** `/tenant-admin/*`
+**Ruta base:** `/dashboard`
 **Acceso:** exclusivo para cuentas con rol `ADMIN_TENANT`.
 
-> **En construcción.** Esta área aún no tiene páginas implementadas. El acceso está planificado pero no disponible en la versión actual.
+Esta área usa el mismo layout del dashboard global (misma cabecera y mismo esqueleto visual), con sidebar propio para el rol `ADMIN_TENANT`.
 
-Funcionalidades previstas:
-- Gestión de usuarios del tenant.
-- Asignación de roles dentro del tenant.
-- Consulta de métricas de uso.
-- Gestión de sesiones activas.
+### 3.1 Dashboard base
+
+**Ruta:** `/dashboard`
+
+Muestra una vista resumida inicial para administración de tenant con tarjetas de estado y accesos directos a módulos.
+
+### 3.2 Usuarios del tenant
+
+**Ruta:** `/dashboard/tenant/users`
+
+Gestión completa de usuarios del tenant con operaciones de lectura y escritura:
+
+**Lectura:**
+- Tabla con todos los usuarios: username, email, nombre, estado
+- Filtrado visible por estado
+
+**Escritura:**
+- **Crear usuario:** botón "+Crear usuario" abre modal con formulario (username, email, password requeridos; nombre y apellido opcionales)
+- **Resetear contraseña:** botón en cada fila permite establecer nueva contraseña
+
+### 3.3 Aplicaciones del tenant
+
+**Ruta:** `/dashboard/tenant/apps`
+
+Gestión de aplicaciones client del tenant con lectura y escritura:
+
+**Lectura:**
+- Tabla con todas las apps: nombre, client_id, tipo (PUBLIC/CONFIDENTIAL), estado, grants
+
+**Escritura:**
+- **Crear aplicación:** botón "+Crear aplicación" abre modal con formulario (nombre requerido; tipo, grants requeridos; descripción, redirect_uris, scopes opcionales)
+- **Rotar secret:** botón en cada fila permite generar nuevo client_secret; muestra el nuevo secret una sola vez con opción copiar
+
+### 3.4 Memberships por usuario
+
+**Ruta:** `/dashboard/tenant/memberships`
+
+Gestión de asignaciones usuario-app (memberships) con lectura y escritura:
+
+**Lectura:**
+- Selector de usuario (dropdown) para elegir usuario del tenant
+- Tabla con memberships del usuario: app, estado, roles asignados, fecha de creación
+
+**Escritura:**
+- **Crear membership:** botón "+Crear membership" abre modal para seleccionar usuario, aplicación y roles; crea la asignación
+- **Revocar membership:** botón en cada fila con confirmación; elimina la asignación inmediatamente
 
 ---
 
@@ -460,12 +501,52 @@ Funcionalidades previstas:
 **Ruta base:** `/dashboard`
 **Acceso:** exclusivo para cuentas con rol `USER_TENANT`.
 
-> **En construcción.** Esta área aún no tiene páginas implementadas.
+Esta area usa el mismo layout del dashboard global (misma cabecera y mismo esqueleto visual), con sidebar propio para el rol `USER_TENANT`.
 
-Funcionalidades previstas:
-- Acceso a las aplicaciones autorizadas por la organización.
-- Edición del perfil personal.
-- Gestión de sesiones activas propias.
+### 4.1 Dashboard base
+
+**Ruta:** `/dashboard`
+
+Vista inicial con resumen y accesos directos a modulos del usuario.
+
+### 4.2 Mi acceso
+
+**Ruta:** `/dashboard/user/my-access`
+
+Muestra las asignaciones de acceso del usuario autenticado:
+- Aplicacion asociada
+- Estado de la asignacion
+- Roles asignados
+- Fecha de asignacion
+
+### 4.3 Actividad
+
+**Ruta:** `/dashboard/user/activity`
+
+Muestra actividad reciente de la cuenta:
+- Ultimo inicio de sesion (desde token)
+- Linea de tiempo de asignaciones de acceso por aplicacion
+
+### 4.4 Sesiones
+
+**Ruta:** `/dashboard/user/sessions`
+
+Muestra detalle de la sesion activa:
+- Emision y expiracion de access token
+- Emision y expiracion de id token
+- Estado del refresh token en sessionStorage
+
+### 4.5 Mi cuenta
+
+**Ruta:** `/dashboard/user/profile`
+
+Formulario self-service para actualizar perfil:
+- Nombre y apellido
+- Telefono
+- Locale y zona horaria
+- Fecha de nacimiento
+- Sitio web
+- URL de foto de perfil
 
 ---
 
@@ -477,8 +558,8 @@ Las siguientes funcionalidades están planificadas pero aún no están disponibl
 |---|---|---|
 | Reactivación de tenants | Detalle de tenant | Mock; endpoint T-033 pendiente en backend |
 | Registro de usuarios (paso 2) | `/register` | Formulario parcialmente implementado |
-| Panel Administrador de Tenant | `/tenant-admin/*` | Sin páginas implementadas |
-| Panel de Usuario | `/dashboard` | Sin páginas implementadas |
+| Panel Administrador de Tenant | `/dashboard` + `/dashboard/tenant/*` | Usuarios, Apps y Memberships implementados; faltan métricas y sesiones avanzadas |
+| Panel de Usuario | `/dashboard` + `/dashboard/user/*` | Mi acceso, actividad, sesiones y perfil implementados |
 | Mi perfil | Menú de usuario (admin) | Botón presente, sin navegación |
 | Configuración de cuenta | Menú de usuario (admin) | Botón presente, sin navegación |
 | Buscador global | Cabecera admin | Decorativo, sin funcionalidad |

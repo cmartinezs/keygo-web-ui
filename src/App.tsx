@@ -6,9 +6,17 @@ import DeveloperDocsPage from './pages/developers/DeveloperDocsPage'
 import LoginPage from './pages/login/LoginPage'
 import NewContractPage from './pages/register/NewContractPage'
 import UserRegisterPage from './pages/register/UserRegisterPage'
-import { RoleGuard } from './auth/roleGuard'
+import DashboardHomePage from './pages/dashboard/DashboardHomePage'
+import FeaturePlaceholderPage from './pages/dashboard/FeaturePlaceholderPage'
+import TenantUsersPage from './pages/dashboard/tenant/TenantUsersPage'
+import TenantAppsPage from './pages/dashboard/tenant/TenantAppsPage'
+import TenantMembershipsPage from './pages/dashboard/tenant/TenantMembershipsPage'
+import UserMyAccessPage from './pages/dashboard/user/UserMyAccessPage'
+import UserActivityPage from './pages/dashboard/user/UserActivityPage'
+import UserSessionsPage from './pages/dashboard/user/UserSessionsPage'
+import UserProfilePage from './pages/dashboard/user/UserProfilePage'
+import { AuthGuard, RoleGuard } from './auth/roleGuard'
 import AdminLayout from './layouts/AdminLayout'
-import AdminDashboardPage from './pages/admin/DashboardPage'
 import TenantsPage from './pages/admin/TenantsPage'
 import TenantDetailPage from './pages/admin/TenantDetailPage'
 import TenantCreatePage from './pages/admin/TenantCreatePage'
@@ -32,23 +40,41 @@ export default function App() {
         <Route path="/subscribe" element={<NewContractPage />} />
         <Route path="/subscribe/resume" element={<Navigate to="/subscribe?resume=1" replace />} />
         <Route path="/register" element={<UserRegisterPage />} />
+        <Route path="/home" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/admin/*" element={<Navigate to="/dashboard" replace />} />
 
-        {/* Admin — role ADMIN */}
+        {/* Unified dashboard route for all authenticated roles */}
         <Route
-          path="/admin"
-          element={<RoleGuard roles={['ADMIN']}><AdminLayout /></RoleGuard>}
+          path="/dashboard"
+          element={<AuthGuard><AdminLayout /></AuthGuard>}
         >
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route index element={<DashboardHomePage />} />
+          <Route path="feature/:featureId" element={<FeaturePlaceholderPage />} />
 
-          {/* Tenant management — master-detail layout */}
-          <Route path="tenants" element={<TenantsPage />}>
-            <Route path="new" element={<TenantCreatePage />} />
-            <Route path=":slug" element={<TenantDetailPage />} />
+          {/* Admin-only sections */}
+          <Route element={<RoleGuard roles={['ADMIN']} redirectTo="/dashboard" />}>
+            <Route path="tenants" element={<TenantsPage />}>
+              <Route path="new" element={<TenantCreatePage />} />
+              <Route path=":slug" element={<TenantDetailPage />} />
+            </Route>
           </Route>
 
-          {/* Unimplemented admin routes → redirect to dashboard */}
-          <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+          {/* Admin tenant sections */}
+          <Route element={<RoleGuard roles={['ADMIN_TENANT']} redirectTo="/dashboard" />}>
+            <Route path="tenant/users" element={<TenantUsersPage />} />
+            <Route path="tenant/apps" element={<TenantAppsPage />} />
+            <Route path="tenant/memberships" element={<TenantMembershipsPage />} />
+          </Route>
+
+          {/* User tenant sections */}
+          <Route element={<RoleGuard roles={['USER_TENANT']} redirectTo="/dashboard" />}>
+            <Route path="user/my-access" element={<UserMyAccessPage />} />
+            <Route path="user/activity" element={<UserActivityPage />} />
+            <Route path="user/sessions" element={<UserSessionsPage />} />
+            <Route path="user/profile" element={<UserProfilePage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
 
         {/* Fallback */}

@@ -138,6 +138,12 @@ Actualizado automáticamente por el agente al final de cada implementación.
 
 > Features completas que están en el roadmap pero no son bloqueantes inmediatas.
 
+### [FEATURE] Endpoint de sesiones y actividad para USER_TENANT
+- **Detectado en:** `src/pages/dashboard/user/UserSessionsPage.tsx`, `src/pages/dashboard/user/UserActivityPage.tsx`
+- **Descripción:** Actualmente la vista de sesiones y actividad de usuario se construye con metadata local de JWT + memberships. Se requiere endpoint backend dedicado para listar sesiones por dispositivo/IP, cierres de sesion remotos y eventos de auditoria por usuario final.
+- **Prioridad:** 🟡 Media
+- **Fecha detección:** 2026-04-02
+
 ### [FEATURE] Registro de usuario con verificación de email — flujo completo
 - **Detectado en:** `src/pages/login/LoginPage.tsx` (link a `/register`)
 - **Descripción:** Implementar el flujo de auto-registro en 3 pantallas:

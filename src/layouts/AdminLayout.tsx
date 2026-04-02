@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useTokenStore } from '@/auth/tokenStore'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemePreference } from '@/hooks/useTheme'
+import { SidebarMenu } from '@/components/dashboard/SidebarMenu'
+import type { SidebarMenuSection } from '@/components/dashboard/SidebarMenu'
+import type { AppRole } from '@/types/roles'
 
 // ── Icons (inline SVG) ───────────────────────────────────────────────────────
 
@@ -282,52 +285,6 @@ function ThemeToggle({ preference, onSelect }: ThemeToggleProps) {
 
 // ── Sidebar nav item ──────────────────────────────────────────────────────────
 
-interface NavSectionProps {
-  label: string
-  collapsed?: boolean
-}
-
-function NavSection({ label, collapsed }: NavSectionProps) {
-  if (collapsed) {
-    return <div className="h-px bg-white/10 my-2 mx-2" />
-  }
-  return (
-    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 mt-4 mb-1">
-      {label}
-    </p>
-  )
-}
-
-interface NavItemProps {
-  to: string
-  icon: React.ReactNode
-  label: string
-  collapsed?: boolean
-  onClick?: () => void
-}
-
-function NavItem({ to, icon, label, collapsed, onClick }: NavItemProps) {
-  return (
-    <NavLink
-      to={to}
-      onClick={onClick}
-      title={collapsed ? label : undefined}
-      className={({ isActive }) =>
-        `flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 ${
-          collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'
-        } ${
-          isActive
-            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-            : 'text-slate-400 hover:bg-white/5 hover:text-white'
-        }`
-      }
-    >
-      {icon}
-      {!collapsed && <span>{label}</span>}
-    </NavLink>
-  )
-}
-
 // ── User avatar initials ──────────────────────────────────────────────────────
 
 function UserAvatar({ name }: { name: string }) {
@@ -343,6 +300,90 @@ function UserAvatar({ name }: { name: string }) {
       {initials}
     </div>
   )
+}
+
+function resolvePrimaryRole(roles: string[]): AppRole {
+  if (roles.includes('ADMIN')) return 'ADMIN'
+  if (roles.includes('ADMIN_TENANT')) return 'ADMIN_TENANT'
+  return 'USER_TENANT'
+}
+
+const SIDEBAR_BY_ROLE: Record<AppRole, SidebarMenuSection[]> = {
+  ADMIN: [
+    {
+      label: 'Plataforma',
+      items: [
+        { to: '/dashboard', icon: <IconDashboard />, label: 'Dashboard' },
+        { to: '/dashboard/tenants', icon: <IconBuilding />, label: 'Tenants' },
+        { to: '/dashboard/feature/apps', icon: <IconApps />, label: 'Apps' },
+        { to: '/dashboard/feature/users', icon: <IconUsers />, label: 'Usuarios' },
+      ],
+    },
+    {
+      label: 'Accesos y registro',
+      items: [
+        { to: '/dashboard/feature/access', icon: <IconShield />, label: 'Accesos' },
+        { to: '/dashboard/feature/audit', icon: <IconClipboard />, label: 'Registro' },
+      ],
+    },
+    {
+      label: 'Seguridad',
+      items: [
+        { to: '/dashboard/feature/signing-keys', icon: <IconKeySmall />, label: 'Claves de firma' },
+        { to: '/dashboard/feature/sessions', icon: <IconClock />, label: 'Sesiones' },
+        { to: '/dashboard/feature/tokens', icon: <IconTicket />, label: 'Tokens' },
+      ],
+    },
+    {
+      label: 'Sistema',
+      items: [
+        { to: '/dashboard/feature/api', icon: <IconCloud />, label: 'API' },
+        { to: '/dashboard/feature/settings', icon: <IconSettings />, label: 'Configuracion' },
+        { to: '/dashboard/feature/profile', icon: <IconUser />, label: 'Mi cuenta' },
+      ],
+    },
+  ],
+  ADMIN_TENANT: [
+    {
+      label: 'Mi organizacion',
+      items: [
+        { to: '/dashboard', icon: <IconDashboard />, label: 'Dashboard' },
+        { to: '/dashboard/tenant/users', icon: <IconUsers />, label: 'Usuarios' },
+        { to: '/dashboard/tenant/apps', icon: <IconApps />, label: 'Apps' },
+      ],
+    },
+    {
+      label: 'Accesos',
+      items: [
+        { to: '/dashboard/tenant/memberships', icon: <IconShield />, label: 'Memberships' },
+        { to: '/dashboard/feature/sessions', icon: <IconClock />, label: 'Sesiones' },
+      ],
+    },
+    {
+      label: 'Cuenta',
+      items: [
+        { to: '/dashboard/feature/profile', icon: <IconUser />, label: 'Mi cuenta' },
+        { to: '/dashboard/feature/settings', icon: <IconSettings />, label: 'Configuracion' },
+      ],
+    },
+  ],
+  USER_TENANT: [
+    {
+      label: 'Inicio',
+      items: [
+        { to: '/dashboard', icon: <IconDashboard />, label: 'Dashboard' },
+        { to: '/dashboard/user/my-access', icon: <IconShield />, label: 'Mi acceso' },
+        { to: '/dashboard/user/activity', icon: <IconClipboard />, label: 'Actividad' },
+      ],
+    },
+    {
+      label: 'Cuenta',
+      items: [
+        { to: '/dashboard/user/sessions', icon: <IconClock />, label: 'Sesiones' },
+        { to: '/dashboard/user/profile', icon: <IconUser />, label: 'Mi cuenta' },
+      ],
+    },
+  ],
 }
 
 // ── Layout ────────────────────────────────────────────────────────────────────
@@ -383,9 +424,9 @@ export default function AdminLayout() {
   }
 
   const displayName = user?.displayName ?? 'Admin'
-  const roleLabel = user?.roles[0]
-    ? user.roles[0].charAt(0).toUpperCase() + user.roles[0].slice(1).toLowerCase()
-    : 'Admin'
+  const sidebarRole = resolvePrimaryRole(user?.roles ?? [])
+  const roleLabel = sidebarRole.replace('_', ' ')
+  const sidebarSections = SIDEBAR_BY_ROLE[sidebarRole]
 
   return (
     <div className="flex h-screen bg-slate-950 overflow-hidden">
@@ -429,31 +470,11 @@ export default function AdminLayout() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-0.5" aria-label="Menú principal">
-          {/* ── Plataforma ── */}
-          <NavSection label="Plataforma" collapsed={collapsed} />
-          <NavItem to="/admin/dashboard" icon={<IconDashboard />} label="Dashboard" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-          <NavItem to="/admin/tenants" icon={<IconBuilding />} label="Tenants" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-          <NavItem to="/admin/apps" icon={<IconApps />} label="Apps" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-          <NavItem to="/admin/users" icon={<IconUsers />} label="Usuarios" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-
-          {/* ── Accesos & Registro ── */}
-          <NavSection label="Accesos & Registro" collapsed={collapsed} />
-          <NavItem to="/admin/accesos" icon={<IconShield />} label="Accesos" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-          <NavItem to="/admin/registro" icon={<IconClipboard />} label="Registro" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-
-          {/* ── Seguridad ── */}
-          <NavSection label="Seguridad" collapsed={collapsed} />
-          <NavItem to="/admin/claves" icon={<IconKeySmall />} label="Claves de firma" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-          <NavItem to="/admin/sesiones" icon={<IconClock />} label="Sesiones" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-          <NavItem to="/admin/tokens" icon={<IconTicket />} label="Tokens" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-
-          {/* ── Sistema ── */}
-          <NavSection label="Sistema" collapsed={collapsed} />
-          <NavItem to="/admin/api" icon={<IconCloud />} label="API" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-          <NavItem to="/admin/configuracion" icon={<IconSettings />} label="Configuración" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-          <NavItem to="/admin/mi-cuenta" icon={<IconUser />} label="Mi cuenta" collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-        </nav>
+        <SidebarMenu
+          sections={sidebarSections}
+          collapsed={collapsed}
+          onNavigate={() => setMobileOpen(false)}
+        />
 
         {/* Sidebar user strip */}
         <div className="px-2 py-4 border-t border-white/10">
