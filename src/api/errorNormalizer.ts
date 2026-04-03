@@ -1,4 +1,5 @@
 import axios, { type AxiosError } from 'axios'
+import { i18n } from '@/i18n/config'
 import type {
   BaseResponse,
   ClientRequestCause,
@@ -28,8 +29,17 @@ export interface AxiosErrorWithAppApiError extends AxiosError {
   appApiError?: AppApiError
 }
 
-const DEFAULT_UNKNOWN_MESSAGE = 'Ocurrio un error inesperado. Intentalo nuevamente.'
-const DEFAULT_NETWORK_MESSAGE = 'No se pudo conectar con el servidor. Revisa tu conexion e intentalo de nuevo.'
+function getDefaultUnknownMessage(): string {
+  return i18n.t('errors.unknownMessage', {
+    defaultValue: 'No pudimos completar la solicitud en este momento. Vuelve a intentarlo en unos segundos.',
+  })
+}
+
+function getDefaultNetworkMessage(): string {
+  return i18n.t('errors.networkMessage', {
+    defaultValue: 'No pudimos completar la comunicacion con el servidor. Reintentaremos automaticamente; si persiste, vuelve a intentarlo en unos segundos.',
+  })
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -63,7 +73,7 @@ function resolveMessage(params: {
   clientMessage?: string
   fallback?: string
 }): string {
-  return params.clientMessage ?? params.backendMessage ?? params.fallback ?? DEFAULT_UNKNOWN_MESSAGE
+  return params.clientMessage ?? params.backendMessage ?? params.fallback ?? getDefaultUnknownMessage()
 }
 
 function isRetryable(params: { status?: number; origin?: ErrorOrigin; code?: string; isNetwork: boolean }): boolean {
@@ -88,7 +98,7 @@ export function normalizeApiError(error: unknown): AppApiError {
   const message = resolveMessage({
     clientMessage: typeof errorData?.clientMessage === 'string' ? errorData.clientMessage : undefined,
     backendMessage: failure.message,
-    fallback: networkError ? DEFAULT_NETWORK_MESSAGE : isAxios ? axiosError?.message : undefined,
+    fallback: networkError ? getDefaultNetworkMessage() : isAxios ? axiosError?.message : undefined,
   })
 
   const normalized = new Error(message) as AppApiError

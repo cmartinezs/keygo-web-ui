@@ -7,6 +7,7 @@ const DEFAULT_DROPDOWN_PANEL_CLASS =
 export function Dropdown({
   ariaLabel,
   trigger,
+  containerClassName,
   panelClassName = DEFAULT_DROPDOWN_PANEL_CLASS,
   panelRole = 'menu',
   children,
@@ -14,7 +15,7 @@ export function Dropdown({
   const { open, ref, toggle, close } = useDropdown()
 
   return (
-    <div className="relative" ref={ref}>
+    <div className={['relative', containerClassName ?? ''].join(' ')} ref={ref}>
       {trigger({ open, toggle })}
 
       {open && (

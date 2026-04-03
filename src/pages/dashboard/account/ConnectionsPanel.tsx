@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { TENANT } from '@/api/client'
+import { SelectDropdown } from '@/components/SelectDropdown'
 import {
   ACCOUNT_QUERY_KEYS,
   getAccountConnections,
@@ -185,26 +186,26 @@ export function ConnectionsPanel() {
 
       <div className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 p-3 dark:border-white/10">
         <div className="min-w-[220px] flex-1">
-          <label htmlFor="provider-to-link" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-200">
+          <p id="provider-to-link-label" className="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-200">
             {t('accountConnections.providerToLink')}
-          </label>
-          <select
-            id="provider-to-link"
+          </p>
+          <SelectDropdown
             value={providerToLink}
-            onChange={(event) => setProviderToLink(event.target.value as SupportedProvider)}
+            onChange={setProviderToLink}
+            options={
+              linkOptions.length === 0
+                ? [{ value: providerToLink, label: t('accountConnections.noProviderAvailable') }]
+                : linkOptions.map((provider) => ({ value: provider, label: provider }))
+            }
+            label={t('accountConnections.noProviderAvailable')}
+            ariaLabel={t('accountConnections.providerToLink')}
+            labelledBy="provider-to-link-label"
             disabled={linkMutation.isPending || linkOptions.length === 0}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/20 dark:bg-slate-800 dark:text-white"
-          >
-            {linkOptions.length === 0 ? (
-              <option value={providerToLink}>{t('accountConnections.noProviderAvailable')}</option>
-            ) : (
-              linkOptions.map((provider) => (
-                <option key={provider} value={provider}>
-                  {provider}
-                </option>
-              ))
-            )}
-          </select>
+            hideSelectedOption
+            selectedValueClassName="text-indigo-600 dark:text-indigo-400"
+            triggerClassName="w-full justify-between rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 hover:bg-white dark:border-white/20 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-800"
+            panelClassName="absolute right-0 top-full mt-2 w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
+          />
         </div>
         <PrimaryActionButton
           onClick={() => linkMutation.mutate(providerToLink)}

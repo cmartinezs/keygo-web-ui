@@ -287,6 +287,7 @@ i18n (react-i18next + i18next)
 
 **Construcción:**
 - Define todas las rutas con `<Routes>` de React Router 7.
+- En la ruta `/`, redirige a `/dashboard` cuando existe sesión activa (`accessToken`), y solo renderiza `LandingPage` para usuarios no autenticados.
 - Expone rutas públicas adicionales `/developers` (documentación) y `/logout` (cierre de sesión seguro).
 - Unifica toda el area autenticada en `/dashboard` (misma ruta para todos los roles).
 - Expone rutas compartidas de cuenta para todos los roles: `/dashboard/account` y `/dashboard/account/settings`.
@@ -308,9 +309,9 @@ i18n (react-i18next + i18next)
 **Árbol de rutas:**
 | Ruta | Componente | Guardia |
 |------|-----------|---------|
-| `/` | `LandingPage` | Pública |
+| `/` | `Navigate -> /dashboard` (si hay sesión) / `LandingPage` (sin sesión) | Pública |
 | `/developers` | `DeveloperDocsPage` | Pública |
-| `/login` | `LoginPage` | Pública |
+| `/login` | `Navigate -> /dashboard` (si hay sesión) / `LoginPage` (sin sesión) | Pública |
 | `/logout` | `LogoutPage` | Pública |
 | `/subscribe` | `NewContractPage` | Pública |
 | `/subscribe/resume` | `Navigate -> /subscribe?resume=1` | Pública |
@@ -1258,6 +1259,7 @@ function useRateLimit(formKey: string) {
 **Construcción:**
 - Usa `useDropdown` para estado y cierre por click exterior.
 - Permite `panelRole` (`menu` o `listbox`) y `panelClassName` configurable.
+- Permite `containerClassName` para integrarse en layouts de formulario sin wrappers extra.
 - Renderiza `children` estático o render function con acceso a `close()`.
 
 **Integración:** Base de `SelectDropdown.tsx` y del menú de usuario en `AdminLayout`.
@@ -1274,12 +1276,29 @@ function useRateLimit(formKey: string) {
 - Recibe opciones tipadas (`DropdownOption<T>`) y controla selección por `value` + `onChange`.
 - Soporta `hideSelectedOption` para ocultar el valor activo dentro del panel.
 - Soporta `selectedValueClassName` para estilizar el valor seleccionado en trigger cerrado.
+- Soporta `disabled`, `triggerClassName`, `panelClassName`, `containerClassName` y asociación accesible con labels visibles (`labelledBy`).
+- Soporta theming contextual del panel abierto mediante `optionClassName`, `activeOptionClassName` y `emptyStateClassName`.
 
 **Integración:** Usado en `src/layouts/AdminLayout.tsx` para `ThemeToggle` y `RoleSwitcher`.
 
 **i18n:** Cuando no existen opciones para seleccionar, el componente usa la clave `common.noMoreOptions` para mostrar el estado vacío en el idioma activo.
 
 **Decisión de diseño:** Separar el caso "selector" del primitive general permite configuración por props sin repetir JSX ni handlers.
+
+---
+
+### `LocaleSwitcher.tsx`
+
+**Propósito:** componente reusable para cambio de idioma (`es-CL`/`en-US`) sobre `SelectDropdown`, preparado para variantes visuales por contexto.
+
+**Construcción:**
+- Usa `useLocale()` para leer locale activo y ejecutar `setLocale(...)` con persistencia manual.
+- Renderiza opciones con bandera por idioma y soporta modo `compact` (labels `ES`/`EN`) para headers con poco espacio.
+- Expone `triggerClassName`, `panelClassName`, `containerClassName` y `selectedValueClassName` para adaptar look & feel sin duplicar lógica.
+
+**Integración:** consumido por `LandingNav.tsx` (header público) y `LoginPage.tsx` (tarjeta de autenticación).
+
+**Decisión de diseño:** centralizar el switcher evita duplicar iconografía/binding i18n y asegura comportamiento consistente de idioma en vistas públicas.
 
 ---
 
@@ -1690,6 +1709,8 @@ div.flex.h-screen
 
 **Decisión de diseño:** Cada sección es un componente independiente para facilitar su mantenimiento y reemplazo. `LandingPage` no contiene lógica — solo composición.
 
+**Actualización relevante:** `LandingNav.tsx` incorpora `LocaleSwitcher` en modo compacto para permitir cambio de idioma (ES/EN) directamente desde la landing, integrado al estilo visual del header público.
+
 **Actualización relevante:** `DevelopersSection.tsx` pasó de ser un bloque meramente promocional a un punto de entrada funcional hacia la guía pública `/developers`, usando `Link` de React Router para navegar a la documentación y al ancla de endpoints.
 
 ---
@@ -1736,9 +1757,17 @@ initMutation.isSuccess                                  → LoginForm
 
 **Integración:** `authorize`, `login`, `exchangeToken` (api/auth.ts) → `verifyIdToken`, `extractRoles` (auth/jwksVerify.ts) → `setTokens` (auth/tokenStore.ts) → `persistRefreshToken` (auth/refresh.ts) → `useBlockingErrorStore` (auth/blockingErrorStore.ts) → `useHoneypot`, `useRateLimit`, `TurnstileWidget`.
 
+**Actualización relevante:** se integra `LocaleSwitcher` en el header de la tarjeta de login para permitir cambio de idioma sin abandonar el flujo de autenticación.
+
+**Actualización relevante:** los mensajes de timeout/reconexión del login dejaron de usar literales fijos y ahora consumen claves i18n (`auth.errors.timeout*`) para respetar el idioma activo también en fallos de red.
+
 **Actualización relevante:** La captura de errores dejó de depender de parseo manual del envelope Axios y ahora usa `getAppApiError(...)` (código, mensaje y retryabilidad) para mantener consistencia con el contrato OpenAPI de `ErrorResponse`. La lógica de reintento/reconexión en `onError` también usa `retryable` y `httpStatus` normalizados.
 
+**Actualización relevante:** los fallbacks genéricos de `errorNormalizer` (`unknown` y `network`) ahora se resuelven vía i18n (`errors.*`) en runtime, evitando mensajes forzados en español cuando el idioma activo es inglés.
+
 **Actualización relevante:** `resolveRedirectPath` ahora mapea todos los roles a `/dashboard` (ruta unificada). Además, el efecto de inicialización de login evita ejecutar `authorize()` cuando ya existe `accessToken`, previniendo ciclos de autorización si la navegación retorna a `/login`.
+
+**Actualización relevante:** el auto-reintento de `authorize()` en estado de error dejó de usar un `setInterval` continuo y ahora agenda un solo intento por ciclo (cada 5s, máximo 3). El contador solo se reinicia al iniciar un nuevo episodio (reintento manual o re-inicialización explícita), evitando reintentos indefinidos cuando el backend está caído.
 
 **Deuda técnica:** el dashboard compartido mantiene tarjetas de resumen con placeholders en roles no ADMIN. Falta conectar metricas especificas por rol.
 
@@ -1812,6 +1841,7 @@ initMutation.isSuccess                                  → LoginForm
 - Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3).
 - Escritura: `useMutation` para `createClientApp(...)` y `rotateClientAppSecret(...)`.
   - Modal "Crear aplicación" con formulario completo: nombre, descripción, tipo (PUBLIC/CONFIDENTIAL), grants (múltiple), redirect_uris, scopes.
+  - Los campos `type` y `grants` usan `SelectDropdown` en vez de `select` nativo.
   - Botón "Rotar secret" en cada fila abre confirmación y luego muestra nuevo secret con opción copiar (one-time display).
   - Invalidación de cache tras éxito.
 - Resiliencia mutaciones: timeout explícito (10s) sin auto-retry para crear app y rotar secret.
@@ -1832,7 +1862,7 @@ initMutation.isSuccess                                  → LoginForm
   - Resuelve nombre de app desde mapa `client_app_id` → `name`.
 - Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) en usuarios, apps, memberships y roles.
 - Escritura: `useMutation` para `createMembership(...)` y `revokeMembership(...)`.
-  - Modal "Crear membership" con selección de usuario, app, y roles (con checkboxes dinámicas cargadas por app).
+  - Modal "Crear membership" con selección de usuario y app mediante `SelectDropdown`, y roles con checkboxes dinámicas cargadas por app.
   - Botón "Revocar" en cada fila con confirmación; elimina membership inmediatamente.
   - Invalidación de cache tras éxito.
 - Resiliencia mutaciones: timeout explícito (10s) sin auto-retry para crear/revocar membership.
@@ -1952,7 +1982,7 @@ initMutation.isSuccess                                  → LoginForm
   - Estado local de carga/error/guardado y toast de feedback.
 - Conexiones implementadas con `ConnectionsPanel.tsx` sobre endpoints temporales MSW:
   - `getAccountConnections(...)`, `linkAccountConnection(...)`, `unlinkAccountConnection(...)`.
-  - Selector de proveedor, lista de conexiones y acciones de vincular/desvincular.
+  - Selector de proveedor implementado con `SelectDropdown`, más lista de conexiones y acciones de vincular/desvincular.
   - Indicadores explícitos en UI de dependencia contractual pendiente (`F-042`).
 - Facturación conectada a endpoints reales (`getActiveSubscription`, `listInvoices`) para `ADMIN_TENANT`.
 - Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para suscripción e invoices.

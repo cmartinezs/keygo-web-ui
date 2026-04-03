@@ -24,6 +24,10 @@
     "noMoreOptions": "Sin mas opciones",
     "admin": "Admin"
   },
+  "errors": {
+    "unknownMessage": "No pudimos completar la solicitud en este momento. Vuelve a intentarlo en unos segundos.",
+    "networkMessage": "No pudimos completar la comunicacion con el servidor. Reintentaremos automaticamente; si persiste, vuelve a intentarlo en unos segundos."
+  },
   "theme": {
     "system": "Sistema",
     "light": "Claro",
@@ -73,7 +77,11 @@
       "connectionRetryIn5": "Sin conexion. Reintentando en 5 s...",
       "connectionManualRetry": "Sin conexion. Usa el boton para reintentar manualmente.",
       "sessionExpiredReconnecting": "Tu sesion expiro. Reconectando...",
-      "cannotConnectReconnecting": "No se pudo conectar. Reconectando..."
+      "cannotConnectReconnecting": "No se pudo conectar. Reconectando...",
+      "timeoutActionLogin": "operacion de inicio de sesion",
+      "timeoutActionReconnect": "reconexion",
+      "timeoutRetryManual": "Vuelve a intentarlo.",
+      "timeoutRetrying": "Reintentando..."
     }
   },
   "dashboard": {

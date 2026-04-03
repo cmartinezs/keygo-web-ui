@@ -20,6 +20,7 @@ import UserProfilePage from './pages/dashboard/user/UserProfilePage'
 import AccountSettingsPage from './pages/dashboard/account/AccountSettingsPage'
 import FaqCenterPage from './pages/dashboard/FaqCenterPage'
 import { AuthGuard, RoleGuard } from './auth/roleGuard'
+import { useTokenStore } from './auth/tokenStore'
 import AdminLayout from './layouts/AdminLayout'
 import TenantsPage from './pages/admin/TenantsPage'
 import TenantDetailPage from './pages/admin/TenantDetailPage'
@@ -35,6 +36,7 @@ const ROUTE_SETTLING_WINDOW_MS = 1200
 export default function App() {
   const { t } = useTranslation()
   const location = useLocation()
+  const accessToken = useTokenStore((state) => state.accessToken)
   const isFetching = useIsFetching()
   const isMutating = useIsMutating()
   const themePreference = useThemeStore((state) => state.preference)
@@ -80,9 +82,9 @@ export default function App() {
     <>
       <Routes>
         {/* Public */}
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={accessToken ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
         <Route path="/developers" element={<DeveloperDocsPage />} />
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={accessToken ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/subscribe" element={<NewContractPage />} />
         <Route path="/subscribe/resume" element={<Navigate to="/subscribe?resume=1" replace />} />

@@ -14,6 +14,7 @@ export interface DropdownChildrenParams {
 export interface DropdownProps {
   ariaLabel: string
   trigger: (params: DropdownTriggerParams) => ReactNode
+  containerClassName?: string
   panelClassName?: string
   panelRole?: DropdownPanelRole
   children: ReactNode | ((params: DropdownChildrenParams) => ReactNode)
@@ -32,6 +33,15 @@ export interface SelectDropdownProps<T extends string> {
   label: string
   icon?: ReactNode
   ariaLabel: string
+  triggerId?: string
+  labelledBy?: string
+  disabled?: boolean
+  containerClassName?: string
+  triggerClassName?: string
+  panelClassName?: string
   hideSelectedOption?: boolean
   selectedValueClassName?: string
+  optionClassName?: string
+  activeOptionClassName?: string
+  emptyStateClassName?: string
 }

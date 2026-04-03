@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm, useFieldArray } from 'react-hook-form'
+import { Controller, useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { listClientApps, createClientApp, rotateClientAppSecret, CLIENT_APP_QUERY_KEYS, type GrantType, type CreateClientAppRequest } from '@/api/clientApps'
 import { getAppApiError } from '@/api/errorNormalizer'
 import { TENANT } from '@/api/client'
+import { SelectDropdown } from '@/components/SelectDropdown'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import {
   NETWORK_MAX_RETRIES,
@@ -23,6 +24,18 @@ const STATUS_LABEL: Record<string, string> = {
   ACTIVE: 'Activa',
   INACTIVE: 'Inactiva',
 }
+
+const APP_TYPE_OPTIONS = [
+  { value: 'PUBLIC', label: 'Pública' },
+  { value: 'CONFIDENTIAL', label: 'Confidencial' },
+] as const
+
+const GRANT_OPTIONS = [
+  { value: 'AUTHORIZATION_CODE', label: 'Authorization Code' },
+  { value: 'CLIENT_CREDENTIALS', label: 'Client Credentials' },
+  { value: 'REFRESH_TOKEN', label: 'Refresh Token' },
+  { value: 'IMPLICIT', label: 'Implicit' },
+] as const
 
 const CreateClientAppSchema = z.object({
   name: z.string().min(1, 'Nombre requerido'),
@@ -246,18 +259,29 @@ export default function TenantAppsPage() {
               </div>
 
               <div>
-                <label htmlFor="type" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                <p id="type-label" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                   Tipo *
-                </label>
-                <select
-                  id="type"
-                  {...createForm.register('type')}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
-                  disabled={createMutation.isPending}
-                >
-                  <option value="PUBLIC">Pública</option>
-                  <option value="CONFIDENTIAL">Confidencial</option>
-                </select>
+                </p>
+                <Controller
+                  name="type"
+                  control={createForm.control}
+                  render={({ field }) => (
+                    <SelectDropdown
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={[...APP_TYPE_OPTIONS]}
+                      label="Tipo"
+                      ariaLabel="Tipo de aplicación"
+                      labelledBy="type-label"
+                      disabled={createMutation.isPending}
+                      containerClassName="w-full"
+                      hideSelectedOption
+                      selectedValueClassName="text-indigo-600 dark:text-indigo-400"
+                      triggerClassName="w-full justify-between px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm hover:bg-white dark:hover:bg-slate-800"
+                      panelClassName="absolute right-0 top-full mt-2 w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
+                    />
+                  )}
+                />
               </div>
 
               <div>
@@ -266,16 +290,25 @@ export default function TenantAppsPage() {
                 </label>
                 {grantFields.map((field, index) => (
                   <div key={field.id} className="flex gap-2 mb-2">
-                    <select
-                      {...createForm.register(`grants.${index}`)}
-                      className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
-                      disabled={createMutation.isPending}
-                    >
-                      <option value="AUTHORIZATION_CODE">Authorization Code</option>
-                      <option value="CLIENT_CREDENTIALS">Client Credentials</option>
-                      <option value="REFRESH_TOKEN">Refresh Token</option>
-                      <option value="IMPLICIT">Implicit</option>
-                    </select>
+                    <Controller
+                      name={`grants.${index}`}
+                      control={createForm.control}
+                      render={({ field: grantField }) => (
+                        <SelectDropdown
+                          value={grantField.value}
+                          onChange={grantField.onChange}
+                          options={[...GRANT_OPTIONS]}
+                          label="Grant"
+                          ariaLabel={`Grant ${index + 1}`}
+                          disabled={createMutation.isPending}
+                          containerClassName="flex-1"
+                          hideSelectedOption
+                          selectedValueClassName="text-indigo-600 dark:text-indigo-400"
+                          triggerClassName="flex-1 justify-between px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm hover:bg-white dark:hover:bg-slate-800"
+                          panelClassName="absolute left-0 top-full mt-2 w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
+                        />
+                      )}
+                    />
                     <button
                       type="button"
                       onClick={() => removeGrant(index)}

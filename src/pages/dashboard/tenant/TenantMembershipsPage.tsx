@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { TENANT } from '@/api/client'
+import { SelectDropdown } from '@/components/SelectDropdown'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { listUsers, USER_QUERY_KEYS } from '@/api/users'
 import { listClientApps, CLIENT_APP_QUERY_KEYS, listAppRoles } from '@/api/clientApps'
-import { listMembershipsByUser, createMembership, revokeMembership, MEMBERSHIP_QUERY_KEYS, type CreateMembershipRequest } from '@/api/memberships'
+import { listMembershipsByUser, createMembership, revokeMembership, MEMBERSHIP_QUERY_KEYS } from '@/api/memberships'
 import { getAppApiError } from '@/api/errorNormalizer'
+import type { CreateMembershipRequest } from '@/types/membership'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -196,22 +198,26 @@ export default function TenantMembershipsPage() {
 
       {!usersQuery.isError && (
         <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-4 space-y-4">
-          <label htmlFor="membership-user" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+          <p id="membership-user-label" className="block text-sm font-medium text-slate-700 dark:text-slate-200">
             Usuario a revisar
-          </label>
-          <select
-            id="membership-user"
-            className="w-full max-w-lg rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-800 dark:text-slate-100"
+          </p>
+          <SelectDropdown
             value={selectedUserId}
-            onChange={(event) => setManualSelectedUserId(event.target.value)}
+            onChange={setManualSelectedUserId}
+            options={(usersQuery.data ?? []).map((tenantUser) => ({
+              value: tenantUser.id,
+              label: `${tenantUser.username} (${tenantUser.email})`,
+            }))}
+            label="Selecciona un usuario"
+            ariaLabel="Usuario a revisar"
+            labelledBy="membership-user-label"
             disabled={usersQuery.isLoading || (usersQuery.data?.length ?? 0) === 0}
-          >
-            {(usersQuery.data ?? []).map((tenantUser) => (
-              <option key={tenantUser.id} value={tenantUser.id}>
-                {tenantUser.username} ({tenantUser.email})
-              </option>
-            ))}
-          </select>
+            containerClassName="w-full max-w-lg"
+            hideSelectedOption
+            selectedValueClassName="text-indigo-600 dark:text-indigo-400"
+            triggerClassName="w-full justify-between rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-800 dark:text-slate-100 hover:bg-white dark:hover:bg-slate-800"
+            panelClassName="absolute right-0 top-full mt-2 w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
+          />
 
           {usersQuery.isLoading && (
             <p role="status" aria-live="polite" className="text-sm text-slate-500 dark:text-slate-400">Cargando usuarios...</p>
@@ -312,48 +318,71 @@ export default function TenantMembershipsPage() {
               )}
 
               <div>
-                <label htmlFor="user_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                <p id="user-id-label" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                   Usuario *
-                </label>
-                <select
-                  id="user_id"
-                  {...createForm.register('user_id')}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
-                  disabled={createMutation.isPending || usersQuery.isLoading}
-                >
-                  <option value="">-- Selecciona un usuario --</option>
-                  {(usersQuery.data ?? []).map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.username} ({u.email})
-                    </option>
-                  ))}
-                </select>
+                </p>
+                <Controller
+                  name="user_id"
+                  control={createForm.control}
+                  render={({ field }) => (
+                    <SelectDropdown
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={[
+                        { value: '', label: '-- Selecciona un usuario --' },
+                        ...((usersQuery.data ?? []).map((u) => ({
+                          value: u.id,
+                          label: `${u.username} (${u.email})`,
+                        }))),
+                      ]}
+                      label="-- Selecciona un usuario --"
+                      ariaLabel="Usuario"
+                      labelledBy="user-id-label"
+                      disabled={createMutation.isPending || usersQuery.isLoading}
+                      containerClassName="w-full"
+                      selectedValueClassName="text-indigo-600 dark:text-indigo-400"
+                      triggerClassName="w-full justify-between px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm hover:bg-white dark:hover:bg-slate-800"
+                      panelClassName="absolute right-0 top-full mt-2 w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
+                    />
+                  )}
+                />
                 {createForm.formState.errors.user_id && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">{createForm.formState.errors.user_id.message}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="client_app_id" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
+                <p id="client-app-id-label" className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">
                   Aplicación *
-                </label>
-                <select
-                  id="client_app_id"
-                  {...createForm.register('client_app_id')}
-                  onChange={(e) => {
-                    createForm.setValue('client_app_id', e.target.value)
-                    setSelectedAppForRoles(e.target.value)
-                  }}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
-                  disabled={createMutation.isPending || appsQuery.isLoading}
-                >
-                  <option value="">-- Selecciona una aplicación --</option>
-                  {(appsQuery.data ?? []).map((app) => (
-                    <option key={app.id} value={app.id}>
-                      {app.name}
-                    </option>
-                  ))}
-                </select>
+                </p>
+                <Controller
+                  name="client_app_id"
+                  control={createForm.control}
+                  render={({ field }) => (
+                    <SelectDropdown
+                      value={field.value}
+                      onChange={(nextValue) => {
+                        field.onChange(nextValue)
+                        setSelectedAppForRoles(nextValue)
+                      }}
+                      options={[
+                        { value: '', label: '-- Selecciona una aplicación --' },
+                        ...((appsQuery.data ?? []).map((app) => ({
+                          value: app.id,
+                          label: app.name,
+                        }))),
+                      ]}
+                      label="-- Selecciona una aplicación --"
+                      ariaLabel="Aplicación"
+                      labelledBy="client-app-id-label"
+                      disabled={createMutation.isPending || appsQuery.isLoading}
+                      containerClassName="w-full"
+                      selectedValueClassName="text-indigo-600 dark:text-indigo-400"
+                      triggerClassName="w-full justify-between px-3 py-2 rounded-lg border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm hover:bg-white dark:hover:bg-slate-800"
+                      panelClassName="absolute right-0 top-full mt-2 w-full bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
+                    />
+                  )}
+                />
                 {createForm.formState.errors.client_app_id && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">{createForm.formState.errors.client_app_id.message}</p>
                 )}

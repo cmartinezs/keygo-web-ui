@@ -2,7 +2,7 @@
 
 > **Audiencia:** usuario final, product owner o cualquier persona que quiera entender qué puede hacer con la aplicación, sin necesidad de conocimiento técnico.
 >
-> **Última actualización:** 2026-04-02
+> **Última actualización:** 2026-04-03
 
 ---
 
@@ -35,6 +35,8 @@ Las siguientes áreas son accesibles **sin necesidad de iniciar sesión**.
 
 **Ruta:** `/`
 
+Si ya existe una sesión activa, la aplicación redirige automáticamente a `/dashboard` y no muestra la landing.
+
 La página de inicio es la presentación pública de KeyGo. Está organizada en secciones verticales a las que se puede navegar mediante el menú superior.
 
 #### Barra de navegación
@@ -47,6 +49,7 @@ Fija en la parte superior de la pantalla. Contiene:
   - "Regístrate" → lleva al formulario de registro de usuario (`/register`).
   - "Nuevo contrato" → lleva al asistente de contratación (`/subscribe`).
   - "Iniciar sesión" → lleva al login (`/login`).
+- **Selector de idioma** integrado en la barra superior (ES/EN) para cambiar idioma sin salir de la landing.
 
 Un botón flotante en la esquina inferior derecha permite volver al inicio de la página en cualquier momento.
 
@@ -122,6 +125,8 @@ Sección de cierre con dos acciones: "Contratar ahora" (→ `/subscribe`) e "Ini
 
 **Ruta:** `/login`
 
+Si ya existe una sesión activa, la aplicación redirige automáticamente a `/dashboard` y no muestra el formulario de login.
+
 Permite autenticarse mediante el flujo OAuth2 Authorization Code + PKCE. El proceso es seguro: nunca se envían credenciales en texto plano desde el navegador.
 
 Ruta de salida segura:
@@ -136,6 +141,7 @@ Ruta de salida segura:
   Comportamiento en red lenta (implementación actual):
   - Cada intento de preparación tiene timeout de 10 segundos.
   - Si expira, la app reintenta automáticamente cada 5 segundos, con un máximo de 3 intentos.
+  - El contador de auto-reintentos se reinicia solo cuando el usuario fuerza un reintento manual o el flujo reinicia explícitamente la preparación de sesión.
   - Al agotarse los intentos automáticos, el usuario puede reintentar manualmente.
 
 2. **Formulario de credenciales:**
@@ -147,6 +153,7 @@ Ruta de salida segura:
 Idioma de interfaz en login:
 - Los textos del flujo de login se renderizan en el idioma activo de la app.
 - Si no hay selección manual previa, login usa el idioma detectado del dispositivo.
+- El login incluye selector de idioma visible en la cabecera de la tarjeta para cambiar idioma en el mismo contexto de autenticación.
 
 3. **Autenticación y redirección** (automática, invisible) — Las credenciales se validan, se obtienen los tokens de sesión y el usuario es llevado automáticamente al área correspondiente a su rol:
   - `ADMIN` → `/dashboard`
@@ -578,7 +585,7 @@ Gestión de aplicaciones client del tenant con lectura y escritura:
 - Tabla con todas las apps: nombre, client_id, tipo (PUBLIC/CONFIDENTIAL), estado, grants
 
 **Escritura:**
-- **Crear aplicación:** botón "+Crear aplicación" abre modal con formulario (nombre requerido; tipo, grants requeridos; descripción, redirect_uris, scopes opcionales)
+- **Crear aplicación:** botón "+Crear aplicación" abre modal con formulario (nombre requerido; tipo, grants requeridos; descripción, redirect_uris, scopes opcionales). Los campos de tipo y grants usan dropdowns reutilizables del sistema.
 - **Rotar secret:** botón en cada fila permite generar nuevo client_secret; muestra el nuevo secret una sola vez con opción copiar
 
 Comportamiento en red lenta:
@@ -596,7 +603,7 @@ Gestión de asignaciones usuario-app (memberships) con lectura y escritura:
 - Tabla con memberships del usuario: app, estado, roles asignados, fecha de creación
 
 **Escritura:**
-- **Crear membership:** botón "+Crear membership" abre modal para seleccionar usuario, aplicación y roles; crea la asignación
+- **Crear membership:** botón "+Crear membership" abre modal para seleccionar usuario, aplicación y roles; crea la asignación. La selección de usuario y aplicación se resuelve con dropdowns reutilizables del sistema.
 - **Revocar membership:** botón en cada fila con confirmación; elimina la asignación inmediatamente
 
 Comportamiento en red lenta:
@@ -693,6 +700,7 @@ Vista de configuraciones personales y operativas por tabs:
 - **Seguridad:** cambio de contraseña y gestión de sesiones activas/remotas (icono de escudo).
 - **Notificaciones:** preferencias por canal/tipo (correo, in-app, digest semanal) (icono de campana).
 - **Conexiones:** gestión de cuentas externas implementada en modo temporal con MSW (pendiente contrato backend oficial F-042) (icono de enlace).
+  - La selección del proveedor a vincular se realiza mediante dropdown reutilizable compartido con el resto del dashboard.
 - **Facturacion:** suscripción y facturas para rol `ADMIN_TENANT` (datos reales); para otros roles se muestra acceso restringido (icono de tarjeta).
 
 Idioma de interfaz (nuevo):

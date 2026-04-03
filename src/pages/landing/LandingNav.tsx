@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { LocaleSwitcher } from '@/components/LocaleSwitcher'
 
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -63,7 +64,15 @@ export function LandingNav() {
             </a>
           </nav>
 
-          <div className="relative flex items-center" ref={dropdownRef}>
+          <div className="relative flex items-center gap-2" ref={dropdownRef}>
+            <LocaleSwitcher
+              compact
+              triggerClassName="h-10 border border-white/20 bg-white/5 px-3 text-slate-100 hover:bg-white/10 hover:text-white focus-visible:ring-indigo-400"
+              panelClassName="absolute right-0 top-full mt-2 w-full rounded-lg bg-slate-900 border border-white/15 shadow-xl py-1 z-50"
+              optionClassName="text-slate-200 hover:bg-white/10 hover:text-white"
+              activeOptionClassName="text-indigo-300 bg-indigo-500/15 font-semibold"
+              selectedValueClassName="font-semibold text-white"
+            />
             <button
               onClick={() => setMenuOpen((prev) => !prev)}
               aria-expanded={menuOpen}

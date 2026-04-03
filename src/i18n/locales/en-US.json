@@ -24,6 +24,10 @@
     "noMoreOptions": "No more options",
     "admin": "Admin"
   },
+  "errors": {
+    "unknownMessage": "We could not complete the request right now. Please try again in a few seconds.",
+    "networkMessage": "We could not complete communication with the server. We will retry automatically; if it persists, try again in a few seconds."
+  },
   "theme": {
     "system": "System",
     "light": "Light",
@@ -73,7 +77,11 @@
       "connectionRetryIn5": "No connection. Retrying in 5 s...",
       "connectionManualRetry": "No connection. Use the button to retry manually.",
       "sessionExpiredReconnecting": "Your session expired. Reconnecting...",
-      "cannotConnectReconnecting": "Unable to connect. Reconnecting..."
+      "cannotConnectReconnecting": "Unable to connect. Reconnecting...",
+      "timeoutActionLogin": "login operation",
+      "timeoutActionReconnect": "reconnection",
+      "timeoutRetryManual": "Please try again.",
+      "timeoutRetrying": "Retrying..."
     }
   },
   "dashboard": {

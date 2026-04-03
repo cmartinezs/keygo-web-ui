@@ -19,6 +19,7 @@ import { useRateLimit } from '@/hooks/useRateLimit'
 import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
+import { LocaleSwitcher } from '@/components/LocaleSwitcher'
 import { env } from '@/config/env'
 import {
   NETWORK_MAX_RETRIES,
@@ -36,7 +37,7 @@ import type { AuthorizeData } from '@/types/auth'
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
 const AUTH_TIMEOUT_MS = NETWORK_REQUEST_TIMEOUT_MS
 const AUTH_RETRY_DELAY_MS = NETWORK_RETRY_DELAY_MS
-const AUTH_MAX_RETRIES = NETWORK_MAX_RETRIES
+const AUTH_MAX_RETRIES: number = NETWORK_MAX_RETRIES
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -447,6 +448,21 @@ export default function LoginPage() {
   const lastAuthErrorRef = useRef<{ message: string; retryable: boolean } | null>(null)
   const loginPhaseRef = useRef<'login' | 'post-login'>('login')
   const autoRetryCountRef = useRef(0)
+  const autoRetryTimeoutRef = useRef<number | null>(null)
+
+  function clearAutoRetryTimeout() {
+    if (autoRetryTimeoutRef.current === null) return
+    window.clearTimeout(autoRetryTimeoutRef.current)
+    autoRetryTimeoutRef.current = null
+  }
+
+  function triggerInit(resetAutoRetry = false) {
+    if (resetAutoRetry) {
+      autoRetryCountRef.current = 0
+      clearAutoRetryTimeout()
+    }
+    initMutation.mutate()
+  }
 
   // Client-side rate limiting — progressive lockout on repeated credential failures
   const rateLimit = useRateLimit('login')
@@ -512,6 +528,8 @@ export default function LoginPage() {
     },
     retry: 0, // Config errors (tenant not found, suspended) must not be auto-retried
     onSuccess: () => {
+      autoRetryCountRef.current = 0
+      clearAutoRetryTimeout()
       isAutoRetryingRef.current = false
       lastAuthErrorRef.current = null // reset so a future disconnect shows the full spinner
       // Clear any previous login error once the session is fresh
@@ -572,9 +590,9 @@ export default function LoginPage() {
       const appError = getAppApiError(error)
 
       if (isRequestTimeout(error)) {
-        toast.error(buildMutationTimeoutMessage('operacion de inicio de sesion', {
+        toast.error(buildMutationTimeoutMessage(t('auth.errors.timeoutActionLogin'), {
           timeoutMs: AUTH_TIMEOUT_MS,
-          retryHint: 'Vuelve a intentarlo.',
+          retryHint: t('auth.errors.timeoutRetryManual'),
         }))
         return
       }
@@ -586,7 +604,7 @@ export default function LoginPage() {
             ? t('auth.errors.networkAfterLogin')
             : appError.clientMessage,
         )
-        initMutation.mutate()
+        triggerInit(true)
         return
       }
 
@@ -594,10 +612,10 @@ export default function LoginPage() {
       const { sessionExpired } = extractLoginError(error)
       if (sessionExpired) {
         toast.warning(t('auth.errors.sessionExpiredReconnecting'))
-        initMutation.mutate()
+        triggerInit(true)
       } else if (appError.retryable) {
         toast.warning(t('auth.errors.cannotConnectReconnecting'))
-        initMutation.mutate()
+        triggerInit(true)
       } else {
         // Credential error (wrong password, account suspended, etc.) — count against rate limit
         rateLimit.recordFailure()
@@ -608,54 +626,58 @@ export default function LoginPage() {
   // Run Pasos 0-1 once on mount (user has not interacted yet)
   useEffect(() => {
     if (accessToken) return
-    initMutation.mutate()
+    triggerInit(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken])
 
-  // While in error state, retry automatically up to env.QUERY_RETRY_COUNT times (every 10 s).
-  // Each new error episode resets the counter. Once exhausted, only the manual retry button works.
+  // While in error state, schedule one controlled retry every AUTH_RETRY_DELAY_MS.
+  // The counter is reset only when a new init episode starts (manual retry or explicit re-init).
   // isAutoRetryingRef suppresses the full spinner; toasts provide visual feedback.
   useEffect(() => {
     if (!initMutation.isError) return
-    autoRetryCountRef.current = 0
 
     const authError = extractAuthorizeError(initMutation.error)
     if (!authError.retryable) return
 
     if (AUTH_MAX_RETRIES === 0) return
+    if (autoRetryCountRef.current >= AUTH_MAX_RETRIES) return
 
-    const id = setInterval(() => {
-      if (autoRetryCountRef.current >= AUTH_MAX_RETRIES) return
-      autoRetryCountRef.current += 1
-      const remaining = AUTH_MAX_RETRIES - autoRetryCountRef.current
+    const nextAttempt = autoRetryCountRef.current + 1
+    const remaining = AUTH_MAX_RETRIES - nextAttempt
+
+    autoRetryTimeoutRef.current = window.setTimeout(() => {
+      autoRetryCountRef.current = nextAttempt
       isAutoRetryingRef.current = true
+
       const toastId = toast.loading(t('auth.errors.reconnecting'))
-      setTimeout(() => {
-        initMutation.mutate(undefined, {
-          onSuccess: () => {
-            toast.success(t('auth.errors.connectionRestored'), { id: toastId })
-          },
-          onError: (error) => {
-            setTimeout(() => {
-              if (isRequestTimeout(error)) {
-                toast.error(buildMutationTimeoutMessage('reconexion', {
-                  timeoutMs: AUTH_TIMEOUT_MS,
-                  retryHint: 'Reintentando…',
-                }), { id: toastId })
-                return
-              }
-              if (remaining > 0) {
-                toast.error(t('auth.errors.connectionRetryIn5'), { id: toastId })
-              } else {
-                toast.error(t('auth.errors.connectionManualRetry'), { id: toastId })
-              }
-            }, 800)
-          },
-        })
-      }, 600)
+      initMutation.mutate(undefined, {
+        onSuccess: () => {
+          toast.success(t('auth.errors.connectionRestored'), { id: toastId })
+        },
+        onError: (error) => {
+          setTimeout(() => {
+            if (isRequestTimeout(error)) {
+              toast.error(buildMutationTimeoutMessage(t('auth.errors.timeoutActionReconnect'), {
+                timeoutMs: AUTH_TIMEOUT_MS,
+                retryHint: t('auth.errors.timeoutRetrying'),
+              }), { id: toastId })
+              return
+            }
+            if (remaining > 0) {
+              toast.error(t('auth.errors.connectionRetryIn5'), { id: toastId })
+            } else {
+              toast.error(t('auth.errors.connectionManualRetry'), { id: toastId })
+            }
+          }, 800)
+        },
+      })
     }, AUTH_RETRY_DELAY_MS)
-    return () => clearInterval(id)
-  }, [initMutation, t])
+
+    return () => {
+      clearAutoRetryTimeout()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initMutation.isError, initMutation.error, t])
 
   // Derived state
   const loginError = loginMutation.error ? extractLoginError(loginMutation.error) : null
@@ -679,7 +701,7 @@ export default function LoginPage() {
         <InitErrorState
           message={lastAuthErrorRef.current.message}
           retryable={lastAuthErrorRef.current.retryable}
-          onRetry={() => initMutation.mutate()}
+          onRetry={() => triggerInit(true)}
           onGoHome={() => navigate('/')}
         />
       )
@@ -692,7 +714,7 @@ export default function LoginPage() {
         <InitErrorState
           message={authError.message}
           retryable={authError.retryable}
-          onRetry={() => initMutation.mutate()}
+          onRetry={() => triggerInit(true)}
           onGoHome={() => navigate('/')}
         />
       )
@@ -724,6 +746,17 @@ export default function LoginPage() {
       </div>
 
       <div className="relative w-full max-w-md">
+        <div className="mb-4 flex justify-end">
+          <LocaleSwitcher
+            compact
+            triggerClassName="h-10 border border-white/15 bg-slate-900/60 px-3 text-slate-200 hover:bg-slate-800/70 hover:text-white focus-visible:ring-indigo-400"
+            panelClassName="absolute right-0 top-full mt-2 w-full rounded-lg bg-slate-900 border border-white/15 shadow-xl py-1 z-50"
+            optionClassName="text-slate-200 hover:bg-white/10 hover:text-white"
+            activeOptionClassName="text-indigo-300 bg-indigo-500/15 font-semibold"
+            selectedValueClassName="font-semibold text-white"
+          />
+        </div>
+
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
           <svg

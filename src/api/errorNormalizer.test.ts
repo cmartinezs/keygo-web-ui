@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { i18n } from '@/i18n/config'
 import {
   getAppApiError,
   isAppApiError,
@@ -85,11 +86,14 @@ describe('errorNormalizer', () => {
       message: 'Network Error',
     })
 
+    void i18n.changeLanguage('en-US')
     const normalized = normalizeApiError(error)
 
-    expect(normalized.clientMessage).toContain('No se pudo conectar con el servidor')
+    expect(normalized.clientMessage).toContain('could not complete communication with the server')
     expect(normalized.retryable).toBe(true)
     expect(normalized.httpStatus).toBeUndefined()
+
+    void i18n.changeLanguage('es-CL')
   })
 
   it('returns attached appApiError when present in AxiosError', () => {
