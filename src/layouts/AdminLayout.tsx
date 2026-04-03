@@ -124,6 +124,10 @@ interface RoleSwitcherProps {
   value: AppRole
   availableRoles: AppRole[]
   onChange: (role: AppRole) => void
+  containerClassName?: string
+  triggerClassName?: string
+  panelClassName?: string
+  selectedValueClassName?: string
 }
 
 // Mapeo de iconos para cada rol
@@ -133,7 +137,15 @@ const ROLE_ICONS: Record<AppRole, React.ReactNode> = {
   USER_TENANT: <IconUser />,
 }
 
-function RoleSwitcher({ value, availableRoles, onChange }: RoleSwitcherProps) {
+function RoleSwitcher({
+  value,
+  availableRoles,
+  onChange,
+  containerClassName,
+  triggerClassName,
+  panelClassName,
+  selectedValueClassName,
+}: RoleSwitcherProps) {
   const { t } = useTranslation()
   const options: DropdownOption<AppRole>[] = availableRoles.map((role) => ({
     value: role,
@@ -149,8 +161,11 @@ function RoleSwitcher({ value, availableRoles, onChange }: RoleSwitcherProps) {
       label={t('roles.role')}
       ariaLabel={t('roles.activeRole')}
       icon={ROLE_ICONS[value]}
+      containerClassName={containerClassName}
+      triggerClassName={triggerClassName}
+      panelClassName={panelClassName}
       hideSelectedOption
-      selectedValueClassName="text-indigo-600 dark:text-indigo-400"
+      selectedValueClassName={selectedValueClassName ?? 'text-indigo-600 dark:text-indigo-400'}
     />
   )
 }
@@ -337,6 +352,10 @@ export default function AdminLayout() {
   }
 
   const displayName = user?.displayName ?? t('common.admin')
+  const userMenuFullName = [user?.firstName?.trim(), user?.lastName?.trim()]
+    .filter(Boolean)
+    .join(' ')
+  const userMenuDisplayName = userMenuFullName || user?.username || displayName
   const sidebarRole = activeRole ?? resolvePrimaryRole(roles) ?? 'USER_TENANT'
   const roleLabel = t(ROLE_LABEL_KEYS[sidebarRole])
   const sidebarSections = createSidebarByRole(t)[sidebarRole]
@@ -428,15 +447,6 @@ export default function AdminLayout() {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Active role selector */}
-          {roles.length > 0 && (
-            <RoleSwitcher
-              availableRoles={roles}
-              value={sidebarRole}
-              onChange={handleRoleChange}
-            />
-          )}
-
           <LanguageSwitcher
             value={locale as SupportedLocale}
             options={supportedLocales}
@@ -467,10 +477,9 @@ export default function AdminLayout() {
                 aria-expanded={open}
                 aria-label={t('common.userMenu')}
               >
-                <UserAvatar name={displayName} />
+                <UserAvatar name={userMenuDisplayName} />
                 <div className="text-left hidden min-[550px]:block">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-white leading-tight">{displayName}</p>
-                  <p className="text-xs text-indigo-500 dark:text-indigo-400 leading-tight">{roleLabel}</p>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white leading-tight">{userMenuDisplayName}</p>
                 </div>
                 <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 hidden min-[550px]:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -478,14 +487,19 @@ export default function AdminLayout() {
               </button>
             )}
           >
-            {/* User info */}
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/10">
-              <UserAvatar name={displayName} />
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">{displayName}</p>
-                <p className="text-xs text-indigo-500 dark:text-indigo-400 font-medium">{roleLabel}</p>
+            {roles.length > 0 && (
+              <div className="px-3 py-2 border-b border-slate-100 dark:border-white/10" role="none">
+                <RoleSwitcher
+                  availableRoles={roles}
+                  value={sidebarRole}
+                  onChange={handleRoleChange}
+                  containerClassName="w-full"
+                  triggerClassName="w-full justify-between h-10 px-3 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"
+                  selectedValueClassName="text-slate-700 dark:text-slate-300"
+                  panelClassName="absolute right-full top-0 mr-2 w-52 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-white/10 py-1 z-50"
+                />
               </div>
-            </div>
+            )}
 
             {/* Menu items */}
             <div className="py-1" role="none">

@@ -23,8 +23,6 @@ Fuentes principales (prioridad alta):
 4. src/layouts/AdminLayout.tsx (navegacion real por rol)
 5. src/pages/** y src/api/** (estado implementado real)
 6. docs/FUNCTIONAL_GUIDE.md y docs/BACKLOG.md (contexto funcional y deuda documentada)
-7. docs/imcomplete-sections/03-implementation-plan.md (propuesta de ejecucion backend y prerequisitos de definicion frontend)
-8. docs/imcomplete-sections/04-frontend-definitions-for-backend-implementation.md (detalle de decisiones frontend para habilitar implementacion backend)
 
 ## 3. Criterio de clasificacion
 
@@ -96,23 +94,6 @@ Impacto:
 
 - Riesgo de priorizar trabajo equivocado.
 - Riesgo de abrir tareas de "pendiente backend" para endpoints ya productivos.
-
-## 5.1 Alineacion con propuesta backend (implementation plan)
-
-Se incorporan como insumo los documentos `docs/imcomplete-sections/03-implementation-plan.md` y `docs/imcomplete-sections/04-frontend-definitions-for-backend-implementation.md`, que detallan fases backend y decisiones frontend necesarias para T-103, T-104, F-043, T-033, T-110 y F-042.
-
-Del cruce RFC + implementation plan se concluye:
-
-1. El flujo de recuperacion de cuenta ya no debe tratarse como bloqueo de contrato general, sino como gap principal de wiring UI (rutas, pantallas y cliente API).
-2. F-042 (conexiones de cuenta) sigue siendo bloqueo de contrato/diseno y requiere definiciones explicitas de frontend antes de implementacion backend.
-3. Para T-110 (sesiones admin por userId), frontend debe confirmar alcance de filtro y campos de tabla para cerrar contrato de respuesta sin retrabajo.
-
-### Definiciones frontend pendientes para desbloquear backend
-
-1. **Conexiones de cuenta (F-042):** confirmar campos finales que consume UI (`providerName`, `displayName`, `avatarUrl`, `connectedAt`, `lastUsedAt`, `scopes`, `status`) y convencion de `providerName` (enum fijo vs string libre).
-2. **Conexiones de cuenta (F-042):** confirmar si UI necesitara vincular conexion manual (`POST /account/connections`) o si el alcance queda solo en listar/revocar (`GET`/`DELETE`) via OAuth2 externo.
-3. **Recuperacion de cuenta (F-043 + T-104):** definir experiencia de usuario final para coexistencia de flujos `reset-password` (password temporal) y `recover-password` (token por email), incluyendo copy y reglas de enrutamiento.
-4. **Sesiones admin por usuario (T-110):** validar columnas y filtros requeridos en UI (`ACTIVE` solo vs `ACTIVE+EXPIRED`) para cerrar contrato sin ambiguedad.
 
 ## 6. Priorizacion recomendada
 

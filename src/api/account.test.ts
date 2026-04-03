@@ -15,11 +15,14 @@ vi.mock('./client', () => ({
 import {
   ACCOUNT_QUERY_KEYS,
   changePassword,
+  forgotPassword,
   getAccountAccess,
   getNotificationPreferences,
   getSessions,
   linkAccountConnection,
+  recoverPassword,
   revokeSession,
+  resetPasswordWithTemporaryPassword,
   unlinkAccountConnection,
   updateNotificationPreferences,
 } from './account'
@@ -235,6 +238,88 @@ describe('account api wrappers', () => {
         roles: ['ADMIN', 'READER'],
       },
     ])
+  })
+
+  it('calls forgot/recover/reset-password account endpoints with expected payloads', async () => {
+    apiClientMock.post.mockResolvedValueOnce({
+      data: {
+        date: '2026-04-03T12:00:00Z',
+        data: { sent: true },
+      },
+    })
+
+    const forgotResult = await forgotPassword(
+      'acme',
+      { email: 'person@example.com' },
+      { timeoutMs: 10_000 },
+    )
+
+    expect(apiClientMock.post).toHaveBeenCalledWith(
+      '/api/v1/tenants/acme/account/forgot-password',
+      { email: 'person@example.com' },
+      {
+        signal: undefined,
+        timeout: 10_000,
+        headers: undefined,
+      },
+    )
+    expect(forgotResult).toEqual({ sent: true })
+
+    apiClientMock.post.mockResolvedValueOnce({
+      data: {
+        date: '2026-04-03T12:00:00Z',
+        data: { recovered: true },
+      },
+    })
+
+    const recoverResult = await recoverPassword(
+      'acme',
+      { recovery_token: 'token-123', new_password: 'NewPass123!' },
+      { timeoutMs: 10_000, idempotencyKey: 'idem-rec-1' },
+    )
+
+    expect(apiClientMock.post).toHaveBeenCalledWith(
+      '/api/v1/tenants/acme/account/recover-password',
+      { recovery_token: 'token-123', new_password: 'NewPass123!' },
+      {
+        signal: undefined,
+        timeout: 10_000,
+        headers: { 'X-Idempotency-Key': 'idem-rec-1' },
+      },
+    )
+    expect(recoverResult).toEqual({ recovered: true })
+
+    apiClientMock.post.mockResolvedValueOnce({
+      data: {
+        date: '2026-04-03T12:00:00Z',
+        data: { reset: true },
+      },
+    })
+
+    const resetResult = await resetPasswordWithTemporaryPassword(
+      'acme',
+      {
+        email: 'person@example.com',
+        temporary_password: 'TempPass123!',
+        new_password: 'NewPass123!',
+      },
+      { timeoutMs: 10_000, idempotencyKey: 'idem-rst-1' },
+    )
+
+    expect(apiClientMock.post).toHaveBeenCalledWith(
+      '/api/v1/tenants/acme/account/reset-password',
+      {
+        email: 'person@example.com',
+        temporary_password: 'TempPass123!',
+        new_password: 'NewPass123!',
+      },
+      {
+        signal: undefined,
+        timeout: 10_000,
+        headers: { 'X-Idempotency-Key': 'idem-rst-1' },
+      },
+    )
+    expect(resetResult).toEqual({ reset: true })
   })
 
   it('builds encoded links/unlinks for temporary connections endpoints', async () => {

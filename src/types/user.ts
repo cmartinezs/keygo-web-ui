@@ -81,6 +81,39 @@ export interface ChangePasswordResult {
   changed: boolean
 }
 
+/** Request de POST /tenants/{slug}/account/forgot-password */
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+/** Respuesta de POST /tenants/{slug}/account/forgot-password */
+export interface ForgotPasswordResult {
+  sent: boolean
+}
+
+/** Request de POST /tenants/{slug}/account/recover-password */
+export interface RecoverPasswordRequest {
+  recovery_token: string
+  new_password: string
+}
+
+/** Respuesta de POST /tenants/{slug}/account/recover-password */
+export interface RecoverPasswordResult {
+  recovered: boolean
+}
+
+/** Request de POST /tenants/{slug}/account/reset-password (password temporal) */
+export interface AccountResetPasswordRequest {
+  email: string
+  temporary_password: string
+  new_password: string
+}
+
+/** Respuesta de POST /tenants/{slug}/account/reset-password (password temporal) */
+export interface AccountResetPasswordResult {
+  reset: boolean
+}
+
 /** Sesion de usuario en GET /tenants/{slug}/account/sessions */
 export interface AccountSessionData {
   session_id: string

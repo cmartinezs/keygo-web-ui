@@ -361,11 +361,6 @@ El panel de administrador incluye una **barra lateral de navegación** y una **c
 
 - **Menú hamburgesa** (solo móvil) — abre/cierra el sidebar como cajón lateral.
 - **Buscador** (escritorio) — decorativo en esta versión, muestra `⌘K`.
-- **Selector de rol activo** (dropdown):
-  - Muestra solo los roles incluidos en el claim `roles` del usuario autenticado.
-  - Al desplegarse, oculta el rol que ya esta seleccionado para evitar duplicidad visual.
-  - Permite cambiar el rol de trabajo en el momento.
-  - Al cambiarlo, la UI vuelve a `/dashboard` y se refrescan menú, vistas y permisos visibles según el rol seleccionado.
 - **Selector de idioma** (dropdown con bandera):
   - Disponible en la cabecera para cambio rapido de idioma en cualquier pantalla autenticada.
   - Permite alternar entre `es-CL` y `en-US`.
@@ -375,9 +370,17 @@ El panel de administrador incluye una **barra lateral de navegación** y una **c
   - En estado cerrado, el valor seleccionado se muestra con color destacado para mejorar la lectura del contexto activo.
 - **Botón de notificaciones** — decorativo en esta versión.
 - **Menú de usuario** (clic en el avatar):
-  - Información del usuario (avatar, nombre, rol).
-  - "Mi perfil" — _sin acción actualmente_.
-  - "Configuración" — _sin acción actualmente_.
+  - Información del usuario (avatar y nombre visible).
+    - El nombre prioriza nombre + apellido; si no existe, usa username como fallback.
+    - No muestra la etiqueta de rol en ese bloque.
+  - Selector de rol activo (dropdown), ubicado sobre "Mi cuenta".
+    - Muestra solo los roles incluidos en el claim `roles` del usuario autenticado.
+    - Al desplegarse, oculta el rol que ya esta seleccionado.
+    - El panel del selector se abre hacia la izquierda.
+    - Al cambiar de rol, la UI vuelve a `/dashboard` y se refrescan menú, vistas y permisos visibles.
+  - "Mi cuenta" — navega a `/dashboard/account`.
+  - "Configuración de cuenta" — navega a `/dashboard/account/settings`.
+  - "FAQs" — navega a `/dashboard/faq`.
   - "Cerrar sesión" — elimina la sesión y redirige al login.
 
 #### Comportamiento en móvil
@@ -667,7 +670,9 @@ Comportamiento:
 **Ruta:** `/dashboard/account`
 
 Vista unificada de cuenta personal (todos los roles autenticados) con tabs:
-- **Resumen:** identidad base, estado, tenant y rol activo (icono de dashboard).
+- **Resumen:** identidad base, estado y tenant (icono de dashboard).
+  - Cuando no existe `first_name` ni `last_name`, el nombre mostrado usa `username` como fallback.
+  - En esta vista de resumen no se muestra correo ni rol activo.
 - **Perfil:** formulario self-service para actualizar perfil (icono de usuario).
 - **Accesos:** listado real de memberships/roles por aplicación (icono de seguridad).
 - **Actividad:** placeholder preparado para timeline de actividad de cuenta (icono de reloj).

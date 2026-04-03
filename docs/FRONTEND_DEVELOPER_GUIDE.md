@@ -22,6 +22,7 @@
 11. [Perfil de usuario — compartido por todos los roles](#11-perfil-de-usuario--compartido-por-todos-los-roles)
 12. [Gestión segura de tokens](#12-gestión-segura-de-tokens)
 13. [Interceptores HTTP y manejo de errores](#13-interceptores-http-y-manejo-de-errores)
+    - [13.4 Trazabilidad — header `X-Trace-ID`](#134-trazabilidad--header-x-trace-id)
 14. [Inventario de endpoints — disponibles vs. pendientes](#14-inventario-de-endpoints--disponibles-vs-pendientes)
 15. [Guía de mocking para features pendientes](#15-guía-de-mocking-para-features-pendientes)16. [Checklist de seguridad](#16-checklist-de-seguridad)
 17. [Comandos de verificación del backend](#17-comandos-de-verificación-del-backend)
@@ -1549,10 +1550,11 @@ export async function logout() {
 import axios from 'axios';
 import { useTokenStore } from '@/auth/tokenStore';
 
-export const KEYGO_BASE = import.meta.env.VITE_KEYGO_BASE;
-export const API_V1     = `${KEYGO_BASE}/api/v1`;
-export const TENANT     = import.meta.env.VITE_TENANT_SLUG ?? 'keygo';
-export const CLIENT_ID  = import.meta.env.VITE_CLIENT_ID  ?? 'keygo-ui';
+export const KEYGO_BASE     = import.meta.env.VITE_KEYGO_BASE;
+export const API_V1         = `${KEYGO_BASE}/api/v1`;
+export const TENANT         = import.meta.env.VITE_TENANT_SLUG ?? 'keygo';
+export const CLIENT_ID      = import.meta.env.VITE_CLIENT_ID  ?? 'keygo-ui';
+export const TRACE_ID_HEADER = 'X-Trace-ID';
 
 export const apiClient = axios.create({ baseURL: API_V1 });
 
@@ -1561,6 +1563,9 @@ apiClient.interceptors.request.use((config) => {
 
   // Bearer token para rutas protegidas
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+
+  // Trace ID único por petición — correlación con logs del servidor (ver §13.4)
+  config.headers[TRACE_ID_HEADER] = crypto.randomUUID();
 
   config.headers['Content-Type'] = 'application/json';
   return config;
@@ -1734,6 +1739,220 @@ El `GlobalExceptionHandler` del backend convierte cada excepción a un `BaseResp
 | `Exception` (catch-all) | 500 | `OPERATION_FAILED` | `SERVER_PROCESSING` | — | Error inesperado |
 
 > **Nota sobre `data.layer`:** para las excepciones tipadas de KeyGo (`KeyGoException`, `DomainException`, `UseCaseException`, `PortException`), el campo `layer` indica la capa: `DOMAIN`, `USE_CASE`, o `PORT`. Para excepciones de Spring (`MethodArgumentNotValidException`, `AccessDeniedException`, etc.) `layer` estará ausente.
+
+---
+
+### 13.4. Trazabilidad — header `X-Trace-ID`
+
+#### ¿Qué es?
+
+Cada petición que llega al servidor KeyGo recibe automáticamente un **trace ID**: un UUID que identifica de forma única ese ciclo de vida request/response. El trace ID se propaga a través del MDC de logs, por lo que **todas las líneas de log del servidor asociadas a esa petición comparten el mismo ID**. Esto permite al equipo de backend encontrar cualquier petición en segundos con un solo filtro en Kibana, CloudWatch o cualquier agregador de logs.
+
+#### Contrato del header (simétrico)
+
+| Dirección | Header | Comportamiento |
+|---|---|---|
+| **UI → Servidor** | `X-Trace-ID` | Si la UI envía este header, el servidor lo reutiliza como trace ID |
+| **Servidor → UI** | `X-Trace-ID` | El servidor **siempre** responde con este header (el enviado por la UI, o uno generado) |
+| **Body de error** | `data.traceId` | En respuestas de error (`BaseResponse<ErrorData>`), el campo `data.traceId` replica el mismo valor |
+
+> **Regla de integración:** la UI **debe** generar y enviar `X-Trace-ID` en cada petición. Así, si el usuario reporta un error, el trace ID ya está en el log del frontend y el backend puede buscarlo directamente sin inspeccionar timestamps ni otras heurísticas.
+
+#### Flujo completo
+
+```mermaid
+sequenceDiagram
+    participant UI as keygo-ui
+    participant Server as KeyGo Server
+    participant Logs as Servidor de logs<br/>(Kibana / CloudWatch)
+
+    UI->>UI: crypto.randomUUID() → traceId
+    UI->>Server: POST /api/v1/... + X-Trace-ID: <traceId>
+    Note over Server: RequestTracingFilter pone<br/>traceId en MDC
+    Server->>Server: BootstrapAdminKeyFilter → MDC.userId
+    Server->>Server: TenantResolutionFilter → MDC.tenantSlug
+    Server->>Server: Controller → UseCase → Adapter<br/>(todos los logs llevan traceId)
+    Server-->>UI: 200 OK + X-Trace-ID: <traceId>
+    UI->>UI: Almacenar traceId del response
+
+    alt Error 4xx / 5xx
+        Server-->>UI: 4xx/5xx + X-Trace-ID: <traceId><br/>Body: { data: { traceId, code, clientMessage, ... } }
+        UI->>UI: Mostrar traceId en diálogo/toast de error
+        UI->>Logs: (soporte) Buscar traceId=<traceId> en logs
+    end
+```
+
+#### TypeScript — tipos actualizados
+
+Agrega `traceId` a la definición de `ErrorData` en `src/types/base.ts`:
+
+```typescript
+// src/types/base.ts
+
+export interface MessageResponse {
+  code:    string;
+  message: string;
+}
+
+export interface FieldValidationError {
+  field:         string;
+  message:       string;
+  rejectedValue?: unknown;
+}
+
+export interface ErrorData {
+  /** UUID que identifica esta petición en los logs del servidor. Usar para reportar errores al soporte. */
+  traceId?:           string;
+  code:               string;
+  /** Capa arquitectónica de origen: DOMAIN | USE_CASE | PORT. Solo para telemetría, nunca mostrar al usuario. */
+  layer?:             'DOMAIN' | 'USE_CASE' | 'PORT';
+  origin?:            'CLIENT_REQUEST' | 'BUSINESS_RULE' | 'SERVER_PROCESSING';
+  clientRequestCause?: 'USER_INPUT' | 'CLIENT_TECHNICAL';
+  clientMessage:      string;
+  detail?:            string;    // solo en modo técnico (dev/local)
+  exception?:         string;    // solo en modo técnico (dev/local)
+  fieldErrors?:       FieldValidationError[];
+}
+
+export interface BaseResponse<T> {
+  date:     string;
+  success?: MessageResponse;
+  failure?: MessageResponse;
+  data?:    T;
+}
+```
+
+#### Implementación en el cliente Axios
+
+Reemplaza `src/api/client.ts` con esta versión que incorpora trazabilidad completa:
+
+```typescript
+// src/api/client.ts
+import axios, { type AxiosError } from 'axios';
+import { useTokenStore } from '@/auth/tokenStore';
+import type { BaseResponse, ErrorData } from '@/types/base';
+
+export const KEYGO_BASE = import.meta.env.VITE_KEYGO_BASE;
+export const API_V1     = `${KEYGO_BASE}/api/v1`;
+export const TENANT     = import.meta.env.VITE_TENANT_SLUG ?? 'keygo';
+export const CLIENT_ID  = import.meta.env.VITE_CLIENT_ID  ?? 'keygo-ui';
+
+/** Nombre del header de trazabilidad — simétrico: mismo nombre en request y response. */
+export const TRACE_ID_HEADER = 'X-Trace-ID';
+
+export const apiClient = axios.create({ baseURL: API_V1 });
+
+// ── Interceptor de REQUEST ────────────────────────────────────────────────────
+// Genera un UUID por petición y lo envía como X-Trace-ID.
+// Si el servidor lo recibe, lo reutiliza; si no, genera el suyo.
+// En ambos casos, el response siempre trae X-Trace-ID de vuelta.
+apiClient.interceptors.request.use((config) => {
+  const { accessToken } = useTokenStore.getState();
+
+  // Bearer token para rutas protegidas
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+
+  // Trace ID único por petición — permite correlación con logs del servidor
+  config.headers[TRACE_ID_HEADER] = crypto.randomUUID();
+
+  config.headers['Content-Type'] = 'application/json';
+  return config;
+});
+
+// ── Interceptor de RESPONSE ───────────────────────────────────────────────────
+apiClient.interceptors.response.use(
+  (res) => res,
+  (err: AxiosError<BaseResponse<ErrorData>>) => {
+    // Extraer traceId — disponible en header y también en body de error
+    const traceId =
+      err.response?.headers?.[TRACE_ID_HEADER.toLowerCase()] ??
+      err.response?.data?.data?.traceId;
+
+    if (err.response?.status === 401) {
+      useTokenStore.getState().clearTokens();
+      window.location.href = '/login';
+      return Promise.reject(err);
+    }
+
+    // Log enriquecido para el equipo de desarrollo
+    // En producción considera reemplazar console.error por Sentry/DataDog/etc.
+    console.error(
+      `[KeyGo] ${err.response?.status} ${err.config?.method?.toUpperCase()} ${err.config?.url}`,
+      { traceId, errorData: err.response?.data?.data }
+    );
+
+    return Promise.reject(err);
+  }
+);
+```
+
+#### Cómo mostrar el `traceId` al usuario en errores graves
+
+Cuando ocurre un error de servidor (`origin=SERVER_PROCESSING`), muestra el `traceId` para que el usuario pueda reportarlo al soporte:
+
+```typescript
+// src/components/BaseResponseHandler.tsx  (fragmento actualizado)
+import { TRACE_ID_HEADER } from '@/api/client';
+import type { BaseResponse, ErrorData } from '@/types/base';
+
+export function ErrorAlert({ errorData, httpHeaders }: {
+  errorData?: ErrorData;
+  httpHeaders?: Record<string, string>;
+}) {
+  if (!errorData) return null;
+
+  // traceId disponible en el body del error (fuente canónica)
+  // o como fallback desde el header HTTP
+  const traceId = errorData.traceId ?? httpHeaders?.[TRACE_ID_HEADER.toLowerCase()];
+
+  const isServerError = errorData.origin === 'SERVER_PROCESSING';
+
+  return (
+    <div role="alert" className="alert-error space-y-1">
+      <p>{errorData.clientMessage}</p>
+
+      {/* Mostrar traceId solo en errores de servidor para que el usuario lo reporte */}
+      {isServerError && traceId && (
+        <p className="text-xs text-muted-foreground font-mono">
+          ID de referencia: <span className="select-all">{traceId}</span>
+        </p>
+      )}
+    </div>
+  );
+}
+```
+
+> **UX recomendada:** en errores `SERVER_PROCESSING`, añade un botón "Copiar ID" que llame a
+> `navigator.clipboard.writeText(traceId)`. Así el usuario puede pegar el ID directamente en el
+> ticket de soporte y el equipo de backend lo busca en los logs con un filtro exacto.
+
+#### Integración con herramientas de monitoreo de frontend (Sentry / DataDog)
+
+Si usas Sentry u otro APM en la UI, agrega el `traceId` del backend como contexto del error:
+
+```typescript
+// En el interceptor de response de Axios — después de extraer traceId:
+import * as Sentry from '@sentry/react';
+
+Sentry.withScope((scope) => {
+  scope.setTag('keygo.traceId', traceId ?? 'unknown');
+  scope.setTag('keygo.errorCode', err.response?.data?.data?.code ?? 'unknown');
+  Sentry.captureException(err);
+});
+```
+
+Esto vincula el evento de Sentry con la búsqueda en Kibana/CloudWatch usando el mismo `traceId`.
+
+#### Referencia rápida
+
+| Qué | Dónde | Cómo |
+|---|---|---|
+| Enviar trace ID al servidor | Interceptor de request | `config.headers['X-Trace-ID'] = crypto.randomUUID()` |
+| Leer trace ID de la respuesta | Header HTTP | `response.headers['x-trace-id']` |
+| Leer trace ID de un error | Body JSON | `error.response.data.data.traceId` |
+| Mostrar al usuario | Solo en `SERVER_PROCESSING` | Texto "ID de referencia: `<uuid>`" con botón Copiar |
+| Enviar a APM (Sentry, DD) | Interceptor de error | `scope.setTag('keygo.traceId', traceId)` |
+| Logs del servidor | Kibana / CloudWatch | Filtrar por campo `traceId` (JSON) o `[<uuid>]` (consola local) |
 
 ---
 

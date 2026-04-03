@@ -58,6 +58,7 @@
     "restartingSession": "Reiniciando sesion...",
     "registerCta": "Registrate",
     "registerPrompt": "Aun no tienes cuenta?",
+    "forgotPasswordCta": "Olvide mi contrasena",
     "copyright": "All Rights Reserved",
     "lockout": "Demasiados intentos fallidos. Espera {{seconds}} s antes de volver a intentarlo.",
     "errors": {
@@ -82,6 +83,56 @@
       "timeoutActionReconnect": "reconexion",
       "timeoutRetryManual": "Vuelve a intentarlo.",
       "timeoutRetrying": "Reintentando..."
+    }
+  },
+  "authRecovery": {
+    "backToLogin": "Volver a iniciar sesion",
+    "emailLabel": "Correo electronico",
+    "newPasswordLabel": "Nueva contrasena",
+    "confirmPasswordLabel": "Confirmar nueva contrasena",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "errors": {
+      "invalidEmail": "Ingresa un correo valido.",
+      "tokenRequired": "El token de recuperacion es obligatorio.",
+      "passwordMin": "La contrasena debe tener al menos 8 caracteres.",
+      "confirmPasswordRequired": "Confirma la nueva contrasena.",
+      "passwordsMismatch": "Las contrasenas no coinciden.",
+      "temporaryPasswordRequired": "La contrasena temporal es obligatoria."
+    },
+    "forgot": {
+      "title": "Recuperar acceso",
+      "subtitle": "Te enviaremos instrucciones para recuperar tu cuenta.",
+      "submit": "Enviar instrucciones",
+      "submitting": "Enviando...",
+      "successMessage": "Si el correo existe, enviaremos instrucciones para recuperar tu acceso.",
+      "successToast": "Solicitud enviada correctamente.",
+      "goToRecover": "Ya tengo token de recuperacion",
+      "timeoutAction": "solicitud de recuperacion de contrasena"
+    },
+    "recover": {
+      "title": "Ingresar nueva contrasena",
+      "subtitle": "Usa el token recibido por correo para recuperar tu acceso.",
+      "tokenLabel": "Token de recuperacion",
+      "submit": "Actualizar contrasena",
+      "submitting": "Actualizando...",
+      "successMessage": "Contrasena actualizada correctamente. Ya puedes iniciar sesion.",
+      "successToast": "Contrasena recuperada correctamente.",
+      "goToLogin": "Ir a iniciar sesion",
+      "needToken": "No tengo token",
+      "timeoutAction": "recuperacion de contrasena"
+    },
+    "reset": {
+      "title": "Reset con contrasena temporal",
+      "subtitle": "Si recibiste una contrasena temporal, confirma tu correo y define una nueva contrasena.",
+      "temporaryPasswordLabel": "Contrasena temporal",
+      "submit": "Confirmar nueva contrasena",
+      "submitting": "Confirmando...",
+      "successMessage": "Contrasena actualizada. Tu cuenta ya puede iniciar sesion normalmente.",
+      "successToast": "Reset completado correctamente.",
+      "goToLogin": "Ir a iniciar sesion",
+      "needRecoveryToken": "Prefiero recuperar por token de correo",
+      "timeoutAction": "reset de contrasena temporal"
     }
   },
   "dashboard": {

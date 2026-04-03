@@ -58,6 +58,7 @@
     "restartingSession": "Restarting session...",
     "registerCta": "Sign up",
     "registerPrompt": "Do not have an account yet?",
+    "forgotPasswordCta": "Forgot my password",
     "copyright": "All Rights Reserved",
     "lockout": "Too many failed attempts. Wait {{seconds}} s before trying again.",
     "errors": {
@@ -82,6 +83,56 @@
       "timeoutActionReconnect": "reconnection",
       "timeoutRetryManual": "Please try again.",
       "timeoutRetrying": "Retrying..."
+    }
+  },
+  "authRecovery": {
+    "backToLogin": "Back to sign in",
+    "emailLabel": "Email",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm new password",
+    "show": "Show",
+    "hide": "Hide",
+    "errors": {
+      "invalidEmail": "Enter a valid email.",
+      "tokenRequired": "Recovery token is required.",
+      "passwordMin": "Password must be at least 8 characters.",
+      "confirmPasswordRequired": "Please confirm the new password.",
+      "passwordsMismatch": "Passwords do not match.",
+      "temporaryPasswordRequired": "Temporary password is required."
+    },
+    "forgot": {
+      "title": "Recover access",
+      "subtitle": "We will send instructions to recover your account.",
+      "submit": "Send instructions",
+      "submitting": "Sending...",
+      "successMessage": "If the email exists, we will send instructions to recover your access.",
+      "successToast": "Request sent successfully.",
+      "goToRecover": "I already have a recovery token",
+      "timeoutAction": "password recovery request"
+    },
+    "recover": {
+      "title": "Set a new password",
+      "subtitle": "Use the token received by email to recover your access.",
+      "tokenLabel": "Recovery token",
+      "submit": "Update password",
+      "submitting": "Updating...",
+      "successMessage": "Password updated successfully. You can sign in now.",
+      "successToast": "Password recovered successfully.",
+      "goToLogin": "Go to sign in",
+      "needToken": "I do not have a token",
+      "timeoutAction": "password recovery"
+    },
+    "reset": {
+      "title": "Reset with temporary password",
+      "subtitle": "If you received a temporary password, confirm your email and set a new password.",
+      "temporaryPasswordLabel": "Temporary password",
+      "submit": "Confirm new password",
+      "submitting": "Confirming...",
+      "successMessage": "Password updated. Your account can sign in normally now.",
+      "successToast": "Reset completed successfully.",
+      "goToLogin": "Go to sign in",
+      "needRecoveryToken": "I prefer recovering with email token",
+      "timeoutAction": "temporary password reset"
     }
   },
   "dashboard": {

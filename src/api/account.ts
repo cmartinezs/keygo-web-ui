@@ -11,6 +11,12 @@ import type {
   UpdateUserProfileRequest,
   ChangePasswordRequest,
   ChangePasswordResult,
+  ForgotPasswordRequest,
+  ForgotPasswordResult,
+  RecoverPasswordRequest,
+  RecoverPasswordResult,
+  AccountResetPasswordRequest,
+  AccountResetPasswordResult,
   AccountSessionData,
   RevokeAccountSessionResult,
   NotificationPreferencesData,
@@ -45,6 +51,9 @@ export const ACCOUNT_QUERY_KEYS = {
 
 const profileUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/profile`
 const changePasswordUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/change-password`
+const forgotPasswordUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/forgot-password`
+const recoverPasswordUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/recover-password`
+const resetPasswordUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/reset-password`
 const sessionsUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/sessions`
 const sessionUrl = (tenantSlug: string, sessionId: string) =>
   `${sessionsUrl(tenantSlug)}/${encodeURIComponent(sessionId)}`
@@ -178,6 +187,75 @@ export async function changePassword(
     },
   )
   return unwrapResponseData(res.data, 'Error al cambiar la contrasena')
+}
+
+/**
+ * POST /api/v1/tenants/{tenantSlug}/account/forgot-password ✅
+ * Solicita token de recuperacion por email (respuesta anti-enumeracion).
+ */
+export async function forgotPassword(
+  tenantSlug: string,
+  data: ForgotPasswordRequest,
+  options?: RequestOptions,
+): Promise<ForgotPasswordResult> {
+  const res = await apiClient.post<BaseResponse<ForgotPasswordResult>>(
+    forgotPasswordUrl(tenantSlug),
+    data,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al solicitar recuperacion de contrasena')
+}
+
+/**
+ * POST /api/v1/tenants/{tenantSlug}/account/recover-password ✅
+ * Recupera contrasena por token one-time enviado por email.
+ */
+export async function recoverPassword(
+  tenantSlug: string,
+  data: RecoverPasswordRequest,
+  options?: RequestOptions,
+): Promise<RecoverPasswordResult> {
+  const res = await apiClient.post<BaseResponse<RecoverPasswordResult>>(
+    recoverPasswordUrl(tenantSlug),
+    data,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al recuperar contrasena')
+}
+
+/**
+ * POST /api/v1/tenants/{tenantSlug}/account/reset-password ✅
+ * Resetea contrasena usando password temporal entregada por administrador.
+ */
+export async function resetPasswordWithTemporaryPassword(
+  tenantSlug: string,
+  data: AccountResetPasswordRequest,
+  options?: RequestOptions,
+): Promise<AccountResetPasswordResult> {
+  const res = await apiClient.post<BaseResponse<AccountResetPasswordResult>>(
+    resetPasswordUrl(tenantSlug),
+    data,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al resetear contrasena temporal')
 }
 
 /**

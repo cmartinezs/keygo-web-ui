@@ -6,6 +6,9 @@ import { useTranslation } from 'react-i18next'
 import LandingPage from './pages/landing/LandingPage'
 import DeveloperDocsPage from './pages/developers/DeveloperDocsPage'
 import LoginPage from './pages/login/LoginPage'
+import ForgotPasswordPage from './pages/login/ForgotPasswordPage'
+import RecoverPasswordPage from './pages/login/RecoverPasswordPage'
+import ResetPasswordPage from './pages/login/ResetPasswordPage'
 import LogoutPage from './pages/login/LogoutPage'
 import NewContractPage from './pages/register/NewContractPage'
 import UserRegisterPage from './pages/register/UserRegisterPage'
@@ -85,6 +88,9 @@ export default function App() {
         <Route path="/" element={accessToken ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
         <Route path="/developers" element={<DeveloperDocsPage />} />
         <Route path="/login" element={accessToken ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+        <Route path="/forgot-password" element={accessToken ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
+        <Route path="/recover-password" element={accessToken ? <Navigate to="/dashboard" replace /> : <RecoverPasswordPage />} />
+        <Route path="/reset-password" element={accessToken ? <Navigate to="/dashboard" replace /> : <ResetPasswordPage />} />
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/subscribe" element={<NewContractPage />} />
         <Route path="/subscribe/resume" element={<Navigate to="/subscribe?resume=1" replace />} />

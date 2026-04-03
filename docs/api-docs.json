@@ -2813,6 +2813,194 @@
         ]
       }
     },
+    "/api/v1/tenants/{tenantSlug}/account/reset-password": {
+      "post": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "Reset password with temporary password",
+        "description": "Allows a user in RESET_PASSWORD status to set their permanent password using the temporary password assigned by the administrator. No Bearer token required — authenticated via email + temporary password.",
+        "operationId": "resetPassword_1",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully (code: ACCOUNT_PASSWORD_RESET)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseResetPasswordResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "New password violates policy (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Temporary password incorrect or user not in RESET_PASSWORD status (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant or user not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/account/recover-password": {
+      "post": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "Recover password with recovery token",
+        "description": "Sets a new password using the one-time recovery token received by email. The token is invalidated after use. No authentication required.",
+        "operationId": "recoverPassword",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Password recovered successfully (code: ACCOUNT_PASSWORD_RECOVERED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseRecoverPasswordResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "New password violates policy (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recovery token not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Token expired or already used (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenants/{tenantSlug}/account/login": {
       "post": {
         "tags": [
@@ -2876,6 +3064,80 @@
           },
           "404": {
             "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/account/forgot-password": {
+      "post": {
+        "tags": [
+          "Account Settings"
+        ],
+        "summary": "Request password recovery token",
+        "description": "Sends a one-time password recovery token to the user's email. Always returns 200 regardless of whether the email exists (anti-enumeration protection). No authentication required.",
+        "operationId": "forgotPassword",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Recovery email sent (or email not found — not revealed) (code: ACCOUNT_PASSWORD_RECOVERY_SENT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseForgotPasswordResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -5198,6 +5460,9 @@
       "ErrorData": {
         "type": "object",
         "properties": {
+          "traceId": {
+            "type": "string"
+          },
           "code": {
             "type": "string"
           },
@@ -6431,6 +6696,95 @@
           "parentRoleCode"
         ]
       },
+      "AccountResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "temporaryPassword": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseResetPasswordResult": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ResetPasswordResult"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "ResetPasswordResult": {
+        "type": "object",
+        "properties": {
+          "reset": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecoverPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "recoveryToken": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseRecoverPasswordResult": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/RecoverPasswordResult"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "RecoverPasswordResult": {
+        "type": "object",
+        "properties": {
+          "recovered": {
+            "type": "boolean"
+          }
+        }
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -6483,6 +6837,46 @@
           },
           "redirect_uri": {
             "type": "string"
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponseForgotPasswordResult": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/ForgotPasswordResult"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "ForgotPasswordResult": {
+        "type": "object",
+        "properties": {
+          "sent": {
+            "type": "boolean"
           }
         }
       },

@@ -2,7 +2,7 @@
 
 > **Audiencia:** desarrollador que hereda o extiende el proyecto. Asume conocimiento de React, TypeScript y OAuth2.
 >
-> **Última actualización:** 2026-04-02
+> **Última actualización:** 2026-04-03
 
 ---
 
@@ -1640,10 +1640,11 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 | `mobileOpen` | boolean | Sidebar abierto en móvil (cajón) |
 | `dropdownOpen` | boolean | Menú de usuario abierto |
 
-**Selector de rol activo (header):**
-- Implementado sobre `Dropdown<T>` con los roles presentes en el claim `roles`.
+**Selector de rol activo (menu de usuario):**
+- Implementado sobre `SelectDropdown` (basado en `Dropdown<T>`) con los roles presentes en el claim `roles`.
+- Se ubica dentro del menu de usuario, por encima de la accion "Mi cuenta".
 - Configurado con `hideSelectedOption=true` para no repetir el rol activo dentro del menu desplegado.
-- Configurado con `selectedValueClassName` para destacar visualmente el rol activo en el trigger cerrado.
+- En ese contexto, su panel se posiciona hacia la izquierda para evitar solaparse con el panel principal del menu de usuario.
 - Al cambiar rol: actualiza `activeRole` en `tokenStore` y navega a `/dashboard` para refrescar contenido y permisos visibles.
 - Sidebar, etiqueta de rol y guards quedan sincronizados con el rol seleccionado.
 
@@ -1667,7 +1668,7 @@ div.flex.h-screen
 ```
 
 **Integración:**
-- `useCurrentUser` → nombre + iniciales + rol del usuario en sidebar y dropdown.
+- `useCurrentUser` → datos base del usuario para avatar/nombre en sidebar y dropdown; en el dropdown superior el nombre visible prioriza nombre+apellido y usa username como fallback.
 - `useTheme` → ThemeToggle.
 - `react-i18next` → textos de navegación, etiquetas de rol/tema, aria-labels y acciones del menú de usuario.
 - `useTokenStore.clearTokens` → logout.
@@ -1951,6 +1952,8 @@ initMutation.isSuccess                                  → LoginForm
 - Mutacion `updateProfile(...)` con invalidacion de cache y feedback por toast.
 - Tab **Accesos** conectada a `getAccountAccess(...)` con estados locales (`loading/error/empty/data`).
 - Tab **Actividad** se mantiene como placeholder backend-driven.
+- En tab **Resumen**, el nombre visible prioriza `first_name + last_name`; si ambos faltan, usa `username` como fallback.
+- En tab **Resumen**, no se muestran `email` ni `activeRole`.
 - Resiliencia: GET de perfil con timeout (10s) + retry automático controlado (5s, máximo 3); PATCH de actualización con timeout explícito (10s) sin auto-retry.
 - i18n con `react-i18next` usando claves `userDashboardProfile.*` para tabs, labels, placeholders, carga/error y toasts.
 - Schema Zod se construye con mensajes localizados (`invalidProfileUrl`) para mantener validación consistente por idioma.
