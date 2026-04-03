@@ -1,5 +1,16 @@
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import AdminDashboardPage from '@/pages/admin/DashboardPage'
+import { getAccountAccess, getSessions } from '@/api/account'
+import { listClientApps } from '@/api/clientApps'
+import { listUsers } from '@/api/users'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/config/network'
+import { runGetWithRecovery } from '@/lib/network/recovery'
 import { IconUsers, IconApps, IconClock, IconBell } from '@/components/icons'
 import { resolvePrimaryRole } from '@/types/roles'
 import type { AppRole } from '@/types/roles'
@@ -10,6 +21,13 @@ interface StatCardProps {
   value: string
   description: string
   icon?: ReactNode
+}
+
+interface StatCardData {
+  title: string
+  value: string
+  description: string
+  icon: ReactNode
 }
 
 type NonAdminRole = Exclude<AppRole, 'ADMIN'>
@@ -25,39 +43,250 @@ function StatCard({ title, value, description, icon }: StatCardProps) {
   )
 }
 
-function RoleOverview({ role }: { role: NonAdminRole }) {
-  const roleCopy = {
-    ADMIN_TENANT: {
-      title: 'Panel de administracion del tenant',
-      subtitle: 'Gestiona usuarios, aplicaciones y seguridad de tu organizacion.',
-      cards: [
-        { title: 'Usuarios activos', value: '--', description: 'Pendiente de integrar metricas del tenant.', icon: <IconUsers className="w-5 h-5" aria-hidden="true" /> },
-        { title: 'Aplicaciones', value: '--', description: 'Listado y estado de apps conectadas.', icon: <IconApps className="w-5 h-5" aria-hidden="true" /> },
-        { title: 'Accesos del dia', value: '--', description: 'Actividad de autenticacion reciente.', icon: <IconClock className="w-5 h-5" aria-hidden="true" /> },
-      ],
-    },
-    USER_TENANT: {
-      title: 'Panel personal',
-      subtitle: 'Accede a tus recursos, historial de accesos y configuraciones personales.',
-      cards: [
-        { title: 'Sesiones activas', value: '--', description: 'Dispositivos con sesion iniciada.', icon: <IconUsers className="w-5 h-5" aria-hidden="true" /> },
-        { title: 'Ultimo acceso', value: '--', description: 'Fecha y origen de tu ultimo login.', icon: <IconClock className="w-5 h-5" aria-hidden="true" /> },
-        { title: 'Alertas', value: '--', description: 'Notificaciones de seguridad y cuenta.', icon: <IconBell className="w-5 h-5" aria-hidden="true" /> },
-      ],
-    },
-  } as const
+function toCardValue(isLoading: boolean, isError: boolean, value: string): string {
+  if (isLoading) return '...'
+  if (isError) return 'N/D'
+  return value
+}
 
-  const view = roleCopy[role]
+function toLocalDateTime(input: string): string {
+  const date = new Date(input)
+  if (Number.isNaN(date.getTime())) {
+    return '--'
+  }
+
+  return date.toLocaleString('es-CL')
+}
+
+function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
+  const usersQuery = useQuery({
+    queryKey: ['dashboard-home', 'tenant-users', tenantSlug],
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'usuarios del tenant',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+          listUsers(tenantSlug, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
+      }),
+    retry: false,
+  })
+
+  const appsQuery = useQuery({
+    queryKey: ['dashboard-home', 'tenant-apps', tenantSlug],
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'aplicaciones del tenant',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+          listClientApps(tenantSlug, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
+      }),
+    retry: false,
+  })
+
+  const sessionsQuery = useQuery({
+    queryKey: ['dashboard-home', 'account-sessions', tenantSlug],
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'sesiones de cuenta',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+          getSessions(tenantSlug, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
+      }),
+    retry: false,
+  })
+
+  const activeUsers = usersQuery.data?.filter((user) => user.status === 'ACTIVE').length ?? 0
+  const appsCount = appsQuery.data?.length ?? 0
+  const todayAccesses =
+    sessionsQuery.data?.filter((session) => {
+      const lastAccess = new Date(session.last_accessed_at)
+      if (Number.isNaN(lastAccess.getTime())) {
+        return false
+      }
+      const now = new Date()
+      return (
+        lastAccess.getFullYear() === now.getFullYear()
+        && lastAccess.getMonth() === now.getMonth()
+        && lastAccess.getDate() === now.getDate()
+      )
+    }).length ?? 0
+
+  const cards: StatCardData[] = [
+    {
+      title: 'Usuarios activos',
+      value: toCardValue(usersQuery.isLoading, usersQuery.isError, String(activeUsers)),
+      description: usersQuery.isError
+        ? 'No fue posible cargar usuarios del tenant.'
+        : 'Cantidad de usuarios activos actualmente en tu tenant.',
+      icon: <span className="inline-flex" aria-hidden="true"><IconUsers /></span>,
+    },
+    {
+      title: 'Aplicaciones',
+      value: toCardValue(appsQuery.isLoading, appsQuery.isError, String(appsCount)),
+      description: appsQuery.isError
+        ? 'No fue posible cargar aplicaciones del tenant.'
+        : 'Aplicaciones registradas para tu organizacion.',
+      icon: <span className="inline-flex" aria-hidden="true"><IconApps /></span>,
+    },
+    {
+      title: 'Accesos del dia',
+      value: toCardValue(sessionsQuery.isLoading, sessionsQuery.isError, String(todayAccesses)),
+      description: sessionsQuery.isError
+        ? 'No fue posible cargar sesiones de cuenta.'
+        : 'Inicios de sesion del usuario actual durante hoy.',
+      icon: <span className="inline-flex" aria-hidden="true"><IconClock /></span>,
+    },
+  ]
+
+  return (
+    <RoleOverviewLayout
+      title="Panel de administracion del tenant"
+      subtitle="Gestiona usuarios, aplicaciones y seguridad de tu organizacion."
+      cards={cards}
+      role="ADMIN_TENANT"
+    />
+  )
+}
+
+function UserTenantOverview({ tenantSlug }: { tenantSlug: string }) {
+  const sessionsQuery = useQuery({
+    queryKey: ['dashboard-home', 'user-sessions', tenantSlug],
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'sesiones activas',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+          getSessions(tenantSlug, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
+      }),
+    retry: false,
+  })
+
+  const accessQuery = useQuery({
+    queryKey: ['dashboard-home', 'user-access', tenantSlug],
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'accesos por aplicacion',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+          getAccountAccess(tenantSlug, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
+      }),
+    retry: false,
+  })
+
+  const lastAccess = useMemo(() => {
+    if (!sessionsQuery.data || sessionsQuery.data.length === 0) {
+      return '--'
+    }
+
+    const sortedSessions = [...sessionsQuery.data].sort((a, b) => {
+      const left = new Date(a.last_accessed_at).getTime()
+      const right = new Date(b.last_accessed_at).getTime()
+      return right - left
+    })
+
+    return toLocalDateTime(sortedSessions[0]?.last_accessed_at ?? '')
+  }, [sessionsQuery.data])
+
+  const cards: StatCardData[] = [
+    {
+      title: 'Sesiones activas',
+      value: toCardValue(
+        sessionsQuery.isLoading,
+        sessionsQuery.isError,
+        String(sessionsQuery.data?.length ?? 0),
+      ),
+      description: sessionsQuery.isError
+        ? 'No fue posible cargar tus sesiones activas.'
+        : 'Dispositivos con sesion iniciada actualmente.',
+      icon: <span className="inline-flex" aria-hidden="true"><IconUsers /></span>,
+    },
+    {
+      title: 'Ultimo acceso',
+      value: toCardValue(sessionsQuery.isLoading, sessionsQuery.isError, lastAccess),
+      description: sessionsQuery.isError
+        ? 'No fue posible obtener el ultimo acceso.'
+        : 'Fecha y hora de tu sesion mas reciente.',
+      icon: <span className="inline-flex" aria-hidden="true"><IconClock /></span>,
+    },
+    {
+      title: 'Aplicaciones con acceso',
+      value: toCardValue(
+        accessQuery.isLoading,
+        accessQuery.isError,
+        String(accessQuery.data?.length ?? 0),
+      ),
+      description: accessQuery.isError
+        ? 'No fue posible cargar tus permisos por aplicacion.'
+        : 'Aplicaciones donde tienes una membresia activa.',
+      icon: <span className="inline-flex" aria-hidden="true"><IconBell /></span>,
+    },
+  ]
+
+  return (
+    <RoleOverviewLayout
+      title="Panel personal"
+      subtitle="Accede a tus recursos, historial de accesos y configuraciones personales."
+      cards={cards}
+      role="USER_TENANT"
+    />
+  )
+}
+
+function RoleOverviewLayout({
+  title,
+  subtitle,
+  cards,
+  role,
+}: {
+  title: string
+  subtitle: string
+  cards: StatCardData[]
+  role: NonAdminRole
+}) {
+  const nextModuleMessage =
+    role === 'ADMIN_TENANT'
+      ? 'Este dashboard ya consume datos reales del tenant y seguira ampliandose con nuevos indicadores de administracion.'
+      : 'Este dashboard ya consume datos reales de tu cuenta y seguira ampliandose con indicadores de actividad y seguridad.'
 
   return (
     <div className="max-w-screen-xl mx-auto space-y-8">
       <header className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{view.title}</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">{view.subtitle}</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{title}</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
       </header>
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" aria-label="Resumen del dashboard">
-        {view.cards.map((card) => (
+        {cards.map((card) => (
           <StatCard key={card.title} title={card.title} value={card.value} description={card.description} icon={card.icon} />
         ))}
       </section>
@@ -65,8 +294,7 @@ function RoleOverview({ role }: { role: NonAdminRole }) {
       <section className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-slate-900/80 p-6">
         <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Siguientes modulos</h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Este dashboard ya comparte layout, navegacion y estructura visual con administracion global. El contenido
-          funcional de este rol se conectara progresivamente a los endpoints especificos del backend.
+          {nextModuleMessage}
         </p>
       </section>
     </div>
@@ -76,10 +304,27 @@ function RoleOverview({ role }: { role: NonAdminRole }) {
 export default function DashboardHomePage() {
   const user = useCurrentUser()
   const role = user?.activeRole ?? resolvePrimaryRole(user?.roles ?? []) ?? 'USER_TENANT'
+  const tenantSlug = user?.tenantSlug
 
   if (role === 'ADMIN') {
     return <AdminDashboardPage />
   }
 
-  return <RoleOverview role={role as NonAdminRole} />
+  if (!tenantSlug) {
+    return (
+      <div className="max-w-screen-xl mx-auto">
+        <section className="rounded-xl border border-red-200 dark:border-red-500/40 bg-red-50 dark:bg-red-950/20 p-4" role="alert" aria-live="assertive">
+          <p className="text-sm text-red-800 dark:text-red-300">
+            No se pudo resolver el tenant activo desde tu sesion. Vuelve a iniciar sesion para continuar.
+          </p>
+        </section>
+      </div>
+    )
+  }
+
+  if (role === 'ADMIN_TENANT') {
+    return <AdminTenantOverview tenantSlug={tenantSlug} />
+  }
+
+  return <UserTenantOverview tenantSlug={tenantSlug} />
 }

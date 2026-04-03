@@ -36,7 +36,6 @@ Fuentes principales (prioridad alta):
 
 | Pantalla/Seccion | Ruta | Tipo | Gap detectado | Endpoint/Contrato relacionado | Evidencia principal |
 |---|---|---|---|---|---|
-| Recuperacion de cuenta (Olvide mi contrasena / Reset/Recover) | Sin ruta activa en App.tsx | C | El contrato backend ya existe para forgot/reset/recover, pero la UI sigue sin ruta publica, sin pantallas y sin wiring API dedicado para ese flujo self-service | POST /api/v1/tenants/{tenantSlug}/account/forgot-password, POST /api/v1/tenants/{tenantSlug}/account/reset-password, POST /api/v1/tenants/{tenantSlug}/account/recover-password | docs/api-docs.json + src/App.tsx + src/api/account.ts + docs/BACKLOG.md |
 | Pago de suscripcion en produccion | /subscribe (paso de pago) | A | En produccion no hay pasarela integrada, solo mensaje informativo; en dev se usa mock approve | Endpoint de PSP real pendiente (referencia backlog: /billing/contracts/{id}/pay por definir) | src/pages/register/steps/PaymentStep.tsx + docs/FUNCTIONAL_GUIDE.md + docs/BACKLOG.md |
 | Landing > Developers > SDKs e integraciones | / (seccion Developers) | B | CTA marcado "Proximamente" y badge "En desarrollo" sin entrega funcional | N/A (definicion de producto/documentacion) | src/pages/landing/DevelopersSection.tsx |
 
@@ -45,8 +44,8 @@ Fuentes principales (prioridad alta):
 | Pantalla/Seccion | Ruta | Tipo | Gap detectado | Endpoint/Contrato relacionado | Evidencia principal |
 |---|---|---|---|---|---|
 | Modulos placeholder por navegacion | /dashboard/feature/:featureId | C (y en algunos casos A/B) | Vista placeholder generica para modulos aun no conectados | Depende del featureId (apps, users, access, audit, signing-keys, sessions, tokens, api) | src/pages/dashboard/FeaturePlaceholderPage.tsx + src/layouts/AdminLayout.tsx |
-| Home dashboard rol ADMIN_TENANT | /dashboard | C + B | Tarjetas muestran "--" y mensaje de metricas pendientes de integrar | Falta definir/consumir endpoints de metricas tenant scoped | src/pages/dashboard/DashboardHomePage.tsx |
-| Home dashboard rol USER_TENANT | /dashboard | C + B | Tarjetas informativas sin datos reales (sesiones, ultimo acceso, alertas) | Requiere fuentes backend para actividad/sesiones/alertas de usuario | src/pages/dashboard/DashboardHomePage.tsx |
+| Home dashboard rol ADMIN_TENANT | /dashboard | C | Resuelto: tarjetas conectadas a datos reales (usuarios activos, apps, accesos del dia) | GET /users + GET /apps + GET /account/sessions ya integrados | src/pages/dashboard/DashboardHomePage.tsx |
+| Home dashboard rol USER_TENANT | /dashboard | C | Resuelto: tarjetas conectadas a datos reales (sesiones activas, ultimo acceso, apps con acceso) | GET /account/sessions + GET /account/access ya integrados | src/pages/dashboard/DashboardHomePage.tsx |
 | Header dashboard admin > selector de rango | /dashboard | B (posible A) | Selector Hoy/7/30 dias declarado como visual, sin impacto en query | Parametrizacion backend para rango (si aplica) | docs/FUNCTIONAL_GUIDE.md (2.1 Encabezado) + src/pages/admin/DashboardPage.tsx |
 | Header dashboard admin > Acciones rapidas | /dashboard | B + C | Boton visible pero sin contenido/flujo definido | N/A o endpoint segun accion final | docs/FUNCTIONAL_GUIDE.md (2.1 Encabezado) + src/pages/admin/DashboardPage.tsx |
 
@@ -54,7 +53,7 @@ Fuentes principales (prioridad alta):
 
 | Pantalla/Seccion | Ruta | Tipo | Gap detectado | Endpoint/Contrato relacionado | Evidencia principal |
 |---|---|---|---|---|---|
-| Mi cuenta > pestaña Actividad (interna) | /dashboard/account (tab activity) | C + B | Sigue como panel de texto/placeholder, sin timeline real conectado | Falta definir fuente oficial de actividad personal | src/pages/dashboard/user/UserProfilePage.tsx |
+| Mi cuenta > pestaña Actividad (interna) | /dashboard/account (tab activity) | C | Resuelto con datos reales de sesiones de cuenta + resumen de accesos; timeline avanzada queda como mejora evolutiva | GET /account/sessions + GET /account/access ya integrados en tab | src/pages/dashboard/user/UserProfilePage.tsx |
 | Configuracion > Conexiones | /dashboard/account/settings?tab=connections | A (temporal cubierto con mock) | Implementado con MSW temporal, pendiente contrato backend oficial F-042 | GET/POST/DELETE /account/connections* pendiente backend oficial | src/api/account.ts + src/mocks/handlers.ts + docs/FUNCTIONAL_GUIDE.md |
 
 ## 4.4 Areas tenant/admin con deuda funcional asociada a backend
@@ -100,14 +99,12 @@ Impacto:
 ### P0 (bloqueante de experiencia o contrato)
 
 1. Definir con backend el contrato final de conexiones de cuenta (F-042) para reemplazar MSW.
-2. Implementar wiring UI completo para flujo forgot/reset/recover password (rutas, pantallas y api client), usando el contrato ya disponible en OpenAPI.
-3. Definir e integrar pasarela PSP real para /subscribe en produccion.
+2. Definir e integrar pasarela PSP real para /subscribe en produccion.
 
 ### P1 (completitud de navegacion por rol)
 
 1. Reemplazar placeholders de /dashboard/feature/:featureId por modulos funcionales priorizados por negocio.
-2. Completar dashboard home para ADMIN_TENANT y USER_TENANT con metricas reales.
-3. Resolver actividad real en tab "Actividad" de Mi cuenta.
+2. Resolver actividad real en tab "Actividad" de Mi cuenta.
 
 ### P2 (calidad de producto/documentacion)
 

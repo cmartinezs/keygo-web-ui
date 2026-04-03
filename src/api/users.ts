@@ -12,6 +12,9 @@ import type {
   UpdateUserRequest,
   ResetPasswordRequest,
   RegistrationData,
+  SuspendUserResult,
+  ActivateUserResult,
+  AccountSessionData,
 } from '@/types/user'
 import type { RequestOptions } from './requestOptions'
 
@@ -20,6 +23,7 @@ import type { RequestOptions } from './requestOptions'
 export const USER_QUERY_KEYS = {
   all: (tenantSlug: string) => ['users', tenantSlug] as const,
   detail: (tenantSlug: string, userId: string) => ['users', tenantSlug, userId] as const,
+  sessions: (tenantSlug: string, userId: string) => ['users', tenantSlug, userId, 'sessions'] as const,
 } as const
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -85,6 +89,62 @@ export async function updateUser(
       : undefined,
   })
   return unwrapResponseData(res.data, 'Error al actualizar usuario')
+}
+
+/** PUT /api/v1/tenants/{tenantSlug}/users/{userId}/suspend ⏳ pendiente backend (T-033) */
+export async function suspendUser(
+  tenantSlug: string,
+  userId: string,
+  options?: RequestOptions,
+): Promise<SuspendUserResult> {
+  const res = await apiClient.put<BaseResponse<SuspendUserResult>>(
+    `${userUrl(tenantSlug, userId)}/suspend`,
+    {},
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al suspender el usuario')
+}
+
+/** PUT /api/v1/tenants/{tenantSlug}/users/{userId}/activate ⏳ pendiente backend (T-033) */
+export async function activateUser(
+  tenantSlug: string,
+  userId: string,
+  options?: RequestOptions,
+): Promise<ActivateUserResult> {
+  const res = await apiClient.put<BaseResponse<ActivateUserResult>>(
+    `${userUrl(tenantSlug, userId)}/activate`,
+    {},
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al activar el usuario')
+}
+
+/** GET /api/v1/tenants/{tenantSlug}/users/{userId}/sessions ⏳ pendiente backend (T-110) */
+export async function getAdminUserSessions(
+  tenantSlug: string,
+  userId: string,
+  options?: RequestOptions,
+): Promise<AccountSessionData[]> {
+  const res = await apiClient.get<BaseResponse<AccountSessionData[]>>(
+    `${userUrl(tenantSlug, userId)}/sessions`,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al obtener las sesiones del usuario')
 }
 
 /** POST /api/v1/tenants/{tenantSlug}/users/{userId}/reset-password ✅ */

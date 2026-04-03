@@ -287,6 +287,7 @@ i18n (react-i18next + i18next)
 
 **Construcción:**
 - Define todas las rutas con `<Routes>` de React Router 7.
+- Envuelve todo el arbol de rutas en `AppErrorBoundary` para contener errores de render no controlados en cualquier pantalla.
 - En la ruta `/`, redirige a `/dashboard` cuando existe sesión activa (`accessToken`), y solo renderiza `LandingPage` para usuarios no autenticados.
 - Expone rutas públicas adicionales `/developers` (documentación) y `/logout` (cierre de sesión seguro).
 - Unifica toda el area autenticada en `/dashboard` (misma ruta para todos los roles).
@@ -301,6 +302,9 @@ i18n (react-i18next + i18next)
 - `<Toaster>` de `sonner` con tema dark y posición `bottom-right`.
 - Catch-all `*` redirige a `/login`.
 
+**Actualización relevante:** si un componente lanza error en render, `AppErrorBoundary` evita la caída total de React y muestra fallback con acción de retorno a `/dashboard`.
+El contenido del fallback es i18n y se alimenta desde `appErrorBoundary.*` en locales ES/EN.
+
 **Integración:**
 - `AuthGuard` / `RoleGuard` → `src/auth/roleGuard.tsx`
 - `AdminLayout` → `src/layouts/AdminLayout.tsx`
@@ -312,14 +316,19 @@ i18n (react-i18next + i18next)
 | `/` | `Navigate -> /dashboard` (si hay sesión) / `LandingPage` (sin sesión) | Pública |
 | `/developers` | `DeveloperDocsPage` | Pública |
 | `/login` | `Navigate -> /dashboard` (si hay sesión) / `LoginPage` (sin sesión) | Pública |
+| `/forgot-password` | `Navigate -> /dashboard` (si hay sesión) / `ForgotPasswordPage` (sin sesión) | Pública |
+| `/recover-password` | `Navigate -> /dashboard` (si hay sesión) / `RecoverPasswordPage` (sin sesión) | Pública |
+| `/reset-password` | `Navigate -> /dashboard` (si hay sesión) / `ResetPasswordPage` (sin sesión) | Pública |
 | `/logout` | `LogoutPage` | Pública |
 | `/subscribe` | `NewContractPage` | Pública |
 | `/subscribe/resume` | `Navigate -> /subscribe?resume=1` | Pública |
 | `/register` | `UserRegisterPage` | Pública |
 | `/dashboard` | `AuthGuard` → `AdminLayout` → `DashboardHomePage` | Autenticada |
+| `/dashboard/feature/api` | `PlatformStatsPage` | `ADMIN` |
 | `/dashboard/feature/:featureId` | `FeaturePlaceholderPage` | Autenticada |
 | `/dashboard/account` | `UserProfilePage` | Autenticada |
 | `/dashboard/account/settings` | `AccountSettingsPage` | Autenticada |
+| `/dashboard/account/sessions` | `AccountSessionsPage` | Autenticada |
 | `/dashboard/tenants` | `TenantsPage` | `ADMIN` |
 | `/dashboard/tenants/new` | `TenantCreatePage` (outlet) | `ADMIN` |
 | `/dashboard/tenants/:slug` | `TenantDetailPage` (outlet) | `ADMIN` |
@@ -328,7 +337,7 @@ i18n (react-i18next + i18next)
 | `/dashboard/tenant/memberships` | `TenantMembershipsPage` | `ADMIN_TENANT` |
 | `/dashboard/user/my-access` | `UserMyAccessPage` | `USER_TENANT` |
 | `/dashboard/user/activity` | `UserActivityPage` | `USER_TENANT` |
-| `/dashboard/user/sessions` | `Navigate -> /dashboard/account/settings?tab=security` | `USER_TENANT` (legacy) |
+| `/dashboard/user/sessions` | `Navigate -> /dashboard/account/sessions` | `USER_TENANT` (legacy) |
 | `/dashboard/user/profile` | `Navigate -> /dashboard/account` | `USER_TENANT` (legacy) |
 | `/home` | `Navigate to /dashboard` | Pública (legacy) |
 | `/admin/*` | `Navigate to /dashboard` | Pública (legacy) |
@@ -1553,6 +1562,7 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 - La constante `SIDEBAR_BY_ROLE` define secciones e items para `ADMIN`, `ADMIN_TENANT` y `USER_TENANT`.
 - El rol primario se calcula con `resolvePrimaryRole(...)` a partir de `useCurrentUser()`.
 - La renderizacion del menu se delega al componente generico `SidebarMenu`.
+- Los items de rutas padre (`/dashboard`, `/dashboard/account`) se marcan con `exact: true` para evitar activacion por prefijo en subrutas hermanas.
 
 **Grupos de navegación actuales (ejemplo ADMIN):**
 
@@ -1579,6 +1589,7 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
   - `getAccountConnections`
   - `linkAccountConnection`
   - `unlinkAccountConnection`
+- Se incorporo normalizacion defensiva en `connections` para aceptar wire `snake_case` y `camelCase` durante la transicion F-042.
 - Se amplio `ACCOUNT_QUERY_KEYS` para `sessions`, `notificationPreferences`, `access` y `connections`.
 
 **Integracion:**
@@ -1591,8 +1602,8 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 **Estrategia:** API domain-first; primero se completa la superficie de endpoints y query keys para luego conectar UI (fases 5-8) sin duplicar logica de red en componentes.
 
 **Puntos de mejora / deuda tecnica conocida:**
-- El contrato oficial OpenAPI de `connections` aun no existe; los wrappers se mantienen como compatibilidad temporal para MSW.
-- El mapeo detallado de naming interno/wire se profundiza en Fase 3.
+- Frontend ya dejo aprobado el contrato funcional F-042, pero backend aun debe publicarlo en OpenAPI y reemplazar MSW.
+- El mapper de compatibilidad mantiene doble naming (snake/camel) hasta cierre definitivo del rollout.
 
 ### `src/types/user.ts`
 
@@ -1604,7 +1615,7 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
   - `AccountSessionData`, `RevokeAccountSessionResult`
   - `NotificationPreferencesData`, `UpdateNotificationPreferencesRequest`
   - `AccountAccessRoleData`, `AccountAccessData`
-  - `AccountConnectionData`, `LinkAccountConnectionRequest`, `LinkAccountConnectionResult`, `UnlinkAccountConnectionResult`
+  - `AccountConnectionData`, `AccountConnectionProvider`, `WireAccountConnectionData`, `WireLinkAccountConnectionResult`, `LinkAccountConnectionRequest`, `LinkAccountConnectionResult`, `UnlinkAccountConnectionResult`
 
 **Integracion:** Los nuevos DTOs son consumidos por la capa API de account y quedaran disponibles para hooks/paginas de settings/profile en fases siguientes.
 
@@ -1770,6 +1781,11 @@ initMutation.isSuccess                                  → LoginForm
 
 **Actualización relevante:** el auto-reintento de `authorize()` en estado de error dejó de usar un `setInterval` continuo y ahora agenda un solo intento por ciclo (cada 5s, máximo 3). El contador solo se reinicia al iniciar un nuevo episodio (reintento manual o re-inicialización explícita), evitando reintentos indefinidos cuando el backend está caído.
 
+**Actualizacion relevante:** se incorporo el enlace "Olvide mi contrasena" en el footer de login y se agregaron tres rutas publicas nuevas:
+- `ForgotPasswordPage.tsx` (`/forgot-password`) — solicitud de recuperacion por correo con respuesta neutral.
+- `RecoverPasswordPage.tsx` (`/recover-password`) — recuperacion por token de email.
+- `ResetPasswordPage.tsx` (`/reset-password`) — reset con contrasena temporal.
+
 **Deuda técnica:** el dashboard compartido mantiene tarjetas de resumen con placeholders en roles no ADMIN. Falta conectar metricas especificas por rol.
 
 **`LogoutPage.tsx`**
@@ -1791,13 +1807,16 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:**
 - Resuelve el rol de vista desde `activeRole` (seleccionado por el usuario en el header) y usa rol primario como fallback.
 - Si es `ADMIN`, renderiza `AdminDashboardPage` completo.
-- Si es `ADMIN_TENANT` o `USER_TENANT`, renderiza resumen inicial con tarjetas base y secciones pendientes.
+- Si es `ADMIN_TENANT`, ejecuta queries locales para `listUsers`, `listClientApps` y `getSessions`, y calcula tarjetas reales (usuarios activos, apps, accesos del dia).
+- Si es `USER_TENANT`, ejecuta queries locales para `getSessions` y `getAccountAccess`, y calcula tarjetas reales (sesiones activas, ultimo acceso, apps con acceso).
+- Cada tarjeta resuelve `loading/error/data` de forma local (`...`, `N/D` o valor final), sin bloquear toda la pantalla.
+- Si no existe `tenantSlug` en la sesion, muestra alerta local de contexto invalido para evitar llamadas fuera de scope.
 
 **Integración:** se monta como `index` route de `/dashboard` en `src/App.tsx`.
 
 **Decisión de diseño:** reutilizar el dashboard admin existente para `ADMIN` y aplicar el mismo esqueleto visual para los otros roles, sin duplicar layout.
 
-**Puntos de mejora / deuda técnica conocida:** conectar tarjetas de rol a endpoints reales (metricas tenant y actividad de usuario).
+**Puntos de mejora / deuda técnica conocida:** enriquecer indicadores con endpoints agregados tenant/user (estadisticas historicas y alertas reales) para reducir dependencia de conteos derivados de sesiones actuales.
 
 **`FeaturePlaceholderPage.tsx`**
 
@@ -1806,6 +1825,8 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:** usa `featureId` en URL para resolver titulo visible y mostrar estado de modulo pendiente.
 
 **Integración:** se monta en `/dashboard/feature/:featureId`.
+
+**Actualización relevante:** `feature/api` dejó de usar placeholder y ahora se resuelve con `PlatformStatsPage` para el rol `ADMIN`.
 
 **Decisión de diseño:** evita 404 internas y permite validar navegacion por rol sin bloquear el flujo.
 
@@ -1881,6 +1902,7 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:**
 - Recibe `sections` (lista de secciones y items), estado `collapsed` y callback `onNavigate`.
 - Renderiza `NavLink` con estilos activos/inactivos comunes.
+- Cada item acepta `exact?: boolean`; cuando esta activo, se propaga a `NavLink end` para match exacto de ruta.
 - Soporta modo colapsado con separadores visuales.
 
 **Integración:** consumido por `src/layouts/AdminLayout.tsx`, que inyecta configuraciones de menu por rol.
@@ -1951,10 +1973,10 @@ initMutation.isSuccess                                  → LoginForm
 - Tab **Perfil** con formulario RHF + Zod para campos editables.
 - Mutacion `updateProfile(...)` con invalidacion de cache y feedback por toast.
 - Tab **Accesos** conectada a `getAccountAccess(...)` con estados locales (`loading/error/empty/data`).
-- Tab **Actividad** se mantiene como placeholder backend-driven.
+- Tab **Actividad** conectada a `getSessions(...)` para mostrar sesiones recientes, estado de sesion actual, IP y fechas de ultimo acceso/expiracion.
 - En tab **Resumen**, el nombre visible prioriza `first_name + last_name`; si ambos faltan, usa `username` como fallback.
 - En tab **Resumen**, no se muestran `email` ni `activeRole`.
-- Resiliencia: GET de perfil con timeout (10s) + retry automático controlado (5s, máximo 3); PATCH de actualización con timeout explícito (10s) sin auto-retry.
+- Resiliencia: GET de perfil/sesiones con timeout (10s) + retry automático controlado (5s, máximo 3); PATCH de actualización con timeout explícito (10s) sin auto-retry.
 - i18n con `react-i18next` usando claves `userDashboardProfile.*` para tabs, labels, placeholders, carga/error y toasts.
 - Schema Zod se construye con mensajes localizados (`invalidProfileUrl`) para mantener validación consistente por idioma.
 
@@ -1965,21 +1987,19 @@ initMutation.isSuccess                                  → LoginForm
 **Decisión de diseño:** centralizar cuenta personal en una única ruta reduce duplicidad entre sidebar y dropdown, y desacopla "mi cuenta" de rutas específicas por rol.
 
 **Puntos de mejora / deuda técnica conocida:**
-- tab de actividad depende de endpoint de timeline self-service.
+- enriquecer actividad con un endpoint de timeline/auditoría dedicado cuando backend publique contrato self-service específico.
 
 **`AccountSettingsPage.tsx`**
 
-**Propósito:** concentrar la configuración de cuenta en una única vista con tabs de seguridad, notificaciones, conexiones y facturación.
+**Propósito:** concentrar la configuración de cuenta en una única vista con tabs de seguridad, notificaciones, conexiones, idioma y facturación.
 
 **Construcción:**
 - Tabs accesibles con estado local para segmentar cada bloque de configuración.
-- Tabs con iconografía contextual (`Shield`, `Bell`, `Link`, `CreditCard`) alineadas con el estándar global.
+- Tabs con iconografía contextual (`Shield`, `Bell`, `Link`, `Globe`, `CreditCard`) alineadas con el estándar global.
 - Lectura de `?tab=` para compatibilidad con rutas legacy (por ejemplo redirección desde `/dashboard/user/sessions`).
-- El bloque de idioma incluye helper explicativo de fuente de detección (`navigator.languages`) y estado de preferencia (automático/manual).
-- Se incorpora CTA hacia el centro de FAQs del sistema (`/dashboard/faq`) para mantener la vista de settings enfocada en configuración.
+- La configuración de idioma se resuelve en tab dedicada, con helper explicativo de fuente de detección (`navigator.languages`) y estado de preferencia (automático/manual).
 - Seguridad implementada con módulos dedicados:
   - `ChangePasswordForm.tsx`: RHF + Zod + `changePassword(...)`.
-  - `SessionsList.tsx`: `getSessions(...)` + `revokeSession(...)` con revocación remota.
 - Notificaciones implementadas con `NotificationsPreferencesForm.tsx`:
   - `getNotificationPreferences(...)` + `updateNotificationPreferences(...)`.
   - Estado local de carga/error/guardado y toast de feedback.
@@ -1988,18 +2008,34 @@ initMutation.isSuccess                                  → LoginForm
   - Selector de proveedor implementado con `SelectDropdown`, más lista de conexiones y acciones de vincular/desvincular.
   - Indicadores explícitos en UI de dependencia contractual pendiente (`F-042`).
 - Facturación conectada a endpoints reales (`getActiveSubscription`, `listInvoices`) para `ADMIN_TENANT`.
+- Se agrega mutación de cancelación de renovación (`cancelSubscription`) con confirmación explícita y refresco de cache (`invalidateQueries`) para suscripción e invoices.
 - Resiliencia GET: timeout por intento (10s) + retry automático controlado (5s, máximo 3) para suscripción e invoices.
 
 **Integración:**
 - Ruta principal: `/dashboard/account/settings` (autenticada para todos los roles).
 - Render condicional por rol: la tab de facturación muestra datos solo para `ADMIN_TENANT`.
-- Rutas legacy: `/dashboard/user/sessions` redirige a `/dashboard/account/settings?tab=security`.
+- Rutas legacy: `/dashboard/user/sessions` redirige a `/dashboard/account/sessions`.
 
 **Decisión de diseño:** separar "Mi cuenta" de "Configuración de cuenta" evita sobrecargar una sola página y permite habilitar módulos backend en forma incremental.
 
 **Puntos de mejora / deuda técnica conocida:**
-- Migrar `ConnectionsPanel.tsx` del contrato temporal MSW al contrato OpenAPI oficial cuando backend publique `F-042`.
+- Reemplazar MSW por backend productivo cuando `F-042` quede publicado en OpenAPI; el panel ya esta preparado para transicion de naming.
 - Falta conectar la tab de actividad de `UserProfilePage` a un endpoint backend self-service cuando el contrato esté disponible.
+
+**`AccountSessionsPage.tsx`**
+
+**Propósito:** separar la gestión de sesiones activas/remotas fuera de Configuración de cuenta para mantener `AccountSettingsPage` enfocada en preferencias y configuración.
+
+**Construcción:**
+- Header contextual con título/subtítulo de seguridad de cuenta.
+- Reutiliza `SessionsList.tsx` como bloque autónomo para listado de sesiones y revocación remota.
+- Incluye acceso rápido de retorno a Configuración de cuenta en tab Seguridad.
+
+**Integración:**
+- Ruta principal: `/dashboard/account/sessions` (autenticada para todos los roles).
+- Compatibilidad: `/dashboard/user/sessions` redirige a esta nueva ruta.
+
+**Decisión de diseño:** mover sesiones a una vista dedicada reduce sobrecarga en la tab de Seguridad de settings y facilita descubribilidad desde el sidebar.
 
 **`AccountPanelPrimitives.tsx`**
 
@@ -2135,6 +2171,20 @@ const { data, isLoading, isError, refetch, isFetching } = useQuery({
 **Decisión de diseño:** Un único endpoint agrega todos los datos para evitar waterfalls. El selector de rango es local hasta que el backend soporte parámetros de filtro temporal.
 
 **Deuda técnica:** El rango seleccionado (Hoy / 7d / 30d) no se envía al backend (el endpoint no define query params de rango). Se activa como filtro cuando el backend lo soporte.
+
+**`src/pages/admin/PlatformStatsPage.tsx`**
+
+**Propósito:** módulo funcional de `Sistema > API` para visualizar estadísticas globales de plataforma en una vista compacta.
+
+**Construcción:**
+- Consulta `getPlatformStats(...)` desde `api/serviceInfo.ts` con `useQuery` y `PLATFORM_QUERY_KEYS.stats`.
+- Usa `runGetWithRecovery` para timeout de 10 segundos y retry controlado (5 segundos, máximo 3).
+- Renderiza cuatro tarjetas (tenants, usuarios, apps y claves activas) con manejo local `isLoading/isError/data`.
+- Aplica lectura defensiva (`?.` + fallback numérico) para payloads parciales del backend y evita crashes por propiedades ausentes.
+
+**Integración:** ruta `/dashboard/feature/api` protegida con `RoleGuard` para `ADMIN` en `src/App.tsx`, con textos i18n en `platformStats.*`.
+
+**Decisión de diseño:** cerrar primero el `GAP_UI` de un endpoint ya productivo (`GET /platform/stats`) antes de abrir módulos con dependencia de contrato pendiente.
 
 ---
 

@@ -21,6 +21,9 @@ import {
   listUsers,
   resetUserPassword,
   updateUser,
+  suspendUser,
+  activateUser,
+  getAdminUserSessions,
   USER_QUERY_KEYS,
 } from '@/api/users'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
@@ -29,6 +32,7 @@ import type {
   ResetPasswordRequest,
   UpdateUserRequest,
   UserData,
+  AccountSessionData,
 } from '@/types/user'
 
 const STATUS_LABEL: Record<string, string> = {
@@ -109,6 +113,8 @@ export default function TenantUsersPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserData | null>(null)
   const [resetPasswordUser, setResetPasswordUser] = useState<UserData | null>(null)
+  const [confirmStatusUser, setConfirmStatusUser] = useState<UserData | null>(null)
+  const [viewingSessionsUser, setViewingSessionsUser] = useState<UserData | null>(null)
 
   async function fetchUsersWithRecovery(signal: AbortSignal) {
     return runGetWithRecovery({
@@ -214,6 +220,73 @@ export default function TenantUsersPage() {
     },
   })
 
+  // ── T-033: Suspend / Activate ⏳ pendiente backend ─────────────────────────
+
+  const suspendMutation = useMutation({
+    mutationFn: (userId: string) =>
+      suspendUser(tenantSlug, userId, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-user-suspend-${tenantSlug}-${userId}`,
+      }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.all(tenantSlug) })
+      setConfirmStatusUser(null)
+      if (result.already_suspended) {
+        toast.info('El usuario ya estaba suspendido')
+      } else {
+        toast.success('Usuario suspendido correctamente')
+      }
+    },
+    onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('suspension de usuario')
+        return
+      }
+      toast.error(getAppApiError(mutationError).clientMessage)
+    },
+  })
+
+  const activateMutation = useMutation({
+    mutationFn: (userId: string) =>
+      activateUser(tenantSlug, userId, {
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        idempotencyKey: `kg-user-activate-${tenantSlug}-${userId}`,
+      }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: USER_QUERY_KEYS.all(tenantSlug) })
+      setConfirmStatusUser(null)
+      if (result.already_active) {
+        toast.info('El usuario ya estaba activo')
+      } else {
+        toast.success('Usuario activado correctamente')
+      }
+    },
+    onError: (mutationError) => {
+      if (isRequestTimeout(mutationError)) {
+        notifyMutationTimeout('activacion de usuario')
+        return
+      }
+      toast.error(getAppApiError(mutationError).clientMessage)
+    },
+  })
+
+  // ── T-110: Sesiones de usuario (admin) ⏳ pendiente backend ────────────────
+
+  const {
+    data: adminSessions,
+    isLoading: isLoadingSessions,
+    isError: isSessionsError,
+  } = useQuery({
+    queryKey: USER_QUERY_KEYS.sessions(tenantSlug, viewingSessionsUser?.id ?? ''),
+    queryFn: ({ signal }) =>
+      getAdminUserSessions(tenantSlug, viewingSessionsUser!.id, {
+        signal,
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      }),
+    enabled: Boolean(viewingSessionsUser),
+    retry: false,
+  })
+
   function openEditModal(item: UserData) {
     setEditingUser(item)
     editForm.reset({
@@ -298,6 +371,31 @@ export default function TenantUsersPage() {
                         className="rounded bg-slate-200 px-3 py-1 text-xs text-slate-800 transition-colors hover:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
                       >
                         Resetear contrasena
+                      </button>
+                      {item.status === 'SUSPENDED' ? (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmStatusUser(item)}
+                          className="rounded bg-emerald-100 px-3 py-1 text-xs text-emerald-800 transition-colors hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30"
+                        >
+                          Activar
+                        </button>
+                      ) : null}
+                      {item.status !== 'SUSPENDED' ? (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmStatusUser(item)}
+                          className="rounded bg-amber-100 px-3 py-1 text-xs text-amber-800 transition-colors hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
+                        >
+                          Suspender
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setViewingSessionsUser(item)}
+                        className="rounded bg-slate-200 px-3 py-1 text-xs text-slate-800 transition-colors hover:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                      >
+                        Sesiones
                       </button>
                     </div>
                   </td>
@@ -552,6 +650,125 @@ export default function TenantUsersPage() {
               </button>
             </div>
           </form>
+        </TenantModal>
+      ) : null}
+
+      {/* ── T-033: Confirmar suspend / activate ⏳ pendiente backend ─────────── */}
+      {confirmStatusUser ? (
+        <TenantModal
+          title={confirmStatusUser.status === 'SUSPENDED' ? 'Activar usuario' : 'Suspender usuario'}
+          dialogId="confirm-status-title"
+          onClose={() => setConfirmStatusUser(null)}
+        >
+          <div className="space-y-4">
+            {confirmStatusUser.status === 'SUSPENDED' ? (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+                El usuario <strong>{confirmStatusUser.username}</strong> recuperara acceso al sistema.
+              </div>
+            ) : (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200">
+                El usuario <strong>{confirmStatusUser.username}</strong> no podra iniciar sesion mientras este suspendido.
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmStatusUser(null)}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Cancelar
+              </button>
+              {confirmStatusUser.status === 'SUSPENDED' ? (
+                <button
+                  type="button"
+                  disabled={activateMutation.isPending}
+                  onClick={() => activateMutation.mutate(confirmStatusUser.id)}
+                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                >
+                  {activateMutation.isPending ? 'Activando...' : 'Activar'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={suspendMutation.isPending}
+                  onClick={() => suspendMutation.mutate(confirmStatusUser.id)}
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                >
+                  {suspendMutation.isPending ? 'Suspendiendo...' : 'Suspender'}
+                </button>
+              )}
+            </div>
+          </div>
+        </TenantModal>
+      ) : null}
+
+      {/* ── T-110: Sesiones activas del usuario (admin) ⏳ pendiente backend ─── */}
+      {viewingSessionsUser ? (
+        <TenantModal
+          title={`Sesiones de ${viewingSessionsUser.username}`}
+          dialogId="user-sessions-title"
+          onClose={() => setViewingSessionsUser(null)}
+        >
+          <div className="space-y-3">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Sesiones activas detectadas para este usuario.
+            </p>
+            {isLoadingSessions ? (
+              <p role="status" aria-live="polite" className="text-sm text-slate-500 dark:text-slate-400">
+                Cargando sesiones...
+              </p>
+            ) : null}
+            {isSessionsError ? (
+              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+                No se pudieron cargar las sesiones.
+              </p>
+            ) : null}
+            {!isLoadingSessions && !isSessionsError && adminSessions ? (
+              adminSessions.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Sin sesiones activas.</p>
+              ) : (
+                <ul className="divide-y divide-slate-100 dark:divide-white/5">
+                  {adminSessions.map((session: AccountSessionData) => (
+                    <li key={session.session_id} className="py-3 text-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium text-slate-800 dark:text-slate-100">
+                          {session.browser} / {session.os}
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            session.status === 'ACTIVE'
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                              : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                          }`}
+                        >
+                          {session.status}
+                        </span>
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        IP: {session.ip_address} &mdash; Dispositivo: {session.device_type}
+                      </div>
+                      <div className="mt-0.5 text-xs text-slate-400 dark:text-slate-500">
+                        Ultimo acceso:{' '}
+                        {new Date(session.last_accessed_at).toLocaleString('es-CL', {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        })}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : null}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setViewingSessionsUser(null)}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
         </TenantModal>
       ) : null}
     </div>

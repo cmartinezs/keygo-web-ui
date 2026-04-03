@@ -1,6 +1,6 @@
 # Definiciones Frontend para Habilitar Implementacion Backend
 
-- Estado: Propuesto
+- Estado: En curso (F-042 aprobado por Frontend)
 - Fecha: 2026-04-03
 - Owner funcional: Frontend
 - Consumidor principal: Backend
@@ -51,10 +51,10 @@ No incluye:
 
 | ID | Decision | Estado | Impacto backend |
 |---|---|---|---|
-| F042-D1 | Shape final de AccountConnectionData | PENDIENTE | Define DTO, entity y mapper |
-| F042-D2 | providerName enum fijo vs string libre | PENDIENTE | Define validaciones y migraciones futuras |
-| F042-D3 | Alcance V1 solo GET/DELETE o tambien POST | PENDIENTE | Define superficie de API |
-| F042-D4 | Semantica UX de DELETE idempotente | PENDIENTE | Define codigos/respuestas y mensajes |
+| F042-D1 | Shape final de AccountConnectionData | APROBADA | Define DTO, entity y mapper |
+| F042-D2 | providerName enum fijo vs string libre | APROBADA | Define validaciones y migraciones futuras |
+| F042-D3 | Alcance V1 solo GET/DELETE o tambien POST | APROBADA | Define superficie de API |
+| F042-D4 | Semantica UX de DELETE idempotente | APROBADA | Define codigos/respuestas y mensajes |
 
 ## 4.2 Propuesta de shape V1 para UI
 
@@ -97,17 +97,16 @@ Campos recomendados V1 (si estan disponibles sin costo alto):
    - Si el recurso no existe o ya fue revocado, frontend mantiene mensaje de exito neutral.
    - Frontend siempre hace refetch de la lista tras DELETE exitoso.
 
-## 4.4 Decisiones que Frontend debe aprobar
+## 4.4 Decisiones aprobadas por Frontend
 
-1. Provider catalog:
-   - Opcion A (recomendada): enum cerrado en backend (GOOGLE, GITHUB, MICROSOFT, SLACK).
-   - Opcion B: string libre + catalogo de iconos en frontend.
-2. Alcance endpoint:
-   - Opcion A (recomendada V1): GET + DELETE solamente.
-   - Opcion B: agregar POST si UI incorpora vinculacion manual en settings.
-3. Orden de listado:
-   - Opcion A: connectedAt DESC.
-   - Opcion B: providerName ASC.
+1. Provider catalog (APROBADA):
+   - Opcion A: enum cerrado en backend (GOOGLE, GITHUB, MICROSOFT, SLACK).
+   - Politica de compatibilidad frontend: si llega un provider fuera de catalogo, UI lo mostrara como string sin bloquear render.
+2. Alcance endpoint V1 (APROBADA):
+   - GET + DELETE + POST /{provider}/link.
+   - Justificacion: la pantalla de conexiones ya expone accion de vinculacion, por lo que POST no puede quedar fuera de V1.
+3. Orden de listado (APROBADA):
+   - connectedAt DESC.
 
 ## 4.5 Criterio de cierre F-042
 
@@ -221,9 +220,9 @@ Frontend debe definir como conviven ambos sin confusion para usuario final.
 
 | Item | Decision | Responsable | Fecha limite sugerida | Estado |
 |---|---|---|---|---|
-| F-042 | Shape AccountConnectionData | Frontend Lead | 2026-04-05 | PENDIENTE |
-| F-042 | providerName enum vs string | Frontend + Backend | 2026-04-05 | PENDIENTE |
-| F-042 | Alcance endpoints V1 | Frontend Product + Backend | 2026-04-05 | PENDIENTE |
+| F-042 | Shape AccountConnectionData | Frontend Lead | 2026-04-05 | APROBADA |
+| F-042 | providerName enum vs string | Frontend + Backend | 2026-04-05 | APROBADA |
+| F-042 | Alcance endpoints V1 | Frontend Product + Backend | 2026-04-05 | APROBADA |
 | F-043/T-104 | Mapa de rutas publicas | Frontend | 2026-04-05 | PENDIENTE |
 | F-043/T-104 | Copy anti-enumeracion | Frontend UX/Producto | 2026-04-05 | PENDIENTE |
 | T-110 | Filtros y columnas V1 | Frontend + Backend | 2026-04-05 | PENDIENTE |

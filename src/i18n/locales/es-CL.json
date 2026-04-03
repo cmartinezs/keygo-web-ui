@@ -28,6 +28,11 @@
     "unknownMessage": "No pudimos completar la solicitud en este momento. Vuelve a intentarlo en unos segundos.",
     "networkMessage": "No pudimos completar la comunicacion con el servidor. Reintentaremos automaticamente; si persiste, vuelve a intentarlo en unos segundos."
   },
+  "appErrorBoundary": {
+    "title": "Ocurrio un error inesperado",
+    "description": "Puedes volver al dashboard para continuar trabajando. Si el problema persiste, recarga la pagina.",
+    "action": "Volver al dashboard"
+  },
   "theme": {
     "system": "Sistema",
     "light": "Claro",
@@ -204,6 +209,12 @@
     "autoRenew": "Renovacion automatica",
     "autoRenewActive": "Activa",
     "autoRenewInactive": "Inactiva",
+    "cancelRenewalHint": "Si cancelas, la suscripcion seguira activa hasta el fin del periodo actual y no se renovara automaticamente.",
+    "cancelRenewalAction": "Cancelar renovacion",
+    "cancelRenewalLoading": "Cancelando renovacion...",
+    "cancelRenewalConfirm": "Deseas cancelar la renovacion automatica de esta suscripcion?",
+    "cancelRenewalSuccess": "Renovacion automatica cancelada correctamente.",
+    "cancelRenewalScheduled": "La renovacion automatica ya esta cancelada para el fin del periodo actual.",
     "issueDate": "Emision",
     "dueDate": "Vencimiento"
   },
@@ -467,6 +478,33 @@
       "recentVerifications": "Verificaciones recientes"
     }
   },
+  "platformStats": {
+    "title": "API de plataforma",
+    "subtitle": "Resumen rapido de indicadores globales expuestos por la API administrativa.",
+    "sectionAria": "Resumen de estadisticas de plataforma",
+    "loading": "Cargando metricas...",
+    "loadError": "No fue posible cargar las estadisticas de plataforma.",
+    "recoveryLabel": "estadisticas de plataforma",
+    "cards": {
+      "loadingDescription": "Sincronizando datos desde el backend.",
+      "tenants": {
+        "label": "Tenants",
+        "description": "{{active}} activos actualmente."
+      },
+      "users": {
+        "label": "Usuarios",
+        "description": "{{active}} activos actualmente."
+      },
+      "apps": {
+        "label": "Apps",
+        "description": "Aplicaciones cliente registradas en plataforma."
+      },
+      "keys": {
+        "label": "Claves activas",
+        "description": "Llaves de firma habilitadas para emision de tokens."
+      }
+    }
+  },
   "userDashboardMyAccess": {
     "title": "Mi acceso",
     "subtitle": "Aplicaciones y roles asignados a tu cuenta en el tenant {{tenantSlug}}.",
@@ -539,7 +577,23 @@
     },
     "activity": {
       "title": "Actividad",
-      "body": "Aqui se integrara la linea de tiempo de actividad de cuenta cuando exista contrato backend para consumo self-service."
+      "loading": "Cargando actividad de cuenta...",
+      "errorFallback": "No fue posible cargar la actividad de cuenta.",
+      "empty": "No hay actividad reciente para mostrar.",
+      "listAria": "Actividad reciente de sesiones",
+      "currentSessionOpen": "Abierta",
+      "currentSessionNotFound": "No detectada",
+      "currentSessionBadge": "Sesion actual",
+      "cards": {
+        "activeSessions": "Sesiones activas",
+        "currentSession": "Sesion actual",
+        "appsWithAccess": "Apps con acceso"
+      },
+      "columns": {
+        "ipAddress": "IP",
+        "lastAccess": "Ultimo acceso",
+        "expiresAt": "Expira"
+      }
     },
     "toasts": {
       "updated": "Perfil actualizado correctamente"
@@ -549,7 +603,8 @@
     },
     "recovery": {
       "profileLabel": "perfil",
-      "accessLabel": "accesos"
+      "accessLabel": "accesos",
+      "sessionsLabel": "sesiones de cuenta"
     }
   },
   "accountNotifications": {

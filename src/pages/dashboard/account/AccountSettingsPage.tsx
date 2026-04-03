@@ -1,17 +1,22 @@
 import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useSearchParams } from 'react-router-dom'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { SelectDropdown } from '@/components/SelectDropdown'
-import { BILLING_QUERY_KEYS, getActiveSubscription, listInvoices } from '@/api/billing'
+import { BILLING_QUERY_KEYS, cancelSubscription, getActiveSubscription, listInvoices } from '@/api/billing'
 import { TENANT, CLIENT_ID } from '@/api/client'
+import { getAppApiError } from '@/api/errorNormalizer'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import type { SupportedLocale } from '@/i18n/constants'
 import { useLocale } from '@/i18n/useLocale'
-import { runGetWithRecovery } from '@/lib/network/recovery'
-import { IconShield, IconBell, IconLink, IconCreditCard, IconFlagChile, IconFlagUs } from '@/components/icons'
+import {
+  isRequestTimeout,
+  notifyMutationTimeout,
+  runGetWithRecovery,
+} from '@/lib/network/recovery'
+import { IconShield, IconBell, IconLink, IconCreditCard, IconFlagChile, IconFlagUs, IconGlobe } from '@/components/icons'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -20,9 +25,8 @@ import {
 import { ChangePasswordForm } from './ChangePasswordForm'
 import { ConnectionsPanel } from './ConnectionsPanel'
 import { NotificationsPreferencesForm } from './NotificationsPreferencesForm'
-import { SessionsList } from './SessionsList'
 
-type SettingsTab = 'security' | 'notifications' | 'connections' | 'billing'
+type SettingsTab = 'security' | 'notifications' | 'connections' | 'language' | 'billing'
 
 interface SettingsTabOption {
   key: SettingsTab
@@ -45,6 +49,7 @@ const LOCALE_ICONS: Record<SupportedLocale, ReactNode> = {
 
 export default function AccountSettingsPage() {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const { locale, setLocale, resetToDeviceLocale, supportedLocales, isAutoDetected } = useLocale()
   const user = useCurrentUser()
   const [searchParams] = useSearchParams()
@@ -52,10 +57,11 @@ export default function AccountSettingsPage() {
   const activeRole = user?.activeRole ?? null
   const canViewBilling = activeRole === 'ADMIN_TENANT'
   const settingsTabs: SettingsTabOption[] = useMemo(() => [
-    { key: 'security', label: t('accountSettings.security'), icon: <IconShield className="w-5 h-5" aria-hidden="true" /> },
-    { key: 'notifications', label: t('accountSettings.notifications'), icon: <IconBell className="w-5 h-5" aria-hidden="true" /> },
-    { key: 'connections', label: t('accountSettings.connections'), icon: <IconLink className="w-5 h-5" aria-hidden="true" /> },
-    { key: 'billing', label: t('accountSettings.billing'), icon: <IconCreditCard className="w-5 h-5" aria-hidden="true" /> },
+    { key: 'security', label: t('accountSettings.security'), icon: <IconShield /> },
+    { key: 'notifications', label: t('accountSettings.notifications'), icon: <IconBell /> },
+    { key: 'connections', label: t('accountSettings.connections'), icon: <IconLink /> },
+    { key: 'language', label: t('accountSettings.languageTitle'), icon: <IconGlobe /> },
+    { key: 'billing', label: t('accountSettings.billing'), icon: <IconCreditCard /> },
   ], [t])
   const initialTab = searchParams.get('tab')
   const normalizedInitialTab: SettingsTab = initialTab && settingsTabs.some((tab) => tab.key === initialTab)
@@ -100,6 +106,25 @@ export default function AccountSettingsPage() {
   })
 
   const invoicesPreview = useMemo(() => (invoicesQuery.data ?? []).slice(0, 5), [invoicesQuery.data])
+  const cancelRenewalMutation = useMutation({
+    mutationFn: () => cancelSubscription(tenantSlug, CLIENT_ID),
+    onSuccess: async () => {
+      toast.success(t('accountSettings.cancelRenewalSuccess'))
+      await queryClient.invalidateQueries({
+        queryKey: BILLING_QUERY_KEYS.subscription(tenantSlug, CLIENT_ID),
+      })
+      await queryClient.invalidateQueries({
+        queryKey: BILLING_QUERY_KEYS.invoices(tenantSlug, CLIENT_ID),
+      })
+    },
+    onError: (error) => {
+      if (isRequestTimeout(error)) {
+        notifyMutationTimeout('cancelacion de renovacion')
+        return
+      }
+      toast.error(getAppApiError(error).clientMessage)
+    },
+  })
   const localeStatusLabel = isAutoDetected
     ? t('accountSettings.languageAuto')
     : t('accountSettings.languageManual')
@@ -118,6 +143,15 @@ export default function AccountSettingsPage() {
     toast.success(t('accountSettings.languageAuto'))
   }
 
+  function handleCancelRenewal() {
+    if (!subscriptionQuery.data || cancelRenewalMutation.isPending) return
+
+    const confirmed = window.confirm(t('accountSettings.cancelRenewalConfirm'))
+    if (!confirmed) return
+
+    cancelRenewalMutation.mutate()
+  }
+
   return (
     <div className="mx-auto max-w-screen-xl space-y-6">
       <header className="space-y-1">
@@ -126,52 +160,6 @@ export default function AccountSettingsPage() {
           {t('accountSettings.subtitle')}
         </p>
       </header>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-900" aria-label={t('accountSettings.languageTitle')}>
-        <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('accountSettings.languageTitle')}</h2>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{t('accountSettings.languageDescription')}</p>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('accountSettings.languageAutoHelper')}</p>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            {t('common.language')}
-          </span>
-          <SelectDropdown
-            value={locale as SupportedLocale}
-            onChange={(nextLocale) => {
-              void handleLanguageChange(nextLocale)
-            }}
-            options={supportedLocales.map((option) => ({
-              value: option.value as SupportedLocale,
-              label: option.label,
-              icon: LOCALE_ICONS[option.value as SupportedLocale],
-            }))}
-            label={t('common.language')}
-            icon={LOCALE_ICONS[locale as SupportedLocale]}
-            ariaLabel={t('common.language')}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              void handleResetToDeviceLocale()
-            }}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/20 dark:text-slate-200 dark:hover:bg-white/10"
-          >
-            {t('accountSettings.languageAuto')}
-          </button>
-        </div>
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{localeStatusLabel}</p>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-slate-900" aria-label={t('accountSettings.faqCtaTitle')}>
-        <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('accountSettings.faqCtaTitle')}</h2>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{t('accountSettings.faqCtaBody')}</p>
-        <Link
-          to="/dashboard/faq"
-          className="mt-4 inline-flex items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/20 dark:text-slate-200 dark:hover:bg-white/10"
-        >
-          {t('accountSettings.faqCtaAction')}
-        </Link>
-      </section>
 
       <section aria-label={t('accountSettings.tabsLabel')} className="rounded-xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-slate-900">
         <div role="tablist" aria-label={t('accountSettings.tabsAria')} className="flex flex-wrap gap-2">
@@ -205,7 +193,6 @@ export default function AccountSettingsPage() {
         className="space-y-4"
       >
         <ChangePasswordForm />
-        <SessionsList />
       </section>
 
       <section
@@ -226,6 +213,49 @@ export default function AccountSettingsPage() {
         className="space-y-4"
       >
         <ConnectionsPanel />
+      </section>
+
+      <section
+        id="settings-panel-language"
+        role="tabpanel"
+        aria-labelledby="settings-tab-language"
+        hidden={activeTab !== 'language'}
+        className="space-y-4"
+      >
+        <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-slate-900">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('accountSettings.languageTitle')}</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{t('accountSettings.languageDescription')}</p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('accountSettings.languageAutoHelper')}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+              {t('common.language')}
+            </span>
+            <SelectDropdown
+              value={locale as SupportedLocale}
+              onChange={(nextLocale) => {
+                void handleLanguageChange(nextLocale)
+              }}
+              options={supportedLocales.map((option) => ({
+                value: option.value as SupportedLocale,
+                label: option.label,
+                icon: LOCALE_ICONS[option.value as SupportedLocale],
+              }))}
+              label={t('common.language')}
+              icon={LOCALE_ICONS[locale as SupportedLocale]}
+              ariaLabel={t('common.language')}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                void handleResetToDeviceLocale()
+              }}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-white/20 dark:text-slate-200 dark:hover:bg-white/10"
+            >
+              {t('accountSettings.languageAuto')}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{localeStatusLabel}</p>
+        </article>
       </section>
 
       <section
@@ -283,6 +313,31 @@ export default function AccountSettingsPage() {
                     </dd>
                   </div>
                 </dl>
+
+                {subscriptionQuery.data.auto_renew && !subscriptionQuery.data.cancel_at_period_end ? (
+                  <div className="mt-4 border-t border-slate-200 pt-4 dark:border-white/10">
+                    <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
+                      {t('accountSettings.cancelRenewalHint')}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleCancelRenewal}
+                      disabled={cancelRenewalMutation.isPending}
+                      aria-busy={cancelRenewalMutation.isPending}
+                      className="rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
+                    >
+                      {cancelRenewalMutation.isPending
+                        ? t('accountSettings.cancelRenewalLoading')
+                        : t('accountSettings.cancelRenewalAction')}
+                    </button>
+                  </div>
+                ) : null}
+
+                {subscriptionQuery.data.cancel_at_period_end ? (
+                  <p role="status" aria-live="polite" className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-300">
+                    {t('accountSettings.cancelRenewalScheduled')}
+                  </p>
+                ) : null}
               </article>
             ) : null}
 

@@ -29,8 +29,10 @@
 | Ver preferencias de notificacion | GET /api/v1/tenants/{tenantSlug}/account/notification-preferences | Si | Si | Si | OK | src/api/account.ts, src/pages/dashboard/account/NotificationsPreferencesForm.tsx |
 | Editar preferencias de notificacion | PATCH /api/v1/tenants/{tenantSlug}/account/notification-preferences | Si | Si | Si | OK | src/api/account.ts, src/pages/dashboard/account/NotificationsPreferencesForm.tsx |
 | Ver accesos propios (apps/roles) | GET /api/v1/tenants/{tenantSlug}/account/access | Si | Si | Si | OK | src/api/account.ts, src/pages/dashboard/user/UserProfilePage.tsx |
-| Olvide mi contrasena | POST /api/v1/tenants/keygo/account/forgot-password | No | No | No | GAP_BACKEND | docs/FRONTEND_DEVELOPER_GUIDE.md (seccion 10.4) |
-| Reset por codigo de recuperacion | POST /api/v1/tenants/keygo/account/reset-password | No | No | No | GAP_BACKEND | docs/FRONTEND_DEVELOPER_GUIDE.md (seccion 10.4) |
+| Actividad en Mi cuenta (tab Activity) | GET /api/v1/tenants/{tenantSlug}/account/sessions + GET /api/v1/tenants/{tenantSlug}/account/access | Si | Si | Si | OK | src/api/account.ts, src/pages/dashboard/user/UserProfilePage.tsx |
+| Olvide mi contrasena | POST /api/v1/tenants/keygo/account/forgot-password | Si | Si | Si | OK | src/api/account.ts, src/pages/login/ForgotPasswordPage.tsx, src/App.tsx |
+| Recuperar contrasena por token | POST /api/v1/tenants/keygo/account/recover-password | Si | Si | Si | OK | src/api/account.ts, src/pages/login/RecoverPasswordPage.tsx, src/App.tsx |
+| Reset con contrasena temporal | POST /api/v1/tenants/keygo/account/reset-password | Si | Si | Si | OK | src/api/account.ts, src/pages/login/ResetPasswordPage.tsx, src/App.tsx |
 | Conexiones externas (listar/vincular/desvincular) | /api/v1/tenants/{tenantSlug}/account/connections* | No | Si | Si | TEMP_MSW | src/api/account.ts, src/mocks/handlers.ts, src/pages/dashboard/account/ConnectionsPanel.tsx |
 
 ## 2) Usuarios administrados por tenant (ADMIN / ADMIN_TENANT)
@@ -61,7 +63,9 @@
 | Caso funcional | Endpoint esperado | OpenAPI | API Front | UI | Estado | Evidencia |
 |---|---|---|---|---|---|---|
 | Dashboard admin agregado | GET /api/v1/admin/platform/dashboard | Si | Si | Si | OK | src/api/dashboard.ts, src/pages/admin/DashboardPage.tsx |
-| Estadisticas plataforma | GET /api/v1/platform/stats | Si | Si | No (no usado en pantalla actual) | GAP_UI | src/api/serviceInfo.ts |
+| Home dashboard ADMIN_TENANT (usuarios/apps/accesos del dia) | GET /api/v1/tenants/{tenantSlug}/users + GET /api/v1/tenants/{tenantSlug}/apps + GET /api/v1/tenants/{tenantSlug}/account/sessions | Si | Si | Si | OK | src/api/users.ts, src/api/clientApps.ts, src/api/account.ts, src/pages/dashboard/DashboardHomePage.tsx |
+| Home dashboard USER_TENANT (sesiones/ultimo acceso/apps con acceso) | GET /api/v1/tenants/{tenantSlug}/account/sessions + GET /api/v1/tenants/{tenantSlug}/account/access | Si | Si | Si | OK | src/api/account.ts, src/pages/dashboard/DashboardHomePage.tsx |
+| Estadisticas plataforma | GET /api/v1/platform/stats | Si | Si | Si | OK | src/api/serviceInfo.ts, src/pages/admin/PlatformStatsPage.tsx, src/App.tsx |
 | Auditoria global plataforma | GET /api/v1/platform/audit | No | No | No | GAP_BACKEND | docs/BACKLOG.md, docs/api-docs.json (sin path) |
 
 ## 5) Registro y autenticacion
@@ -91,7 +95,7 @@
 | Reanudar onboarding contrato | GET /api/v1/billing/contracts/{contractId}/resume | Si | Si | Si | OK | src/api/billing.ts, src/pages/register/ResumeContractPage.tsx |
 | Suscripcion activa tenant | GET /api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/subscription | Si | Si | Si | OK | src/api/billing.ts, src/pages/dashboard/account/AccountSettingsPage.tsx |
 | Facturas tenant | GET /api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/invoices | Si | Si | Si | OK | src/api/billing.ts, src/pages/dashboard/account/AccountSettingsPage.tsx |
-| Cancelar renovacion | POST /api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/subscription/cancel | Si | Si | Parcial | GAP_UI | src/api/billing.ts |
+| Cancelar renovacion | POST /api/v1/tenants/{tenantSlug}/apps/{clientId}/billing/subscription/cancel | Si | Si | Si | OK | src/api/billing.ts, src/pages/dashboard/account/AccountSettingsPage.tsx |
 | Pago real PSP produccion | POST /billing/contracts/{id}/pay (definir) | No | No | No | GAP_BACKEND | docs/BACKLOG.md, src/pages/register/steps/PaymentStep.tsx |
 
 ## 7) Mapa de confusiones comunes (scope)

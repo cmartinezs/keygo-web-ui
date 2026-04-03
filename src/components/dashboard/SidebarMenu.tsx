@@ -5,6 +5,7 @@ export interface SidebarMenuItem {
   to: string
   icon: ReactNode
   label: string
+  exact?: boolean
 }
 
 export interface SidebarMenuSection {
@@ -45,6 +46,7 @@ function SidebarNavItem({ item, collapsed, onNavigate }: SidebarNavItemProps) {
   return (
     <NavLink
       to={item.to}
+      end={item.exact}
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>

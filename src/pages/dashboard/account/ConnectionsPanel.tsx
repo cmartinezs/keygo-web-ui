@@ -42,8 +42,8 @@ function formatDateSafe(value: string | null | undefined, locale: string): strin
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
-function normalizeProvider(provider: string): string {
-  return provider.trim().toLowerCase()
+function normalizeProvider(provider: string | null | undefined): string {
+  return (provider ?? '').trim().toLowerCase()
 }
 
 function ConnectionItem({
@@ -64,7 +64,7 @@ function ConnectionItem({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-slate-900 dark:text-white capitalize">
-            {connection.provider || '-'}
+            {connection.provider_name || '-'}
           </p>
           <dl className="mt-2 grid grid-cols-1 gap-y-1 text-xs sm:grid-cols-2 sm:gap-x-4">
             <div>
@@ -73,11 +73,11 @@ function ConnectionItem({
             </div>
             <div>
               <dt className="text-slate-500 dark:text-slate-400">{t('accountConnections.providerUserId')}</dt>
-              <dd className="truncate text-slate-900 dark:text-white">{connection.provider_user_id || '-'}</dd>
+              <dd className="truncate text-slate-900 dark:text-white">{connection.display_name || '-'}</dd>
             </div>
             <div>
               <dt className="text-slate-500 dark:text-slate-400">{t('accountConnections.linkedAt')}</dt>
-              <dd className="text-slate-900 dark:text-white">{formatDateSafe(connection.linked_at, locale)}</dd>
+              <dd className="text-slate-900 dark:text-white">{formatDateSafe(connection.connected_at, locale)}</dd>
             </div>
             <div>
               <dt className="text-slate-500 dark:text-slate-400">{t('accountConnections.lastUsedAt')}</dt>
@@ -160,7 +160,7 @@ export function ConnectionsPanel() {
   })
 
   const linkedProviders = useMemo(
-    () => new Set((connectionsQuery.data ?? []).map((c) => normalizeProvider(c.provider))),
+    () => new Set((connectionsQuery.data ?? []).map((c) => normalizeProvider(c.provider_name))),
     [connectionsQuery.data],
   )
 
@@ -227,7 +227,7 @@ export function ConnectionsPanel() {
           ) : (
             <ul aria-label={t('accountConnections.listAria')} className="space-y-3">
               {(connectionsQuery.data ?? []).map((connection, index) => {
-                const key = connection.id?.trim() || `connection-${index}-${connection.provider}`
+                const key = connection.id?.trim() || `connection-${index}-${connection.provider_name}`
                 return (
                   <ConnectionItem
                     key={key}

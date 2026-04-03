@@ -134,6 +134,20 @@ export interface RevokeAccountSessionResult {
   already_closed: boolean
 }
 
+/** Respuesta de PUT /tenants/{slug}/users/{userId}/suspend ⏳ pendiente backend (T-033) */
+export interface SuspendUserResult {
+  user_id: string
+  status: string
+  already_suspended: boolean
+}
+
+/** Respuesta de PUT /tenants/{slug}/users/{userId}/activate ⏳ pendiente backend (T-033) */
+export interface ActivateUserResult {
+  user_id: string
+  status: string
+  already_active: boolean
+}
+
 /** Preferencias de notificacion del usuario autenticado */
 export interface NotificationPreferencesData {
   security_alerts_email: boolean
@@ -162,31 +176,64 @@ export interface AccountAccessData {
   roles: string[]
 }
 
-/** Conexion externa vinculada (temporal hasta contrato OpenAPI oficial) */
+/** Catalogo V1 de proveedores soportados para conexiones de cuenta (F-042). */
+export type AccountConnectionProvider = 'GOOGLE' | 'GITHUB' | 'MICROSOFT' | 'SLACK'
+
+/** Conexion externa vinculada en formato interno frontend (snake_case). */
 export interface AccountConnectionData {
   id: string
-  provider: string
-  provider_user_id?: string
+  provider_name: AccountConnectionProvider | string
   status: string
-  linked_at: string
+  connected_at: string
+  display_name?: string | null
+  avatar_url?: string | null
+  scopes?: string[]
   last_used_at?: string | null
 }
 
-/** Request de vinculacion para /account/connections/{provider}/link (temporal) */
+/** Request de vinculacion para /account/connections/{provider}/link. */
 export interface LinkAccountConnectionRequest {
   authorization_code?: string
   state?: string
 }
 
-/** Respuesta de POST /account/connections/{provider}/link (temporal) */
+/** Respuesta de POST /account/connections/{provider}/link. */
 export interface LinkAccountConnectionResult {
   linked: boolean
   connection: AccountConnectionData
 }
 
-/** Respuesta de DELETE /account/connections/{connectionId} (temporal) */
+/** Respuesta de DELETE /account/connections/{connectionId}. */
 export interface UnlinkAccountConnectionResult {
   unlinked: boolean
+}
+
+/** Wire: objeto de conexion compatible snake_case/camelCase durante transicion F-042. */
+export interface WireAccountConnectionData {
+  id: string
+  status: string
+  provider?: string
+  provider_name?: string
+  providerName?: string
+  provider_user_id?: string
+  providerUserId?: string
+  linked_at?: string
+  linkedAt?: string
+  connected_at?: string
+  connectedAt?: string
+  display_name?: string | null
+  displayName?: string | null
+  avatar_url?: string | null
+  avatarUrl?: string | null
+  scopes?: string[]
+  last_used_at?: string | null
+  lastUsedAt?: string | null
+}
+
+/** Wire: respuesta de POST /account/connections/{provider}/link. */
+export interface WireLinkAccountConnectionResult {
+  linked: boolean
+  connection: WireAccountConnectionData
 }
 
 // ── Wire types — formato exacto del backend (camelCase) ───────────────────────

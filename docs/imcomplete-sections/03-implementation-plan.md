@@ -36,13 +36,13 @@ la condición que los traería al alcance en el futuro.
 | Pago real en producción (`/billing/contracts/{id}/pay`) | §4.1 | A | Requiere decisión de negocio sobre proveedor de pago (Stripe, MercadoPago) y configuración de cuenta PSP | Proveedor PSP seleccionado + credenciales disponibles → T-084 |
 | Sección "SDKs e integraciones" en landing | §4.1 | B | Contenido de marketing/producto; no depende de ningún endpoint backend | Definición de contenido por parte de producto |
 | Módulos placeholder `/dashboard/feature/:featureId` | §4.2 | C (y A/B en algunos casos) | Trabajo exclusivamente de UI (wiring de rutas existentes); cada feature tiene su propio backlog | Priorización por negocio de qué módulo conectar primero |
-| Métricas home dashboard `ADMIN_TENANT` (tarjetas con "--") | §4.2 | C + B | Requiere definir qué métricas exponer a nivel tenant-admin; no existe endpoint de stats tenant-scoped | Definir y aprobar contrato de `GET /api/v1/tenants/{slug}/stats` (ver T-070 en ROADMAP) |
-| Métricas home dashboard `USER_TENANT` (sesiones, último acceso, alertas) | §4.2 | C + B | Requiere fuentes backend de actividad/alertas personales; no hay endpoint definido | Definir y aprobar contrato de actividad personal; prerequisito: T-076 (audit events) |
+| Métricas home dashboard `ADMIN_TENANT` (tarjetas con "--") | §4.2 | C + B | Gap UI resuelto en frontend (2026-04-03) con datos reales desde endpoints existentes (`users`, `apps`, `account/sessions`) | No requiere backend adicional en esta fase; evolución futura opcional con `GET /api/v1/tenants/{slug}/stats` |
+| Métricas home dashboard `USER_TENANT` (sesiones, último acceso, alertas) | §4.2 | C + B | Gap UI resuelto en frontend (2026-04-03) con datos reales desde `account/sessions` y `account/access` | No requiere backend adicional en esta fase; para alertas avanzadas, definir contrato de actividad personal (T-076) |
 | Selector de rango Hoy/7/30 días en header dashboard admin | §4.2 | B (posible A) | Dashboard admin ya acepta datos agregados sin parámetro de rango; parametrizar requiere definición funcional | Confirmar si el endpoint existente `GET /admin/platform/dashboard` necesita `?from=&to=` o si es un filtro puramente visual |
 | Acciones rápidas en header dashboard admin | §4.2 | B + C | No existe definición de qué acciones exponer ni a qué endpoints apuntarían | Definición de producto: lista de acciones + endpoints destino |
-| Mi cuenta > pestaña "Actividad" | §4.3 | C + B | La tab existe en UI pero muestra placeholder; requiere fuente oficial de eventos de actividad personal | Implementar T-076 (tabla `audit_events`) o definir contrato alternativo de actividad personal |
-| `GET /platform/stats` sin wiring en UI | §4.4 | GAP_UI | Backend existe y devuelve datos; solo falta que `src/api/serviceInfo.ts` se consuma en una pantalla | Trabajo de UI: conectar datos ya disponibles en la pantalla de estadísticas |
-| Cancelar renovación de suscripción sin wiring | §6 | GAP_UI | `POST /billing/subscription/cancel` existe en OpenAPI; solo falta botón/confirmación en la pantalla de suscripción | Trabajo de UI: agregar confirmación en `AccountSettingsPage.tsx` |
+| Mi cuenta > pestaña "Actividad" | §4.3 | C + B | Gap UI base resuelto en frontend (2026-04-03) con sesiones de cuenta y resumen de accesos; la timeline avanzada sigue dependiente de contrato dedicado | Para evolución, implementar T-076 (tabla `audit_events`) o contrato alternativo de actividad personal |
+| `GET /platform/stats` sin wiring en UI | §4.4 | GAP_UI (resuelto en frontend 2026-04-03) | Backend existe y devuelve datos; wiring implementado en `PlatformStatsPage` (`/dashboard/feature/api`) | No requiere trabajo backend adicional |
+| Cancelar renovación de suscripción sin wiring | §6 | GAP_UI (resuelto en frontend 2026-04-03) | `POST /billing/subscription/cancel` existe en OpenAPI y ya fue conectado en UI con confirmación | No requiere trabajo backend adicional |
 
 ---
 
@@ -338,9 +338,9 @@ ver las sesiones activas de cualquier usuario en el tenant, sin necesidad de aut
 ## Fase 6 — Contrato e implementación de conexiones de cuenta (F-042)
 
 **Objetivo:** Reemplazar el mock MSW temporal de `ConnectionsPanel.tsx` con un contrato backend
-oficial. **Esta fase requiere aprobación del diseño de datos antes de implementar.**
+oficial. Las definiciones frontend del contrato ya quedaron aprobadas en `04-frontend-definitions-for-backend-implementation.md`.
 
-**Prerrequisito:** Contrato acordado con equipo de UI sobre el modelo de datos.
+**Prerrequisito:** Publicar contrato OpenAPI final y habilitar endpoints productivos.
 
 ### Diseño propuesto del modelo
 
@@ -371,12 +371,10 @@ CREATE INDEX idx_connections_user_tenant ON account_connections(user_id, tenant_
 | Method | Path | Descripción |
 |---|---|---|
 | `GET` | `/account/connections` | Lista conexiones del usuario autenticado |
+| `POST` | `/account/connections/{provider}/link` | Vincula conexión con proveedor externo |
 | `DELETE` | `/account/connections/{connectionId}` | Revoca una conexión (idempotente) |
 
-> `POST /account/connections` no se implementa en este plan — las conexiones se crean
-> durante el flujo OAuth2 con el proveedor externo (fuera del alcance actual).
-
-### Artefactos (pendientes de aprobación de diseño)
+### Artefactos (pendientes de implementación backend)
 
 | Artefacto | Módulo | Acción |
 |---|---|---|
@@ -394,10 +392,9 @@ CREATE INDEX idx_connections_user_tenant ON account_connections(user_id, tenant_
 
 1. Revisar los mocks en `src/mocks/handlers.ts` y el componente `ConnectionsPanel.tsx` en `keygo-ui`
    para validar que el modelo propuesto satisface todos los campos que la UI espera.
-2. Acordar con el equipo UI si el `provider_name` es un enum fijo o string libre.
-3. Confirmar si se necesita `POST /connections` para flujo de vinculación manual o si siempre
-   es vía redirect OAuth2 externo.
-4. Aprobar la migración V23 y el contrato OpenAPI antes de iniciar el código.
+2. Implementar catalogo de `provider_name` como enum V1 (`GOOGLE`, `GITHUB`, `MICROSOFT`, `SLACK`) con tolerancia a nuevos valores para no romper UI.
+3. Incluir `POST /connections/{provider}/link` en OpenAPI V1 para cubrir acción de vinculación existente en settings.
+4. Publicar migración V23 y contrato OpenAPI antes de iniciar integración final en UI.
 
 ---
 
@@ -430,7 +427,7 @@ CREATE INDEX idx_connections_user_tenant ON account_connections(user_id, tenant_
 | 3 | Forgot/Recover password self-service (F-043) + V22 | Pendiente |
 | 4 | Suspender/Activar usuario del tenant (T-033) | Pendiente |
 | 5 | Sesiones por userId admin (T-110) | Pendiente |
-| 6 | Contrato e implementación de conexiones (F-042) + V23 | Pendiente diseño |
+| 6 | Contrato e implementación de conexiones (F-042) + V23 | Pendiente implementación backend |
 | 7 | Documentación y cierre | Pendiente |
 
 ---

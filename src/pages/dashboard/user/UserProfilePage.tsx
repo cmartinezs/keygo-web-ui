@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { ACCOUNT_QUERY_KEYS, getAccountAccess, getProfile, updateProfile } from '@/api/account'
+import { ACCOUNT_QUERY_KEYS, getAccountAccess, getProfile, getSessions, updateProfile } from '@/api/account'
 import { TENANT } from '@/api/client'
 import { getAppApiError } from '@/api/errorNormalizer'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
@@ -45,15 +45,14 @@ function createProfileSchema() {
   })
 }
 
-type ProfileFormData = {
-  first_name?: string
-  last_name?: string
-  phone_number?: string
-  locale?: string
-  zoneinfo?: string
-  website?: string
-  birthdate?: string
-  profile_picture_url?: string
+type ProfileFormData = z.infer<ReturnType<typeof createProfileSchema>>
+
+function formatDateTime(value: string, locale: string): string {
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) {
+    return '--'
+  }
+  return parsed.toLocaleString(locale)
 }
 
 export default function UserProfilePage() {
@@ -64,10 +63,10 @@ export default function UserProfilePage() {
   const [activeTab, setActiveTab] = useState<AccountTab>('summary')
   const profileSchema = createProfileSchema()
   const accountTabs: Array<AccountTabOption> = [
-    { key: 'summary', label: t('userDashboardProfile.tabs.summary'), icon: <IconDashboard className="w-5 h-5" aria-hidden="true" /> },
-    { key: 'profile', label: t('userDashboardProfile.tabs.profile'), icon: <IconUser className="w-5 h-5" aria-hidden="true" /> },
-    { key: 'access', label: t('userDashboardProfile.tabs.access'), icon: <IconShield className="w-5 h-5" aria-hidden="true" /> },
-    { key: 'activity', label: t('userDashboardProfile.tabs.activity'), icon: <IconClock className="w-5 h-5" aria-hidden="true" /> },
+    { key: 'summary', label: t('userDashboardProfile.tabs.summary'), icon: <span aria-hidden="true"><IconDashboard /></span> },
+    { key: 'profile', label: t('userDashboardProfile.tabs.profile'), icon: <span aria-hidden="true"><IconUser /></span> },
+    { key: 'access', label: t('userDashboardProfile.tabs.access'), icon: <span aria-hidden="true"><IconShield /></span> },
+    { key: 'activity', label: t('userDashboardProfile.tabs.activity'), icon: <span aria-hidden="true"><IconClock /></span> },
   ]
 
   async function fetchProfileWithRecovery(signal: AbortSignal) {
@@ -100,6 +99,21 @@ export default function UserProfilePage() {
     })
   }
 
+  async function fetchSessionsWithRecovery(signal: AbortSignal) {
+    return runGetWithRecovery({
+      signal,
+      label: t('userDashboardProfile.recovery.sessionsLabel'),
+      timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+      retryDelayMs: NETWORK_RETRY_DELAY_MS,
+      maxRetries: NETWORK_MAX_RETRIES,
+      query: () =>
+        getSessions(tenantSlug, {
+          signal,
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        }),
+    })
+  }
+
   const profileQuery = useQuery({
     queryKey: ACCOUNT_QUERY_KEYS.profile(tenantSlug),
     queryFn: ({ signal }) => fetchProfileWithRecovery(signal),
@@ -109,6 +123,12 @@ export default function UserProfilePage() {
   const accessQuery = useQuery({
     queryKey: ACCOUNT_QUERY_KEYS.access(tenantSlug),
     queryFn: ({ signal }) => fetchAccessWithRecovery(signal),
+    retry: false,
+  })
+
+  const sessionsQuery = useQuery({
+    queryKey: ACCOUNT_QUERY_KEYS.sessions(tenantSlug),
+    queryFn: ({ signal }) => fetchSessionsWithRecovery(signal),
     retry: false,
   })
 
@@ -451,12 +471,106 @@ export default function UserProfilePage() {
             role="tabpanel"
             aria-labelledby="account-tab-activity"
             hidden={activeTab !== 'activity'}
-            className="rounded-xl border border-dashed border-slate-300 bg-white p-6 dark:border-white/20 dark:bg-slate-900"
+            className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-slate-900"
           >
             <h2 className="text-base font-semibold text-slate-900 dark:text-white">{t('userDashboardProfile.activity.title')}</h2>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              {t('userDashboardProfile.activity.body')}
-            </p>
+
+            {sessionsQuery.isLoading ? (
+              <p role="status" aria-live="polite" className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                {t('userDashboardProfile.activity.loading')}
+              </p>
+            ) : null}
+
+            {sessionsQuery.isError ? (
+              <div role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+                {sessionsQuery.error instanceof Error
+                  ? sessionsQuery.error.message
+                  : t('userDashboardProfile.activity.errorFallback')}
+              </div>
+            ) : null}
+
+            {!sessionsQuery.isLoading && !sessionsQuery.isError ? (
+              <>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <article className="rounded-lg border border-slate-200 p-4 dark:border-white/10">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {t('userDashboardProfile.activity.cards.activeSessions')}
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+                      {sessionsQuery.data?.length ?? 0}
+                    </p>
+                  </article>
+
+                  <article className="rounded-lg border border-slate-200 p-4 dark:border-white/10">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {t('userDashboardProfile.activity.cards.currentSession')}
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+                      {sessionsQuery.data?.some((session) => session.is_current)
+                        ? t('userDashboardProfile.activity.currentSessionOpen')
+                        : t('userDashboardProfile.activity.currentSessionNotFound')}
+                    </p>
+                  </article>
+
+                  <article className="rounded-lg border border-slate-200 p-4 dark:border-white/10">
+                    <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      {t('userDashboardProfile.activity.cards.appsWithAccess')}
+                    </p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+                      {accessQuery.data?.length ?? 0}
+                    </p>
+                  </article>
+                </div>
+
+                {(sessionsQuery.data?.length ?? 0) === 0 ? (
+                  <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                    {t('userDashboardProfile.activity.empty')}
+                  </p>
+                ) : (
+                  <ul className="mt-4 space-y-3" aria-label={t('userDashboardProfile.activity.listAria')}>
+                    {(sessionsQuery.data ?? [])
+                      .slice()
+                      .sort((left, right) =>
+                        new Date(right.last_accessed_at).getTime() - new Date(left.last_accessed_at).getTime(),
+                      )
+                      .slice(0, 5)
+                      .map((session) => (
+                        <li key={session.session_id} className="rounded-lg border border-slate-200 p-4 dark:border-white/10">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                              {session.browser} · {session.os}
+                            </p>
+                            {session.is_current ? (
+                              <span className="rounded-full border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300">
+                                {t('userDashboardProfile.activity.currentSessionBadge')}
+                              </span>
+                            ) : null}
+                          </div>
+
+                          <dl className="mt-2 grid grid-cols-1 gap-y-1 text-xs sm:grid-cols-3 sm:gap-x-3">
+                            <div>
+                              <dt className="text-slate-500 dark:text-slate-400">{t('userDashboardProfile.activity.columns.ipAddress')}</dt>
+                              <dd className="text-slate-900 dark:text-white">{session.ip_address || '--'}</dd>
+                            </div>
+                            <div>
+                              <dt className="text-slate-500 dark:text-slate-400">{t('userDashboardProfile.activity.columns.lastAccess')}</dt>
+                              <dd className="text-slate-900 dark:text-white">
+                                {formatDateTime(session.last_accessed_at, i18n.language)}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt className="text-slate-500 dark:text-slate-400">{t('userDashboardProfile.activity.columns.expiresAt')}</dt>
+                              <dd className="text-slate-900 dark:text-white">
+                                {formatDateTime(session.expires_at, i18n.language)}
+                              </dd>
+                            </div>
+                          </dl>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </>
+            ) : null}
           </section>
         </>
       ) : null}

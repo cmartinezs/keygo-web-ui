@@ -28,6 +28,11 @@
     "unknownMessage": "We could not complete the request right now. Please try again in a few seconds.",
     "networkMessage": "We could not complete communication with the server. We will retry automatically; if it persists, try again in a few seconds."
   },
+  "appErrorBoundary": {
+    "title": "An unexpected error occurred",
+    "description": "You can return to the dashboard to keep working. If the issue persists, reload the page.",
+    "action": "Back to dashboard"
+  },
   "theme": {
     "system": "System",
     "light": "Light",
@@ -204,6 +209,12 @@
     "autoRenew": "Auto-renew",
     "autoRenewActive": "Active",
     "autoRenewInactive": "Inactive",
+    "cancelRenewalHint": "If you cancel, the subscription remains active until the end of the current period and will not auto-renew.",
+    "cancelRenewalAction": "Cancel renewal",
+    "cancelRenewalLoading": "Cancelling renewal...",
+    "cancelRenewalConfirm": "Do you want to cancel the automatic renewal for this subscription?",
+    "cancelRenewalSuccess": "Automatic renewal cancelled successfully.",
+    "cancelRenewalScheduled": "Automatic renewal is already cancelled for the end of the current period.",
     "issueDate": "Issue",
     "dueDate": "Due"
   },
@@ -467,6 +478,33 @@
       "recentVerifications": "Recent verifications"
     }
   },
+  "platformStats": {
+    "title": "Platform API",
+    "subtitle": "Quick summary of global indicators exposed by the administrative API.",
+    "sectionAria": "Platform statistics summary",
+    "loading": "Loading metrics...",
+    "loadError": "Could not load platform statistics.",
+    "recoveryLabel": "platform statistics",
+    "cards": {
+      "loadingDescription": "Synchronizing data from backend.",
+      "tenants": {
+        "label": "Tenants",
+        "description": "{{active}} currently active."
+      },
+      "users": {
+        "label": "Users",
+        "description": "{{active}} currently active."
+      },
+      "apps": {
+        "label": "Apps",
+        "description": "Client applications registered on platform."
+      },
+      "keys": {
+        "label": "Active keys",
+        "description": "Signing keys enabled for token issuance."
+      }
+    }
+  },
   "userDashboardMyAccess": {
     "title": "My access",
     "subtitle": "Applications and roles assigned to your account in tenant {{tenantSlug}}.",
@@ -539,7 +577,23 @@
     },
     "activity": {
       "title": "Activity",
-      "body": "The account activity timeline will be integrated here when there is a backend contract for self-service consumption."
+      "loading": "Loading account activity...",
+      "errorFallback": "Could not load account activity.",
+      "empty": "No recent activity to display.",
+      "listAria": "Recent session activity",
+      "currentSessionOpen": "Open",
+      "currentSessionNotFound": "Not detected",
+      "currentSessionBadge": "Current session",
+      "cards": {
+        "activeSessions": "Active sessions",
+        "currentSession": "Current session",
+        "appsWithAccess": "Apps with access"
+      },
+      "columns": {
+        "ipAddress": "IP",
+        "lastAccess": "Last access",
+        "expiresAt": "Expires"
+      }
     },
     "toasts": {
       "updated": "Profile updated successfully"
@@ -549,7 +603,8 @@
     },
     "recovery": {
       "profileLabel": "profile",
-      "accessLabel": "access"
+      "accessLabel": "access",
+      "sessionsLabel": "account sessions"
     }
   },
   "accountNotifications": {

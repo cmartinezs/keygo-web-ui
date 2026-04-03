@@ -227,7 +227,7 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
     {
       label: t('dashboard.platform'),
       items: [
-        { to: '/dashboard', icon: <IconDashboard />, label: t('dashboard.dashboard') },
+        { to: '/dashboard', exact: true, icon: <IconDashboard />, label: t('dashboard.dashboard') },
         { to: '/dashboard/tenants', icon: <IconBuilding />, label: t('dashboard.tenants') },
         { to: '/dashboard/feature/apps', icon: <IconApps />, label: t('dashboard.apps') },
         { to: '/dashboard/feature/users', icon: <IconUsers />, label: t('dashboard.users') },
@@ -252,9 +252,10 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
       label: t('dashboard.system'),
       items: [
         { to: '/dashboard/feature/api', icon: <IconCloud />, label: t('dashboard.api') },
+        { to: '/dashboard/account/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
         { to: '/dashboard/account/settings', icon: <IconSettings />, label: t('common.accountSettings') },
         { to: '/dashboard/faq', icon: <IconFaq />, label: t('common.faq') },
-        { to: '/dashboard/account', icon: <IconUser />, label: t('common.myAccount') },
+        { to: '/dashboard/account', exact: true, icon: <IconUser />, label: t('common.myAccount') },
       ],
     },
   ],
@@ -262,7 +263,7 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
     {
       label: t('dashboard.myOrganization'),
       items: [
-        { to: '/dashboard', icon: <IconDashboard />, label: t('dashboard.dashboard') },
+        { to: '/dashboard', exact: true, icon: <IconDashboard />, label: t('dashboard.dashboard') },
         { to: '/dashboard/tenant/users', icon: <IconUsers />, label: t('dashboard.users') },
         { to: '/dashboard/tenant/apps', icon: <IconApps />, label: t('dashboard.apps') },
       ],
@@ -277,7 +278,8 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
     {
       label: t('dashboard.account'),
       items: [
-        { to: '/dashboard/account', icon: <IconUser />, label: t('common.myAccount') },
+        { to: '/dashboard/account', exact: true, icon: <IconUser />, label: t('common.myAccount') },
+        { to: '/dashboard/account/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
         { to: '/dashboard/account/settings', icon: <IconSettings />, label: t('common.accountSettings') },
         { to: '/dashboard/faq', icon: <IconFaq />, label: t('common.faq') },
       ],
@@ -287,7 +289,7 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
     {
       label: t('dashboard.home'),
       items: [
-        { to: '/dashboard', icon: <IconDashboard />, label: t('dashboard.dashboard') },
+        { to: '/dashboard', exact: true, icon: <IconDashboard />, label: t('dashboard.dashboard') },
         { to: '/dashboard/user/my-access', icon: <IconShield />, label: t('dashboard.myAccess') },
         { to: '/dashboard/user/activity', icon: <IconClipboard />, label: t('dashboard.activity') },
       ],
@@ -295,7 +297,8 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
     {
       label: t('dashboard.account'),
       items: [
-        { to: '/dashboard/account', icon: <IconUser />, label: t('common.myAccount') },
+        { to: '/dashboard/account', exact: true, icon: <IconUser />, label: t('common.myAccount') },
+        { to: '/dashboard/account/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
         { to: '/dashboard/account/settings', icon: <IconSettings />, label: t('common.accountSettings') },
         { to: '/dashboard/faq', icon: <IconFaq />, label: t('common.faq') },
       ],

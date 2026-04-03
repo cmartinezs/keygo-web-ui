@@ -22,6 +22,9 @@ interface MockConnection {
   last_used_at: string | null
 }
 
+/** Mapa userId → status para simular suspend/activate (T-033) */
+const mockUserStatuses: Record<string, string> = {}
+
 let mockConnections: MockConnection[] = [
   {
     id: 'conn-001',
@@ -64,6 +67,79 @@ function errorResponse(code: string, message: string, status: number) {
 // ── Handlers ⏳ pendiente backend (F-042) ─────────────────────────────────────
 
 export const handlers = [
+  // ── Handlers ⏳ pendiente backend (T-033) — suspend / activate usuario ─────
+
+  /**
+   * PUT /api/v1/tenants/:tenantSlug/users/:userId/suspend
+   * ⏳ pendiente backend (T-033) — temporal MSW
+   * Idempotente: devuelve already_suspended=true si ya estaba suspendido.
+   */
+  http.put('/api/v1/tenants/:tenantSlug/users/:userId/suspend', ({ params }) => {
+    const userId = params.userId as string
+    const alreadySuspended = (mockUserStatuses[userId] ?? 'ACTIVE') === 'SUSPENDED'
+    mockUserStatuses[userId] = 'SUSPENDED'
+    return successResponse(
+      { user_id: userId, status: 'SUSPENDED', already_suspended: alreadySuspended },
+      'USER_SUSPENDED',
+    )
+  }),
+
+  /**
+   * PUT /api/v1/tenants/:tenantSlug/users/:userId/activate
+   * ⏳ pendiente backend (T-033) — temporal MSW
+   * Idempotente: devuelve already_active=true si ya estaba activo.
+   */
+  http.put('/api/v1/tenants/:tenantSlug/users/:userId/activate', ({ params }) => {
+    const userId = params.userId as string
+    const alreadyActive = (mockUserStatuses[userId] ?? 'ACTIVE') === 'ACTIVE'
+    mockUserStatuses[userId] = 'ACTIVE'
+    return successResponse(
+      { user_id: userId, status: 'ACTIVE', already_active: alreadyActive },
+      'USER_ACTIVATED',
+    )
+  }),
+
+  // ── Handler ⏳ pendiente backend (T-110) — sesiones de usuario (admin) ─────
+
+  /**
+   * GET /api/v1/tenants/:tenantSlug/users/:userId/sessions
+   * ⏳ pendiente backend (T-110) — temporal MSW
+   * Devuelve sesiones activas del usuario. isCurrent siempre false en contexto admin.
+   */
+  http.get('/api/v1/tenants/:tenantSlug/users/:userId/sessions', ({ params }) => {
+    const userId = params.userId as string
+    const now = Date.now()
+    const mockSessions = [
+      {
+        session_id: `sess-${userId}-001`,
+        status: 'ACTIVE',
+        browser: 'Chrome 124',
+        os: 'Windows 11',
+        device_type: 'DESKTOP',
+        ip_address: '203.0.113.1',
+        created_at: new Date(now - 3_600_000 * 2).toISOString(),
+        last_accessed_at: new Date(now - 60_000 * 5).toISOString(),
+        expires_at: new Date(now + 3_600_000 * 6).toISOString(),
+        is_current: false,
+      },
+      {
+        session_id: `sess-${userId}-002`,
+        status: 'ACTIVE',
+        browser: 'Firefox 125',
+        os: 'macOS Sonoma',
+        device_type: 'DESKTOP',
+        ip_address: '198.51.100.42',
+        created_at: new Date(now - 3_600_000 * 24).toISOString(),
+        last_accessed_at: new Date(now - 3_600_000).toISOString(),
+        expires_at: new Date(now + 3_600_000 * 4).toISOString(),
+        is_current: false,
+      },
+    ]
+    return successResponse(mockSessions, 'USER_SESSIONS_RETRIEVED')
+  }),
+
+  // ── Handlers ⏳ pendiente backend (F-042) — conexiones de cuenta ──────────
+
   /**
    * GET /api/v1/tenants/:tenantSlug/account/connections
    * ⏳ pendiente backend (F-042) — temporal MSW

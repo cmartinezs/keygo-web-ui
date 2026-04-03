@@ -19,8 +19,10 @@ import TenantAppsPage from './pages/dashboard/tenant/TenantAppsPage'
 import TenantMembershipsPage from './pages/dashboard/tenant/TenantMembershipsPage'
 import UserMyAccessPage from './pages/dashboard/user/UserMyAccessPage'
 import UserActivityPage from './pages/dashboard/user/UserActivityPage'
+import PlatformStatsPage from './pages/admin/PlatformStatsPage'
 import UserProfilePage from './pages/dashboard/user/UserProfilePage'
 import AccountSettingsPage from './pages/dashboard/account/AccountSettingsPage'
+import AccountSessionsPage from './pages/dashboard/account/AccountSessionsPage'
 import FaqCenterPage from './pages/dashboard/FaqCenterPage'
 import { AuthGuard, RoleGuard } from './auth/roleGuard'
 import { useTokenStore } from './auth/tokenStore'
@@ -30,6 +32,7 @@ import TenantDetailPage from './pages/admin/TenantDetailPage'
 import TenantCreatePage from './pages/admin/TenantCreatePage'
 import { BlockingErrorModal } from './components/BlockingErrorModal'
 import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
 import { useBlockingErrorStore } from './auth/blockingErrorStore'
 import { useThemeStore } from './hooks/useTheme'
 
@@ -82,8 +85,13 @@ export default function App() {
   const shouldShowGlobalLoader = !hasBlockingError && isRouteSettling && isSlowNetwork
 
   return (
-    <>
-      <Routes>
+    <AppErrorBoundary
+      title={t('appErrorBoundary.title')}
+      description={t('appErrorBoundary.description')}
+      actionLabel={t('appErrorBoundary.action')}
+    >
+      <>
+        <Routes>
         {/* Public */}
         <Route path="/" element={accessToken ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
         <Route path="/developers" element={<DeveloperDocsPage />} />
@@ -104,11 +112,11 @@ export default function App() {
           element={<AuthGuard><AdminLayout /></AuthGuard>}
         >
           <Route index element={<DashboardHomePage />} />
-          <Route path="feature/:featureId" element={<FeaturePlaceholderPage />} />
 
           {/* Account sections (all authenticated roles) */}
           <Route path="account" element={<UserProfilePage />} />
           <Route path="account/settings" element={<AccountSettingsPage />} />
+          <Route path="account/sessions" element={<AccountSessionsPage />} />
           <Route path="faq" element={<FaqCenterPage />} />
           <Route path="account/faq" element={<Navigate to="/dashboard/faq" replace />} />
 
@@ -118,7 +126,10 @@ export default function App() {
               <Route path="new" element={<TenantCreatePage />} />
               <Route path=":slug" element={<TenantDetailPage />} />
             </Route>
+            <Route path="feature/api" element={<PlatformStatsPage />} />
           </Route>
+
+          <Route path="feature/:featureId" element={<FeaturePlaceholderPage />} />
 
           {/* Admin tenant sections */}
           <Route element={<RoleGuard roles={['ADMIN_TENANT']} redirectTo="/dashboard" />}>
@@ -131,7 +142,7 @@ export default function App() {
           <Route element={<RoleGuard roles={['USER_TENANT']} redirectTo="/dashboard" />}>
             <Route path="user/my-access" element={<UserMyAccessPage />} />
             <Route path="user/activity" element={<UserActivityPage />} />
-            <Route path="user/sessions" element={<Navigate to="/dashboard/account/settings?tab=security" replace />} />
+            <Route path="user/sessions" element={<Navigate to="/dashboard/account/sessions" replace />} />
             <Route path="user/profile" element={<Navigate to="/dashboard/account" replace />} />
           </Route>
 
@@ -140,27 +151,28 @@ export default function App() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-      <Toaster
-        position="bottom-right"
-        theme={isHighContrast ? 'light' : 'dark'}
-        richColors
-        toastOptions={{
-          classNames: {
-            toast: isHighContrast
-              ? 'bg-black border-2 border-white text-white text-sm'
-              : 'bg-slate-800 border border-white/10 text-slate-100 text-sm',
-          },
-        }}
-      />
-      <GlobalLoaderOverlay
-        active={shouldShowGlobalLoader}
-        skipDelays
-        title={t('common.loading')}
-        description={t('common.slowLoading')}
-      />
-      <BlockingErrorModal />
-    </>
+        </Routes>
+        <Toaster
+          position="bottom-right"
+          theme={isHighContrast ? 'light' : 'dark'}
+          richColors
+          toastOptions={{
+            classNames: {
+              toast: isHighContrast
+                ? 'bg-black border-2 border-white text-white text-sm'
+                : 'bg-slate-800 border border-white/10 text-slate-100 text-sm',
+            },
+          }}
+        />
+        <GlobalLoaderOverlay
+          active={shouldShowGlobalLoader}
+          skipDelays
+          title={t('common.loading')}
+          description={t('common.slowLoading')}
+        />
+        <BlockingErrorModal />
+      </>
+    </AppErrorBoundary>
   )
 }
 

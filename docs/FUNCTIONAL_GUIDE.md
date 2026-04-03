@@ -19,6 +19,7 @@
    - 2.2 [Gestión de Tenants](#22-gestión-de-tenants)
    - 2.3 [Detalle de un Tenant](#23-detalle-de-un-tenant)
    - 2.4 [Crear un Tenant](#24-crear-un-tenant)
+  - 2.5 [Sistema > API](#25-sistema--api)
 3. [Panel de Administrador de Tenant (ADMIN_TENANT)](#3-panel-de-administrador-de-tenant-admin_tenant)
 4. [Panel de Usuario (USER_TENANT)](#4-panel-de-usuario-user_tenant)
 5. [Funcionalidades pendientes](#5-funcionalidades-pendientes)
@@ -132,6 +133,11 @@ Permite autenticarse mediante el flujo OAuth2 Authorization Code + PKCE. El proc
 Ruta de salida segura:
 - `/logout` — limpia la sesión en memoria (tokens y estado bloqueante) y redirige a `/login`. Sirve como salida directa ante contextos de sesión inconsistentes.
 
+Rutas publicas de recuperacion de acceso:
+- `/forgot-password` — solicitud de recuperacion por correo (respuesta neutral para evitar enumeracion de usuarios).
+- `/recover-password` — recuperacion por token one-time recibido por correo.
+- `/reset-password` — reset con contrasena temporal entregada por administrador.
+
 #### Flujo paso a paso
 
 0. **Pantalla de carga global** (automática, previa a cualquier ruta) — Al abrir o recargar la aplicación, se muestra una capa de carga visual mientras se valida o restaura la sesión. Evita que el usuario vea la pantalla en blanco en conexiones lentas.
@@ -149,6 +155,12 @@ Ruta de salida segura:
   - Campo **contraseña** con control de visibilidad (icono de ojo para mostrar/ocultar).
    - Si está configurado: widget de verificación **Turnstile** (Cloudflare) para protección anti-bot.
    - Botón "Iniciar sesión".
+  - Enlace "Olvide mi contrasena" hacia `/forgot-password`.
+
+4. **Recuperacion de acceso (publico):**
+  - En `/forgot-password`, el usuario ingresa su correo y recibe mensaje neutral de confirmacion.
+  - En `/recover-password`, el usuario ingresa token de recuperacion y define nueva contrasena.
+  - En `/reset-password`, el usuario confirma correo + contrasena temporal y define nueva contrasena.
 
 Idioma de interfaz en login:
 - Los textos del flujo de login se renderizan en el idioma activo de la app.
@@ -355,6 +367,7 @@ El panel de administrador incluye una **barra lateral de navegación** y una **c
   - **Seguridad:** Claves de firma, Sesiones, Tokens
   - **Sistema:** API, Configuración, Mi cuenta
   - El ítem activo se resalta con fondo índigo. En modo colapsado, los grupos se separan con un divisor horizontal.
+  - En rutas base con subrutas (como `Dashboard` y `Mi cuenta`), el resaltado activo es exacto para evitar que queden seleccionadas al navegar a otras secciones.
 - **Perfil de usuario** en la parte inferior: avatar con iniciales, nombre completo y rol.
 
 #### Cabecera superior
@@ -545,6 +558,26 @@ Comportamiento en red lenta:
 - La creación usa timeout de 10 segundos por intento.
 - No se aplican reintentos automáticos en esta operación; el usuario controla el reintento manual.
 
+### 2.5 Sistema > API
+
+**Ruta:** `/dashboard/feature/api` (solo rol `ADMIN`)
+
+Vista de estado rápido para consumo operativo de la API de plataforma.
+
+Qué muestra:
+- **Tenants:** total global y cantidad activa.
+- **Usuarios:** total global y cantidad activa.
+- **Apps:** total de aplicaciones cliente registradas.
+- **Claves activas:** cantidad de llaves de firma habilitadas.
+
+Fuente de datos:
+- `GET /api/v1/platform/stats`.
+
+Comportamiento en red lenta:
+- La vista usa carga local por bloque (sin overlay global de pantalla completa).
+- La consulta aplica timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- Si se agotan reintentos, se muestra alerta local de error y el resto del dashboard sigue navegable.
+
 ---
 
 ## 3. Panel de Administrador de Tenant (ADMIN_TENANT)
@@ -558,7 +591,15 @@ Esta área usa el mismo layout del dashboard global (misma cabecera y mismo esqu
 
 **Ruta:** `/dashboard`
 
-Muestra una vista resumida inicial para administración de tenant con tarjetas de estado y accesos directos a módulos.
+Muestra una vista resumida inicial para administración de tenant con tarjetas conectadas a datos reales:
+- **Usuarios activos:** conteo de usuarios en estado activo del tenant.
+- **Aplicaciones:** total de client apps registradas en el tenant.
+- **Accesos del día:** sesiones del usuario actual con último acceso en el día vigente.
+
+Comportamiento en red lenta:
+- Cada tarjeta se resuelve con carga local (sin bloquear toda la pantalla).
+- Las consultas GET usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- Si una consulta falla tras reintentos, la tarjeta afectada muestra `N/D` y mensaje local de error.
 
 ### 3.2 Usuarios del tenant
 
@@ -626,7 +667,15 @@ Esta area usa el mismo layout del dashboard global (misma cabecera y mismo esque
 
 **Ruta:** `/dashboard`
 
-Vista inicial con resumen y accesos directos a modulos del usuario.
+Vista inicial con resumen personal conectado a datos reales:
+- **Sesiones activas:** número de sesiones abiertas de la cuenta.
+- **Último acceso:** fecha/hora más reciente detectada en sesiones de la cuenta.
+- **Aplicaciones con acceso:** total de apps en las que el usuario mantiene membresía.
+
+Comportamiento en red lenta:
+- Cada tarjeta se resuelve con carga local (sin bloquear toda la pantalla).
+- Las consultas GET usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- Si una consulta falla tras reintentos, la tarjeta afectada muestra `N/D` y mensaje local de error.
 
 ### 4.2 Mi acceso
 
@@ -675,7 +724,7 @@ Vista unificada de cuenta personal (todos los roles autenticados) con tabs:
   - En esta vista de resumen no se muestra correo ni rol activo.
 - **Perfil:** formulario self-service para actualizar perfil (icono de usuario).
 - **Accesos:** listado real de memberships/roles por aplicación (icono de seguridad).
-- **Actividad:** placeholder preparado para timeline de actividad de cuenta (icono de reloj).
+- **Actividad:** vista real de sesiones recientes de la cuenta (icono de reloj), con estado de sesión actual, IP, último acceso y expiración.
 
 Campos editables en la tab Perfil:
 - Nombre y apellido
@@ -692,6 +741,7 @@ Idioma de interfaz:
 Comportamiento en red lenta:
 - La carga del perfil usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 - La carga de accesos usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
+- La carga de actividad (sesiones de cuenta) usa timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 - Guardar cambios usa timeout de 10 segundos sin auto-retry.
 
 Compatibilidad:
@@ -702,27 +752,34 @@ Compatibilidad:
 **Ruta:** `/dashboard/account/settings`
 
 Vista de configuraciones personales y operativas por tabs:
-- **Seguridad:** cambio de contraseña y gestión de sesiones activas/remotas (icono de escudo).
+- **Seguridad:** cambio de contraseña (icono de escudo).
 - **Notificaciones:** preferencias por canal/tipo (correo, in-app, digest semanal) (icono de campana).
 - **Conexiones:** gestión de cuentas externas implementada en modo temporal con MSW (pendiente contrato backend oficial F-042) (icono de enlace).
   - La selección del proveedor a vincular se realiza mediante dropdown reutilizable compartido con el resto del dashboard.
+- **Idioma de la interfaz:** selector de idioma local por navegador con modo automático/manual (icono de globo).
 - **Facturacion:** suscripción y facturas para rol `ADMIN_TENANT` (datos reales); para otros roles se muestra acceso restringido (icono de tarjeta).
+  - En suscripción activa con renovación automática, se habilita la acción "Cancelar renovación" con confirmación previa.
+  - Al cancelar, la suscripción sigue activa hasta el fin del período actual y queda programada sin renovación.
 
 Idioma de interfaz (nuevo):
-- Se incorpora selector de idioma en la misma vista de configuración.
+- Se incorpora selector de idioma como tab dedicada dentro de configuración.
 - Idiomas disponibles en esta fase: `es-CL` y `en-US`.
 - Comportamiento por defecto: si el usuario no define preferencia manual, la app toma la configuración del dispositivo cliente.
 - Si el usuario cambia idioma manualmente, la preferencia queda guardada en el navegador y prevalece en futuras sesiones de ese dispositivo.
 - Existe acción para volver al modo automático (idioma del dispositivo).
 - Se muestra una ayuda contextual que aclara que el modo automático usa `navigator.languages` del navegador.
-- Se incorpora acceso directo hacia una página dedicada de FAQs para resolver dudas sin recargar la vista de configuración.
 - Regla de implementación: los selectores de la app deben reutilizar el componente `Dropdown` compartido (via `SelectDropdown`) para mantener consistencia de UX.
+
+Sesiones activas (nuevo):
+- Se reubican fuera de Configuración de cuenta en una vista dedicada.
+- Ruta principal: `/dashboard/account/sessions`.
+- Incluye listado de sesiones activas/remotas y acción de cierre remoto.
 
 Comportamiento en red lenta:
 - Suscripción y facturas usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 
 Compatibilidad:
-- La ruta legacy `/dashboard/user/sessions` redirige a `/dashboard/account/settings?tab=security`.
+- La ruta legacy `/dashboard/user/sessions` redirige a `/dashboard/account/sessions`.
 
 ### 4.6 FAQs del sistema
 
@@ -752,7 +809,7 @@ Las siguientes funcionalidades están planificadas pero aún no están disponibl
 | Reactivación de tenants | Detalle de tenant | Mock; endpoint T-033 pendiente en backend |
 | Registro de usuarios (paso 2) | `/register` | Formulario parcialmente implementado |
 | Panel Administrador de Tenant | `/dashboard` + `/dashboard/tenant/*` | Usuarios, Apps y Memberships implementados; faltan métricas y sesiones avanzadas |
-| Panel de Usuario | `/dashboard` + `/dashboard/user/*` + `/dashboard/account*` | Mi acceso implementado en tab Access; actividad queda como placeholder backend-driven |
+| Panel de Usuario | `/dashboard` + `/dashboard/user/*` + `/dashboard/account*` | Mi acceso y actividad en Mi cuenta implementados; pendiente timeline avanzada por contrato dedicado |
 | Seguridad de cuenta (change-password/sesiones remotas) | `/dashboard/account/settings` | Implementada (cambio de contraseña y revocación remota de sesiones) |
 | Buscador global | Cabecera admin | Decorativo, sin funcionalidad |
 | Notificaciones | Cabecera admin | Decorativo, sin funcionalidad |

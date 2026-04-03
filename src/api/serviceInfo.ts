@@ -1,6 +1,7 @@
 import type { BaseResponse } from '@/types/base'
 import { apiClient, API_V1 } from './client'
 import { unwrapResponseData } from './response'
+import type { RequestOptions } from './requestOptions'
 
 export interface ServiceInfoData {
   title: string
@@ -24,13 +25,19 @@ export const PLATFORM_QUERY_KEYS = {
   stats: ['platform-stats'] as const,
 }
 
-export async function getServiceInfo(): Promise<ServiceInfoData> {
-  const response = await apiClient.get<BaseResponse<ServiceInfoData>>(`${API_V1}/service/info`)
+export async function getServiceInfo(options?: RequestOptions): Promise<ServiceInfoData> {
+  const response = await apiClient.get<BaseResponse<ServiceInfoData>>(`${API_V1}/service/info`, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  })
   return unwrapResponseData(response.data, 'Failed to fetch service info')
 }
 
 /** GET /api/v1/platform/stats ✅ — estadísticas globales. Solo ADMIN. */
-export async function getPlatformStats(): Promise<PlatformStatsData> {
-  const response = await apiClient.get<BaseResponse<PlatformStatsData>>(`${API_V1}/platform/stats`)
+export async function getPlatformStats(options?: RequestOptions): Promise<PlatformStatsData> {
+  const response = await apiClient.get<BaseResponse<PlatformStatsData>>(`${API_V1}/platform/stats`, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  })
   return unwrapResponseData(response.data, 'Failed to fetch platform stats')
 }

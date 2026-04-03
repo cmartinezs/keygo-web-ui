@@ -26,6 +26,8 @@ import type {
   LinkAccountConnectionRequest,
   LinkAccountConnectionResult,
   UnlinkAccountConnectionResult,
+  WireAccountConnectionData,
+  WireLinkAccountConnectionResult,
   WireChangePasswordRequest,
   WireAccountSessionData,
   WireRevokeSessionResult,
@@ -124,6 +126,19 @@ function fromWireUserAccess(wire: WireUserAccessData): AccountAccessData {
     membership_id: wire.membershipId,
     status: wire.status,
     roles: wire.roles,
+  }
+}
+
+function fromWireAccountConnection(wire: WireAccountConnectionData): AccountConnectionData {
+  return {
+    id: wire.id,
+    provider_name: wire.provider_name ?? wire.providerName ?? wire.provider ?? 'UNKNOWN',
+    status: wire.status,
+    connected_at: wire.connected_at ?? wire.connectedAt ?? wire.linked_at ?? wire.linkedAt ?? '',
+    display_name: wire.display_name ?? wire.displayName ?? null,
+    avatar_url: wire.avatar_url ?? wire.avatarUrl ?? null,
+    scopes: wire.scopes ?? [],
+    last_used_at: wire.last_used_at ?? wire.lastUsedAt ?? null,
   }
 }
 
@@ -354,22 +369,24 @@ export async function getAccountAccess(
 
 /**
  * GET /api/v1/tenants/{tenantSlug}/account/connections ⏳ pendiente backend (F-042)
- * Flujo temporal para mock/MSW mientras se publica contrato oficial.
+ * Transicion: acepta wire snake_case o camelCase y normaliza a DTO interno estable.
  */
 export async function getAccountConnections(
   tenantSlug: string,
   options?: RequestOptions,
 ): Promise<AccountConnectionData[]> {
-  const res = await apiClient.get<BaseResponse<AccountConnectionData[]>>(connectionsUrl(tenantSlug), {
+  const res = await apiClient.get<BaseResponse<WireAccountConnectionData[]>>(connectionsUrl(tenantSlug), {
     signal: options?.signal,
     timeout: options?.timeoutMs,
   })
-  return unwrapResponseData(res.data, 'Error al obtener conexiones vinculadas')
+  return unwrapResponseData(res.data, 'Error al obtener conexiones vinculadas').map(
+    fromWireAccountConnection,
+  )
 }
 
 /**
  * POST /api/v1/tenants/{tenantSlug}/account/connections/{provider}/link ⏳ pendiente backend (F-042)
- * Flujo temporal para mock/MSW mientras se publica contrato oficial.
+ * Transicion: normaliza conexion retornada para evitar quiebres de UI durante rollout.
  */
 export async function linkAccountConnection(
   tenantSlug: string,
@@ -377,7 +394,7 @@ export async function linkAccountConnection(
   data?: LinkAccountConnectionRequest,
   options?: RequestOptions,
 ): Promise<LinkAccountConnectionResult> {
-  const res = await apiClient.post<BaseResponse<LinkAccountConnectionResult>>(
+  const res = await apiClient.post<BaseResponse<WireLinkAccountConnectionResult>>(
     linkConnectionUrl(tenantSlug, provider),
     data,
     {
@@ -388,7 +405,11 @@ export async function linkAccountConnection(
         : undefined,
     },
   )
-  return unwrapResponseData(res.data, 'Error al vincular conexion externa')
+  const result = unwrapResponseData(res.data, 'Error al vincular conexion externa')
+  return {
+    linked: result.linked,
+    connection: fromWireAccountConnection(result.connection),
+  }
 }
 
 /**
