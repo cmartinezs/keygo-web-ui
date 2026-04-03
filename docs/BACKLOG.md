@@ -219,6 +219,17 @@ Actualizado automáticamente por el agente al final de cada implementación.
 - **Prioridad:** 🔵 Media
 - **Fecha detección:** 2026-04-02
 
+### [MEJORA] Reevaluar migración a librería de iconos (`lucide-react`)
+- **Detectado en:** `src/components/icons/definitions.tsx`, `src/components/icons/index.ts`
+- **Descripción:** La fase de centralización de iconografía SVG ya está implementada y operativa. Mantener este enfoque por ahora y reevaluar migración a librería externa solo si aporta beneficios medibles.
+- **Estado actual:** Postergado por decisión técnica (2026-04-02).
+- **Criterios de reapertura:**
+  1. Reducción comprobable de mantenimiento en nuevos features.
+  2. Impacto positivo en bundle y tree-shaking.
+  3. Paridad visual/accesible sin regresiones en tabs, cards y mensajes de estado.
+- **Prioridad:** 🔵 Baja
+- **Fecha detección:** 2026-04-02
+
 ### [MEJORA] Instalar y configurar shadcn/ui
 - **Detectado en:** `src/pages/login/LoginPage.tsx`, `src/pages/register/`
 - **Descripción:** Los componentes de formulario usan Tailwind puro con clases repetidas. Instalar shadcn/ui (`Button`, `Input`, `Label`, `Card`, `Select`, `Checkbox`) para consistencia con el sistema de diseño definido en las instrucciones. Migrar login y pasos del contrato.
@@ -258,6 +269,12 @@ Actualizado automáticamente por el agente al final de cada implementación.
 - **Descripción:** El menú de la landing está oculto en pantallas pequeñas sin alternativa móvil (hamburger menu). Implementar menú desplegable accesible para `< md`.
 - **Prioridad:** 🔵 Baja
 - **Fecha detección:** 2026-03-26
+
+### [REFACTOR] Consolidar SVG inline residuales al catálogo central
+- **Detectado en:** `src/pages/login/LoginPage.tsx`, `src/pages/register/**`, `src/pages/admin/**`, `src/components/PolicyModal.tsx`, `src/components/PlanCard.tsx`, `src/components/AppFooter.tsx`
+- **Descripción:** Tras la centralización principal de iconografía en `src/components/icons/`, persisten SVG inline en pantallas legacy y estados transitorios. Mantener los spinners inline es aceptable; el resto de iconos de contexto debe migrarse gradualmente al catálogo central.
+- **Prioridad:** 🔵 Baja
+- **Fecha detección:** 2026-04-02
 
 ---
 

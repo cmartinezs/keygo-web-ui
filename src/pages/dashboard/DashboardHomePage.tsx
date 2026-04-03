@@ -1,19 +1,23 @@
 import AdminDashboardPage from '@/pages/admin/DashboardPage'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { IconUsers, IconApps, IconClock, IconBell } from '@/components/icons'
 import { resolvePrimaryRole } from '@/types/roles'
 import type { AppRole } from '@/types/roles'
+import type { ReactNode } from 'react'
 
 interface StatCardProps {
   title: string
   value: string
   description: string
+  icon?: ReactNode
 }
 
 type NonAdminRole = Exclude<AppRole, 'ADMIN'>
 
-function StatCard({ title, value, description }: StatCardProps) {
+function StatCard({ title, value, description, icon }: StatCardProps) {
   return (
     <article className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-1.5">
+      {icon && <div className="w-5 h-5 text-slate-400 dark:text-slate-500">{icon}</div>}
       <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{title}</p>
       <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
       <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
@@ -27,18 +31,18 @@ function RoleOverview({ role }: { role: NonAdminRole }) {
       title: 'Panel de administracion del tenant',
       subtitle: 'Gestiona usuarios, aplicaciones y seguridad de tu organizacion.',
       cards: [
-        { title: 'Usuarios activos', value: '--', description: 'Pendiente de integrar metricas del tenant.' },
-        { title: 'Aplicaciones', value: '--', description: 'Listado y estado de apps conectadas.' },
-        { title: 'Accesos del dia', value: '--', description: 'Actividad de autenticacion reciente.' },
+        { title: 'Usuarios activos', value: '--', description: 'Pendiente de integrar metricas del tenant.', icon: <IconUsers className="w-5 h-5" aria-hidden="true" /> },
+        { title: 'Aplicaciones', value: '--', description: 'Listado y estado de apps conectadas.', icon: <IconApps className="w-5 h-5" aria-hidden="true" /> },
+        { title: 'Accesos del dia', value: '--', description: 'Actividad de autenticacion reciente.', icon: <IconClock className="w-5 h-5" aria-hidden="true" /> },
       ],
     },
     USER_TENANT: {
       title: 'Panel personal',
       subtitle: 'Accede a tus recursos, historial de accesos y configuraciones personales.',
       cards: [
-        { title: 'Sesiones activas', value: '--', description: 'Dispositivos con sesion iniciada.' },
-        { title: 'Ultimo acceso', value: '--', description: 'Fecha y origen de tu ultimo login.' },
-        { title: 'Alertas', value: '--', description: 'Notificaciones de seguridad y cuenta.' },
+        { title: 'Sesiones activas', value: '--', description: 'Dispositivos con sesion iniciada.', icon: <IconUsers className="w-5 h-5" aria-hidden="true" /> },
+        { title: 'Ultimo acceso', value: '--', description: 'Fecha y origen de tu ultimo login.', icon: <IconClock className="w-5 h-5" aria-hidden="true" /> },
+        { title: 'Alertas', value: '--', description: 'Notificaciones de seguridad y cuenta.', icon: <IconBell className="w-5 h-5" aria-hidden="true" /> },
       ],
     },
   } as const
@@ -54,7 +58,7 @@ function RoleOverview({ role }: { role: NonAdminRole }) {
 
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" aria-label="Resumen del dashboard">
         {view.cards.map((card) => (
-          <StatCard key={card.title} title={card.title} value={card.value} description={card.description} />
+          <StatCard key={card.title} title={card.title} value={card.value} description={card.description} icon={card.icon} />
         ))}
       </section>
 

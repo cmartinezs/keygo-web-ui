@@ -1,5 +1,6 @@
 import { Dropdown } from '@/components/Dropdown'
 import { useTranslation } from 'react-i18next'
+import { IconChevronDown, IconCheckmark } from '@/components/icons'
 import type { SelectDropdownProps } from '@/types/dropdown'
 
 export function SelectDropdown<T extends string>({
@@ -33,9 +34,7 @@ export function SelectDropdown<T extends string>({
         >
           {icon}
           <span className={current && selectedValueClassName ? selectedValueClassName : ''}>{current?.label ?? label}</span>
-          <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
+          <IconChevronDown className="w-3 h-3 opacity-60" aria-hidden="true" />
         </button>
       )}
     >
@@ -70,9 +69,7 @@ export function SelectDropdown<T extends string>({
                     {option.icon}
                     {option.label}
                     {active && (
-                      <svg className="w-3.5 h-3.5 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+                      <IconCheckmark className="w-3.5 h-3.5 ml-auto" aria-hidden="true" />
                     )}
                   </button>
                 </li>

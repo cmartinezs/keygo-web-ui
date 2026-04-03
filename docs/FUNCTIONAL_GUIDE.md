@@ -412,6 +412,10 @@ Idioma de interfaz:
 | 5 | Rankings | Top tenants por usuarios (izquierda), Top apps por memberships (derecha) |
 | 6 | Salud de onboarding | 4 tarjetas: Pendientes de verificación, Verificaciones expiradas, Registros recientes, Verificaciones exitosas |
 
+Iconografía visible:
+- Las tarjetas del dashboard usan iconos contextuales por bloque para facilitar lectura rápida de métricas.
+- El patrón se mantiene en modo claro/oscuro y no depende solo de color para comunicar estado.
+
 #### Estados de carga
 
 - **Cargando:** skeleton animado en cada fila.
@@ -656,10 +660,10 @@ Comportamiento:
 **Ruta:** `/dashboard/account`
 
 Vista unificada de cuenta personal (todos los roles autenticados) con tabs:
-- **Resumen:** identidad base, estado, tenant y rol activo.
-- **Perfil:** formulario self-service para actualizar perfil.
-- **Accesos:** listado real de memberships/roles por aplicación (self-service).
-- **Actividad:** placeholder preparado para timeline de actividad de cuenta.
+- **Resumen:** identidad base, estado, tenant y rol activo (icono de dashboard).
+- **Perfil:** formulario self-service para actualizar perfil (icono de usuario).
+- **Accesos:** listado real de memberships/roles por aplicación (icono de seguridad).
+- **Actividad:** placeholder preparado para timeline de actividad de cuenta (icono de reloj).
 
 Campos editables en la tab Perfil:
 - Nombre y apellido
@@ -686,10 +690,10 @@ Compatibilidad:
 **Ruta:** `/dashboard/account/settings`
 
 Vista de configuraciones personales y operativas por tabs:
-- **Seguridad:** cambio de contraseña y gestión de sesiones activas/remotas.
-- **Notificaciones:** preferencias por canal/tipo (correo, in-app, digest semanal).
-- **Conexiones:** gestión de cuentas externas implementada en modo temporal con MSW (pendiente contrato backend oficial F-042).
-- **Facturacion:** suscripción y facturas para rol `ADMIN_TENANT` (datos reales); para otros roles se muestra acceso restringido.
+- **Seguridad:** cambio de contraseña y gestión de sesiones activas/remotas (icono de escudo).
+- **Notificaciones:** preferencias por canal/tipo (correo, in-app, digest semanal) (icono de campana).
+- **Conexiones:** gestión de cuentas externas implementada en modo temporal con MSW (pendiente contrato backend oficial F-042) (icono de enlace).
+- **Facturacion:** suscripción y facturas para rol `ADMIN_TENANT` (datos reales); para otros roles se muestra acceso restringido (icono de tarjeta).
 
 Idioma de interfaz (nuevo):
 - Se incorpora selector de idioma en la misma vista de configuración.

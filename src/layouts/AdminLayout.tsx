@@ -14,231 +14,31 @@ import type { SidebarMenuSection } from '@/components/dashboard/SidebarMenu'
 import type { DropdownOption } from '@/types/dropdown'
 import { resolvePrimaryRole } from '@/types/roles'
 import type { AppRole } from '@/types/roles'
+import {
+  IconKey,
+  IconChevronLeft,
+  IconChevronRight,
+  IconHamburger,
+  IconDashboard,
+  IconBuilding,
+  IconLogout,
+  IconApps,
+  IconUsers,
+  IconShield,
+  IconClipboard,
+  IconKeySmall,
+  IconClock,
+  IconTicket,
+  IconCloud,
+  IconUser,
+  IconSearch,
+  IconBell,
+  IconSettings,
+  IconFaq,
+  IconFlagChile,
+  IconFlagUs,
+} from '@/components/icons'
 
-// ── Icons (inline SVG) ───────────────────────────────────────────────────────
-
-function IconKey() {
-  return (
-    <svg
-      className="w-6 h-6 text-indigo-400 shrink-0"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"
-      />
-    </svg>
-  )
-}
-
-function IconChevronLeft() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-    </svg>
-  )
-}
-
-function IconChevronRight() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
-  )
-}
-
-function IconHamburger() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  )
-}
-
-function IconDashboard() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <rect x="3" y="3" width="7" height="7" rx="1.5" />
-      <rect x="14" y="3" width="7" height="7" rx="1.5" />
-      <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      <rect x="14" y="14" width="7" height="7" rx="1.5" />
-    </svg>
-  )
-}
-
-function IconBuilding() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M9 21V7l6-4v18M9 7H5a1 1 0 00-1 1v13M15 11h2M15 15h2M9 11H7M9 15H7" />
-    </svg>
-  )
-}
-
-function IconLogout() {
-  return (
-    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-    </svg>
-  )
-}
-
-function IconApps() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-    </svg>
-  )
-}
-
-function IconUsers() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-    </svg>
-  )
-}
-
-function IconShield() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-    </svg>
-  )
-}
-
-function IconClipboard() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-    </svg>
-  )
-}
-
-function IconKeySmall() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
-    </svg>
-  )
-}
-
-function IconClock() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  )
-}
-
-function IconTicket() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-    </svg>
-  )
-}
-
-function IconCloud() {
-  return (
-    <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-    </svg>
-  )
-}
-
-function IconUser() {
-  return (
-    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-  )
-}
-
-function IconSearch() {
-  return (
-    <svg className="w-4 h-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
-    </svg>
-  )
-}
-
-function IconBell() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-    </svg>
-  )
-}
-
-function IconSettings() {
-  return (
-    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  )
-}
-
-function IconFaq() {
-  return (
-    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9a3.75 3.75 0 117.265 1.2c0 2.625-3.743 3.375-3.743 3.375" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 17.25h.008v.008H12v-.008z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  )
-}
-
-function IconFlagChile() {
-  return (
-    <svg className="w-4 h-4 shrink-0 rounded-sm" viewBox="0 0 20 14" aria-hidden="true">
-      <rect width="20" height="7" fill="#ffffff" />
-      <rect y="7" width="20" height="7" fill="#d52b1e" />
-      <rect width="8" height="7" fill="#0039a6" />
-      <path d="M4 1.4l.67 1.99h2.1L5.08 4.6l.65 1.99L4 5.36 2.27 6.59l.65-1.99L1.23 3.39h2.1L4 1.4z" fill="#ffffff" />
-    </svg>
-  )
-}
-
-function IconFlagUs() {
-  return (
-    <svg className="w-4 h-4 shrink-0 rounded-sm" viewBox="0 0 20 14" aria-hidden="true">
-      <rect width="20" height="14" fill="#ffffff" />
-      <rect y="0" width="20" height="1.2" fill="#b22234" />
-      <rect y="2.4" width="20" height="1.2" fill="#b22234" />
-      <rect y="4.8" width="20" height="1.2" fill="#b22234" />
-      <rect y="7.2" width="20" height="1.2" fill="#b22234" />
-      <rect y="9.6" width="20" height="1.2" fill="#b22234" />
-      <rect y="12" width="20" height="1.2" fill="#b22234" />
-      <rect width="8.6" height="6.8" fill="#3c3b6e" />
-      <circle cx="1.4" cy="1.2" r="0.35" fill="#ffffff" />
-      <circle cx="3" cy="1.2" r="0.35" fill="#ffffff" />
-      <circle cx="4.6" cy="1.2" r="0.35" fill="#ffffff" />
-      <circle cx="6.2" cy="1.2" r="0.35" fill="#ffffff" />
-      <circle cx="2.2" cy="2.2" r="0.35" fill="#ffffff" />
-      <circle cx="3.8" cy="2.2" r="0.35" fill="#ffffff" />
-      <circle cx="5.4" cy="2.2" r="0.35" fill="#ffffff" />
-      <circle cx="7" cy="2.2" r="0.35" fill="#ffffff" />
-      <circle cx="1.4" cy="3.2" r="0.35" fill="#ffffff" />
-      <circle cx="3" cy="3.2" r="0.35" fill="#ffffff" />
-      <circle cx="4.6" cy="3.2" r="0.35" fill="#ffffff" />
-      <circle cx="6.2" cy="3.2" r="0.35" fill="#ffffff" />
-      <circle cx="2.2" cy="4.2" r="0.35" fill="#ffffff" />
-      <circle cx="3.8" cy="4.2" r="0.35" fill="#ffffff" />
-      <circle cx="5.4" cy="4.2" r="0.35" fill="#ffffff" />
-      <circle cx="7" cy="4.2" r="0.35" fill="#ffffff" />
-      <circle cx="1.4" cy="5.2" r="0.35" fill="#ffffff" />
-      <circle cx="3" cy="5.2" r="0.35" fill="#ffffff" />
-      <circle cx="4.6" cy="5.2" r="0.35" fill="#ffffff" />
-      <circle cx="6.2" cy="5.2" r="0.35" fill="#ffffff" />
-    </svg>
-  )
-}
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
 

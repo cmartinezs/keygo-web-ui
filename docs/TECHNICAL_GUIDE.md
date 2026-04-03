@@ -54,6 +54,7 @@
    - [BlockingErrorModal.tsx](#blockingerrormodaltsx)
    - [PlanCard.tsx](#planCardtsx)
    - [plans.ts](#plansts)
+  - [icons/ module (`src/components/icons/`)](#icons-module-srccomponentsicons)
    - [ScrollToTop.tsx](#scrolltotoptsx)
 9. [Layouts — `src/layouts/`](#9-layouts--srclayouts)
    - [AdminLayout.tsx](#adminlayouttsx)
@@ -1282,6 +1283,25 @@ function useRateLimit(formKey: string) {
 
 ---
 
+### Icons module (`src/components/icons/`)
+
+**Propósito:** centralizar la iconografía SVG del proyecto para evitar duplicación, mantener consistencia visual y facilitar accesibilidad.
+
+**Construcción:**
+- `src/components/icons/definitions.tsx` contiene los componentes SVG (`Icon*`) agrupados por dominio (navegación, sidebar, estado, acciones, dashboard, billing, banderas).
+- `src/components/icons/index.ts` expone un barrel export para imports limpios (`@/components/icons`).
+- Todos los íconos se implementan como componentes React sin dependencia externa.
+
+**Integración:**
+- Consumido por `AdminLayout`, dashboard admin (`IamCoreRow`, `ServiceStatusRow`, `SecurityRow`), `TenantsPage`, `SelectDropdown`, `ScrollToTop`, landing (`FeaturesSection`, `DevelopersSection`) y vistas de cuenta (`UserProfilePage`, `AccountSettingsPage`, `DashboardHomePage`).
+
+**Decisión de diseño (Fase 4 - 2026-04-02):**
+- Se evaluó migrar a `lucide-react` y se decidió **postergar** la adopción.
+- Motivo: la centralización actual ya resuelve consistencia, accesibilidad y DX sin introducir peso adicional ni riesgo de regresión visual.
+- Criterios para reevaluar migración: reducción neta de mantenimiento, mejora tangible de bundle y paridad total de iconografía semántica existente.
+
+---
+
 ### `GlobalLoaderOverlay.tsx`
 
 **Propósito:** Componente reusable de carga fullscreen para evitar pantallas vacías durante demoras de red o durante el bootstrap inicial.
@@ -1503,7 +1523,7 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 **Construcción:**
 
 **Componentes privados internos:**
-- Iconos SVG inline (`IconKey`, `IconDashboard`, `IconBuilding`, `IconApps`, `IconUsers`, `IconShield`, `IconClipboard`, `IconKeySmall`, `IconClock`, `IconTicket`, `IconCloud`, etc.) — sin dependencia de librería de iconos.
+- Importa iconos desde `src/components/icons/` (módulo centralizado).
 - `Dropdown<T>` — componente reutilizable para selectores del header con cierre por click exterior y `role="listbox"`.
 - `ThemeToggle` y `RoleSwitcher` — wrappers que consumen `Dropdown<T>` para mapear opciones de tema/rol.
 - `LanguageSwitcher` — wrapper del selector de idioma en cabecera con iconos de bandera (`es-CL`, `en-US`).
@@ -1638,7 +1658,7 @@ div.flex.h-screen
 - `useLocale` (`src/i18n/useLocale.ts`) alimenta el idioma actual, opciones soportadas y el cambio de idioma.
 - `AdminLayout` es el `element` del route `/dashboard` en `App.tsx`.
 
-**Decisión de diseño:** Iconos SVG inline para evitar una dependencia de librería de iconos. La consistencia visual se logra usando siempre el mismo tamaño (`w-5 h-5`) y `aria-hidden="true"`.
+**Decisión de diseño:** usar iconografía SVG centralizada en `src/components/icons/` (sin dependencia externa) para mantener consistencia visual (`w-5 h-5` base), accesibilidad (`aria-hidden="true"` en decorativos) y reutilización.
 
 **Deuda técnica:**
 - Buscador en el header es solo decorativo.
@@ -1836,7 +1856,7 @@ initMutation.isSuccess                                  → LoginForm
 
 **Decisión de diseño:** separar estructura de menu (datos) de la presentacion para mantener sidebars parametrizables.
 
-**Puntos de mejora / deuda técnica conocida:** extraer iconografia a modulo compartido.
+**Puntos de mejora / deuda técnica conocida:** revisar periódicamente iconos inline residuales en pantallas legacy para consolidarlos al módulo compartido.
 
 ### 10.2.4 User tenant pages reales — `src/pages/dashboard/user/`
 
@@ -1896,6 +1916,7 @@ initMutation.isSuccess                                  → LoginForm
 **Construcción:**
 - Query `getProfile(...)` con `ACCOUNT_QUERY_KEYS.profile(...)` para hidratar resumen y formulario.
 - Tabs accesibles (`role="tablist"`, `role="tab"`, `role="tabpanel"`) para separar estados de UI sin overlays globales.
+- Tabs con iconografía contextual (`Dashboard`, `User`, `Shield`, `Clock`) para mejorar escaneo visual.
 - Tab **Perfil** con formulario RHF + Zod para campos editables.
 - Mutacion `updateProfile(...)` con invalidacion de cache y feedback por toast.
 - Tab **Accesos** conectada a `getAccountAccess(...)` con estados locales (`loading/error/empty/data`).
@@ -1919,6 +1940,7 @@ initMutation.isSuccess                                  → LoginForm
 
 **Construcción:**
 - Tabs accesibles con estado local para segmentar cada bloque de configuración.
+- Tabs con iconografía contextual (`Shield`, `Bell`, `Link`, `CreditCard`) alineadas con el estándar global.
 - Lectura de `?tab=` para compatibilidad con rutas legacy (por ejemplo redirección desde `/dashboard/user/sessions`).
 - El bloque de idioma incluye helper explicativo de fuente de detección (`navigator.languages`) y estado de preferencia (automático/manual).
 - Se incorpora CTA hacia el centro de FAQs del sistema (`/dashboard/faq`) para mantener la vista de settings enfocada en configuración.

@@ -3,6 +3,7 @@ import { useNavigate, useOutlet, NavLink } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { listTenants, TENANT_QUERY_KEYS } from '@/api/tenants'
+import { IconBuilding, IconSearch, IconPlus, IconChevronLeft, IconChevronRight } from '@/components/icons'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -110,20 +111,7 @@ function TenantsEmptyState({ onNew }: { onNew: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full min-h-[400px] gap-4 p-10 text-center">
       <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-        <svg
-          className="w-8 h-8 text-indigo-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.5}
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"
-          />
-        </svg>
+        <IconBuilding className="w-8 h-8 text-indigo-500" aria-hidden="true" />
       </div>
       <div>
         <h2 className="text-base font-semibold text-slate-800 dark:text-white">
@@ -137,9 +125,7 @@ function TenantsEmptyState({ onNew }: { onNew: () => void }) {
         onClick={onNew}
         className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
+        <IconPlus className="w-4 h-4" aria-hidden="true" />
         {t('adminTenants.newTenant')}
       </button>
     </div>
@@ -151,40 +137,6 @@ function TenantsEmptyState({ onNew }: { onNew: () => void }) {
 type FilterStatus = 'ALL' | TenantStatus
 
 const FILTER_TABS: FilterStatus[] = ['ALL', 'ACTIVE', 'SUSPENDED', 'PENDING']
-
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
-function IconSearch() {
-  return (
-    <svg className="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 115 11a6 6 0 0112 0z" />
-    </svg>
-  )
-}
-
-function IconPlus() {
-  return (
-    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-    </svg>
-  )
-}
-
-function IconChevronLeft() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-    </svg>
-  )
-}
-
-function IconChevronRight() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-    </svg>
-  )
-}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 

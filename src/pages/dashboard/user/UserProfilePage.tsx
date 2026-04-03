@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -9,6 +10,7 @@ import { ACCOUNT_QUERY_KEYS, getAccountAccess, getProfile, updateProfile } from 
 import { TENANT } from '@/api/client'
 import { getAppApiError } from '@/api/errorNormalizer'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { IconDashboard, IconUser, IconShield, IconClock } from '@/components/icons'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -23,6 +25,12 @@ import { i18n } from '@/i18n/config'
 import type { UpdateUserProfileRequest } from '@/types/user'
 
 type AccountTab = 'summary' | 'profile' | 'access' | 'activity'
+
+interface AccountTabOption {
+  key: AccountTab
+  label: string
+  icon: ReactNode
+}
 
 function createProfileSchema() {
   return z.object({
@@ -55,11 +63,11 @@ export default function UserProfilePage() {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<AccountTab>('summary')
   const profileSchema = createProfileSchema()
-  const accountTabs: Array<{ key: AccountTab; label: string }> = [
-    { key: 'summary', label: t('userDashboardProfile.tabs.summary') },
-    { key: 'profile', label: t('userDashboardProfile.tabs.profile') },
-    { key: 'access', label: t('userDashboardProfile.tabs.access') },
-    { key: 'activity', label: t('userDashboardProfile.tabs.activity') },
+  const accountTabs: Array<AccountTabOption> = [
+    { key: 'summary', label: t('userDashboardProfile.tabs.summary'), icon: <IconDashboard className="w-5 h-5" aria-hidden="true" /> },
+    { key: 'profile', label: t('userDashboardProfile.tabs.profile'), icon: <IconUser className="w-5 h-5" aria-hidden="true" /> },
+    { key: 'access', label: t('userDashboardProfile.tabs.access'), icon: <IconShield className="w-5 h-5" aria-hidden="true" /> },
+    { key: 'activity', label: t('userDashboardProfile.tabs.activity'), icon: <IconClock className="w-5 h-5" aria-hidden="true" /> },
   ]
 
   async function fetchProfileWithRecovery(signal: AbortSignal) {
@@ -175,12 +183,13 @@ export default function UserProfilePage() {
               aria-selected={activeTab === tab.key}
               aria-controls={`account-panel-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
                 activeTab === tab.key
                   ? 'bg-indigo-600 text-white'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
               }`}
             >
+              <span className={activeTab === tab.key ? 'text-white' : ''}>{tab.icon}</span>
               {tab.label}
             </button>
           ))}

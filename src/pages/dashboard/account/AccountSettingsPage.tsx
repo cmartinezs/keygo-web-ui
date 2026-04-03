@@ -11,6 +11,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser'
 import type { SupportedLocale } from '@/i18n/constants'
 import { useLocale } from '@/i18n/useLocale'
 import { runGetWithRecovery } from '@/lib/network/recovery'
+import { IconShield, IconBell, IconLink, IconCreditCard, IconFlagChile, IconFlagUs } from '@/components/icons'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -26,6 +27,7 @@ type SettingsTab = 'security' | 'notifications' | 'connections' | 'billing'
 interface SettingsTabOption {
   key: SettingsTab
   label: string
+  icon: ReactNode
 }
 
 function formatCurrency(amount: number, currency: string, locale: string): string {
@@ -34,52 +36,6 @@ function formatCurrency(amount: number, currency: string, locale: string): strin
     currency,
     maximumFractionDigits: 0,
   }).format(amount)
-}
-
-function IconFlagChile() {
-  return (
-    <svg className="w-4 h-4 shrink-0 rounded-sm" viewBox="0 0 20 14" aria-hidden="true">
-      <rect width="20" height="7" fill="#ffffff" />
-      <rect y="7" width="20" height="7" fill="#d52b1e" />
-      <rect width="8" height="7" fill="#0039a6" />
-      <path d="M4 1.4l.67 1.99h2.1L5.08 4.6l.65 1.99L4 5.36 2.27 6.59l.65-1.99L1.23 3.39h2.1L4 1.4z" fill="#ffffff" />
-    </svg>
-  )
-}
-
-function IconFlagUs() {
-  return (
-    <svg className="w-4 h-4 shrink-0 rounded-sm" viewBox="0 0 20 14" aria-hidden="true">
-      <rect width="20" height="14" fill="#ffffff" />
-      <rect y="0" width="20" height="1.2" fill="#b22234" />
-      <rect y="2.4" width="20" height="1.2" fill="#b22234" />
-      <rect y="4.8" width="20" height="1.2" fill="#b22234" />
-      <rect y="7.2" width="20" height="1.2" fill="#b22234" />
-      <rect y="9.6" width="20" height="1.2" fill="#b22234" />
-      <rect y="12" width="20" height="1.2" fill="#b22234" />
-      <rect width="8.6" height="6.8" fill="#3c3b6e" />
-      <circle cx="1.4" cy="1.2" r="0.35" fill="#ffffff" />
-      <circle cx="3" cy="1.2" r="0.35" fill="#ffffff" />
-      <circle cx="4.6" cy="1.2" r="0.35" fill="#ffffff" />
-      <circle cx="6.2" cy="1.2" r="0.35" fill="#ffffff" />
-      <circle cx="2.2" cy="2.2" r="0.35" fill="#ffffff" />
-      <circle cx="3.8" cy="2.2" r="0.35" fill="#ffffff" />
-      <circle cx="5.4" cy="2.2" r="0.35" fill="#ffffff" />
-      <circle cx="7" cy="2.2" r="0.35" fill="#ffffff" />
-      <circle cx="1.4" cy="3.2" r="0.35" fill="#ffffff" />
-      <circle cx="3" cy="3.2" r="0.35" fill="#ffffff" />
-      <circle cx="4.6" cy="3.2" r="0.35" fill="#ffffff" />
-      <circle cx="6.2" cy="3.2" r="0.35" fill="#ffffff" />
-      <circle cx="2.2" cy="4.2" r="0.35" fill="#ffffff" />
-      <circle cx="3.8" cy="4.2" r="0.35" fill="#ffffff" />
-      <circle cx="5.4" cy="4.2" r="0.35" fill="#ffffff" />
-      <circle cx="7" cy="4.2" r="0.35" fill="#ffffff" />
-      <circle cx="1.4" cy="5.2" r="0.35" fill="#ffffff" />
-      <circle cx="3" cy="5.2" r="0.35" fill="#ffffff" />
-      <circle cx="4.6" cy="5.2" r="0.35" fill="#ffffff" />
-      <circle cx="6.2" cy="5.2" r="0.35" fill="#ffffff" />
-    </svg>
-  )
 }
 
 const LOCALE_ICONS: Record<SupportedLocale, ReactNode> = {
@@ -96,10 +52,10 @@ export default function AccountSettingsPage() {
   const activeRole = user?.activeRole ?? null
   const canViewBilling = activeRole === 'ADMIN_TENANT'
   const settingsTabs: SettingsTabOption[] = useMemo(() => [
-    { key: 'security', label: t('accountSettings.security') },
-    { key: 'notifications', label: t('accountSettings.notifications') },
-    { key: 'connections', label: t('accountSettings.connections') },
-    { key: 'billing', label: t('accountSettings.billing') },
+    { key: 'security', label: t('accountSettings.security'), icon: <IconShield className="w-5 h-5" aria-hidden="true" /> },
+    { key: 'notifications', label: t('accountSettings.notifications'), icon: <IconBell className="w-5 h-5" aria-hidden="true" /> },
+    { key: 'connections', label: t('accountSettings.connections'), icon: <IconLink className="w-5 h-5" aria-hidden="true" /> },
+    { key: 'billing', label: t('accountSettings.billing'), icon: <IconCreditCard className="w-5 h-5" aria-hidden="true" /> },
   ], [t])
   const initialTab = searchParams.get('tab')
   const normalizedInitialTab: SettingsTab = initialTab && settingsTabs.some((tab) => tab.key === initialTab)
@@ -228,12 +184,13 @@ export default function AccountSettingsPage() {
               aria-selected={activeTab === tab.key}
               aria-controls={`settings-panel-${tab.key}`}
               onClick={() => setActiveTab(tab.key)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
                 activeTab === tab.key
                   ? 'bg-indigo-600 text-white'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
               }`}
             >
+              <span className={activeTab === tab.key ? 'text-white' : ''}>{tab.icon}</span>
               {tab.label}
             </button>
           ))}

@@ -79,7 +79,43 @@ Diseñar props para casos actuales, pero sin cerrar la puerta a extensiones simp
 interface StatusBadgeProps {
   status: 'active' | 'inactive' | 'pending'
   className?: string   // permite override de estilos puntual
+  icon?: ReactNode     // ← permite pasar icono opcional
 }
+```
+
+**Componentes con iconos**
+- Exponer `icon?: ReactNode` como prop opcional para permitir override o inyección de icono.
+- Si el icono es decorativo (acompaña texto visible), aplicar `aria-hidden="true"` en el ícono.
+- Si el ícono va dentro de un `<button>`, el nombre accesible va en `aria-label` del botón, no en el ícono.
+- **Importar iconos desde `src/components/icons/`** — nunca definir iconos inline nuevos en componentes.
+- **[Aprendido]** Se permite SVG inline solo para iconografía transitoria de estado (por ejemplo, `spinner` de carga local) o casos excepcionales aún no incorporados al catálogo central; en esos casos debe registrarse su consolidación pendiente en `docs/BACKLOG.md`.
+
+Ejemplo:
+```tsx
+interface TabProps {
+  label: string
+  icon?: ReactNode
+  isActive: boolean
+  onClick: () => void
+}
+
+export function Tab({ label, icon, isActive, onClick }: TabProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={...}
+      aria-selected={isActive}
+    >
+      {icon && <span aria-hidden="true">{icon}</span>}
+      <span>{label}</span>
+    </button>
+  )
+}
+
+// Uso
+import { IconShield } from '@/components/icons'
+
+<Tab label="Seguridad" icon={<IconShield className="w-5 h-5" />} isActive={...} ... />
 ```
 
 ### Hooks reutilizables

@@ -54,7 +54,9 @@ Cuando exista conflicto entre una implementación visual y la accesibilidad, **p
 
 ---
 
-## 3. Nombres accesibles
+## 3. Nombres accesibles e iconografía
+
+### 3.1 Nombres accesibles
 
 ```tsx
 // ✅ Icon button con nombre accesible
@@ -71,6 +73,32 @@ Cuando exista conflicto entre una implementación visual y la accesibilidad, **p
 - Toda imagen informativa necesita `alt` descriptivo; imágenes decorativas: `alt=""`.
 - Los icon buttons requieren `aria-label` o `aria-labelledby`.
 - Los svg/icons que acompañan texto: `aria-hidden="true"`.
+
+### 3.2 Iconografía en mensajes de estado
+
+Mensaje de estado (info, success, warning, error) DEBE incluir: **icono + color + texto sensible**. Nunca depender solo del color.
+
+```tsx
+// ✅ Correcto — icon + text + color + semantic role
+<div role="status" aria-live="polite" className="flex items-center gap-3 rounded-lg bg-blue-50 p-4 text-blue-900 dark:bg-blue-950/30 dark:text-blue-300">
+  <IconInfo className="w-5 h-5 shrink-0 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+  <span>Se ha registrado tu solicitud correctamente.</span>
+</div>
+
+// ✅ Error message con icono // ❌ PROHIBIDO — solo color, sin icono
+<div className="p-3 rounded-lg bg-red-50 text-red-900">
+  No se pudo guardar los cambios.
+</div>
+```
+
+**Patrón semántico por estado:**
+
+| Estado | Icon | Color | Role | Aria-live |
+|--------|------|-------|------|-----------|
+| **Info** | `IconInfo` (círculo i) | blue-600 | `role="status"` | `polite` |
+| **Success** | `IconCheckCircle` (check) | green-600 | `role="status"` | `polite` |
+| **Warning** | `IconAlertTriangle` (triángulo) | yellow-600 | `role="alert"` | `assertive` |
+| **Error** | `IconXCircle` (X) | red-600 | `role="alert"` | `assertive` |
 
 ---
 
