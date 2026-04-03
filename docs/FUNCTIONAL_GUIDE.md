@@ -802,14 +802,16 @@ Acceso:
 
 ## 5. Funcionalidades pendientes
 
-Las siguientes funcionalidades están planificadas pero aún no están disponibles:
+Las siguientes funcionalidades tienen implementación visible en UI, pero aún dependen de backend parcial o inexistente. En cada pantalla se muestra un badge de estado con el detalle de lo pendiente.
 
 | Funcionalidad | Área | Estado |
 |---|---|---|
-| Reactivación de tenants | Detalle de tenant | Mock; endpoint T-033 pendiente en backend |
+| Reactivación de tenants | Detalle de tenant | Mock temporal; endpoint backend pendiente |
 | Registro de usuarios (paso 2) | `/register` | Formulario parcialmente implementado |
-| Panel Administrador de Tenant | `/dashboard` + `/dashboard/tenant/*` | Usuarios, Apps y Memberships implementados; faltan métricas y sesiones avanzadas |
-| Panel de Usuario | `/dashboard` + `/dashboard/user/*` + `/dashboard/account*` | Mi acceso y actividad en Mi cuenta implementados; pendiente timeline avanzada por contrato dedicado |
+| Módulos admin cross-tenant (`apps`, `users`, `access`, `audit`, `signing-keys`, `sessions`, `tokens`) | `/dashboard/feature/:featureId` | UI funcional mockeada (tabla, KPIs y acciones); backend real pendiente por módulo |
+| Módulos tenant/user auxiliares (`members`, `services`, `my-access`, `activity`) | `/dashboard/feature/:featureId` | UI funcional mockeada; falta contrato backend definitivo |
+| Panel Administrador de Tenant | `/dashboard` + `/dashboard/tenant/*` | Usuarios, Apps y Memberships implementados; sesiones por usuario y cambios de estado operan en modo mock temporal |
+| Panel de Usuario | `/dashboard` + `/dashboard/user/*` + `/dashboard/account*` | Mi acceso y actividad base disponibles; historial avanzado depende de contrato dedicado |
 | Seguridad de cuenta (change-password/sesiones remotas) | `/dashboard/account/settings` | Implementada (cambio de contraseña y revocación remota de sesiones) |
 | Buscador global | Cabecera admin | Decorativo, sin funcionalidad |
 | Notificaciones | Cabecera admin | Decorativo, sin funcionalidad |

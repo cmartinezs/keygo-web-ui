@@ -10,7 +10,8 @@ import { env } from './config/env'
 import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
 import './i18n/config'
 
-// ⏳ pendiente backend (F-042) — Activa MSW para conexiones externas cuando
+// ⏳ pendiente backend (modulos varios) — Activa MSW para endpoints temporales
+// (connections, users suspend/activate, user sessions, feature/* pending) cuando
 // VITE_MOCK_CONNECTIONS=true. Solo opera en modo desarrollo.
 async function prepareMocks(): Promise<void> {
   if (!env.MOCK_CONNECTIONS || !env.DEV) return

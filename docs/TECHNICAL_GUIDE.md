@@ -325,7 +325,7 @@ El contenido del fallback es i18n y se alimenta desde `appErrorBoundary.*` en lo
 | `/register` | `UserRegisterPage` | Pública |
 | `/dashboard` | `AuthGuard` → `AdminLayout` → `DashboardHomePage` | Autenticada |
 | `/dashboard/feature/api` | `PlatformStatsPage` | `ADMIN` |
-| `/dashboard/feature/:featureId` | `FeaturePlaceholderPage` | Autenticada |
+| `/dashboard/feature/:featureId` | `FeaturePlaceholderPage` (UI funcional con datos mock MSW) | Autenticada |
 | `/dashboard/account` | `UserProfilePage` | Autenticada |
 | `/dashboard/account/settings` | `AccountSettingsPage` | Autenticada |
 | `/dashboard/account/sessions` | `AccountSessionsPage` | Autenticada |
@@ -1820,17 +1820,37 @@ initMutation.isSuccess                                  → LoginForm
 
 **`FeaturePlaceholderPage.tsx`**
 
-**Propósito:** pantalla temporal para entradas de sidebar aun no implementadas.
+**Propósito:** pantalla dinamica para modulos pendientes del sidebar con UI funcional y datos mockeados.
 
-**Construcción:** usa `featureId` en URL para resolver titulo visible y mostrar estado de modulo pendiente.
+**Construcción:**
+- Usa `featureId` en URL para resolver titulo, badge y metadata del modulo.
+- Consulta snapshot del modulo con TanStack Query + `getPendingFeatureSnapshot(...)` (MSW) y resiliencia de red (`runGetWithRecovery`).
+- Renderiza resumen, KPIs, acciones y tabla de datos segun la configuracion del modulo.
+- Ejecuta acciones simuladas mediante `runPendingFeatureAction(...)` con `useMutation` y feedback con toast.
+- Mantiene estados locales de `loading`, `error` y `data` sin bloquear el resto del dashboard.
 
 **Integración:** se monta en `/dashboard/feature/:featureId`.
 
 **Actualización relevante:** `feature/api` dejó de usar placeholder y ahora se resuelve con `PlatformStatsPage` para el rol `ADMIN`.
 
-**Decisión de diseño:** evita 404 internas y permite validar navegacion por rol sin bloquear el flujo.
+**Decisión de diseño:** reemplazar placeholders vacios por una unica pagina dinamica para acelerar validacion funcional y UX mientras el backend publica contratos definitivos por modulo.
 
-**Puntos de mejora / deuda técnica conocida:** reemplazar cada `featureId` por su pagina real conforme se implemente.
+**Puntos de mejora / deuda técnica conocida:** reemplazar el endpoint mock `GET/POST /api/v1/platform/pending-features/:featureId` por endpoints backend reales por dominio y migrar la tabla generica a componentes especificos por modulo.
+
+**`src/api/pendingFeatures.ts`**
+
+**Propósito:** encapsular acceso a endpoints temporales MSW para modulos pendientes del dashboard.
+
+**Construcción:**
+- `getPendingFeatureSnapshot(featureId)` obtiene `PendingFeatureSnapshot` para pintar la UI.
+- `runPendingFeatureAction(featureId, action, itemId)` simula acciones operativas con envelope `BaseResponse<T>`.
+- Define `PENDING_FEATURE_QUERY_KEYS` para cache consistente de TanStack Query.
+
+**Integración:** consumido por `FeaturePlaceholderPage.tsx`; datos servidos por `src/mocks/handlers.ts`.
+
+**Decisión de diseño:** centralizar capa API mock en un modulo para evitar lógica HTTP en componentes y facilitar migracion a backend real.
+
+**Puntos de mejora / deuda técnica conocida:** al existir contrato oficial, dividir este modulo en APIs de dominio (`apps`, `audit`, `tokens`, etc.) y eliminar dependencias temporales.
 
 ### 10.2.2 Admin tenant pages reales — `src/pages/dashboard/tenant/`
 
