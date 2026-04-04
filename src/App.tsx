@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useIsFetching, useIsMutating } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { resetTraceId } from './lib/traceId'
 import LandingPage from './pages/landing/LandingPage'
 import DeveloperDocsPage from './pages/developers/DeveloperDocsPage'
 import LoginPage from './pages/login/LoginPage'
@@ -51,6 +52,10 @@ export default function App() {
   const [isRouteSettling, setIsRouteSettling] = useState(true)
   const [isSlowNetwork, setIsSlowNetwork] = useState(false)
   const isHighContrast = themePreference === 'high-contrast'
+
+  useEffect(() => {
+    resetTraceId()
+  }, [location.pathname])
 
   useEffect(() => {
     const openSettleFrame = window.requestAnimationFrame(() => {

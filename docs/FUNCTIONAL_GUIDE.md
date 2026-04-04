@@ -437,6 +437,33 @@ El panel de administrador incluye una **barra lateral de navegación** y una **c
 
 En pantallas pequeñas, la barra lateral se convierte en un cajón desplegable que se cierra automáticamente al navegar a otra sección.
 
+#### Consola de desarrollo (KeyGo Console) — solo ADMIN
+
+Una franja fija en la parte inferior de la pantalla, visible exclusivamente para cuentas con rol `ADMIN`. Permite inspeccionar el tráfico HTTP del panel sin abrir las DevTools del navegador.
+
+- **Estado colapsado (por defecto):** muestra solo la barra de 28px con el título "KeyGo Console" y un contador de requests registrados.
+- **Estado expandido:** muestra la salida de comandos (zona de log) y un campo de entrada de comandos en la parte inferior.
+- **Altura ajustable:** el borde superior se puede arrastrar para redimensionar la consola (mínimo 120px, máximo 65% de la altura de pantalla).
+
+**Cómo abrir/cerrar:**
+- Clic en el botón `▲` / `▼` de la cabecera de la consola.
+- Doble clic sobre la barra de título.
+- Atajo de teclado `Ctrl+`` (acento grave).
+
+**Comandos disponibles:**
+
+| Comando | Descripción |
+|---|---|
+| `req [N]` | Muestra los últimos N requests HTTP (N por defecto: 10, máximo 50) |
+| `requests [N]` | Alias de `req` |
+| `filter METODO` | Filtra requests por método HTTP: `GET`, `POST`, `PUT`, `DELETE`, `PATCH` |
+| `status` | Resumen de todos los requests agrupados por código de estado (2xx, 4xx, etc.) |
+| `detail N` | Muestra el detalle completo del N-ésimo request más reciente (URL, estado, duración, body) |
+| `clear` / `cls` | Limpia la salida de la consola |
+| `help` / `?` | Lista todos los comandos disponibles |
+
+El campo de entrada soporta historial de comandos con las teclas `↑` / `↓`.
+
 ---
 
 ### 2.1 Dashboard — Panel de control

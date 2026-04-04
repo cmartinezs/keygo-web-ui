@@ -5,6 +5,16 @@ import {
   normalizeApiError,
   type AxiosErrorWithAppApiError,
 } from './errorNormalizer'
+import { useDevConsoleStore } from '@/lib/devConsole/store'
+import { getTraceId } from '@/lib/traceId'
+
+// ── Axios config type augmentation for DevConsole tracking ─────────────────────
+declare module 'axios' {
+  interface InternalAxiosRequestConfig {
+    _devConsoleId?: string
+    _devConsoleStart?: number
+  }
+}
 
 export const KEYGO_BASE = env.KEYGO_BASE
 export const API_V1 = `${KEYGO_BASE}/api/v1`
@@ -31,6 +41,15 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
+// Inject X-Trace-ID for request correlation (shared per page/route).
+function attachTraceId(config: import('axios').InternalAxiosRequestConfig) {
+  config.headers['X-Trace-ID'] = getTraceId()
+  return config
+}
+
+apiClient.interceptors.request.use(attachTraceId)
+authClient.interceptors.request.use(attachTraceId)
+
 function onRejectedWithNormalizedError(error: unknown): Promise<never> {
   const appApiError = normalizeApiError(error)
 
@@ -45,3 +64,71 @@ function onRejectedWithNormalizedError(error: unknown): Promise<never> {
 
 apiClient.interceptors.response.use((response) => response, onRejectedWithNormalizedError)
 authClient.interceptors.response.use((response) => response, onRejectedWithNormalizedError)
+
+// ── DevConsole HTTP logging interceptors ───────────────────────────────────────
+// Captures request/response pairs and routes them to the DevConsole store.
+// These interceptors are placed last so they observe the already-enriched config.
+
+let _devSeq = 0
+
+function attachDevConsoleRequest(config: import('axios').InternalAxiosRequestConfig) {
+  const id      = `req-${Date.now()}-${++_devSeq}`
+  const startMs = performance.now()
+
+  config._devConsoleId    = id
+  config._devConsoleStart = startMs
+
+  // Sanitize: never log Authorization header value
+  const safeHeaders: Record<string, string> = {}
+  if (config.headers) {
+    for (const [k] of Object.entries(config.headers.toJSON ? config.headers.toJSON() : config.headers)) {
+      safeHeaders[k] = k.toLowerCase() === 'authorization' ? '[redacted]' : String(config.headers[k] ?? '')
+    }
+  }
+
+  useDevConsoleStore.getState().logRequest({
+    id,
+    timestamp:   new Date(),
+    method:      (config.method ?? 'GET').toUpperCase(),
+    url:         (config.baseURL ?? '') + (config.url ?? ''),
+    requestBody: config.data as unknown,
+    _startMs:    startMs,
+  })
+
+  return config
+}
+
+apiClient.interceptors.request.use(attachDevConsoleRequest)
+authClient.interceptors.request.use(attachDevConsoleRequest)
+
+function finalizeDevConsoleSuccess(response: import('axios').AxiosResponse) {
+  const id    = response.config._devConsoleId
+  const start = response.config._devConsoleStart
+  if (id) {
+    useDevConsoleStore.getState().finalizeRequest(id, {
+      status:       response.status,
+      duration:     start !== undefined ? performance.now() - start : undefined,
+      responseBody: response.data as unknown,
+    })
+  }
+  return response
+}
+
+function finalizeDevConsoleError(error: unknown) {
+  if (axios.isAxiosError(error) && error.config) {
+    const id    = error.config._devConsoleId
+    const start = error.config._devConsoleStart
+    if (id) {
+      useDevConsoleStore.getState().finalizeRequest(id, {
+        status:   error.response?.status,
+        duration: start !== undefined ? performance.now() - start : undefined,
+        error:    error.message,
+      })
+    }
+  }
+  return Promise.reject(error)
+}
+
+apiClient.interceptors.response.use(finalizeDevConsoleSuccess, finalizeDevConsoleError)
+authClient.interceptors.response.use(finalizeDevConsoleSuccess, finalizeDevConsoleError)
+

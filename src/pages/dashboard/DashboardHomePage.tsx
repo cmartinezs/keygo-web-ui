@@ -1,11 +1,13 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import AdminDashboardPage from '@/pages/admin/DashboardPage'
 import { getAccountAccess, getSessions } from '@/api/account'
 import { listClientApps } from '@/api/clientApps'
+import { listTenants, TENANT_QUERY_KEYS } from '@/api/tenants'
 import { listUsers } from '@/api/users'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useTokenStore } from '@/auth/tokenStore'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -73,8 +75,55 @@ function toLocalDateTime(input: string): string {
 }
 
 function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
+  const currentUser = useCurrentUser()
+  const managedTenantSlug = useTokenStore((s) => s.managedTenantSlug)
+  const setManagedTenantSlug = useTokenStore((s) => s.setManagedTenantSlug)
+
+  const tenantsQuery = useQuery({
+    queryKey: TENANT_QUERY_KEYS.list({ owner_email: currentUser?.email, size: 100 }),
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'tenants administrados',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () =>
+          listTenants(
+            { owner_email: currentUser?.email, size: 100 },
+            { signal, timeoutMs: NETWORK_REQUEST_TIMEOUT_MS },
+          ),
+      }),
+    enabled: !!currentUser?.email,
+    retry: false,
+  })
+
+  const ownedTenants = useMemo(
+    () => tenantsQuery.data?.content ?? [],
+    [tenantsQuery.data],
+  )
+
+  const effectiveTenantSlug = useMemo(() => {
+    if (managedTenantSlug && ownedTenants.some((t) => t.slug === managedTenantSlug)) {
+      return managedTenantSlug
+    }
+    const firstActive = ownedTenants.find((t) => t.status === 'ACTIVE')
+    return firstActive?.slug ?? tenantSlug
+  }, [managedTenantSlug, ownedTenants, tenantSlug])
+
+  useEffect(() => {
+    if (tenantsQuery.isSuccess && ownedTenants.length > 0 && !managedTenantSlug) {
+      const firstActive = ownedTenants.find((t) => t.status === 'ACTIVE')
+      if (firstActive) {
+        setManagedTenantSlug(firstActive.slug)
+      }
+    }
+  }, [tenantsQuery.isSuccess, ownedTenants, managedTenantSlug, setManagedTenantSlug])
+
+  const shouldRunTenantQueries = !tenantsQuery.isLoading
+
   const usersQuery = useQuery({
-    queryKey: ['dashboard-home', 'tenant-users', tenantSlug],
+    queryKey: ['dashboard-home', 'tenant-users', effectiveTenantSlug],
     queryFn: ({ signal }) =>
       runGetWithRecovery({
         signal,
@@ -83,16 +132,17 @@ function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
         retryDelayMs: NETWORK_RETRY_DELAY_MS,
         maxRetries: NETWORK_MAX_RETRIES,
         query: () =>
-          listUsers(tenantSlug, {
+          listUsers(effectiveTenantSlug, {
             signal,
             timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
           }),
       }),
     retry: false,
+    enabled: shouldRunTenantQueries,
   })
 
   const appsQuery = useQuery({
-    queryKey: ['dashboard-home', 'tenant-apps', tenantSlug],
+    queryKey: ['dashboard-home', 'tenant-apps', effectiveTenantSlug],
     queryFn: ({ signal }) =>
       runGetWithRecovery({
         signal,
@@ -101,16 +151,17 @@ function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
         retryDelayMs: NETWORK_RETRY_DELAY_MS,
         maxRetries: NETWORK_MAX_RETRIES,
         query: () =>
-          listClientApps(tenantSlug, {
+          listClientApps(effectiveTenantSlug, {
             signal,
             timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
           }),
       }),
     retry: false,
+    enabled: shouldRunTenantQueries,
   })
 
   const sessionsQuery = useQuery({
-    queryKey: ['dashboard-home', 'account-sessions', tenantSlug],
+    queryKey: ['dashboard-home', 'account-sessions', effectiveTenantSlug],
     queryFn: ({ signal }) =>
       runGetWithRecovery({
         signal,
@@ -119,19 +170,20 @@ function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
         retryDelayMs: NETWORK_RETRY_DELAY_MS,
         maxRetries: NETWORK_MAX_RETRIES,
         query: () =>
-          getSessions(tenantSlug, {
+          getSessions(effectiveTenantSlug, {
             signal,
             timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
           }),
       }),
     retry: false,
+    enabled: shouldRunTenantQueries,
   })
 
   const users = toArrayPayload<{ status?: string }>(usersQuery.data)
   const apps = toArrayPayload<unknown>(appsQuery.data)
   const sessions = toArrayPayload<{ last_accessed_at?: string }>(sessionsQuery.data)
 
-  const activeUsers = users.filter((user) => user.status === 'ACTIVE').length
+  const activeUsers = users.filter((u) => u.status === 'ACTIVE').length
   const appsCount = apps.length
   const todayAccesses =
     sessions.filter((session) => {
@@ -147,40 +199,116 @@ function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
       )
     }).length
 
+  const isLoadingTenantUsers = tenantsQuery.isLoading || usersQuery.isLoading
+  const isLoadingTenantApps = tenantsQuery.isLoading || appsQuery.isLoading
+  const isLoadingTenantSessions = tenantsQuery.isLoading || sessionsQuery.isLoading
+  const isErrorTenantUsers = tenantsQuery.isError || usersQuery.isError
+  const isErrorTenantApps = tenantsQuery.isError || appsQuery.isError
+  const isErrorTenantSessions = tenantsQuery.isError || sessionsQuery.isError
+
   const cards: StatCardData[] = [
     {
       title: 'Usuarios activos',
-      value: toCardValue(usersQuery.isLoading, usersQuery.isError, String(activeUsers)),
-      description: usersQuery.isError
-        ? 'No fue posible cargar usuarios del tenant.'
+      value: toCardValue(isLoadingTenantUsers, isErrorTenantUsers, String(activeUsers)),
+      description: isErrorTenantUsers
+        ? 'No fue posible cargar usuarios del tenant administrado.'
         : 'Cantidad de usuarios activos actualmente en tu tenant.',
       icon: <span className="inline-flex" aria-hidden="true"><IconUsers /></span>,
     },
     {
       title: 'Aplicaciones',
-      value: toCardValue(appsQuery.isLoading, appsQuery.isError, String(appsCount)),
-      description: appsQuery.isError
-        ? 'No fue posible cargar aplicaciones del tenant.'
+      value: toCardValue(isLoadingTenantApps, isErrorTenantApps, String(appsCount)),
+      description: isErrorTenantApps
+        ? 'No fue posible cargar aplicaciones del tenant administrado.'
         : 'Aplicaciones registradas para tu organizacion.',
       icon: <span className="inline-flex" aria-hidden="true"><IconApps /></span>,
     },
     {
       title: 'Accesos del dia',
-      value: toCardValue(sessionsQuery.isLoading, sessionsQuery.isError, String(todayAccesses)),
-      description: sessionsQuery.isError
-        ? 'No fue posible cargar sesiones de cuenta.'
+      value: toCardValue(isLoadingTenantSessions, isErrorTenantSessions, String(todayAccesses)),
+      description: isErrorTenantSessions
+        ? 'No fue posible cargar sesiones del tenant administrado.'
         : 'Inicios de sesion del usuario actual durante hoy.',
       icon: <span className="inline-flex" aria-hidden="true"><IconClock /></span>,
     },
   ]
 
+  let tenantSelectorNode: ReactNode
+  if (tenantsQuery.isLoading) {
+    tenantSelectorNode = (
+      <div
+        className="h-7 w-48 rounded animate-pulse bg-slate-200 dark:bg-slate-700"
+        aria-busy="true"
+        aria-label="Cargando tenants administrados"
+      />
+    )
+  } else if (tenantsQuery.isError) {
+    tenantSelectorNode = (
+      <p className="text-sm text-amber-600 dark:text-amber-400" role="alert">
+        No fue posible cargar los tenants administrados.
+      </p>
+    )
+  } else if (ownedTenants.length <= 1) {
+    tenantSelectorNode = (
+      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+        {ownedTenants[0]?.name ?? effectiveTenantSlug}
+      </span>
+    )
+  } else {
+    tenantSelectorNode = (
+      <select
+        id="managed-tenant-selector"
+        value={effectiveTenantSlug}
+        onChange={(e) => setManagedTenantSlug(e.target.value)}
+        className="text-sm rounded border border-slate-300 dark:border-white/20 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        aria-label="Seleccionar tenant administrado"
+      >
+        {ownedTenants.map((t) => (
+          <option key={t.slug} value={t.slug}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+    )
+  }
+
   return (
-    <RoleOverviewLayout
-      title="Panel de administracion del tenant"
-      subtitle="Gestiona usuarios, aplicaciones y seguridad de tu organizacion."
-      cards={cards}
-      role="ADMIN_TENANT"
-    />
+    <div className="max-w-screen-xl mx-auto space-y-8">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Panel de administracion del tenant
+        </h1>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-500 dark:text-slate-400">Organizacion activa:</span>
+          {tenantSelectorNode}
+        </div>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Gestiona usuarios, aplicaciones y seguridad de tu organizacion.
+        </p>
+      </header>
+
+      <section
+        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+        aria-label="Resumen del dashboard"
+      >
+        {cards.map((card) => (
+          <StatCard
+            key={card.title}
+            title={card.title}
+            value={card.value}
+            description={card.description}
+            icon={card.icon}
+          />
+        ))}
+      </section>
+
+      <section className="rounded-xl border border-dashed border-slate-300 dark:border-white/20 bg-white/80 dark:bg-slate-900/80 p-6">
+        <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Siguientes modulos</h2>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Este dashboard ya consume datos reales del tenant y seguira ampliandose con nuevos indicadores de administracion.
+        </p>
+      </section>
+    </div>
   )
 }
 

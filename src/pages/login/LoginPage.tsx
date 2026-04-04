@@ -623,10 +623,18 @@ export default function LoginPage() {
     },
   })
 
-  // Run Pasos 0-1 once on mount (user has not interacted yet)
+  // Run Pasos 0-1 once on mount (user has not interacted yet).
+  // React 18 StrictMode double-invokes effects (mount → cleanup → remount). We use a
+  // deferred call via setTimeout so the cleanup has a chance to cancel it before it fires.
+  // On the real (final) mount the cleanup never runs, so the timer fires exactly once.
   useEffect(() => {
     if (accessToken) return
-    triggerInit(true)
+    const timerId = window.setTimeout(() => {
+      triggerInit(true)
+    }, 0)
+    return () => {
+      window.clearTimeout(timerId)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accessToken])
 

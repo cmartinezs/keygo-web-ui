@@ -3,7 +3,7 @@
 // Todos los handlers marcados con ⏳ deben eliminarse cuando el backend publique
 // el contrato real y se migre la UI al endpoint definitivo.
 
-import { http, HttpResponse } from 'msw'
+import { http, HttpResponse, passthrough } from 'msw'
 
 const API_V1_GLOB = '*/api/v1'
 
@@ -230,6 +230,44 @@ function errorResponse(code: string, message: string, status: number) {
 // ── Handlers ⏳ pendiente backend (F-042) ─────────────────────────────────────
 
 export const handlers = [
+  /**
+   * GET /api/v1/tenants?owner_email=... ⏳ pendiente — filtro owner_email + acceso ADMIN_TENANT
+   * Solo intercepta peticiones con owner_email; las demás hacen passthrough al backend real.
+   */
+  http.get(`${API_V1_GLOB}/tenants`, ({ request }) => {
+    const url = new URL(request.url)
+    const ownerEmail = url.searchParams.get('owner_email')
+    if (!ownerEmail) return passthrough()
+    return successResponse(
+      {
+        content: [
+          {
+            id: 'mock-owned-t-001',
+            slug: 'mock-org-principal',
+            name: 'Mi Organizacion Principal',
+            owner_email: ownerEmail,
+            status: 'ACTIVE',
+            created_at: '2026-01-10T00:00:00Z',
+          },
+          {
+            id: 'mock-owned-t-002',
+            slug: 'mock-org-dev',
+            name: 'Mi Organizacion Dev',
+            owner_email: ownerEmail,
+            status: 'ACTIVE',
+            created_at: '2026-02-20T00:00:00Z',
+          },
+        ],
+        page: 0,
+        size: 100,
+        total_elements: 2,
+        total_pages: 1,
+        last: true,
+      },
+      'TENANT_LIST_RETRIEVED',
+    )
+  }),
+
   /**
    * GET /api/v1/platform/pending-features/:featureId
    * ⏳ pendiente backend — temporal MSW para modulos placeholder del dashboard.

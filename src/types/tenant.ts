@@ -17,6 +17,10 @@ export interface CreateTenantRequest {
 export interface ListTenantsParams {
   status?: TenantStatus
   name_like?: string
+  /** ⏳ pendiente — filtro por propietario para scope ADMIN_TENANT (requiere soporte backend) */
+  owner_email?: string
   page?: number
   size?: number
+  sort?: string
+  order?: string
 }

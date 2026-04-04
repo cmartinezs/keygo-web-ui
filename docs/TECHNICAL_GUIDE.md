@@ -56,6 +56,7 @@
    - [plans.ts](#plansts)
   - [icons/ module (`src/components/icons/`)](#icons-module-srccomponentsicons)
    - [ScrollToTop.tsx](#scrolltotoptsx)
+  - [8b. DevConsole — `src/lib/devConsole/` + `src/components/DevConsole/`](#8b-devconsole--srclibdevconsole--srccomponentsdevconsole)
 9. [Layouts — `src/layouts/`](#9-layouts--srclayouts)
    - [AdminLayout.tsx](#adminlayouttsx)
 10. [Páginas — `src/pages/`](#10-páginas--srcpages)
@@ -594,9 +595,16 @@ apiClient.interceptors.request.use(config => {
 - Si el error es Axios, preserva el objeto original y adjunta `appApiError` para compatibilidad con pantallas que aún usan `axios.isAxiosError(...)`.
 - Si no es Axios, rechaza directamente un `AppApiError`.
 
-**Integración:** Importado por todos los módulos de `src/api/*.ts`.
+**Interceptores de DevConsole (request + response, ambos clientes):**
+- Se añaden tras los interceptores de autenticación/error para observar el tráfico ya enriquecido.
+- `attachDevConsoleRequest` — asigna un `id` y un `_startMs` al config de la request y llama `logRequest(...)` en el store.
+- `finalizeDevConsoleSuccess` / `finalizeDevConsoleError` — calculan duración, extraen status y body, y llaman `finalizeRequest(...)` para completar la entrada en el log.
+- El header `Authorization` se redacta (`[redacted]`) antes de almacenarlo; nunca se loguea el token real.
+- Los interceptores no bloquean ni modifican el flujo normal; solo leen y escriben en el store.
 
-**Decisión de diseño:** Dos instancias Axios separadas por responsabilidad — `authClient` para el flujo OAuth2 (necesita cookies de sesión del servidor), `apiClient` para llamadas autenticadas (necesita Bearer token).
+**Integración:** Importado por todos los módulos de `src/api/*.ts`. Los interceptores de DevConsole usan `useDevConsoleStore.getState()` (Zustand fuera de React) para acceso seguro desde Axios.
+
+**Decisión de diseño:** Dos instancias Axios separadas por responsabilidad — `authClient` para el flujo OAuth2 (necesita cookies de sesión del servidor), `apiClient` para llamadas autenticadas (necesita Bearer token). La observabilidad de DevConsole se añade como capa transversal sin modificar la lógica de negocio de cada instancia.
 
 **Deuda técnica:** Sin timeout global en Axios y sin estrategia de retry/backoff centralizada; la normalización de errores ya existe pero falta migrar gradualmente los consumidores UI a `appApiError`.
 
@@ -1554,6 +1562,83 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 
 ---
 
+## 8b. DevConsole — `src/lib/devConsole/` + `src/components/DevConsole/`
+
+### `src/lib/devConsole/store.ts`
+
+**Propósito:** Zustand store centralizado para el estado de la consola de desarrollo: log de tráfico HTTP, salida de comandos e historial de entrada.
+
+**Construcción:**
+- `HttpLogEntry` — modelo de una entrada HTTP: `id`, `timestamp`, `method`, `url`, `status`, `duration`, `requestBody`, `responseBody`, `error`.
+- `OutputLine` — unión discriminada de tipos de salida: `command`, `output`, `error`, `info`, `divider`, `http-header`, `http-row`.
+- `DevConsoleStore` expone:
+  - `open` / `height` — estado visual del panel.
+  - `httpLog[]` — circular (máximo 200 entradas), alimentado por interceptores de Axios.
+  - `output[]` — líneas de salida del intérprete (máximo 500).
+  - `history[]` — historial de comandos ejecutados (máximo 100).
+  - `logRequest` / `finalizeRequest` — API de escritura para interceptores (dos fases: request bootstrap → response patch).
+  - `push` / `clearOutput` / `addHistory` — API del intérprete de comandos.
+
+**Integración:**
+- Leído por `DevConsole.tsx` para renderizar estado y reaccionar a cambios.
+- Escrito por los interceptores de `src/api/client.ts`.
+- Escrito por `src/lib/devConsole/commands.ts` vía `push` y `clearOutput`.
+
+**Decisión de diseño:** Store separado de `tokenStore` y `blockingErrorStore` para encapsular completamente la preocupación de observabilidad interna. Solo se activa en el layout con rol `ADMIN`.
+
+**Deuda técnica:** El log es en memoria; se pierde al navegar o recargar. Se podría persistir en `sessionStorage` con un límite ajustado si se necesita diagnóstico cross-navegación.
+
+---
+
+### `src/lib/devConsole/commands.ts`
+
+**Propósito:** Intérprete puro de comandos de texto para la consola. Sin dependencias de React.
+
+**Construcción:**
+- `runCommand(raw, ctx)` — función de entrada: parsea el string, despacha al handler correspondiente.
+- `CommandContext` — interfaz que recibe `httpLog[]`, `push()` y `clear()` para desacoplar el intérprete del store.
+- Comandos implementados: `req [N]`, `requests [N]`, `filter <METHOD>`, `status`, `detail <N>`, `clear`, `cls`, `help`, `?`.
+- Ningún handler tiene efectos secundarios fuera del `CommandContext` recibido.
+
+**Integración:** Invocado por `CommandInput` dentro de `DevConsole.tsx` en el evento `submit` del input.
+
+**Decisión de diseño:** Mantener el intérprete puro (sin imports de React ni Zustand) permite testarlo en aislamiento y añadir nuevos comandos sin tocar el componente visual.
+
+---
+
+### `src/components/DevConsole/DevConsole.tsx`
+
+**Propósito:** Componente UI de la consola de desarrollo. Renderiza la barra, el panel de salida y el input de comandos.
+
+**Construcción (subcomponentes privados):**
+- `HttpTableHeader` — cabecera de la tabla de requests.
+- `HttpRow` — fila individual de request con coloreado por método y estado.
+- `OutputLineItem` — despacha cada `OutputLine` al renderer correcto (plain text / tabla HTTP / divider).
+- `CommandInput` — input controlado con submit por Enter, historial `↑`/`↓` y focus automático al abrir.
+- `RequestsBadge` — badge numérico con el total de requests registrados.
+- `DevConsole` (export principal) — orquesta tamaño, drag-to-resize, atajos de teclado y scroll automático al final del log.
+
+**Estado y efectos:**
+- `useRef` + `useEffect` para scroll automático al final del output cuando se añaden líneas.
+- `useEffect` para focus del input al abrir.
+- `useEffect` para atajo `Ctrl+`` (global en `window`).
+- Lógica de drag-to-resize via `mousedown` + listeners globales `mousemove`/`mouseup`.
+
+**Accesibilidad:**
+- `role="region"` + `aria-label` en el contenedor principal.
+- `role="log"` + `aria-live="polite"` en el área de salida.
+- `aria-expanded` y `aria-controls` en el botón de toggle.
+- `aria-label` en el input de comandos.
+- Botones con `focus-visible:ring` para navegación por teclado.
+
+**Integración:** Montado condicionalmente en `AdminLayout.tsx` solo cuando `activeRole === 'ADMIN'`.
+
+**Decisión de diseño:** Panel siempre presente en el DOM (sin desmontar) para no perder el estado de log al cambiar de ruta; solo cambia la altura CSS entre `28px` (colapsado) y el valor de `height` del store.
+
+**Deuda técnica:** El drag-to-resize no está adaptado a touch (sin `touchmove`/`touchend`). Los comandos están hardcoded en español; no están conectados al sistema i18n.
+
+---
+
 ## 9. Layouts — `src/layouts/`
 
 ### `AdminLayout.tsx`
@@ -1707,6 +1792,15 @@ div.flex.h-screen
 - Campana de notificaciones sin funcionalidad.
 - Configuración de cuenta ya integra conexiones externas con backend real; se mantiene deuda de evolución para actividad avanzada de cuenta.
 - Sin keyboard navigation completa en ThemeToggle (solo focus ring).
+- `DevConsole` montada solo para `ADMIN`; los roles `ADMIN_TENANT` y `USER_TENANT` no tienen acceso a ella.
+
+**DevConsole integration:**
+```
+div.flex-1.flex-col
+├── header
+├── main > Outlet
+└── DevConsole  ← solo cuando activeRole === 'ADMIN'
+```
 
 **Regla de UX aplicada:** los selectores deben reutilizar el primitive compartido `Dropdown` (via `SelectDropdown`) para consistencia visual y de interacción; incluye selector de idioma en cabecera y en `AccountSettingsPage`.
 
@@ -2453,6 +2547,9 @@ Crear `src/mocks/handlers.ts` con `http.get/post(...)` de MSW respetando el shap
 | 17 | `src/layouts/AdminLayout.tsx` | Buscador, notificaciones, Mi perfil y Configuración son decorativos | Media |
 | 18 | Proyecto general | Sin infraestructura de tests (Vitest, Testing Library, MSW) | **Alta** |
 | 19 | `tsconfig.json` | `moduleResolution: "Node"` es el modo legacy | Baja |
+| 20 | `src/components/DevConsole/DevConsole.tsx` | Drag-to-resize no soporta touch (sin `touchmove`/`touchend`) | Baja |
+| 21 | `src/lib/devConsole/` | Comandos hardcoded en español; no conectados al sistema i18n | Baja |
+| 22 | `src/lib/devConsole/store.ts` | Log HTTP en memoria; se pierde al recargar la página | Baja |
 
 ---
 

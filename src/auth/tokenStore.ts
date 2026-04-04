@@ -11,6 +11,8 @@ interface TokenState {
   refreshToken: string | null
   roles: AppRole[]
   activeRole: AppRole | null
+  /** Tenant gestionado activo para ADMIN_TENANT. Persiste durante la sesión; se limpia al cerrar sesión. */
+  managedTenantSlug: string | null
 }
 
 interface TokenActions {
@@ -21,6 +23,7 @@ interface TokenActions {
     roles: AppRole[]
   }) => void
   setActiveRole: (role: AppRole) => void
+  setManagedTenantSlug: (slug: string | null) => void
   clearTokens: () => void
 }
 
@@ -32,6 +35,7 @@ const initialState: TokenState = {
   refreshToken: null,
   roles: [],
   activeRole: null,
+  managedTenantSlug: null,
 }
 
 export const useTokenStore = create<TokenStore>()((set) => ({
@@ -52,6 +56,7 @@ export const useTokenStore = create<TokenStore>()((set) => ({
           ? { activeRole: state.activeRole }
           : { activeRole: resolvePrimaryRole(state.roles) },
     ),
+  setManagedTenantSlug: (slug) => set({ managedTenantSlug: slug }),
   clearTokens: () => {
     sessionStorage.removeItem(SESSION_KEY)
     set(initialState)
