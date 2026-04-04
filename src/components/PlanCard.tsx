@@ -23,11 +23,12 @@ function CheckIcon({ className }: { className: string }) {
 
 export function PlanCard(props: PlanCardProps) {
   const { plan } = props
+  const isSelectMode = props.mode === 'select'
   const isSelected = props.mode === 'select' && props.selected
   const highlighted = plan.highlighted && !isSelected
   const ctaTo = props.mode === 'display' ? props.ctaTo : null
 
-  const cardBaseClasses = `group relative rounded-2xl p-8 flex flex-col h-full overflow-hidden transition-all ${
+  const cardBaseClasses = `group relative rounded-2xl ${isSelectMode ? 'p-6' : 'p-8'} flex flex-col h-full overflow-hidden transition-all ${
     highlighted
       ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/30 ring-2 ring-indigo-400 ring-offset-2'
       : isSelected
@@ -48,10 +49,10 @@ export function PlanCard(props: PlanCardProps) {
 
       {/* Static content — always visible */}
       <div className="flex-1">
-        <h3 className={`font-bold text-xl mb-1 ${highlighted ? 'text-white' : 'text-slate-900'}`}>
+        <h3 className={`font-bold ${isSelectMode ? 'text-lg' : 'text-xl'} mb-1 ${highlighted ? 'text-white' : 'text-slate-900'}`}>
           {plan.name}
         </h3>
-        <div className={`text-4xl font-extrabold mb-1 ${highlighted ? 'text-white' : 'text-slate-900'}`}>
+        <div className={`${isSelectMode ? 'text-3xl' : 'text-4xl'} font-extrabold mb-1 ${highlighted ? 'text-white' : 'text-slate-900'}`}>
           {plan.price}
         </div>
         <div className={`text-sm mb-1 ${highlighted ? 'text-indigo-200' : 'text-slate-400'}`}>
@@ -113,7 +114,7 @@ export function PlanCard(props: PlanCardProps) {
   // Badge lives outside the card so it's not clipped by overflow-hidden
   const badge = plan.badge && (
     <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-      <span className="bg-amber-400 text-amber-900 text-xs font-bold px-4 py-1.5 rounded-full shadow-md">
+      <span className="bg-amber-400 text-amber-900 text-xs font-bold px-4 py-1.5 rounded-full shadow-md whitespace-nowrap">
         {plan.badge}
       </span>
     </div>

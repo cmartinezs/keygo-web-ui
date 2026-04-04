@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPeriod } from '@/types/billing'
 import { PlanCard } from './PlanCard'
 import { PlanCardSelect } from './PlanCardSelect'
@@ -32,6 +33,7 @@ function hasMultiplePeriods(plans: AppPlan[]): boolean {
 }
 
 export function PlanCatalogGrid(props: PlanCatalogGridProps) {
+  const { t } = useTranslation()
   const { plans, isLoading = false, isError = false, onRetry } = props
   const [displayPeriod, setDisplayPeriod] = useState<BillingPeriod>('MONTHLY')
   const activePeriod = props.mode === 'select' ? props.activePeriod : displayPeriod
@@ -90,7 +92,7 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Mensual
+              {t('subscribe.period.monthly')}
             </button>
             <button
               type="button"
@@ -101,7 +103,7 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Anual
+              {t('subscribe.period.yearly')}
             </button>
           </div>
         </div>
@@ -124,9 +126,18 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
   const total = plans.length
   const [index, setIndex] = useState(0)
   const [visibleCount, setVisibleCount] = useState(3)
+  const isSelectMode = mode.mode === 'select'
 
   useEffect(() => {
     function update() {
+      // In subscribe select mode, keep cards wider to avoid cramped content.
+      if (isSelectMode) {
+        if (window.innerWidth >= 1536) setVisibleCount(3)
+        else if (window.innerWidth >= 1200) setVisibleCount(2)
+        else setVisibleCount(1)
+        return
+      }
+
       if (window.innerWidth >= 1024) setVisibleCount(3)
       else if (window.innerWidth >= 640) setVisibleCount(2)
       else setVisibleCount(1)
@@ -134,7 +145,7 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
     update()
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
-  }, [])
+  }, [isSelectMode])
 
   // Clamp index when visible count or total changes
   useEffect(() => {
@@ -169,7 +180,8 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
   return (
     <div className="flex flex-col gap-4">
       {/* Track — pt-5 for badge above, pb-4 for shadow/border below */}
-      <div className="overflow-hidden pt-5 pb-4">
+      {/* min-w-0 + w-full prevent the flex row's min-content (5 × card) from bubbling up */}
+      <div className="w-full min-w-0 overflow-hidden pt-5 pb-4">
         <div
           className="flex transition-transform duration-500 ease-in-out items-stretch gap-0"
           style={{ transform: `translateX(-${index * cardPct}%)` }}
@@ -179,7 +191,7 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
           {plans.map((plan, i) => (
             <div
               key={plan.id}
-              className="shrink-0 px-2 self-stretch"
+              className="shrink-0 px-2 self-stretch box-border"
               style={{ width: `${cardPct}%` }}
               aria-hidden={!isVisible(i)}
             >

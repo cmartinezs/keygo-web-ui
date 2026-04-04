@@ -325,6 +325,10 @@ El contenido del fallback es i18n y se alimenta desde `appErrorBoundary.*` en lo
 | `/register` | `UserRegisterPage` | Pública |
 | `/dashboard` | `AuthGuard` → `AdminLayout` → `DashboardHomePage` | Autenticada |
 | `/dashboard/feature/api` | `PlatformStatsPage` | `ADMIN` |
+| `/dashboard/feature/apps` | `Navigate -> /dashboard/tenant/apps` | Autenticada (legacy) |
+| `/dashboard/feature/users` | `Navigate -> /dashboard/tenant/users` | Autenticada (legacy) |
+| `/dashboard/feature/access` | `Navigate -> /dashboard/tenant/memberships` | Autenticada (legacy) |
+| `/dashboard/feature/sessions` | `Navigate -> /dashboard/account/sessions` | Autenticada (legacy) |
 | `/dashboard/feature/:featureId` | `FeaturePlaceholderPage` (UI funcional con datos mock MSW) | Autenticada |
 | `/dashboard/account` | `UserProfilePage` | Autenticada |
 | `/dashboard/account/settings` | `AccountSettingsPage` | Autenticada |
@@ -332,9 +336,9 @@ El contenido del fallback es i18n y se alimenta desde `appErrorBoundary.*` en lo
 | `/dashboard/tenants` | `TenantsPage` | `ADMIN` |
 | `/dashboard/tenants/new` | `TenantCreatePage` (outlet) | `ADMIN` |
 | `/dashboard/tenants/:slug` | `TenantDetailPage` (outlet) | `ADMIN` |
-| `/dashboard/tenant/users` | `TenantUsersPage` | `ADMIN_TENANT` |
-| `/dashboard/tenant/apps` | `TenantAppsPage` | `ADMIN_TENANT` |
-| `/dashboard/tenant/memberships` | `TenantMembershipsPage` | `ADMIN_TENANT` |
+| `/dashboard/tenant/users` | `TenantUsersPage` | `ADMIN` o `ADMIN_TENANT` |
+| `/dashboard/tenant/apps` | `TenantAppsPage` | `ADMIN` o `ADMIN_TENANT` |
+| `/dashboard/tenant/memberships` | `TenantMembershipsPage` | `ADMIN` o `ADMIN_TENANT` |
 | `/dashboard/user/my-access` | `UserMyAccessPage` | `USER_TENANT` |
 | `/dashboard/user/activity` | `UserActivityPage` | `USER_TENANT` |
 | `/dashboard/user/sessions` | `Navigate -> /dashboard/account/sessions` | `USER_TENANT` (legacy) |
@@ -1585,11 +1589,11 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
   - `getNotificationPreferences`
   - `updateNotificationPreferences`
   - `getAccountAccess`
-- Se agregaron wrappers temporales para `connections` (mock-first):
+- Se agregaron wrappers para `connections` (backend real):
   - `getAccountConnections`
   - `linkAccountConnection`
   - `unlinkAccountConnection`
-- Se incorporo normalizacion defensiva en `connections` para aceptar wire `snake_case` y `camelCase` durante la transicion F-042.
+- Se mantiene normalizacion defensiva en `connections` para aceptar wire `snake_case` y `camelCase` y evitar quiebres entre versiones de contrato.
 - Se amplio `ACCOUNT_QUERY_KEYS` para `sessions`, `notificationPreferences`, `access` y `connections`.
 
 **Integracion:**
@@ -1597,13 +1601,12 @@ export const PLAN_NAMES: Record<PlanId, string> = { starter: 'Starter', ... }
 - Usa `RequestOptions` para `signal`, `timeoutMs` e `idempotencyKey` en mutaciones.
 - Usa `unwrapResponseData` para extraer `BaseResponse<T>.data` de forma consistente.
 
-**Decision de diseno:** Priorizar wrappers tipados y puros en `src/api/` para desacoplar UI de detalles HTTP y permitir evolucion por fases (backend real vs MSW temporal en connections).
+**Decision de diseno:** Priorizar wrappers tipados y puros en `src/api/` para desacoplar UI de detalles HTTP y facilitar evolucion de contrato sin tocar componentes.
 
 **Estrategia:** API domain-first; primero se completa la superficie de endpoints y query keys para luego conectar UI (fases 5-8) sin duplicar logica de red en componentes.
 
 **Puntos de mejora / deuda tecnica conocida:**
-- Frontend ya dejo aprobado el contrato funcional F-042, pero backend aun debe publicarlo en OpenAPI y reemplazar MSW.
-- El mapper de compatibilidad mantiene doble naming (snake/camel) hasta cierre definitivo del rollout.
+- El mapper de compatibilidad mantiene doble naming (snake/camel) hasta estabilizar naming wire definitivo del backend.
 
 ### `src/types/user.ts`
 
@@ -1694,7 +1697,7 @@ div.flex.h-screen
 **Deuda técnica:**
 - Buscador en el header es solo decorativo.
 - Campana de notificaciones sin funcionalidad.
-- Configuración de cuenta mantiene dependencia contractual pendiente solo en conexiones externas (`F-042`) y actividad de cuenta.
+- Configuración de cuenta ya integra conexiones externas con backend real; se mantiene deuda de evolución para actividad avanzada de cuenta.
 - Sin keyboard navigation completa en ThemeToggle (solo focus ring).
 
 **Regla de UX aplicada:** los selectores deben reutilizar el primitive compartido `Dropdown` (via `SelectDropdown`) para consistencia visual y de interacción; incluye selector de idioma en cabecera y en `AccountSettingsPage`.
@@ -1710,18 +1713,24 @@ div.flex.h-screen
 **Secciones:**
 | Archivo | Propósito | Notas |
 |---------|-----------|-------|
-| `LandingNav.tsx` | Barra de nav fija con links de ancla y CTAs | Sin menú móvil — deuda técnica |
-| `HeroSection.tsx` | Banner full-height con CTAs | Static content |
-| `FeaturesSection.tsx` | Grid de 6 feature cards | Array de datos inline |
-| `HowItWorksSection.tsx` | 3 pasos del flujo de auth | Array de datos inline |
-| `RolesSection.tsx` | Tarjetas de los 3 roles | Mapeados desde `AppRole` values |
+| `LandingNav.tsx` | Barra de nav fija con links de ancla y CTAs | Integrado con i18n para labels del menu y acciones |
+| `HeroSection.tsx` | Banner full-height con CTAs | Integrado con i18n para titular, descripcion y stats |
+| `FeaturesSection.tsx` | Grid de 6 feature cards | Textos i18n + iconografia por key semantica |
+| `HowItWorksSection.tsx` | 3 pasos del flujo de auth | Steps por key i18n (`landing.howItWorks.steps.*`) |
+| `RolesSection.tsx` | Tarjetas de los 3 roles | Copy y capabilities resueltas por i18n |
 | `PricingSection.tsx` | Grid de plan cards en modo display | Carga diferida del catálogo con `IntersectionObserver` + `useQuery`, timeout de 10s y retry automático controlado (5s, máximo 3) |
-| `DevelopersSection.tsx` | Recursos para devs | Enlaza la guía pública de integración y deja solo SDKs como pendiente |
-| `CTASection.tsx` | Footer con CTA final y copyright | Año dinámico: `new Date().getFullYear()` |
+| `DevelopersSection.tsx` | Recursos para devs | Enlaza la guía pública de integración + copy i18n por recurso |
+| `CTASection.tsx` | Footer con CTA final y copyright | i18n para copy/acciones + año dinámico |
 
 **Decisión de diseño:** Cada sección es un componente independiente para facilitar su mantenimiento y reemplazo. `LandingPage` no contiene lógica — solo composición.
 
 **Actualización relevante:** `LandingNav.tsx` incorpora `LocaleSwitcher` en modo compacto para permitir cambio de idioma (ES/EN) directamente desde la landing, integrado al estilo visual del header público.
+
+**Actualización relevante:** `LandingNav.tsx` replica la estrategia responsive de `/subscribe` para mobile/tablet: wordmark `KeyGo` oculto hasta `lg` (`hidden lg:inline`) y `LocaleSwitcher` con `selectedValueClassName="hidden lg:inline ..."` para mostrar solo bandera hasta ese breakpoint.
+
+**Actualización relevante:** `HeroSection.tsx` ajustó el offset vertical del hero en mobile (`pt-24 sm:pt-16`) para compensar el header fijo y mantener distancia visual entre la barra superior y el badge "Plataforma IAM cloud-ready".
+
+**Actualizacion relevante:** todas las secciones de landing (`LandingNav`, `HeroSection`, `FeaturesSection`, `HowItWorksSection`, `RolesSection`, `PricingSection`, `DevelopersSection`, `CTASection`) migraron copy visible a claves i18n `landing.*` para que el cambio de idioma sea consistente en toda la pantalla.
 
 **Actualización relevante:** `DevelopersSection.tsx` pasó de ser un bloque meramente promocional a un punto de entrada funcional hacia la guía pública `/developers`, usando `Link` de React Router para navegar a la documentación y al ancla de endpoints.
 
@@ -1785,6 +1794,8 @@ initMutation.isSuccess                                  → LoginForm
 - `ForgotPasswordPage.tsx` (`/forgot-password`) — solicitud de recuperacion por correo con respuesta neutral.
 - `RecoverPasswordPage.tsx` (`/recover-password`) — recuperacion por token de email.
 - `ResetPasswordPage.tsx` (`/reset-password`) — reset con contrasena temporal.
+
+**Actualizacion relevante:** el bloque de CTA secundarios del footer del login (`forgot password` y `register`) aumento su escala tipografica a `text-sm` y mayor peso visual para mejorar legibilidad respecto al estado previo.
 
 **Deuda técnica:** el dashboard compartido mantiene tarjetas de resumen con placeholders en roles no ADMIN. Falta conectar metricas especificas por rol.
 
@@ -2112,8 +2123,12 @@ initMutation.isSuccess                                  → LoginForm
   - 4 → `PaymentStep`: orden + (en DEV) mock payment → `mockApprovePayment()` + `activateBillingContract()`.
   - `done` → `SuccessStep`.
 - `StepIndicator` (privado): 5 steps, con checkmark SVG para completados y `aria-current="step"` para el activo.
+- `StepRail` (privado): navegacion vertical de pasos en lateral izquierdo para desktop.
+- `LiveSummary` (privado): panel lateral derecho con resumen en vivo (paso actual, plan, precio, responsable, empresa, condiciones e ID de contrato).
+- El bloque `Current step` de `LiveSummary` reutiliza el lenguaje visual de seleccion (fondo indigo claro + borde indigo marcado + sombra) para mantener consistencia con la seleccion de planes.
 - Honeypot a nivel de página (`HoneypotField` + `useHoneypot`) filtrado en `handleTermsSubmit`.
-- Ancho de tarjeta mayor en paso 0 (grilla de planes) que en los demás pasos.
+- Layout responsive: en `lg` usa grilla de 3 columnas (`StepRail` + contenido + `LiveSummary`); en móvil mantiene `StepIndicator` compacto sobre el contenido.
+- Ajuste visual: en desktop intermedio se redujo el ancho de columnas laterales para priorizar la columna central, se bajo padding vertical/horizontal del panel principal y los paneles laterales (`StepRail`/`LiveSummary`) quedaron sticky para mantener contexto con menos scroll percibido.
 
 **Steps:**
 | Componente | Archivo | Responsabilidad |
@@ -2126,6 +2141,36 @@ initMutation.isSuccess                                  → LoginForm
 | `SuccessStep` | `steps/SuccessStep.tsx` | Confirmación con companySlug (B2B) y link a `/login` |
 
 **Integración:** `getBillingCatalog`, `createBillingContract`, `verifyContractEmail`, `mockApprovePayment`, `activateBillingContract` de `src/api/billing.ts`; `BILLING_QUERY_KEYS`; `useHoneypot`; `HoneypotField`; `toast` (sonner).
+
+**Actualizacion relevante:** el header de `NewContractPage.tsx` (y la vista legacy `ResumeContractPage.tsx`) integra `LocaleSwitcher` en modo compacto para permitir cambio de idioma sin salir del flujo de contratacion.
+
+**Actualizacion relevante:** el flujo completo de `/subscribe` y sus steps (`PlanStep`, `ContractorStep`, `TermsStep`, `EmailVerificationStep`, `PaymentStep`, `SuccessStep`) migro sus textos visibles a claves i18n `subscribe.*`, incluyendo mensajes de estado y labels accesibles del OTP.
+
+**Actualizacion relevante:** `TermsOfServiceContent.tsx` y `PrivacyPolicyContent.tsx` eliminaron el switch local ES/EN; ahora ambos renderizan la version legal segun el idioma global activo (`i18n.resolvedLanguage`/`i18n.language`) para mantener consistencia con `LocaleSwitcher` del flujo.
+
+**Actualizacion relevante:** `PolicyModal.tsx` migro sus textos estaticos a i18n (`policyModal.close`, `policyModal.accept`, `policyModal.scrollHint`) para que el aria-label del cierre, los botones y el mensaje de "desplazate" se rendericen en el idioma activo.
+
+**Actualizacion relevante:** `PlanCatalogGrid.tsx` migro el toggle de periodicidad de seleccion de plan (`Mensual/Anual`) a i18n usando `subscribe.period.monthly` y `subscribe.period.yearly`, eliminando labels hardcodeados en español.
+
+**Actualizacion relevante:** `PlanCatalogGrid.tsx` ajusto su estrategia de `visibleCount` en modo seleccion para mostrar menos tarjetas por viewport en desktop intermedio (2 en lugar de 3), evitando cards angostas en `/subscribe`.
+
+**Actualizacion relevante:** en modo seleccion, `PlanCatalogGrid.tsx` endurecio breakpoints para mostrar 1 card por vista en movil/tablet chico y pasar a 2 cards recien desde anchos grandes (`>=1200px`), corrigiendo compresion de tarjetas en telefono.
+
+**Actualizacion relevante:** `PlanCatalogGrid.tsx` corrigio overflow horizontal post-carga en movil/tablet agregando `box-border` a cada slide del track, de modo que el padding lateral quede incluido en el ancho porcentual de la tarjeta (`width: cardPct%`).
+
+**Actualizacion relevante:** `StepIndicator` en `NewContractPage.tsx` ajusto tamano/espaciado en mobile (`w/h` de nodos y ancho de conectores) y encapsulo overflow horizontal para evitar que el tracker de 5 pasos empuje el layout fuera del viewport en telefono.
+
+**Actualizacion relevante:** `PlanCard.tsx` en modo seleccion utiliza tipografia/padding mas compactos y el badge (`Mas popular`) fuerza `whitespace-nowrap` para evitar quiebres.
+
+**Actualizacion relevante:** `PlanStep.tsx` redujo su separacion vertical (`gap`) y elimino padding superior extra en el contenedor de acciones para acercar el boton "Continuar" al carrusel y alinear el ritmo visual con los otros pasos.
+
+**Actualizacion relevante:** `NewContractPage.tsx` aumento la jerarquia tipografica del CTA de retoma de contrato al pie del wizard (`text-xs` -> `text-sm` y accion con `font-semibold`) para equiparar legibilidad con otros CTAs textuales de autenticacion/registro.
+
+**Actualizacion relevante:** `NewContractPage.tsx` y `ResumeContractPage.tsx` ocultaron el wordmark "KeyGo" en mobile (`hidden sm:inline`) para dejar solo el icono en header y mejorar el uso de ancho junto al selector de idioma y CTA de login.
+
+**Actualizacion relevante:** en ambos headers de subscribe, `LocaleSwitcher` usa `selectedValueClassName="hidden sm:inline ..."` para mostrar solo la bandera en mobile y recuperar la etiqueta textual del idioma en `sm+`.
+
+**Actualizacion relevante:** en `NewContractPage.tsx` y `ResumeContractPage.tsx`, el texto introductorio del enlace de login (`subscribe.header.alreadyHaveAccount`) se oculta en mobile (`hidden sm:inline`) para dejar solo la accion principal (`subscribe.header.login`) y optimizar ancho en cabecera.
 
 **Actualización relevante:** El manejo de errores del flujo migró a `getAppApiError(...)` en sus handlers principales (lookup de contrato, creación, verificación de email, reenvío de código y pago/activación), eliminando parsing por string y homogenizando mensajes por contrato backend.
 
@@ -2306,6 +2351,8 @@ const mutation = useMutation({
 **Construcción:** organiza el contenido en cinco bloques: hero introductorio, comparativa de estrategias, sección de login propio, sección de login integrado, catálogo mínimo de endpoints y checklist de seguridad. Usa arrays inline para prerrequisitos, endpoints y reglas, renderiza snippets con subcomponentes locales `CodePanel`, `JsonPanel` y `QueryStringPanel`, tablas de campos con `FieldTable`, tabs de I/O con `EndpointIoTabs`, tabs de catálogo con `EndpointCatalogTabs`, y normaliza el scroll de entrada con `useLocation`: sin hash sube al tope; con hash hace scroll a la sección objetivo. El bloque de endpoints se presenta como tabs accesibles por endpoint para reducir altura visual y facilitar comparación rápida. Las tabs del catálogo usan etiquetas concisas (`Authorize`, `Login`, `Token`, `JWKS`) en layout con `flex-wrap` para evitar scroll horizontal en pantallas estrechas. El endpoint activo muestra método HTTP, requisito de auth/sesión y alterna en tabs entre `Request` y `Response`: `Request` muestra tablas de campos por canal (`queryParams` y/o `requestBody`) más ejemplos (query string para `queryParams`, JSON para `requestBody`), mientras `Response` muestra formato, tabla de campos y ejemplos JSON. Cada bloque usa una lista `examples[]` para soportar variantes excluyentes del mismo endpoint (por ejemplo, `authorization_code` y `refresh_token` en `/oauth2/token`).
 
 **Integración:** se registra en `App.tsx` bajo la ruta pública `/developers`, reutiliza `AppFooter` para mantener consistencia visual con el resto del acceso público, es enlazada desde `src/pages/landing/DevelopersSection.tsx` y al volver al landing navega con `state={{ scrollToTop: true }}` para resetear la posición vertical de la home.
+
+**Actualizacion relevante:** `AppFooter` consume i18n para el copyright y el indicador de estado (`common.allRightsReserved`, `common.allSystemsOperational`), evitando textos fijos en espanol cuando el idioma activo es ingles.
 
 **Decisión de diseño:** se implementó como página pública separada, no como una subsección adicional del landing, para permitir un contenido más profundo, navegable por anclas y con snippets de código sin sobrecargar la home de marketing.
 

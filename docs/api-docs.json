@@ -268,6 +268,194 @@
         ]
       }
     },
+    "/api/v1/tenants/{tenantSlug}/users/{userId}/suspend": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Suspend user",
+        "description": "Suspends an active user account within the tenant. Requires user to be in ACTIVE status.",
+        "operationId": "suspendUser",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "User UUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "a1b2c3d4-e5f6-..."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User suspended successfully (code: USER_SUSPENDED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User is already suspended (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/tenants/{tenantSlug}/users/{userId}/activate": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "summary": "Activate user",
+        "description": "Reactivates a previously suspended user account within the tenant.",
+        "operationId": "activateUser",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "User UUID",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "a1b2c3d4-e5f6-..."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User activated successfully (code: USER_ACTIVATED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User or tenant not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/v1/tenants/{tenantSlug}/apps/{clientId}": {
       "get": {
         "tags": [
@@ -638,7 +826,7 @@
           "Tenants"
         ],
         "summary": "List all tenants",
-        "description": "Returns a paginated list of all tenants. Supports optional filtering by status and partial name match. Requires ADMIN role.",
+        "description": "Returns a paginated list of all tenants. Supports optional filtering by status and partial name match, plus sorting. Requires ADMIN role.",
         "operationId": "listTenants",
         "parameters": [
           {
@@ -688,6 +876,25 @@
               "default": 20
             },
             "example": 20
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (name, status, createdAt)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (ASC, DESC)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASC"
           }
         ],
         "responses": {
@@ -840,7 +1047,7 @@
           "Users"
         ],
         "summary": "List users",
-        "description": "Returns all user accounts registered under the specified tenant.",
+        "description": "Returns a paginated list of user accounts under the specified tenant. Supports filtering by status and partial email/username match, plus sorting.",
         "operationId": "listUsers",
         "parameters": [
           {
@@ -852,6 +1059,82 @@
               "type": "string"
             },
             "example": "my-company"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by user status (ACTIVE, SUSPENDED, PENDING, RESET_PASSWORD)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "SUSPENDED",
+                "PENDING",
+                "RESET_PASSWORD"
+              ]
+            }
+          },
+          {
+            "name": "username_like",
+            "in": "query",
+            "description": "Partial match on username (case-insensitive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email_like",
+            "in": "query",
+            "description": "Partial match on email (case-insensitive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (1–200)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (username, email, status, createdAt)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (ASC, DESC)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASC"
           }
         ],
         "responses": {
@@ -860,7 +1143,17 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListUserData"
+                  "$ref": "#/components/schemas/BaseResponsePagedDataUserData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (code: INVALID_INPUT). data.field_errors lists each invalid field.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1412,7 +1705,7 @@
           "Memberships"
         ],
         "summary": "List memberships",
-        "description": "List all memberships for a user or app (query params determine filter)",
+        "description": "List memberships with optional pagination, filtering by user or app, and sorting",
         "operationId": "listMemberships",
         "parameters": [
           {
@@ -1443,6 +1736,49 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (1–200)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (createdAt)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (ASC, DESC)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASC"
           }
         ],
         "responses": {
@@ -1451,7 +1787,17 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListMembershipData"
+                  "$ref": "#/components/schemas/BaseResponsePagedDataMembershipData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (code: INVALID_INPUT). data.field_errors lists each invalid field.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -1616,7 +1962,7 @@
           "Client Apps"
         ],
         "summary": "List client applications",
-        "description": "Returns all OAuth2 client applications registered under the specified tenant.",
+        "description": "Returns a paginated list of OAuth2 client applications under the specified tenant. Supports filtering by status and partial name match, plus sorting.",
         "operationId": "listClientApps",
         "parameters": [
           {
@@ -1628,6 +1974,72 @@
               "type": "string"
             },
             "example": "my-company"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by application status (ACTIVE, SUSPENDED, PENDING)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
+                "SUSPENDED",
+                "PENDING"
+              ]
+            }
+          },
+          {
+            "name": "name_like",
+            "in": "query",
+            "description": "Partial match on application name (case-insensitive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (1–200)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (name, status, createdAt)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (ASC, DESC)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASC"
           }
         ],
         "responses": {
@@ -1636,7 +2048,17 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListClientAppData"
+                  "$ref": "#/components/schemas/BaseResponsePagedDataClientAppData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (code: INVALID_INPUT). data.field_errors lists each invalid field.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -2393,7 +2815,7 @@
           "App Roles"
         ],
         "summary": "List app roles",
-        "description": "List all roles defined for a client application",
+        "description": "List roles defined for a client application with optional pagination, filtering, and sorting",
         "operationId": "listAppRoles",
         "parameters": [
           {
@@ -2414,6 +2836,58 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "name_like",
+            "in": "query",
+            "description": "Partial match on role name (case-insensitive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (1–200)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (name, createdAt)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (ASC, DESC)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASC"
           }
         ],
         "responses": {
@@ -2422,7 +2896,17 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListAppRoleData"
+                  "$ref": "#/components/schemas/BaseResponsePagedDataAppRoleData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (code: INVALID_INPUT). data.field_errors lists each invalid field.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -7260,7 +7744,7 @@
           }
         }
       },
-      "BaseResponseListUserData": {
+      "BaseResponsePagedDataUserData": {
         "type": "object",
         "properties": {
           "date": {
@@ -7274,16 +7758,43 @@
             "$ref": "#/components/schemas/MessageResponse"
           },
           "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserData"
-            }
+            "$ref": "#/components/schemas/PagedDataUserData"
           },
           "debug": {
             "$ref": "#/components/schemas/MessageResponse"
           },
           "throwable": {
             "type": "string"
+          }
+        }
+      },
+      "PagedDataUserData": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserData"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
           }
         }
       },
@@ -7390,7 +7901,7 @@
           }
         }
       },
-      "BaseResponseListMembershipData": {
+      "BaseResponsePagedDataMembershipData": {
         "type": "object",
         "properties": {
           "date": {
@@ -7404,10 +7915,7 @@
             "$ref": "#/components/schemas/MessageResponse"
           },
           "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MembershipData"
-            }
+            "$ref": "#/components/schemas/PagedDataMembershipData"
           },
           "debug": {
             "$ref": "#/components/schemas/MessageResponse"
@@ -7417,7 +7925,37 @@
           }
         }
       },
-      "BaseResponseListClientAppData": {
+      "PagedDataMembershipData": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MembershipData"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BaseResponsePagedDataClientAppData": {
         "type": "object",
         "properties": {
           "date": {
@@ -7431,16 +7969,43 @@
             "$ref": "#/components/schemas/MessageResponse"
           },
           "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ClientAppData"
-            }
+            "$ref": "#/components/schemas/PagedDataClientAppData"
           },
           "debug": {
             "$ref": "#/components/schemas/MessageResponse"
           },
           "throwable": {
             "type": "string"
+          }
+        }
+      },
+      "PagedDataClientAppData": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientAppData"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
           }
         }
       },
@@ -7558,7 +8123,7 @@
           }
         }
       },
-      "BaseResponseListAppRoleData": {
+      "BaseResponsePagedDataAppRoleData": {
         "type": "object",
         "properties": {
           "date": {
@@ -7572,16 +8137,43 @@
             "$ref": "#/components/schemas/MessageResponse"
           },
           "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppRoleData"
-            }
+            "$ref": "#/components/schemas/PagedDataAppRoleData"
           },
           "debug": {
             "$ref": "#/components/schemas/MessageResponse"
           },
           "throwable": {
             "type": "string"
+          }
+        }
+      },
+      "PagedDataAppRoleData": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppRoleData"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
           }
         }
       },

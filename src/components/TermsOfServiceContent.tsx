@@ -1,31 +1,13 @@
-import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 export function TermsOfServiceContent() {
-  const [lang, setLang] = useState<'es' | 'en'>('es')
+  const { i18n } = useTranslation()
+  const language = (i18n.resolvedLanguage ?? i18n.language).toLowerCase()
+  const isEnglish = language.startsWith('en')
 
   return (
     <>
-      {/* Language switch */}
-      <div className="flex justify-end mb-4">
-        <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden text-xs font-medium">
-          <button
-            type="button"
-            onClick={() => setLang('es')}
-            className={`px-3 py-1.5 transition-colors ${lang === 'es' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
-          >
-            Español
-          </button>
-          <button
-            type="button"
-            onClick={() => setLang('en')}
-            className={`px-3 py-1.5 transition-colors ${lang === 'en' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
-          >
-            English
-          </button>
-        </div>
-      </div>
-
-    {lang === 'en' && <div className="space-y-6">
+    {isEnglish && <div className="space-y-6">
       <section>
         <h3 className="font-semibold text-slate-900 mb-2">1. Acceptance of Terms</h3>
         <p>
@@ -164,7 +146,7 @@ export function TermsOfServiceContent() {
       </p>
     </div>}
 
-    {lang === 'es' && <div className="space-y-6">
+    {!isEnglish && <div className="space-y-6">
       <section>
         <h3 className="font-semibold text-slate-900 mb-2">1. Aceptación de los Términos</h3>
         <p>

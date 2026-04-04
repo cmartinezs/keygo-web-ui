@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface EmailVerificationStepProps {
   email: string
@@ -18,6 +19,7 @@ interface OtpInputProps {
 }
 
 function OtpInput({ onComplete, shouldReset, onInputChange }: OtpInputProps) {
+  const { t } = useTranslation()
   const [digits, setDigits] = useState<string[]>(Array(6).fill(''))
   const refs = useRef<Array<HTMLInputElement | null>>(Array(6).fill(null))
 
@@ -65,7 +67,7 @@ function OtpInput({ onComplete, shouldReset, onInputChange }: OtpInputProps) {
   }
 
   return (
-    <div className="flex gap-3 justify-center" onPaste={handlePaste} aria-label="Código de verificación (6 dígitos)">
+    <div className="flex gap-3 justify-center" onPaste={handlePaste} aria-label={t('subscribe.steps.email.otpAria')}>
       {digits.map((d, i) => (
         <input
           key={i}
@@ -76,7 +78,7 @@ function OtpInput({ onComplete, shouldReset, onInputChange }: OtpInputProps) {
           value={d}
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKeyDown(i, e)}
-          aria-label={`Dígito ${i + 1}`}
+          aria-label={t('subscribe.steps.email.digitAria', { index: i + 1 })}
           className={`w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors ${
             d ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-slate-300 bg-white text-slate-900'
           }`}
@@ -89,6 +91,7 @@ function OtpInput({ onComplete, shouldReset, onInputChange }: OtpInputProps) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, onResend, isResending }: EmailVerificationStepProps) {
+  const { t } = useTranslation()
   const [code, setCode] = useState('')
   const [cooldown, setCooldown] = useState(0)
   const [isErrorVisible, setIsErrorVisible] = useState(false)
@@ -138,11 +141,11 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Verifica tu correo</h2>
+        <h2 className="text-2xl font-bold text-slate-900">{t('subscribe.steps.email.title')}</h2>
         <p className="mt-2 text-slate-500 text-sm max-w-sm">
-          Hemos enviado un código de 6 dígitos a{' '}
+          {t('subscribe.steps.email.descriptionPrefix')}{' '}
           <span className="font-semibold text-slate-700">{email}</span>.
-          Introdúcelo a continuación para continuar.
+          {` ${t('subscribe.steps.email.descriptionSuffix')}`}
         </p>
       </div>
 
@@ -160,7 +163,7 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
       )}
 
       <p className="text-xs text-slate-400 max-w-sm">
-        El código es válido durante 30 minutos. Si no ves el correo, revisa tu carpeta de spam.
+        {t('subscribe.steps.email.helpText')}
       </p>
 
       <button
@@ -174,10 +177,10 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
-            Verificando…
+            {t('subscribe.steps.email.verifying')}
           </>
         ) : (
-          'Verificar código →'
+          t('subscribe.steps.email.verifyCode')
         )}
       </button>
 
@@ -189,10 +192,10 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
           className="text-sm text-indigo-600 hover:text-indigo-500 disabled:text-slate-400 disabled:cursor-not-allowed underline-offset-2 hover:underline transition-colors"
         >
           {isResending
-            ? 'Enviando…'
+            ? t('subscribe.steps.email.resending')
             : cooldown > 0
-              ? `Reenviar código en ${cooldown}s`
-              : '¿No recibiste el código? Reenviar'}
+              ? t('subscribe.steps.email.resendIn', { seconds: cooldown })
+              : t('subscribe.steps.email.resend')}
         </button>
       )}
     </form>

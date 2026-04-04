@@ -229,14 +229,14 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
       items: [
         { to: '/dashboard', exact: true, icon: <IconDashboard />, label: t('dashboard.dashboard') },
         { to: '/dashboard/tenants', icon: <IconBuilding />, label: t('dashboard.tenants') },
-        { to: '/dashboard/feature/apps', icon: <IconApps />, label: t('dashboard.apps') },
-        { to: '/dashboard/feature/users', icon: <IconUsers />, label: t('dashboard.users') },
+        { to: '/dashboard/tenant/apps', icon: <IconApps />, label: t('dashboard.apps') },
+        { to: '/dashboard/tenant/users', icon: <IconUsers />, label: t('dashboard.users') },
       ],
     },
     {
       label: t('dashboard.accessAndAudit'),
       items: [
-        { to: '/dashboard/feature/access', icon: <IconShield />, label: t('dashboard.access') },
+        { to: '/dashboard/tenant/memberships', icon: <IconShield />, label: t('dashboard.access') },
         { to: '/dashboard/feature/audit', icon: <IconClipboard />, label: t('dashboard.audit') },
       ],
     },
@@ -244,7 +244,7 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
       label: t('dashboard.security'),
       items: [
         { to: '/dashboard/feature/signing-keys', icon: <IconKeySmall />, label: t('dashboard.signingKeys') },
-        { to: '/dashboard/feature/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
+        { to: '/dashboard/account/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
         { to: '/dashboard/feature/tokens', icon: <IconTicket />, label: t('dashboard.tokens') },
       ],
     },
@@ -272,7 +272,7 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
       label: t('dashboard.access'),
       items: [
         { to: '/dashboard/tenant/memberships', icon: <IconShield />, label: t('dashboard.memberships') },
-        { to: '/dashboard/feature/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
+        { to: '/dashboard/account/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
       ],
     },
     {

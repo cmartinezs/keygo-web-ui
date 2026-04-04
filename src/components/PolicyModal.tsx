@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface PolicyModalProps {
   isOpen: boolean
@@ -9,6 +10,7 @@ interface PolicyModalProps {
 }
 
 export function PolicyModal({ isOpen, title, children, onClose, onAccept }: PolicyModalProps) {
+  const { t } = useTranslation()
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -67,7 +69,7 @@ export function PolicyModal({ isOpen, title, children, onClose, onAccept }: Poli
             type="button"
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
-            aria-label="Cerrar"
+            aria-label={t('policyModal.close')}
           >
             <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -91,7 +93,7 @@ export function PolicyModal({ isOpen, title, children, onClose, onAccept }: Poli
               <svg className="w-3.5 h-3.5 animate-bounce" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fillRule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
-              Desplázate hasta el final para aceptar
+              {t('policyModal.scrollHint')}
             </p>
           )}
           <div className="flex gap-3">
@@ -100,7 +102,7 @@ export function PolicyModal({ isOpen, title, children, onClose, onAccept }: Poli
               onClick={onClose}
               className="flex-1 sm:flex-none border border-slate-300 text-slate-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none text-sm"
             >
-              Cerrar
+              {t('policyModal.close')}
             </button>
             <button
               type="button"
@@ -108,7 +110,7 @@ export function PolicyModal({ isOpen, title, children, onClose, onAccept }: Poli
               disabled={!hasScrolledToBottom}
               className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 outline-none text-sm"
             >
-              Acepto
+              {t('policyModal.accept')}
             </button>
           </div>
         </div>

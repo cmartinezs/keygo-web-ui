@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { TENANT } from '@/api/client'
 import { SelectDropdown } from '@/components/SelectDropdown'
-import { PendingFeatureBadge } from '@/components/PendingFeatureBadge'
 import {
   ACCOUNT_QUERY_KEYS,
   getAccountConnections,
@@ -174,18 +173,8 @@ export function ConnectionsPanel() {
     <PanelCard
       title={t('accountConnections.title')}
       subtitle={t('accountConnections.subtitle')}
-      badge={
-        <PendingFeatureBadge
-          featureCode="F-042"
-          title="Conexiones externas — Backend en desarrollo"
-          description="Vincular, desvincular y listar conexiones externas (Google, GitHub, Microsoft). Actualmente funciona con datos simulados. Cuando el backend publique el contrato oficial, los datos persistirán realmente."
-        />
-      }
+      badge={null}
     >
-
-      <p className="mt-3 rounded-lg border border-amber-300/70 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-        {t('accountConnections.temporaryHint')}
-      </p>
 
       <div className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 p-3 dark:border-white/10">
         <div className="min-w-[220px] flex-1">

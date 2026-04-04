@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
   getBillingContract,
@@ -10,6 +11,7 @@ import {
 } from '@/api/billing'
 import type { AppContract } from '@/types/billing'
 import { env } from '@/config/env'
+import { LocaleSwitcher } from '@/components/LocaleSwitcher'
 import { EmailVerificationStep } from './steps/EmailVerificationStep'
 import { AppFooter } from '@/components/AppFooter'
 
@@ -30,6 +32,8 @@ interface LookupFormProps {
 }
 
 function LookupForm({ inputId, onChange, onSubmit, isLoading, error }: LookupFormProps) {
+  const { t } = useTranslation()
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-6" noValidate>
       <div className="text-center">
@@ -38,15 +42,15 @@ function LookupForm({ inputId, onChange, onSubmit, isLoading, error }: LookupFor
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-slate-900">Continuar contratación</h2>
+        <h2 className="text-2xl font-bold text-slate-900">{t('subscribe.resumeLookup.title')}</h2>
         <p className="mt-2 text-slate-500 text-sm max-w-sm mx-auto">
-          Si iniciaste el proceso de contratación y no lo completaste, ingresa tu ID de contrato para retomarlo.
+          {t('subscribe.resumeLookup.description')}
         </p>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="contractId" className="text-sm font-medium text-slate-700">
-          ID de contrato <span aria-hidden="true" className="text-red-500">*</span>
+          {t('subscribe.resumeLookup.contractIdLabel')} <span aria-hidden="true" className="text-red-500">*</span>
         </label>
         <input
           id="contractId"
@@ -64,7 +68,7 @@ function LookupForm({ inputId, onChange, onSubmit, isLoading, error }: LookupFor
           <p id="contractId-error" className="text-xs text-red-600" role="alert">{error}</p>
         ) : (
           <p id="contractId-hint" className="text-xs text-slate-400">
-            Puedes encontrarlo en el correo de confirmación que recibiste al iniciar el proceso.
+            {t('subscribe.resumeLookup.contractIdHint')}
           </p>
         )}
       </div>
@@ -80,17 +84,17 @@ function LookupForm({ inputId, onChange, onSubmit, isLoading, error }: LookupFor
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
-            Buscando…
+            {t('subscribe.resumeLookup.searching')}
           </>
         ) : (
-          'Continuar →'
+          t('subscribe.resumeLookup.continue')
         )}
       </button>
 
       <p className="text-center text-sm text-slate-500">
-        ¿Aún no tienes un contrato?{' '}
+        {t('subscribe.resumeLookup.noContractYet')}{' '}
         <Link to="/subscribe" className="font-semibold text-indigo-600 hover:text-indigo-500">
-          Iniciar contratación
+          {t('subscribe.resumeLookup.startContract')}
         </Link>
       </p>
     </form>
@@ -106,6 +110,8 @@ interface PaymentViewProps {
 }
 
 function PaymentView({ isProcessing, error, onConfirm }: PaymentViewProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col gap-6 items-center text-center">
       <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center" aria-hidden="true">
@@ -115,9 +121,9 @@ function PaymentView({ isProcessing, error, onConfirm }: PaymentViewProps) {
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Confirma el pago</h2>
+        <h2 className="text-2xl font-bold text-slate-900">{t('subscribe.resumePayment.title')}</h2>
         <p className="mt-2 text-slate-500 text-sm max-w-sm">
-          Tu correo fue verificado. Completa el pago para activar tu cuenta.
+          {t('subscribe.resumePayment.description')}
         </p>
       </div>
 
@@ -136,7 +142,7 @@ function PaymentView({ isProcessing, error, onConfirm }: PaymentViewProps) {
             <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
-            <span>Modo desarrollo — pago simulado</span>
+            <span>{t('subscribe.resumePayment.devMode')}</span>
           </div>
           <button
             type="button"
@@ -150,16 +156,16 @@ function PaymentView({ isProcessing, error, onConfirm }: PaymentViewProps) {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
-                Procesando…
+                {t('subscribe.actions.processing')}
               </>
             ) : (
-              'Simular aprobación de pago (DEV)'
+              t('subscribe.resumePayment.simulatePayment')
             )}
           </button>
         </div>
       ) : (
         <p className="text-sm text-slate-500 max-w-sm">
-          La integración de pagos estará disponible próximamente. Contacta con soporte si necesitas activar tu cuenta.
+          {t('subscribe.resumePayment.gatewayPending')}
         </p>
       )}
     </div>
@@ -169,6 +175,8 @@ function PaymentView({ isProcessing, error, onConfirm }: PaymentViewProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function DoneView({ email }: { email: string }) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col items-center gap-6 py-4 text-center">
       <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center" aria-hidden="true">
@@ -178,19 +186,19 @@ function DoneView({ email }: { email: string }) {
       </div>
 
       <div>
-        <h2 className="text-3xl font-extrabold text-slate-900">¡Cuenta activada!</h2>
+        <h2 className="text-3xl font-extrabold text-slate-900">{t('subscribe.resumeDone.title')}</h2>
         <p className="mt-2 text-slate-500 max-w-sm mx-auto">
-          Tu suscripción ha sido activada exitosamente.
+          {t('subscribe.resumeDone.description')}
         </p>
       </div>
 
       <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-5 max-w-sm w-full text-left space-y-2">
         <div>
-          <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-0.5">Correo de acceso</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-0.5">{t('subscribe.resumeDone.accessEmailLabel')}</p>
           <p className="font-semibold text-slate-800">{email}</p>
         </div>
         <p className="text-sm text-slate-600 pt-1">
-          Recibirás un correo con tus credenciales en breve.
+          {t('subscribe.resumeDone.helpText')}
         </p>
       </div>
 
@@ -198,7 +206,7 @@ function DoneView({ email }: { email: string }) {
         to="/login"
         className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
       >
-        Ir a iniciar sesión →
+        {t('subscribe.resumeDone.goToLogin')}
       </Link>
     </div>
   )
@@ -211,6 +219,7 @@ interface TerminalViewProps {
 }
 
 function TerminalView({ type }: TerminalViewProps) {
+  const { t } = useTranslation()
   const isActive = type === 'active'
   return (
     <div className="flex flex-col items-center gap-6 py-4 text-center">
@@ -229,12 +238,12 @@ function TerminalView({ type }: TerminalViewProps) {
 
       <div>
         <h2 className="text-2xl font-bold text-slate-900">
-          {isActive ? 'Contrato ya activado' : 'Contrato no disponible'}
+          {isActive ? t('subscribe.terminal.activeTitle') : t('subscribe.terminal.unrecoverableTitle')}
         </h2>
         <p className="mt-2 text-slate-500 text-sm max-w-sm mx-auto">
           {isActive
-            ? 'Este contrato ya fue procesado. Tu cuenta está activa, puedes iniciar sesión.'
-            : 'Este contrato ha expirado o fue cancelado. Por favor, inicia un nuevo proceso de contratación.'}
+            ? t('subscribe.terminal.activeDescription')
+            : t('subscribe.terminal.unrecoverableDescription')}
         </p>
       </div>
 
@@ -244,7 +253,7 @@ function TerminalView({ type }: TerminalViewProps) {
             to="/login"
             className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
           >
-            Ir a iniciar sesión →
+            {t('subscribe.terminal.goToLogin')}
           </Link>
         ) : (
           <>
@@ -252,14 +261,14 @@ function TerminalView({ type }: TerminalViewProps) {
               to="/subscribe"
               className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
             >
-              Nueva contratación
+              {t('subscribe.terminal.newContract')}
             </Link>
             <button
               type="button"
               onClick={() => window.history.back()}
               className="border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
-              Volver
+              {t('subscribe.actions.back')}
             </button>
           </>
         )}
@@ -271,6 +280,7 @@ function TerminalView({ type }: TerminalViewProps) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ResumeContractPage() {
+  const { t } = useTranslation()
   const [inputId, setInputId] = useState('')
   const [contract, setContract] = useState<AppContract | null>(null)
   const [phase, setPhase] = useState<Phase>('lookup')
@@ -311,7 +321,7 @@ export default function ResumeContractPage() {
       }
     } catch {
       setPhase('lookup')
-      setLookupError('No encontramos un contrato con ese ID. Verifica el dato e inténtalo de nuevo.')
+      setLookupError(t('subscribe.resume.errors.notFound'))
     } finally {
       setIsLoading(false)
     }
@@ -326,7 +336,7 @@ export default function ResumeContractPage() {
       setContract(updated)
       setPhase('payment')
     } catch {
-      setProcessError('El código es incorrecto o ha expirado. Solicita uno nuevo con el enlace de abajo.')
+      setProcessError(t('subscribe.errors.invalidCode'))
     } finally {
       setIsProcessing(false)
     }
@@ -337,9 +347,9 @@ export default function ResumeContractPage() {
     setIsResending(true)
     try {
       await resendContractVerificationEmail(contract.id)
-      toast.success('Código reenviado. Revisa tu bandeja de entrada.')
+      toast.success(t('subscribe.messages.codeResent'))
     } catch {
-      toast.error('No se pudo reenviar el código. Inténtalo de nuevo más tarde.')
+      toast.error(t('subscribe.messages.resendFailed'))
     } finally {
       setIsResending(false)
     }
@@ -354,10 +364,10 @@ export default function ResumeContractPage() {
         await mockApprovePayment(contract.id)
       }
       await activateBillingContract(contract.id)
-      toast.success('¡Cuenta activada exitosamente!')
+      toast.success(t('subscribe.messages.accountActivated'))
       setPhase('done')
     } catch {
-      setProcessError('No se pudo completar la activación. Por favor, inténtalo de nuevo.')
+      setProcessError(t('subscribe.messages.activationFailed'))
     } finally {
       setIsProcessing(false)
     }
@@ -377,12 +387,22 @@ export default function ResumeContractPage() {
             <svg className="w-6 h-6 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
             </svg>
-            <span>KeyGo</span>
+            <span className="hidden sm:inline">KeyGo</span>
           </Link>
-          <Link to="/login" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">
-            ¿Ya tienes cuenta?{' '}
-            <span className="font-semibold text-indigo-600">Iniciar sesión</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <LocaleSwitcher
+              compact
+              triggerClassName="h-10 border border-slate-300 bg-white px-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-indigo-500"
+              panelClassName="absolute right-0 top-full mt-2 w-full rounded-lg border border-slate-200 bg-white py-1 shadow-xl z-50"
+              optionClassName="text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+              activeOptionClassName="text-indigo-700 bg-indigo-50 font-semibold"
+              selectedValueClassName="hidden sm:inline font-semibold text-slate-900"
+            />
+            <Link to="/login" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">
+              <span className="hidden sm:inline">{t('subscribe.header.alreadyHaveAccount')}{' '}</span>
+              <span className="font-semibold text-indigo-600">{t('subscribe.header.login')}</span>
+            </Link>
+          </div>
         </div>
       </header>
 

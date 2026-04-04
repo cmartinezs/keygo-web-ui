@@ -129,10 +129,17 @@ export default function App() {
             <Route path="feature/api" element={<PlatformStatsPage />} />
           </Route>
 
+          {/* Legacy routes: módulos ya implementados fuera de placeholder */}
+          <Route path="feature/apps" element={<Navigate to="/dashboard/tenant/apps" replace />} />
+          <Route path="feature/users" element={<Navigate to="/dashboard/tenant/users" replace />} />
+          <Route path="feature/access" element={<Navigate to="/dashboard/tenant/memberships" replace />} />
+          {/* Legacy route: sesiones ahora usa módulo real de cuenta */}
+          <Route path="feature/sessions" element={<Navigate to="/dashboard/account/sessions" replace />} />
+
           <Route path="feature/:featureId" element={<FeaturePlaceholderPage />} />
 
           {/* Admin tenant sections */}
-          <Route element={<RoleGuard roles={['ADMIN_TENANT']} redirectTo="/dashboard" />}>
+          <Route element={<RoleGuard roles={['ADMIN', 'ADMIN_TENANT']} redirectTo="/dashboard" />}>
             <Route path="tenant/users" element={<TenantUsersPage />} />
             <Route path="tenant/apps" element={<TenantAppsPage />} />
             <Route path="tenant/memberships" element={<TenantMembershipsPage />} />

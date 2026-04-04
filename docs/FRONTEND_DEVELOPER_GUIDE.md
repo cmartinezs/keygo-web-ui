@@ -1246,8 +1246,7 @@ export const resetPassword = (slug: string, userId: string, newPassword: string)
   apiClient.post<BaseResponse<void>>(`/tenants/${slug}/users/${userId}/reset-password`, { newPassword });
 ```
 
-**Disponibles ✅:** `GET`, `POST`, `GET/{userId}`, `PUT/{userId}`, `POST/{userId}/reset-password`  
-**Pendientes ⏳:** `PUT/{userId}/suspend` (T-033) · `PUT/{userId}/activate` (T-033) · `GET/{userId}/sessions` (T-072)
+**Disponibles ✅:** `GET`, `POST`, `GET/{userId}`, `PUT/{userId}`, `POST/{userId}/reset-password`, `PUT/{userId}/suspend`, `PUT/{userId}/activate`, `GET/{userId}/sessions`
 
 ---
 
@@ -1975,15 +1974,15 @@ Esto vincula el evento de Sentry con la búsqueda en Kibana/CloudWatch usando el
 | Reenviar código | POST | `/api/v1/tenants/keygo/apps/keygo-ui/resend-verification` | ✅ |
 | Ver mi perfil | GET | `/api/v1/tenants/keygo/account/profile` | ✅ — Bearer token, NO X-KEYGO-ADMIN |
 | Editar mi perfil | PATCH | `/api/v1/tenants/keygo/account/profile` | ✅ — Bearer token, PATCH semántica, NO X-KEYGO-ADMIN |
-| Olvidé contraseña | POST | `/api/v1/tenants/keygo/account/forgot-password` | ⏳ Pendiente |
-| Reset contraseña | POST | `/api/v1/tenants/keygo/account/reset-password` | ⏳ Pendiente |
+| Olvidé contraseña | POST | `/api/v1/tenants/keygo/account/forgot-password` | ✅ — Sin autenticación; anti-enumeración (siempre 200) |
+| Reset contraseña | POST | `/api/v1/tenants/keygo/account/reset-password` | ✅ — Sin autenticación; validar password temporal + estado RESET_PASSWORD |
 | Cambiar contraseña | POST | `/api/v1/tenants/keygo/account/change-password` | ✅ — Bearer token; 403 si contraseña actual incorrecta |
 | Mis sesiones | GET | `/api/v1/tenants/keygo/account/sessions` | ✅ — Lista ACTIVE; `is_current` por User-Agent+IP; parser UA básico |
 | Cerrar sesión remota | DELETE | `/api/v1/tenants/keygo/account/sessions/{id}` | ✅ — Idempotente; 200 siempre; ownership check (403 si otro usuario) |
 | Preferencias de notificación | GET | `/api/v1/tenants/keygo/account/notification-preferences` | ✅ — Defaults si no existe registro; sin crear fila |
 | Actualizar preferencias | PATCH | `/api/v1/tenants/keygo/account/notification-preferences` | ✅ — Upsert; rechaza campos desconocidos (400) |
 | Vista de acceso | GET | `/api/v1/tenants/keygo/account/access` | ✅ — Membresías del usuario con roles por app; lista vacía si sin membresías |
-| Conexiones vinculadas | GET | `/api/v1/tenants/keygo/account/connections` | ⏳ F-042 |
+| Conexiones vinculadas | GET | `/api/v1/tenants/keygo/account/connections` | ✅ — Integrado en UI (F-042) |
 
 ### 14.1.1. Patron recomendado: login central de `keygo-ui` para apps de otros tenants
 
@@ -2284,7 +2283,7 @@ Reglas rápidas de interpretación en frontend:
 
 | Caso de uso | Método | Endpoint | Auth | Estado |
 |---|---|---|---|---|
-| Listar tenants (paginado) | GET | `/api/v1/tenants?status=&name_like=&page=0&size=20` | Bearer ADMIN | ✅ |
+| Listar tenants (paginado) | GET | `/api/v1/tenants?status=&name_like=&page=0&size=20&sort=&order=` | Bearer ADMIN | ✅ |
 | Crear tenant | POST | `/api/v1/tenants` | Bearer ADMIN | ✅ |
 | Ver tenant | GET | `/api/v1/tenants/{slug}` | Bearer ADMIN | ✅ |
 | Suspender tenant | PUT | `/api/v1/tenants/{slug}/suspend` | Bearer ADMIN | ✅ |
@@ -2298,6 +2297,8 @@ Reglas rápidas de interpretación en frontend:
 | `name_like` | string | — | Búsqueda parcial en nombre (case-insensitive) |
 | `page` | int | `0` | Página (base 0) |
 | `size` | int | `20` | Tamaño (1–200) |
+| `sort` | `name\|status\|createdAt` | — | Campo a ordenar (opcional) |
+| `order` | `ASC\|DESC` | `ASC` | Dirección de ordenamiento |
 
 ---
 
@@ -2305,11 +2306,22 @@ Reglas rápidas de interpretación en frontend:
 
 | Caso de uso | Método | Endpoint | Auth | Estado |
 |---|---|---|---|---|
-| Listar apps | GET | `/api/v1/tenants/{slug}/apps` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Listar apps (paginado) | GET | `/api/v1/tenants/{slug}/apps?status=&name_like=&page=0&size=20&sort=&order=` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Crear app | POST | `/api/v1/tenants/{slug}/apps` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Ver app | GET | `/api/v1/tenants/{slug}/apps/{clientId}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Actualizar app | PUT | `/api/v1/tenants/{slug}/apps/{clientId}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Rotar secret | POST | `/api/v1/tenants/{slug}/apps/{clientId}/rotate-secret` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+
+**Query params de listado (todos snake_case):**
+
+| Param | Tipo | Por defecto | Descripción |
+|---|---|---|---|
+| `status` | `ACTIVE\|SUSPENDED` | — | Filtro por estado |
+| `name_like` | string | — | Búsqueda parcial en nombre (case-insensitive) |
+| `page` | int | `0` | Página (base 0) |
+| `size` | int | `20` | Tamaño (1–200) |
+| `sort` | `name\|status\|createdAt` | — | Campo a ordenar (opcional) |
+| `order` | `ASC\|DESC` | `ASC` | Dirección de ordenamiento |
 
 ---
 
@@ -2317,8 +2329,18 @@ Reglas rápidas de interpretación en frontend:
 
 | Caso de uso | Método | Endpoint | Auth | Estado |
 |---|---|---|---|---|
-| Listar roles | GET | `/api/v1/tenants/{slug}/apps/{clientId}/roles` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Listar roles (paginado) | GET | `/api/v1/tenants/{slug}/apps/{clientId}/roles?name_like=&page=0&size=20&sort=&order=` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Crear rol | POST | `/api/v1/tenants/{slug}/apps/{clientId}/roles` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+
+**Query params de listado (todos snake_case):**
+
+| Param | Tipo | Por defecto | Descripción |
+|---|---|---|---|
+| `name_like` | string | — | Búsqueda parcial en nombre (case-insensitive) |
+| `page` | int | `0` | Página (base 0) |
+| `size` | int | `20` | Tamaño (1–200) |
+| `sort` | `name\|createdAt` | — | Campo a ordenar (opcional) |
+| `order` | `ASC\|DESC` | `ASC` | Dirección de ordenamiento |
 
 ---
 
@@ -2326,7 +2348,7 @@ Reglas rápidas de interpretación en frontend:
 
 | Caso de uso | Método | Endpoint | Auth | Estado |
 |---|---|---|---|---|
-| Listar usuarios | GET | `/api/v1/tenants/{slug}/users` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Listar usuarios (paginado) | GET | `/api/v1/tenants/{slug}/users?status=&username_like=&email_like=&page=0&size=20&sort=&order=` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Crear usuario | POST | `/api/v1/tenants/{slug}/users` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Ver usuario | GET | `/api/v1/tenants/{slug}/users/{userId}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Actualizar usuario | PUT | `/api/v1/tenants/{slug}/users/{userId}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
@@ -2335,23 +2357,38 @@ Reglas rápidas de interpretación en frontend:
 | Activar usuario | PUT | `/api/v1/tenants/{slug}/users/{userId}/activate` | Bearer ADMIN/ADMIN_TENANT | ⏳ T-033 |
 | Ver sesiones del usuario | GET | `/api/v1/tenants/{slug}/users/{userId}/sessions` | Bearer ADMIN/ADMIN_TENANT | ⏳ Pendiente (T-072) |
 
+**Query params de listado (todos snake_case):**
+
+| Param | Tipo | Por defecto | Descripción |
+|---|---|---|---|
+| `status` | `ACTIVE\|INACTIVE` | — | Filtro por estado |
+| `username_like` | string | — | Búsqueda parcial en nombre de usuario (case-insensitive) |
+| `email_like` | string | — | Búsqueda parcial en email (case-insensitive) |
+| `page` | int | `0` | Página (base 0) |
+| `size` | int | `20` | Tamaño (1–200) |
+| `sort` | `username\|email\|status\|createdAt` | — | Campo a ordenar (opcional) |
+| `order` | `ASC\|DESC` | `ASC` | Dirección de ordenamiento |
+
 ---
 
 #### 14.2.5. Memberships
 
 | Caso de uso | Método | Endpoint | Auth | Estado |
 |---|---|---|---|---|
-| Listar por app (`client_app_id`) | GET | `/api/v1/tenants/{slug}/memberships?client_app_id={uuid}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
-| Listar por usuario (`user_id`) | GET | `/api/v1/tenants/{slug}/memberships?user_id={uuid}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
+| Listar memberships (paginado) | GET | `/api/v1/tenants/{slug}/memberships?user_id=&client_app_id=&page=0&size=20&sort=&order=` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Crear membership | POST | `/api/v1/tenants/{slug}/memberships` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 | Revocar membership | DELETE | `/api/v1/tenants/{slug}/memberships/{id}` | Bearer ADMIN/ADMIN_TENANT | ✅ |
 
-**Query params (snake_case obligatorio):**
+**Query params de listado (todos snake_case):**
 
-| Param HTTP | Tipo | Descripción |
-|---|---|---|
-| `user_id` | UUID string | Filtrar memberships por ID de usuario |
-| `client_app_id` | UUID string | Filtrar memberships por ID de app |
+| Param | Tipo | Por defecto | Descripción |
+|---|---|---|---|
+| `user_id` | UUID string | — | Filtrar memberships por ID de usuario |
+| `client_app_id` | UUID string | — | Filtrar memberships por ID de app |
+| `page` | int | `0` | Página (base 0) |
+| `size` | int | `20` | Tamaño (1–200) |
+| `sort` | `createdAt` | — | Campo a ordenar (opcional) |
+| `order` | `ASC\|DESC` | `ASC` | Dirección de ordenamiento |
 
 ---
 

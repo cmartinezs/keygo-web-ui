@@ -51,6 +51,9 @@ Fija en la parte superior de la pantalla. Contiene:
   - "Nuevo contrato" → lleva al asistente de contratación (`/subscribe`).
   - "Iniciar sesión" → lleva al login (`/login`).
 - **Selector de idioma** integrado en la barra superior (ES/EN) para cambiar idioma sin salir de la landing.
+- El cambio de idioma aplica en runtime sobre toda la landing: menu superior, hero, caracteristicas, como funciona, roles, planes, desarrolladores y CTA final.
+- En movil y tablet (incluyendo iPad Air), la marca del header de landing se muestra solo con el icono de llave y el selector de idioma muestra solo bandera (sin texto ES/EN); los textos reaparecen en `lg`.
+- En movil, el bloque inicial del hero agrega separacion superior adicional para evitar que el badge de plataforma quede pegado al header fijo.
 
 Un botón flotante en la esquina inferior derecha permite volver al inicio de la página en cualquier momento.
 
@@ -120,6 +123,8 @@ Recursos para integradores:
 
 Sección de cierre con dos acciones: "Contratar ahora" (→ `/subscribe`) e "Iniciar sesión" (→ `/login`). Incluye indicador de estado de la plataforma.
 
+El texto del indicador de estado del footer tambien se traduce en runtime segun el idioma activo (ES/EN).
+
 ---
 
 ### 1.2 Iniciar sesión
@@ -156,6 +161,7 @@ Rutas publicas de recuperacion de acceso:
    - Si está configurado: widget de verificación **Turnstile** (Cloudflare) para protección anti-bot.
    - Botón "Iniciar sesión".
   - Enlace "Olvide mi contrasena" hacia `/forgot-password`.
+  - Pie de soporte con CTA "Olvide mi contrasena" y "Registrate" en tamano legible para lectura continua.
 
 4. **Recuperacion de acceso (publico):**
   - En `/forgot-password`, el usuario ingresa su correo y recibe mensaje neutral de confirmacion.
@@ -240,12 +246,32 @@ Asistente de auto-contratación en **5 pasos** conectado al backend de billing. 
 
 El indicador de pasos muestra en todo momento la posición dentro del flujo.
 
+La cabecera del flujo incluye selector de idioma (ES/EN) visible durante todo `/subscribe`, incluyendo modo de retomar contrato.
+Los textos del wizard (pasos, formularios, mensajes de estado y acciones) tambien cambian en runtime segun el idioma activo.
+En movil, la marca del header del flujo se muestra solo con el icono de llave (sin texto "KeyGo") para ahorrar ancho util.
+En movil, el selector de idioma del header muestra solo la bandera del idioma activo; la etiqueta textual (ES/EN) aparece desde `sm` en adelante.
+En movil, el acceso a login del header muestra solo la accion (**Sign in / Iniciar sesion**), ocultando el texto introductorio; en `sm+` se vuelve a mostrar la frase completa.
+
+En pantallas desktop, el flujo usa layout de tres columnas: pasos a la izquierda, contenido del paso al centro y resumen en vivo a la derecha con los datos seleccionados/ingresados.
+El bloque "Current step" del resumen en vivo usa resaltado visual de seleccion para identificar claramente el estado actual del wizard.
+
 #### Paso 1 — Selección de plan
 
 Las tarjetas se cargan dinámicamente desde la API (`GET /billing/catalog`). Cada tarjeta muestra:
 - Badge de tipo: **Empresa** o **Personal**.
 - Toggle de periodicidad: **Mensual / Anual** (si el plan tiene las dos versiones).
+- El toggle de periodicidad se traduce en runtime segun el idioma activo (ES/EN).
 - Precio formateado con divisa, días de prueba y lista de beneficios (entitlements).
+
+Mejoras de visualizacion del paso:
+- En `subscribe` el carrusel prioriza tarjetas mas anchas en desktop intermedio para mejorar legibilidad.
+- En movil, la seleccion de plan muestra una sola tarjeta por vista para mantener legibilidad y evitar cards comprimidas.
+- Se corrigio el desborde horizontal del carrusel cuando los planes ya estan cargados, manteniendo el contenido dentro del viewport en telefono y tablet.
+- El indicador de pasos en movil se compacto para evitar desborde horizontal y mantener centrado el contenido del wizard.
+- El badge de popularidad mantiene una sola linea y evita quiebre de texto.
+- El contenedor principal y paneles laterales se compactaron/ajustaron para reducir la sensacion de pagina excesivamente larga.
+- El boton "Continuar" del paso de plan se acerco al carrusel para mantener una separacion consistente con los demas formularios del wizard.
+- El CTA de retoma de contratacion al pie del wizard incremento su tamano/peso visual para alinearse con otros textos de accion del producto.
 
 Acción: "Continuar →" habilitado al seleccionar una tarjeta.
 
@@ -275,6 +301,8 @@ Acciones: "← Atrás", "Continuar →".
 
 - Panel de resumen (plan, precio, periodicidad, días de prueba, datos del contratante y empresa si B2B).
 - Dos checkboxes obligatorios: **Términos de Servicio** y **Política de Privacidad**.
+- Los modales de **Términos** y **Política** se muestran directamente en el idioma global activo de la app (ES/EN), sin selector de idioma interno.
+- En esos modales, el mensaje de ayuda de scroll y las acciones **Cerrar / Acepto** también se traducen en runtime según el idioma activo.
 - Widget Turnstile (si `VITE_TURNSTILE_SITE_KEY` configurado).
 - Botón "Confirmar y continuar →" — llama a `POST /billing/contracts` en el backend. Un honeypot invisible filtra envíos automáticos.
 
@@ -808,9 +836,9 @@ Las siguientes funcionalidades tienen implementación visible en UI, pero aún d
 |---|---|---|
 | Reactivación de tenants | Detalle de tenant | Mock temporal; endpoint backend pendiente |
 | Registro de usuarios (paso 2) | `/register` | Formulario parcialmente implementado |
-| Módulos admin cross-tenant (`apps`, `users`, `access`, `audit`, `signing-keys`, `sessions`, `tokens`) | `/dashboard/feature/:featureId` | UI funcional mockeada (tabla, KPIs y acciones); backend real pendiente por módulo |
+| Módulos admin cross-tenant en placeholder (`audit`, `signing-keys`, `tokens`) | `/dashboard/feature/:featureId` | UI funcional mockeada (tabla, KPIs y acciones); backend real pendiente por módulo |
 | Módulos tenant/user auxiliares (`members`, `services`, `my-access`, `activity`) | `/dashboard/feature/:featureId` | UI funcional mockeada; falta contrato backend definitivo |
-| Panel Administrador de Tenant | `/dashboard` + `/dashboard/tenant/*` | Usuarios, Apps y Memberships implementados; sesiones por usuario y cambios de estado operan en modo mock temporal |
+| Panel Administrador de Tenant | `/dashboard` + `/dashboard/tenant/*` | Usuarios, Apps y Memberships implementados; sesiones por usuario y cambios de estado integrados con backend real |
 | Panel de Usuario | `/dashboard` + `/dashboard/user/*` + `/dashboard/account*` | Mi acceso y actividad base disponibles; historial avanzado depende de contrato dedicado |
 | Seguridad de cuenta (change-password/sesiones remotas) | `/dashboard/account/settings` | Implementada (cambio de contraseña y revocación remota de sesiones) |
 | Buscador global | Cabecera admin | Decorativo, sin funcionalidad |

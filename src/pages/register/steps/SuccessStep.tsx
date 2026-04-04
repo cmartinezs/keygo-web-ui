@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 interface SuccessStepProps {
   email: string
@@ -6,6 +7,8 @@ interface SuccessStepProps {
 }
 
 export function SuccessStep({ email, planName }: SuccessStepProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-col items-center gap-6 py-8 text-center">
       {/* Icon */}
@@ -18,21 +21,21 @@ export function SuccessStep({ email, planName }: SuccessStepProps) {
       </div>
 
       <div>
-        <h2 className="text-3xl font-extrabold text-slate-900">¡Cuenta activada!</h2>
+        <h2 className="text-3xl font-extrabold text-slate-900">{t('subscribe.steps.success.title')}</h2>
         <p className="mt-2 text-slate-500 max-w-sm mx-auto">
-          Tu suscripción al plan{' '}
+          {t('subscribe.steps.success.descriptionPrefix')}{' '}
           <span className="font-semibold text-indigo-700">{planName}</span>{' '}
-          ha sido activada exitosamente.
+          {t('subscribe.steps.success.descriptionSuffix')}
         </p>
       </div>
 
       <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-5 max-w-sm w-full text-left space-y-2.5">
         <div>
-          <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-0.5">Correo de acceso</p>
+          <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-0.5">{t('subscribe.steps.success.accessEmailLabel')}</p>
           <p className="font-semibold text-slate-800">{email}</p>
         </div>
         <p className="text-sm text-slate-600 pt-1">
-          Recibirás un correo con tus credenciales de acceso en breve. Usa el botón de abajo para iniciar sesión.
+          {t('subscribe.steps.success.helpText')}
         </p>
       </div>
 
@@ -40,14 +43,14 @@ export function SuccessStep({ email, planName }: SuccessStepProps) {
         to="/login"
         className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
       >
-        Ir a iniciar sesión →
+        {t('subscribe.steps.success.goToLogin')}
       </Link>
 
       <Link
         to="/"
         className="text-sm text-slate-400 hover:text-indigo-600 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
       >
-        ← Volver al inicio
+        {t('subscribe.steps.success.backToHome')}
       </Link>
     </div>
   )

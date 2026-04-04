@@ -22,7 +22,14 @@
     "loadingInvoices": "Cargando facturas...",
     "notDefined": "No definido",
     "noMoreOptions": "Sin mas opciones",
-    "admin": "Admin"
+    "admin": "Admin",
+    "allRightsReserved": "Todos los derechos reservados",
+    "allSystemsOperational": "Todos los sistemas operativos"
+  },
+  "policyModal": {
+    "close": "Cerrar",
+    "accept": "Acepto",
+    "scrollHint": "Desplazate hasta el final para aceptar"
   },
   "errors": {
     "unknownMessage": "No pudimos completar la solicitud en este momento. Vuelve a intentarlo en unos segundos.",
@@ -138,6 +145,392 @@
       "goToLogin": "Ir a iniciar sesion",
       "needRecoveryToken": "Prefiero recuperar por token de correo",
       "timeoutAction": "reset de contrasena temporal"
+    }
+  },
+  "landing": {
+    "nav": {
+      "backToTopAria": "Volver al inicio de la pagina",
+      "primaryAria": "Navegacion principal",
+      "features": "Caracteristicas",
+      "howItWorks": "Como funciona",
+      "roles": "Para tu equipo",
+      "pricing": "Planes",
+      "developers": "Desarrolladores",
+      "startHere": "Comienza aqui",
+      "login": "Iniciar sesion",
+      "subscribe": "Contratar",
+      "joinTeam": "Sumate a tu equipo"
+    },
+    "hero": {
+      "badge": "Plataforma IAM cloud-ready",
+      "titleLine1": "La llave de tu",
+      "titleLine2": "identidad digital",
+      "descriptionPrefix": "KeyGo es la plataforma de gestion de identidades que centraliza el acceso de tus usuarios, protege tus aplicaciones y permite a cada persona ver",
+      "descriptionEmphasis": "exactamente lo que necesita",
+      "descriptionSuffix": "sin complicaciones y con la seguridad que tu organizacion merece.",
+      "startNow": "Empezar ahora ->",
+      "viewFeatures": "Ver caracteristicas",
+      "stats": {
+        "secureAccess": {
+          "value": "Acceso seguro",
+          "label": "Inicio de sesion unificado",
+          "desc": "Un solo login para todas tus aplicaciones"
+        },
+        "totalControl": {
+          "value": "Control total",
+          "label": "Permisos por perfil",
+          "desc": "Cada usuario ve solo lo que le corresponde"
+        },
+        "multiTenant": {
+          "value": "Multi-tenant",
+          "label": "Gestion centralizada",
+          "desc": "Multiples organizaciones en una sola plataforma"
+        }
+      }
+    },
+    "features": {
+      "eyebrow": "Caracteristicas",
+      "title": "Todo lo que necesitas para gestionar identidades",
+      "description": "KeyGo integra las mejores practicas de seguridad en una plataforma cohesionada, eliminando la complejidad sin sacrificar control.",
+      "items": {
+        "authentication": {
+          "title": "Autenticacion estandar",
+          "description": "Implementa OAuth2 Authorization Code Flow con PKCE de forma nativa. Sin secretos en el browser, sin riesgos de intercepcion."
+        },
+        "roleAccess": {
+          "title": "Control de acceso por roles",
+          "description": "Define permisos precisos para administradores globales, administradores de tenant y usuarios finales. Cada rol ve exactamente lo que necesita."
+        },
+        "multiTenant": {
+          "title": "Multi-tenant nativo",
+          "description": "Gestiona multiples organizaciones desde una sola instancia. Cada tenant con sus propios usuarios, aplicaciones y configuraciones aisladas."
+        },
+        "jwt": {
+          "title": "Tokens JWT seguros",
+          "description": "Emite tokens firmados con RS256 y los valida via JWKS. El refresh silencioso se ejecuta automaticamente antes de que expire la sesion."
+        },
+        "clientApps": {
+          "title": "Gestion de aplicaciones cliente",
+          "description": "Registra y administra las aplicaciones que se integran con KeyGo. Controla redirect URIs, scopes y ciclo de vida de cada client app."
+        },
+        "api": {
+          "title": "API REST documentada",
+          "description": "Documentacion OpenAPI v3 completa. Integra KeyGo en tu stack en minutos con contratos claros y respuestas consistentes."
+        }
+      }
+    },
+    "howItWorks": {
+      "eyebrow": "Como funciona",
+      "title": "Seguridad sin fricciones en tres pasos",
+      "description": "KeyGo gestiona toda la complejidad de la seguridad en segundo plano. Tus usuarios solo experimentan acceso rapido y fluido.",
+      "steps": {
+        "step1": {
+          "title": "El usuario inicia sesion",
+          "description": "El usuario accede con sus credenciales a traves de una pantalla de login segura gestionada por KeyGo. No importa desde que aplicacion entre: siempre es la misma experiencia.",
+          "detail": "Un unico punto de acceso para todas tus aplicaciones."
+        },
+        "step2": {
+          "title": "KeyGo verifica y autoriza",
+          "description": "KeyGo comprueba la identidad del usuario, valida sus permisos y establece una sesion activa de forma automatica. Todo ocurre en segundo plano, sin interrumpir el flujo de trabajo.",
+          "detail": "La sesion se renueva sola para que nadie pierda su trabajo."
+        },
+        "step3": {
+          "title": "Acceso personalizado por perfil",
+          "description": "Cada usuario llega directamente a su panel: administradores globales, responsables de organizacion o usuarios finales ven exactamente las herramientas que les corresponden.",
+          "detail": "Sin configuracion manual: los permisos se aplican de forma automatica."
+        }
+      }
+    },
+    "roles": {
+      "eyebrow": "Para tu equipo",
+      "title": "El acceso correcto para cada persona",
+      "description": "KeyGo adapta la experiencia y los permisos automaticamente segun el rol del usuario, leido directamente del token JWT.",
+      "items": {
+        "admin": {
+          "title": "Administrador Global",
+          "description": "Control total sobre la plataforma KeyGo. Gestiona tenants, configura el sistema y supervisa toda la actividad desde un unico panel.",
+          "capabilities": [
+            "Crear y gestionar tenants",
+            "Administrar usuarios globales",
+            "Configurar aplicaciones cliente",
+            "Supervisar logs y auditoria"
+          ]
+        },
+        "tenantAdmin": {
+          "title": "Administrador de Tenant",
+          "description": "Gestion autonoma dentro de su organizacion. Administra usuarios, permisos y configuraciones sin depender del equipo tecnico central.",
+          "capabilities": [
+            "Gestionar usuarios del tenant",
+            "Asignar y revocar roles",
+            "Ver metricas de su organizacion",
+            "Administrar sesiones activas"
+          ]
+        },
+        "tenantUser": {
+          "title": "Usuario del sistema",
+          "description": "Acceso seguro y personalizado a las aplicaciones del tenant. Gestiona su perfil, sesiones y preferencias de forma autonoma.",
+          "capabilities": [
+            "Acceder a aplicaciones autorizadas",
+            "Ver y editar su perfil",
+            "Gestionar sesiones activas",
+            "Cambiar credenciales de forma segura"
+          ]
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Planes y precios",
+      "title": "Escoge el plan que mejor se adapta",
+      "description": "Cloud gestionado o despliegue en tus propios servidores - KeyGo se adapta a las necesidades de cada organizacion, sin letra pequena.",
+      "footerPrefix": "Tu organizacion tiene requisitos especificos de cumplimiento o soberania de datos?",
+      "footerLink": "Habla con nuestro equipo",
+      "footerSuffix": "y disenamos juntos la solucion ideal."
+    },
+    "developers": {
+      "eyebrow": "Para desarrolladores",
+      "title": "Integra KeyGo en minutos",
+      "description": "KeyGo esta disenado para ser adoptado rapidamente por cualquier equipo de desarrollo. Documentacion clara, API REST estandar y SDKs oficiales en camino.",
+      "inProgress": "En desarrollo",
+      "resources": {
+        "docs": {
+          "title": "Documentacion tecnica",
+          "description": "Guia publica para integrar KeyGo con login propio o reutilizando el login hospedado de keygo-ui.",
+          "cta": "Abrir guia"
+        },
+        "sdk": {
+          "title": "SDKs e integraciones",
+          "description": "Librerias oficiales y ejemplos listos para usar en los frameworks y lenguajes mas populares.",
+          "cta": "Proximamente"
+        },
+        "api": {
+          "title": "API REST completa",
+          "description": "Endpoints documentados con OpenAPI v3. Integra KeyGo en tu stack en minutos con contratos claros y respuestas consistentes.",
+          "cta": "Ver endpoints"
+        }
+      },
+      "banner": {
+        "title": "Guia de integracion disponible",
+        "description": "Revisa el flujo recomendado para login propio y el patron de login central con keygo-ui, junto con el contrato minimo de endpoints que debes implementar.",
+        "cta": "Leer documentacion"
+      }
+    },
+    "cta": {
+      "title": "Listo para empezar?",
+      "description": "Accede a tu panel de KeyGo y toma el control de la identidad digital de tu organizacion hoy mismo.",
+      "login": "Iniciar sesion",
+      "subscribe": "Contratar",
+      "joinTeam": "Sumate a tu equipo"
+    }
+  },
+  "subscribe": {
+    "stepLabels": {
+      "plan": "Plan",
+      "contractor": "Tus datos",
+      "terms": "Revision",
+      "email": "Email",
+      "payment": "Pago"
+    },
+    "stepIndicatorAria": "Pasos del registro",
+    "common": {
+      "optional": "opcional"
+    },
+    "actions": {
+      "continue": "Continuar ->",
+      "back": "<- Atras",
+      "processing": "Procesando..."
+    },
+    "layout": {
+      "stepsTitle": "Progreso",
+      "summaryTitle": "Resumen en vivo",
+      "currentStep": "Paso actual",
+      "completed": "Completado",
+      "selectedPlan": "Plan seleccionado",
+      "price": "Precio",
+      "contractOwner": "Responsable",
+      "company": "Empresa",
+      "conditions": "Condiciones",
+      "conditionsAccepted": "Aceptadas",
+      "conditionsPending": "Pendientes",
+      "contractId": "ID de contrato",
+      "notProvided": "Sin datos"
+    },
+    "header": {
+      "backHomeAria": "Volver al inicio",
+      "alreadyHaveAccount": "Ya tienes cuenta?",
+      "login": "Iniciar sesion"
+    },
+    "resume": {
+      "title": "Retomar contratacion",
+      "description": "Ingresa el ID de contrato para continuar desde el paso 4 de este flujo.",
+      "contractIdLabel": "ID de contrato",
+      "contractIdHint": "Puedes encontrar este ID en el correo que recibiste al iniciar la contratacion.",
+      "backToNew": "<- Volver al flujo nuevo",
+      "searching": "Buscando...",
+      "continueContract": "Continuar contrato ->",
+      "ctaPrefix": "Iniciaste una contratacion antes?",
+      "ctaAction": "Continuar en el paso 4 con un contrato existente",
+      "errors": {
+        "planNotAvailable": "No pudimos asociar este contrato a un plan vigente del catalogo. Inicia una nueva contratacion.",
+        "alreadyProcessed": "Este contrato ya esta procesado. Puedes iniciar sesion con tu cuenta activa.",
+        "unrecoverable": "Este contrato no se puede retomar porque esta expirado, cancelado o fallido.",
+        "notFound": "No encontramos un contrato con ese ID. Verifica el dato e intentalo de nuevo."
+      }
+    },
+    "recovery": {
+      "catalogLabel": "catalogo de planes",
+      "contractLabel": "contrato",
+      "contractLookupAction": "consulta del contrato",
+      "retryHint": "Intenta nuevamente en unos minutos.",
+      "createContractAction": "creacion del contrato",
+      "connectionHint": "Verifica tu conexion y vuelve a intentarlo.",
+      "verifyCodeAction": "verificacion del codigo",
+      "resendCodeAction": "reenvio del codigo",
+      "retryHintShort": "Intenta nuevamente en unos momentos.",
+      "approvalActivationAction": "aprobacion/activacion",
+      "approvalActivationHint": "Revisa el estado del contrato y vuelve a intentar si corresponde.",
+      "paymentOrActivationAction": "pago o activacion"
+    },
+    "errors": {
+      "invalidInput": "Los datos introducidos no son validos. Por favor, revisalos e intentalo de nuevo.",
+      "invalidCode": "El codigo es incorrecto o ha expirado. Revisa tu correo e intentalo de nuevo."
+    },
+    "messages": {
+      "codeResent": "Codigo reenviado. Revisa tu bandeja de entrada.",
+      "accountActivated": "Cuenta activada exitosamente!",
+      "resendFailed": "No se pudo reenviar el codigo. Intentalo de nuevo mas tarde.",
+      "activationFailed": "No se pudo completar la activacion. Por favor, intentalo de nuevo."
+    },
+    "period": {
+      "monthly": "Mensual",
+      "yearly": "Anual",
+      "monthlySuffix": "/mes",
+      "yearlySuffix": "/ano",
+      "oneTimeSuffix": " pago unico"
+    },
+    "customPricing": "A medida · contactar",
+    "free": "Gratis",
+    "steps": {
+      "plan": {
+        "title": "Elige tu plan",
+        "description": "Selecciona el plan que mejor se adapta a tus necesidades."
+      },
+      "contractor": {
+        "title": "Tus datos",
+        "description": "Informacion del titular de la cuenta y, si aplica, de la empresa.",
+        "companySection": "Datos de la empresa",
+        "fields": {
+          "firstName": "Nombre",
+          "lastName": "Apellidos",
+          "email": "Correo electronico",
+          "companyName": "Nombre de la empresa",
+          "companyTaxId": "RFC / NIF / Tax ID",
+          "companyAddress": "Direccion fiscal"
+        },
+        "placeholders": {
+          "firstName": "Carlos",
+          "lastName": "Garcia Lopez",
+          "email": "tu@email.com",
+          "companyName": "Acme Corp S.A.",
+          "companyTaxId": "RFC123456XYZ",
+          "companyAddress": "Av. Reforma 300, CDMX"
+        },
+        "validation": {
+          "firstNameRequired": "El nombre es requerido",
+          "lastNameRequired": "Los apellidos son requeridos",
+          "emailInvalid": "Introduce un correo electronico valido",
+          "companyNameRequired": "El nombre de la empresa es requerido (min. 2 caracteres)"
+        }
+      },
+      "terms": {
+        "title": "Resumen y condiciones",
+        "description": "Revisa tu solicitud y acepta las condiciones para continuar.",
+        "summaryTitle": "Resumen de la contratacion",
+        "fields": {
+          "plan": "Plan",
+          "price": "Precio",
+          "trialPeriod": "Periodo de prueba",
+          "trialDays": "{{days}} dias gratis",
+          "contractOwner": "Responsable del contrato",
+          "company": "Empresa"
+        },
+        "acceptanceTitle": "Aceptacion de condiciones",
+        "acceptanceTooltip": "Haz clic en el enlace, lee el documento completo y pulsa «Acepto» para marcar cada casilla.",
+        "acceptTermsPrefix": "He leido y acepto los",
+        "termsLink": "Terminos de Uso y Servicio",
+        "acceptTermsSuffix": "de KeyGo.",
+        "acceptPrivacyPrefix": "He leido y acepto la",
+        "privacyLink": "Politica de Privacidad",
+        "acceptPrivacySuffix": ", incluyendo el tratamiento de mis datos personales.",
+        "termsModalTitle": "Terms of Use and Service",
+        "privacyModalTitle": "Privacy Policy",
+        "confirmAndContinue": "Confirmar y continuar ->"
+      },
+      "email": {
+        "title": "Verifica tu correo",
+        "otpAria": "Codigo de verificacion (6 digitos)",
+        "digitAria": "Digito {{index}}",
+        "descriptionPrefix": "Hemos enviado un codigo de 6 digitos a",
+        "descriptionSuffix": "Introducelo a continuacion para continuar.",
+        "helpText": "El codigo es valido durante 30 minutos. Si no ves el correo, revisa tu carpeta de spam.",
+        "verifying": "Verificando...",
+        "verifyCode": "Verificar codigo ->",
+        "resending": "Enviando...",
+        "resendIn": "Reenviar codigo en {{seconds}}s",
+        "resend": "No recibiste el codigo? Reenviar"
+      },
+      "payment": {
+        "title": "Confirma el pago",
+        "description": "Tu correo ha sido verificado exitosamente. El ultimo paso es confirmar el pago para activar tu suscripcion.",
+        "orderSummary": "Detalle del pedido",
+        "monthlyBilling": "Facturacion mensual",
+        "yearlyBilling": "Facturacion anual",
+        "oneTimePayment": "Pago unico",
+        "trialInfo": "Los primeros {{days}} dias son gratuitos. Se cobraran despues del periodo de prueba.",
+        "devMode": "Modo desarrollo - pago simulado",
+        "confirmMockPayment": "Confirmar pago (simulado) ->",
+        "gatewayPending": "La pasarela de pago estara disponible proximamente. Nuestro equipo se pondra en contacto contigo."
+      },
+      "success": {
+        "title": "Cuenta activada!",
+        "descriptionPrefix": "Tu suscripcion al plan",
+        "descriptionSuffix": "ha sido activada exitosamente.",
+        "accessEmailLabel": "Correo de acceso",
+        "helpText": "Recibiras un correo con tus credenciales de acceso en breve. Usa el boton de abajo para iniciar sesion.",
+        "goToLogin": "Ir a iniciar sesion ->",
+        "backToHome": "<- Volver al inicio"
+      }
+    },
+    "resumeLookup": {
+      "title": "Continuar contratacion",
+      "description": "Si iniciaste el proceso de contratacion y no lo completaste, ingresa tu ID de contrato para retomarlo.",
+      "contractIdLabel": "ID de contrato",
+      "contractIdHint": "Puedes encontrarlo en el correo de confirmacion que recibiste al iniciar el proceso.",
+      "searching": "Buscando...",
+      "continue": "Continuar ->",
+      "noContractYet": "Aun no tienes un contrato?",
+      "startContract": "Iniciar contratacion"
+    },
+    "resumePayment": {
+      "title": "Confirma el pago",
+      "description": "Tu correo fue verificado. Completa el pago para activar tu cuenta.",
+      "devMode": "Modo desarrollo - pago simulado",
+      "simulatePayment": "Simular aprobacion de pago (DEV)",
+      "gatewayPending": "La integracion de pagos estara disponible proximamente. Contacta con soporte si necesitas activar tu cuenta."
+    },
+    "resumeDone": {
+      "title": "Cuenta activada!",
+      "description": "Tu suscripcion ha sido activada exitosamente.",
+      "accessEmailLabel": "Correo de acceso",
+      "helpText": "Recibiras un correo con tus credenciales en breve.",
+      "goToLogin": "Ir a iniciar sesion ->"
+    },
+    "terminal": {
+      "activeTitle": "Contrato ya activado",
+      "unrecoverableTitle": "Contrato no disponible",
+      "activeDescription": "Este contrato ya fue procesado. Tu cuenta esta activa, puedes iniciar sesion.",
+      "unrecoverableDescription": "Este contrato ha expirado o fue cancelado. Por favor, inicia un nuevo proceso de contratacion.",
+      "goToLogin": "Ir a iniciar sesion ->",
+      "newContract": "Nueva contratacion"
     }
   },
   "dashboard": {

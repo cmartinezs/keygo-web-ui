@@ -6,7 +6,6 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { TENANT } from '@/api/client'
 import { getAppApiError } from '@/api/errorNormalizer'
-import { PendingFeatureBadge } from '@/components/PendingFeatureBadge'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -221,7 +220,7 @@ export default function TenantUsersPage() {
     },
   })
 
-  // ── T-033: Suspend / Activate ⏳ pendiente backend ─────────────────────────
+  // ── T-033: Suspend / Activate ─────────────────────────────────────────────
 
   const suspendMutation = useMutation({
     mutationFn: (userId: string) =>
@@ -271,7 +270,7 @@ export default function TenantUsersPage() {
     },
   })
 
-  // ── T-110: Sesiones de usuario (admin) ⏳ pendiente backend ────────────────
+  // ── T-110: Sesiones de usuario (admin) ────────────────────────────────────
 
   const {
     data: adminSessions,
@@ -304,18 +303,6 @@ export default function TenantUsersPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Gestion operativa de cuentas para {tenantSlug}.
           </p>
-          <div className="flex flex-wrap gap-2 pt-2">
-            <PendingFeatureBadge
-              featureCode="T-033"
-              title="Suspender/Activar usuario — Backend en desarrollo"
-              description="Suspender y activar usuarios individuales. Botones para cambiar el estado están en la fila de cada usuario (Suspender/Activar). Actualmente funciona con mocks. Una vez el backend implemente el endpoint, estos cambios serán persistentes."
-            />
-            <PendingFeatureBadge
-              featureCode="T-110"
-              title="Ver sesiones del usuario — Backend en desarrollo"
-              description="Ver todas las sesiones activas de un usuario específico (navegador, SO, IP, último acceso). Botón 'Sesiones' en cada fila. Actualmente devuelve datos simulados. Cuando el backend publique el endpoint, mostrará las sesiones reales."
-            />
-          </div>
         </header>
         <button
           type="button"
@@ -666,7 +653,7 @@ export default function TenantUsersPage() {
         </TenantModal>
       ) : null}
 
-      {/* ── T-033: Confirmar suspend / activate ⏳ pendiente backend ─────────── */}
+      {/* ── T-033: Confirmar suspend / activate ─────────────────────────────── */}
       {confirmStatusUser ? (
         <TenantModal
           title={confirmStatusUser.status === 'SUSPENDED' ? 'Activar usuario' : 'Suspender usuario'}
@@ -715,7 +702,7 @@ export default function TenantUsersPage() {
         </TenantModal>
       ) : null}
 
-      {/* ── T-110: Sesiones activas del usuario (admin) ⏳ pendiente backend ─── */}
+      {/* ── T-110: Sesiones activas del usuario (admin) ─────────────────────── */}
       {viewingSessionsUser ? (
         <TenantModal
           title={`Sesiones de ${viewingSessionsUser.username}`}

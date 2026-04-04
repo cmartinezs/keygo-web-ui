@@ -91,7 +91,7 @@ export async function updateUser(
   return unwrapResponseData(res.data, 'Error al actualizar usuario')
 }
 
-/** PUT /api/v1/tenants/{tenantSlug}/users/{userId}/suspend ⏳ pendiente backend (T-033) */
+/** PUT /api/v1/tenants/{tenantSlug}/users/{userId}/suspend ✅ (T-033 integrado) */
 export async function suspendUser(
   tenantSlug: string,
   userId: string,
@@ -111,7 +111,7 @@ export async function suspendUser(
   return unwrapResponseData(res.data, 'Error al suspender el usuario')
 }
 
-/** PUT /api/v1/tenants/{tenantSlug}/users/{userId}/activate ⏳ pendiente backend (T-033) */
+/** PUT /api/v1/tenants/{tenantSlug}/users/{userId}/activate ✅ (T-033 integrado) */
 export async function activateUser(
   tenantSlug: string,
   userId: string,
@@ -131,7 +131,7 @@ export async function activateUser(
   return unwrapResponseData(res.data, 'Error al activar el usuario')
 }
 
-/** GET /api/v1/tenants/{tenantSlug}/users/{userId}/sessions ⏳ pendiente backend (T-110) */
+/** GET /api/v1/tenants/{tenantSlug}/users/{userId}/sessions ✅ (T-110 integrado) */
 export async function getAdminUserSessions(
   tenantSlug: string,
   userId: string,

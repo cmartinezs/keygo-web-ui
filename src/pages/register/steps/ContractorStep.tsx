@@ -1,24 +1,35 @@
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
-const basePersonalSchema = z.object({
-  firstName: z.string().min(2, 'El nombre es requerido'),
-  lastName: z.string().min(2, 'Los apellidos son requeridos'),
-  email: z.string().email('Introduce un correo electrónico válido'),
-})
+function createBusinessSchema(t: (key: string) => string) {
+  const basePersonalSchema = z.object({
+    firstName: z.string().min(2, t('subscribe.steps.contractor.validation.firstNameRequired')),
+    lastName: z.string().min(2, t('subscribe.steps.contractor.validation.lastNameRequired')),
+    email: z.string().email(t('subscribe.steps.contractor.validation.emailInvalid')),
+  })
 
-const companySchema = z.object({
-  companyName: z.string().min(2, 'El nombre de la empresa es requerido (mín. 2 caracteres)').optional().or(z.literal('')),
-  companyTaxId: z.string().optional(),
-  companyAddress: z.string().optional(),
-})
+  const companySchema = z.object({
+    companyName: z.string().min(2, t('subscribe.steps.contractor.validation.companyNameRequired')).optional().or(z.literal('')),
+    companyTaxId: z.string().optional(),
+    companyAddress: z.string().optional(),
+  })
 
-const businessSchema = basePersonalSchema.merge(companySchema)
+  return basePersonalSchema.merge(companySchema)
+}
 
-export type ContractorFormValues = z.infer<typeof businessSchema>
+export type ContractorFormValues = {
+  firstName: string
+  lastName: string
+  email: string
+  companyName?: string
+  companyTaxId?: string
+  companyAddress?: string
+}
 
 // ── Field helpers ─────────────────────────────────────────────────────────────
 
@@ -31,12 +42,13 @@ interface FieldProps {
 }
 
 function Field({ id, label, error, optional, children }: FieldProps) {
+  const { t } = useTranslation()
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={id} className="text-sm font-medium text-slate-700">
         {label}{' '}
         {optional ? (
-          <span className="text-slate-400 font-normal">(opcional)</span>
+          <span className="text-slate-400 font-normal">({t('subscribe.common.optional')})</span>
         ) : (
           <span aria-hidden="true" className="text-red-500">*</span>
         )}
@@ -62,7 +74,8 @@ interface ContractorStepProps {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStepProps) {
-  const schema = businessSchema
+  const { t } = useTranslation()
+  const schema = useMemo(() => createBusinessSchema(t), [t])
 
   const {
     register,
@@ -76,44 +89,44 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
   return (
     <form onSubmit={handleSubmit((data) => onNext(data as ContractorFormValues))} className="flex flex-col gap-6" noValidate>
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-slate-900">Tus datos</h2>
+        <h2 className="text-2xl font-bold text-slate-900">{t('subscribe.steps.contractor.title')}</h2>
         <p className="mt-1 text-slate-500 text-sm">
-          Información del titular de la cuenta y, si aplica, de la empresa.
+          {t('subscribe.steps.contractor.description')}
         </p>
       </div>
 
       <div className="space-y-4">
         {/* Personal info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field id="firstName" label="Nombre" error={errors.firstName?.message}>
+          <Field id="firstName" label={t('subscribe.steps.contractor.fields.firstName')} error={errors.firstName?.message}>
             <input
               id="firstName"
               type="text"
               autoComplete="given-name"
-              placeholder="Carlos"
+              placeholder={t('subscribe.steps.contractor.placeholders.firstName')}
               className={inputCls(!!errors.firstName)}
               {...register('firstName')}
             />
           </Field>
 
-          <Field id="lastName" label="Apellidos" error={errors.lastName?.message}>
+          <Field id="lastName" label={t('subscribe.steps.contractor.fields.lastName')} error={errors.lastName?.message}>
             <input
               id="lastName"
               type="text"
               autoComplete="family-name"
-              placeholder="García López"
+              placeholder={t('subscribe.steps.contractor.placeholders.lastName')}
               className={inputCls(!!errors.lastName)}
               {...register('lastName')}
             />
           </Field>
         </div>
 
-        <Field id="email" label="Correo electrónico" error={errors.email?.message}>
+        <Field id="email" label={t('subscribe.steps.contractor.fields.email')} error={errors.email?.message}>
           <input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="tu@email.com"
+            placeholder={t('subscribe.steps.contractor.placeholders.email')}
             className={inputCls(!!errors.email)}
             {...register('email')}
           />
@@ -123,39 +136,39 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
         <>
             <div className="border-t border-slate-100 pt-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-4">
-                Datos de la empresa
+                {t('subscribe.steps.contractor.companySection')}
               </p>
             </div>
 
-            <Field id="companyName" label="Nombre de la empresa" optional error={errors.companyName?.message}>
+            <Field id="companyName" label={t('subscribe.steps.contractor.fields.companyName')} optional error={errors.companyName?.message}>
               <input
                 id="companyName"
                 type="text"
                 autoComplete="organization"
-                placeholder="Acme Corp S.A."
+                placeholder={t('subscribe.steps.contractor.placeholders.companyName')}
                 className={inputCls(!!errors.companyName)}
                 {...register('companyName')}
               />
             </Field>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field id="companyTaxId" label="RFC / NIF / Tax ID" optional error={errors.companyTaxId?.message}>
+              <Field id="companyTaxId" label={t('subscribe.steps.contractor.fields.companyTaxId')} optional error={errors.companyTaxId?.message}>
                 <input
                   id="companyTaxId"
                   type="text"
                   autoComplete="off"
-                  placeholder="RFC123456XYZ"
+                  placeholder={t('subscribe.steps.contractor.placeholders.companyTaxId')}
                   className={inputCls(!!errors.companyTaxId)}
                   {...register('companyTaxId')}
                 />
               </Field>
 
-              <Field id="companyAddress" label="Dirección fiscal" optional error={errors.companyAddress?.message}>
+              <Field id="companyAddress" label={t('subscribe.steps.contractor.fields.companyAddress')} optional error={errors.companyAddress?.message}>
                 <input
                   id="companyAddress"
                   type="text"
                   autoComplete="street-address"
-                  placeholder="Av. Reforma 300, CDMX"
+                  placeholder={t('subscribe.steps.contractor.placeholders.companyAddress')}
                   className={inputCls(!!errors.companyAddress)}
                   {...register('companyAddress')}
                 />
@@ -170,13 +183,13 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
           onClick={onBack}
           className="flex-1 sm:flex-none border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
-          ← Atrás
+          {t('subscribe.actions.back')}
         </button>
         <button
           type="submit"
           className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
         >
-          Continuar →
+          {t('subscribe.actions.continue')}
         </button>
       </div>
     </form>

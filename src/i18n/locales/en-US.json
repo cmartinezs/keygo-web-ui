@@ -22,7 +22,14 @@
     "loadingInvoices": "Loading invoices...",
     "notDefined": "Not defined",
     "noMoreOptions": "No more options",
-    "admin": "Admin"
+    "admin": "Admin",
+    "allRightsReserved": "All Rights Reserved",
+    "allSystemsOperational": "All systems operational"
+  },
+  "policyModal": {
+    "close": "Close",
+    "accept": "Accept",
+    "scrollHint": "Scroll to the bottom to accept"
   },
   "errors": {
     "unknownMessage": "We could not complete the request right now. Please try again in a few seconds.",
@@ -138,6 +145,392 @@
       "goToLogin": "Go to sign in",
       "needRecoveryToken": "I prefer recovering with email token",
       "timeoutAction": "temporary password reset"
+    }
+  },
+  "landing": {
+    "nav": {
+      "backToTopAria": "Back to top of the page",
+      "primaryAria": "Main navigation",
+      "features": "Features",
+      "howItWorks": "How it works",
+      "roles": "For your team",
+      "pricing": "Plans",
+      "developers": "Developers",
+      "startHere": "Start here",
+      "login": "Sign in",
+      "subscribe": "Subscribe",
+      "joinTeam": "Join your team"
+    },
+    "hero": {
+      "badge": "Cloud-ready IAM platform",
+      "titleLine1": "The key to your",
+      "titleLine2": "digital identity",
+      "descriptionPrefix": "KeyGo is the identity management platform that centralizes user access, protects your applications, and lets each person see",
+      "descriptionEmphasis": "exactly what they need",
+      "descriptionSuffix": "without friction and with the security your organization deserves.",
+      "startNow": "Start now ->",
+      "viewFeatures": "View features",
+      "stats": {
+        "secureAccess": {
+          "value": "Secure access",
+          "label": "Unified sign-in",
+          "desc": "One login for all your applications"
+        },
+        "totalControl": {
+          "value": "Total control",
+          "label": "Role-based permissions",
+          "desc": "Each user sees only what they should"
+        },
+        "multiTenant": {
+          "value": "Multi-tenant",
+          "label": "Centralized management",
+          "desc": "Multiple organizations in a single platform"
+        }
+      }
+    },
+    "features": {
+      "eyebrow": "Features",
+      "title": "Everything you need to manage identities",
+      "description": "KeyGo brings security best practices into one cohesive platform, reducing complexity without losing control.",
+      "items": {
+        "authentication": {
+          "title": "Standards-based authentication",
+          "description": "Implements OAuth2 Authorization Code Flow with PKCE natively. No browser secrets, no interception risks."
+        },
+        "roleAccess": {
+          "title": "Role-based access control",
+          "description": "Define precise permissions for global admins, tenant admins, and end users. Each role sees exactly what it needs."
+        },
+        "multiTenant": {
+          "title": "Native multi-tenant",
+          "description": "Manage multiple organizations from a single instance. Each tenant has isolated users, apps, and settings."
+        },
+        "jwt": {
+          "title": "Secure JWT tokens",
+          "description": "Issue RS256-signed tokens and validate them through JWKS. Silent refresh runs automatically before session expiration."
+        },
+        "clientApps": {
+          "title": "Client app management",
+          "description": "Register and manage apps that integrate with KeyGo. Control redirect URIs, scopes, and each app lifecycle."
+        },
+        "api": {
+          "title": "Documented REST API",
+          "description": "Complete OpenAPI v3 docs. Integrate KeyGo into your stack in minutes with clear contracts and consistent responses."
+        }
+      }
+    },
+    "howItWorks": {
+      "eyebrow": "How it works",
+      "title": "Frictionless security in three steps",
+      "description": "KeyGo handles security complexity in the background. Your users only see fast and smooth access.",
+      "steps": {
+        "step1": {
+          "title": "The user signs in",
+          "description": "Users access with their credentials through a secure login screen managed by KeyGo. No matter which app they start from, the experience is always the same.",
+          "detail": "A single access point for all your applications."
+        },
+        "step2": {
+          "title": "KeyGo verifies and authorizes",
+          "description": "KeyGo validates identity, checks permissions, and establishes an active session automatically. Everything happens in the background without disrupting work.",
+          "detail": "The session renews automatically so no one loses work."
+        },
+        "step3": {
+          "title": "Personalized profile-based access",
+          "description": "Each user lands directly on their panel: global administrators, tenant owners, and end users see exactly the tools that match their permissions.",
+          "detail": "No manual setup: permissions are applied automatically."
+        }
+      }
+    },
+    "roles": {
+      "eyebrow": "For your team",
+      "title": "The right access for every person",
+      "description": "KeyGo adapts experience and permissions automatically by role, read directly from the JWT token.",
+      "items": {
+        "admin": {
+          "title": "Global Administrator",
+          "description": "Full control over the KeyGo platform. Manage tenants, configure the system, and supervise all activity from one panel.",
+          "capabilities": [
+            "Create and manage tenants",
+            "Manage global users",
+            "Configure client applications",
+            "Monitor logs and audit"
+          ]
+        },
+        "tenantAdmin": {
+          "title": "Tenant Administrator",
+          "description": "Autonomous management inside your organization. Manage users, permissions, and configuration without depending on the central tech team.",
+          "capabilities": [
+            "Manage tenant users",
+            "Assign and revoke roles",
+            "View organization metrics",
+            "Manage active sessions"
+          ]
+        },
+        "tenantUser": {
+          "title": "System user",
+          "description": "Secure, personalized access to tenant applications. Manage profile, sessions, and preferences independently.",
+          "capabilities": [
+            "Access authorized applications",
+            "View and edit profile",
+            "Manage active sessions",
+            "Change credentials securely"
+          ]
+        }
+      }
+    },
+    "pricing": {
+      "eyebrow": "Plans and pricing",
+      "title": "Choose the plan that fits best",
+      "description": "Managed cloud or deployment on your own servers - KeyGo adapts to each organization's needs, with no fine print.",
+      "footerPrefix": "Does your organization have specific compliance or data sovereignty requirements?",
+      "footerLink": "Talk to our team",
+      "footerSuffix": "and we will design the ideal solution together."
+    },
+    "developers": {
+      "eyebrow": "For developers",
+      "title": "Integrate KeyGo in minutes",
+      "description": "KeyGo is designed for rapid adoption by any development team. Clear documentation, standards-based REST API, and official SDKs on the way.",
+      "inProgress": "In progress",
+      "resources": {
+        "docs": {
+          "title": "Technical documentation",
+          "description": "Public guide to integrate KeyGo with your own login or by reusing keygo-ui hosted login.",
+          "cta": "Open guide"
+        },
+        "sdk": {
+          "title": "SDKs and integrations",
+          "description": "Official libraries and ready-to-use examples for the most popular languages and frameworks.",
+          "cta": "Coming soon"
+        },
+        "api": {
+          "title": "Complete REST API",
+          "description": "OpenAPI v3-documented endpoints. Integrate KeyGo into your stack in minutes with clear contracts and consistent responses.",
+          "cta": "View endpoints"
+        }
+      },
+      "banner": {
+        "title": "Integration guide available",
+        "description": "Review the recommended flow for custom login and the central login pattern with keygo-ui, along with the minimum endpoint contract you must implement.",
+        "cta": "Read documentation"
+      }
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "description": "Access your KeyGo panel and take control of your organization's digital identity today.",
+      "login": "Sign in",
+      "subscribe": "Subscribe",
+      "joinTeam": "Join your team"
+    }
+  },
+  "subscribe": {
+    "stepLabels": {
+      "plan": "Plan",
+      "contractor": "Your details",
+      "terms": "Review",
+      "email": "Email",
+      "payment": "Payment"
+    },
+    "stepIndicatorAria": "Registration steps",
+    "common": {
+      "optional": "optional"
+    },
+    "actions": {
+      "continue": "Continue ->",
+      "back": "<- Back",
+      "processing": "Processing..."
+    },
+    "layout": {
+      "stepsTitle": "Progress",
+      "summaryTitle": "Live summary",
+      "currentStep": "Current step",
+      "completed": "Completed",
+      "selectedPlan": "Selected plan",
+      "price": "Price",
+      "contractOwner": "Owner",
+      "company": "Company",
+      "conditions": "Conditions",
+      "conditionsAccepted": "Accepted",
+      "conditionsPending": "Pending",
+      "contractId": "Contract ID",
+      "notProvided": "No data"
+    },
+    "header": {
+      "backHomeAria": "Back to home",
+      "alreadyHaveAccount": "Already have an account?",
+      "login": "Sign in"
+    },
+    "resume": {
+      "title": "Resume subscription",
+      "description": "Enter the contract ID to continue from step 4 of this flow.",
+      "contractIdLabel": "Contract ID",
+      "contractIdHint": "You can find this ID in the email you received when starting the subscription.",
+      "backToNew": "<- Back to new flow",
+      "searching": "Searching...",
+      "continueContract": "Continue contract ->",
+      "ctaPrefix": "Started a subscription before?",
+      "ctaAction": "Continue at step 4 with an existing contract",
+      "errors": {
+        "planNotAvailable": "We could not associate this contract with an active catalog plan. Start a new subscription.",
+        "alreadyProcessed": "This contract is already processed. You can sign in with your active account.",
+        "unrecoverable": "This contract cannot be resumed because it is expired, cancelled, or failed.",
+        "notFound": "We could not find a contract with that ID. Please verify and try again."
+      }
+    },
+    "recovery": {
+      "catalogLabel": "plan catalog",
+      "contractLabel": "contract",
+      "contractLookupAction": "contract lookup",
+      "retryHint": "Please try again in a few minutes.",
+      "createContractAction": "contract creation",
+      "connectionHint": "Check your connection and try again.",
+      "verifyCodeAction": "code verification",
+      "resendCodeAction": "code resend",
+      "retryHintShort": "Please try again shortly.",
+      "approvalActivationAction": "approval/activation",
+      "approvalActivationHint": "Check contract status and try again if needed.",
+      "paymentOrActivationAction": "payment or activation"
+    },
+    "errors": {
+      "invalidInput": "The entered data is invalid. Please review it and try again.",
+      "invalidCode": "The code is invalid or expired. Check your email and try again."
+    },
+    "messages": {
+      "codeResent": "Code resent. Check your inbox.",
+      "accountActivated": "Account successfully activated!",
+      "resendFailed": "Could not resend the code. Please try again later.",
+      "activationFailed": "Could not complete activation. Please try again."
+    },
+    "period": {
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "monthlySuffix": "/month",
+      "yearlySuffix": "/year",
+      "oneTimeSuffix": " one-time payment"
+    },
+    "customPricing": "Custom pricing · contact us",
+    "free": "Free",
+    "steps": {
+      "plan": {
+        "title": "Choose your plan",
+        "description": "Select the plan that best fits your needs."
+      },
+      "contractor": {
+        "title": "Your details",
+        "description": "Account holder information and, if applicable, company details.",
+        "companySection": "Company details",
+        "fields": {
+          "firstName": "First name",
+          "lastName": "Last name",
+          "email": "Email",
+          "companyName": "Company name",
+          "companyTaxId": "RFC / NIF / Tax ID",
+          "companyAddress": "Tax address"
+        },
+        "placeholders": {
+          "firstName": "Carlos",
+          "lastName": "Garcia Lopez",
+          "email": "you@email.com",
+          "companyName": "Acme Corp S.A.",
+          "companyTaxId": "RFC123456XYZ",
+          "companyAddress": "Av. Reforma 300, CDMX"
+        },
+        "validation": {
+          "firstNameRequired": "First name is required",
+          "lastNameRequired": "Last name is required",
+          "emailInvalid": "Enter a valid email",
+          "companyNameRequired": "Company name is required (min. 2 characters)"
+        }
+      },
+      "terms": {
+        "title": "Summary and terms",
+        "description": "Review your request and accept the conditions to continue.",
+        "summaryTitle": "Subscription summary",
+        "fields": {
+          "plan": "Plan",
+          "price": "Price",
+          "trialPeriod": "Trial period",
+          "trialDays": "{{days}} free days",
+          "contractOwner": "Contract owner",
+          "company": "Company"
+        },
+        "acceptanceTitle": "Terms acceptance",
+        "acceptanceTooltip": "Click the link, read the full document, and press 'Accept' to check each box.",
+        "acceptTermsPrefix": "I have read and accept the",
+        "termsLink": "Terms of Use and Service",
+        "acceptTermsSuffix": "of KeyGo.",
+        "acceptPrivacyPrefix": "I have read and accept the",
+        "privacyLink": "Privacy Policy",
+        "acceptPrivacySuffix": ", including the processing of my personal data.",
+        "termsModalTitle": "Terms of Use and Service",
+        "privacyModalTitle": "Privacy Policy",
+        "confirmAndContinue": "Confirm and continue ->"
+      },
+      "email": {
+        "title": "Verify your email",
+        "otpAria": "Verification code (6 digits)",
+        "digitAria": "Digit {{index}}",
+        "descriptionPrefix": "We sent a 6-digit code to",
+        "descriptionSuffix": "Enter it below to continue.",
+        "helpText": "The code is valid for 30 minutes. If you do not see the email, check your spam folder.",
+        "verifying": "Verifying...",
+        "verifyCode": "Verify code ->",
+        "resending": "Sending...",
+        "resendIn": "Resend code in {{seconds}}s",
+        "resend": "Did not receive the code? Resend"
+      },
+      "payment": {
+        "title": "Confirm payment",
+        "description": "Your email has been verified successfully. The last step is confirming payment to activate your subscription.",
+        "orderSummary": "Order summary",
+        "monthlyBilling": "Monthly billing",
+        "yearlyBilling": "Yearly billing",
+        "oneTimePayment": "One-time payment",
+        "trialInfo": "The first {{days}} days are free. Billing starts after the trial period.",
+        "devMode": "Development mode - simulated payment",
+        "confirmMockPayment": "Confirm payment (simulated) ->",
+        "gatewayPending": "The payment gateway will be available soon. Our team will contact you."
+      },
+      "success": {
+        "title": "Account activated!",
+        "descriptionPrefix": "Your subscription to",
+        "descriptionSuffix": "has been activated successfully.",
+        "accessEmailLabel": "Access email",
+        "helpText": "You will receive an email with your access credentials shortly. Use the button below to sign in.",
+        "goToLogin": "Go to sign in ->",
+        "backToHome": "<- Back to home"
+      }
+    },
+    "resumeLookup": {
+      "title": "Continue subscription",
+      "description": "If you started the subscription process and did not finish it, enter your contract ID to resume.",
+      "contractIdLabel": "Contract ID",
+      "contractIdHint": "You can find it in the confirmation email you received when starting the process.",
+      "searching": "Searching...",
+      "continue": "Continue ->",
+      "noContractYet": "Do not have a contract yet?",
+      "startContract": "Start subscription"
+    },
+    "resumePayment": {
+      "title": "Confirm payment",
+      "description": "Your email was verified. Complete payment to activate your account.",
+      "devMode": "Development mode - simulated payment",
+      "simulatePayment": "Simulate payment approval (DEV)",
+      "gatewayPending": "Payment integration will be available soon. Contact support if you need to activate your account."
+    },
+    "resumeDone": {
+      "title": "Account activated!",
+      "description": "Your subscription has been activated successfully.",
+      "accessEmailLabel": "Access email",
+      "helpText": "You will receive an email with your credentials shortly.",
+      "goToLogin": "Go to sign in ->"
+    },
+    "terminal": {
+      "activeTitle": "Contract already activated",
+      "unrecoverableTitle": "Contract unavailable",
+      "activeDescription": "This contract has already been processed. Your account is active and you can sign in.",
+      "unrecoverableDescription": "This contract has expired or was cancelled. Please start a new subscription process.",
+      "goToLogin": "Go to sign in ->",
+      "newContract": "New subscription"
     }
   },
   "dashboard": {

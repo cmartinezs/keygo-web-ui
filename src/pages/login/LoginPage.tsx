@@ -788,20 +788,20 @@ export default function LoginPage() {
 
         {/* Footer — only when form is visible */}
         {initMutation.isSuccess && (
-          <div className="mt-6 space-y-2 text-center text-xs">
+          <div className="mt-6 space-y-2 text-center text-sm">
             <p>
               <Link
                 to="/forgot-password"
-                className="text-slate-300 hover:text-white transition-colors underline-offset-2 hover:underline"
+                className="font-medium text-slate-300 hover:text-white transition-colors underline-offset-2 hover:underline"
               >
                 {t('auth.forgotPasswordCta')}
               </Link>
             </p>
-            <p className="text-slate-500">
+            <p className="text-slate-400">
               {t('auth.registerPrompt')}{' '}
               <Link
                 to="/register"
-                className="text-indigo-400 hover:text-indigo-300 transition-colors"
+                className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
               >
                 {t('auth.registerCta')}
               </Link>

@@ -1,10 +1,9 @@
 import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption } from '@/types/billing'
+import { useTranslation } from 'react-i18next'
 import { env } from '@/config/env'
-import { i18n } from '@/i18n/config'
 import { normalizeLocale } from '@/i18n/localeUtils'
 
 const IS_DEV = env.DEV
-const ACTIVE_LOCALE = normalizeLocale(i18n.resolvedLanguage ?? i18n.language)
 
 interface PaymentStepProps {
   plan: AppPlan
@@ -16,12 +15,14 @@ interface PaymentStepProps {
 }
 
 export function PaymentStep({ plan, version, billingOption, isProcessing, error, onMockApprove }: PaymentStepProps) {
+  const { t, i18n } = useTranslation()
+  const activeLocale = normalizeLocale(i18n.resolvedLanguage ?? i18n.language)
   const isCustomPricing = plan.code === 'FLEX' || plan.code === 'ENTERPRISE'
   const priceLabel = isCustomPricing
-    ? 'A medida · contactar'
+    ? t('subscribe.customPricing')
     : !billingOption || billingOption.base_price === 0
-      ? 'Gratis'
-      : new Intl.NumberFormat(ACTIVE_LOCALE, {
+      ? t('subscribe.free')
+      : new Intl.NumberFormat(activeLocale, {
           style: 'currency',
           currency: version.currency,
           minimumFractionDigits: 0,
@@ -37,29 +38,29 @@ export function PaymentStep({ plan, version, billingOption, isProcessing, error,
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">Confirma el pago</h2>
+        <h2 className="text-2xl font-bold text-slate-900">{t('subscribe.steps.payment.title')}</h2>
         <p className="mt-2 text-slate-500 text-sm max-w-sm">
-          Tu correo ha sido verificado exitosamente. El último paso es confirmar el pago para activar tu suscripción.
+          {t('subscribe.steps.payment.description')}
         </p>
       </div>
 
       {/* Order summary */}
       <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-slate-50 p-5 text-left">
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Detalle del pedido</h3>
+        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">{t('subscribe.steps.payment.orderSummary')}</h3>
         <div className="flex items-center justify-between">
           <div>
             <p className="font-semibold text-slate-900">{plan.name}</p>
             <p className="text-sm text-slate-500">
-              {billingOption?.billing_period === 'MONTHLY' ? 'Facturación mensual'
-                : billingOption?.billing_period === 'YEARLY' ? 'Facturación anual'
-                : 'Pago único'}
+              {billingOption?.billing_period === 'MONTHLY' ? t('subscribe.steps.payment.monthlyBilling')
+                : billingOption?.billing_period === 'YEARLY' ? t('subscribe.steps.payment.yearlyBilling')
+                : t('subscribe.steps.payment.oneTimePayment')}
             </p>
           </div>
           <p className="text-lg font-bold text-slate-900">{priceLabel}</p>
         </div>
         {version.trial_days > 0 && (
           <p className="mt-3 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-            Los primeros {version.trial_days} días son gratuitos. Se cobrarán después del período de prueba.
+            {t('subscribe.steps.payment.trialInfo', { days: version.trial_days })}
           </p>
         )}
       </div>
@@ -80,7 +81,7 @@ export function PaymentStep({ plan, version, billingOption, isProcessing, error,
             <svg className="w-3.5 h-3.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
             </svg>
-            <span>Modo desarrollo — pago simulado</span>
+            <span>{t('subscribe.steps.payment.devMode')}</span>
           </div>
           <button
             type="button"
@@ -94,10 +95,10 @@ export function PaymentStep({ plan, version, billingOption, isProcessing, error,
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
-                Procesando…
+                  {t('subscribe.actions.processing')}
               </>
             ) : (
-              'Confirmar pago (simulado) →'
+                t('subscribe.steps.payment.confirmMockPayment')
             )}
           </button>
         </div>
@@ -108,7 +109,7 @@ export function PaymentStep({ plan, version, billingOption, isProcessing, error,
             <svg className="w-4 h-4 flex-shrink-0 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 002 0V6zm-1 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
             </svg>
-            <span>La pasarela de pago estará disponible próximamente. Nuestro equipo se pondrá en contacto contigo.</span>
+            <span>{t('subscribe.steps.payment.gatewayPending')}</span>
           </div>
         </div>
       )}

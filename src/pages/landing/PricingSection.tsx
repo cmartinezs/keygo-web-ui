@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { PlanCatalogGrid } from '@/components/PlanCatalogGrid'
 import { getBillingCatalog, BILLING_QUERY_KEYS } from '@/api/billing'
 import { TENANT, CLIENT_ID } from '@/api/client'
@@ -11,6 +12,7 @@ import {
 import { runGetWithRecovery } from '@/lib/network/recovery'
 
 export function PricingSection() {
+  const { t } = useTranslation()
   const sectionRef = useRef<HTMLElement | null>(null)
   const [shouldLoadPlans, setShouldLoadPlans] = useState(false)
 
@@ -71,14 +73,13 @@ export function PricingSection() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <span className="text-indigo-600 text-sm font-semibold uppercase tracking-widest">
-            Planes y precios
+            {t('landing.pricing.eyebrow')}
           </span>
           <h2 className="mt-3 text-4xl font-extrabold text-slate-900">
-            Escoge el plan que mejor se adapta
+            {t('landing.pricing.title')}
           </h2>
           <p className="mt-4 text-slate-500 text-lg max-w-2xl mx-auto">
-            Cloud gestionado o despliegue en tus propios servidores — KeyGo se adapta
-            a las necesidades de cada organización, sin letra pequeña.
+            {t('landing.pricing.description')}
           </p>
         </div>
 
@@ -93,11 +94,11 @@ export function PricingSection() {
 
         <div className="mt-12 text-center">
           <p className="text-slate-500 text-sm">
-            ¿Tu organización tiene requisitos específicos de cumplimiento o soberanía de datos?{' '}
+            {t('landing.pricing.footerPrefix')}{' '}
             <a href="#pricing" className="text-indigo-600 font-medium hover:underline">
-              Habla con nuestro equipo
+              {t('landing.pricing.footerLink')}
             </a>{' '}
-            y diseñamos juntos la solución ideal.
+            {t('landing.pricing.footerSuffix')}
           </p>
         </div>
       </div>
