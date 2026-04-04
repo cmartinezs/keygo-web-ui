@@ -37,8 +37,17 @@
   },
   "appErrorBoundary": {
     "title": "An unexpected error occurred",
-    "description": "You can return to the dashboard to keep working. If the issue persists, reload the page.",
-    "action": "Back to dashboard"
+    "description": "The application entered a recovery screen. Reload this page or leave to a safe route to continue.",
+    "reloadAction": "Reload page",
+    "safeExitAction": "Leave this screen",
+    "debugTitle": "Technical details (development only)",
+    "debugRuntimeStackTitle": "Runtime stack",
+    "debugSourceTitle": "Source location",
+    "debugSourceUnavailable": "Could not load source preview for this frame.",
+    "debugStackTitle": "Component stack",
+    "debugCopyStackLabel": "Copy stack",
+    "debugCopySuccess": "Stack copied to clipboard.",
+    "debugCopyError": "Could not copy the stack. Please copy it manually."
   },
   "theme": {
     "system": "System",
@@ -553,7 +562,8 @@
     "home": "Home",
     "myAccess": "My access",
     "activity": "Activity",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "tenantResolutionError": "We could not resolve the active tenant from your session. Please sign in again to continue."
   },
   "accountSettings": {
     "title": "Account settings",

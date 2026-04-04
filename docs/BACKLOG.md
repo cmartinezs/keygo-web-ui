@@ -212,6 +212,13 @@ Actualizado automáticamente por el agente al final de cada implementación.
 
 > No bloquean funcionalidad actual pero mejoran mantenibilidad, DX o UX.
 
+### [MEJORA] Telemetría de crashes desde AppErrorBoundary
+- **Detectado en:** `src/components/AppErrorBoundary.tsx`, `src/App.tsx`
+- **Descripción:** Cuando ocurra un crash de render, enviar un evento al backend con contexto mínimo para observabilidad (mensaje, `componentStack`, ruta actual, timestamp, `userAgent`, rol activo y tenant si existe), almacenarlo y exponerlo en un panel de monitoreo para soporte y diagnóstico.
+- **Requisitos sugeridos:** endpoint dedicado con rate-limit, sanitización de datos sensibles, correlación por `supportCode` y vista paginada/filtrable en dashboard admin.
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-04-04
+
 ### [MEJORA] Optimización de bundle/chunks en build de producción
 - **Detectado en:** `npm run build` (warning Vite/Rollup por chunks > 500 kB)
 - **Descripción:** Implementar code-splitting por ruta o por módulo (dynamic `import()` + `manualChunks`) para reducir tamaño de chunks principales y mejorar tiempo de carga inicial.

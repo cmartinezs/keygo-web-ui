@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import AdminDashboardPage from '@/pages/admin/DashboardPage'
 import { getAccountAccess, getSessions } from '@/api/account'
 import { listClientApps } from '@/api/clientApps'
@@ -31,6 +32,19 @@ interface StatCardData {
 }
 
 type NonAdminRole = Exclude<AppRole, 'ADMIN'>
+
+function toArrayPayload<T>(value: unknown): T[] {
+  if (Array.isArray(value)) return value
+  if (!value || typeof value !== 'object') return []
+
+  const candidate = value as Record<string, unknown>
+  if (Array.isArray(candidate.items)) return candidate.items as T[]
+  if (Array.isArray(candidate.content)) return candidate.content as T[]
+  if (Array.isArray(candidate.rows)) return candidate.rows as T[]
+  if (Array.isArray(candidate.data)) return candidate.data as T[]
+
+  return []
+}
 
 function StatCard({ title, value, description, icon }: StatCardProps) {
   return (
@@ -113,11 +127,15 @@ function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
     retry: false,
   })
 
-  const activeUsers = usersQuery.data?.filter((user) => user.status === 'ACTIVE').length ?? 0
-  const appsCount = appsQuery.data?.length ?? 0
+  const users = toArrayPayload<{ status?: string }>(usersQuery.data)
+  const apps = toArrayPayload<unknown>(appsQuery.data)
+  const sessions = toArrayPayload<{ last_accessed_at?: string }>(sessionsQuery.data)
+
+  const activeUsers = users.filter((user) => user.status === 'ACTIVE').length
+  const appsCount = apps.length
   const todayAccesses =
-    sessionsQuery.data?.filter((session) => {
-      const lastAccess = new Date(session.last_accessed_at)
+    sessions.filter((session) => {
+      const lastAccess = new Date(session.last_accessed_at ?? '')
       if (Number.isNaN(lastAccess.getTime())) {
         return false
       }
@@ -127,7 +145,7 @@ function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
         && lastAccess.getMonth() === now.getMonth()
         && lastAccess.getDate() === now.getDate()
       )
-    }).length ?? 0
+    }).length
 
   const cards: StatCardData[] = [
     {
@@ -203,19 +221,22 @@ function UserTenantOverview({ tenantSlug }: { tenantSlug: string }) {
     retry: false,
   })
 
+  const sessions = toArrayPayload<{ last_accessed_at?: string }>(sessionsQuery.data)
+  const accesses = toArrayPayload<unknown>(accessQuery.data)
+
   const lastAccess = useMemo(() => {
-    if (!sessionsQuery.data || sessionsQuery.data.length === 0) {
+    if (sessions.length === 0) {
       return '--'
     }
 
-    const sortedSessions = [...sessionsQuery.data].sort((a, b) => {
-      const left = new Date(a.last_accessed_at).getTime()
-      const right = new Date(b.last_accessed_at).getTime()
+    const sortedSessions = [...sessions].sort((a, b) => {
+      const left = new Date(a.last_accessed_at ?? '').getTime()
+      const right = new Date(b.last_accessed_at ?? '').getTime()
       return right - left
     })
 
     return toLocalDateTime(sortedSessions[0]?.last_accessed_at ?? '')
-  }, [sessionsQuery.data])
+  }, [sessions])
 
   const cards: StatCardData[] = [
     {
@@ -223,7 +244,7 @@ function UserTenantOverview({ tenantSlug }: { tenantSlug: string }) {
       value: toCardValue(
         sessionsQuery.isLoading,
         sessionsQuery.isError,
-        String(sessionsQuery.data?.length ?? 0),
+        String(sessions.length),
       ),
       description: sessionsQuery.isError
         ? 'No fue posible cargar tus sesiones activas.'
@@ -243,7 +264,7 @@ function UserTenantOverview({ tenantSlug }: { tenantSlug: string }) {
       value: toCardValue(
         accessQuery.isLoading,
         accessQuery.isError,
-        String(accessQuery.data?.length ?? 0),
+        String(accesses.length),
       ),
       description: accessQuery.isError
         ? 'No fue posible cargar tus permisos por aplicacion.'
@@ -302,6 +323,7 @@ function RoleOverviewLayout({
 }
 
 export default function DashboardHomePage() {
+  const { t } = useTranslation()
   const user = useCurrentUser()
   const role = user?.activeRole ?? resolvePrimaryRole(user?.roles ?? []) ?? 'USER_TENANT'
   const tenantSlug = user?.tenantSlug
@@ -315,7 +337,7 @@ export default function DashboardHomePage() {
       <div className="max-w-screen-xl mx-auto">
         <section className="rounded-xl border border-red-200 dark:border-red-500/40 bg-red-50 dark:bg-red-950/20 p-4" role="alert" aria-live="assertive">
           <p className="text-sm text-red-800 dark:text-red-300">
-            No se pudo resolver el tenant activo desde tu sesion. Vuelve a iniciar sesion para continuar.
+            {t('dashboard.tenantResolutionError')}
           </p>
         </section>
       </div>

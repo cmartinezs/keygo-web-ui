@@ -88,7 +88,16 @@ export default function App() {
     <AppErrorBoundary
       title={t('appErrorBoundary.title')}
       description={t('appErrorBoundary.description')}
-      actionLabel={t('appErrorBoundary.action')}
+      reloadLabel={t('appErrorBoundary.reloadAction')}
+      safeExitLabel={t('appErrorBoundary.safeExitAction')}
+      debugTitle={t('appErrorBoundary.debugTitle')}
+      debugStackTitle={t('appErrorBoundary.debugStackTitle')}
+      debugRuntimeStackTitle={t('appErrorBoundary.debugRuntimeStackTitle')}
+      debugSourceTitle={t('appErrorBoundary.debugSourceTitle')}
+      debugSourceUnavailable={t('appErrorBoundary.debugSourceUnavailable')}
+      debugCopyStackLabel={t('appErrorBoundary.debugCopyStackLabel')}
+      debugCopySuccess={t('appErrorBoundary.debugCopySuccess')}
+      debugCopyError={t('appErrorBoundary.debugCopyError')}
     >
       <>
         <Routes>

@@ -304,6 +304,13 @@ i18n (react-i18next + i18next)
 
 **Actualización relevante:** si un componente lanza error en render, `AppErrorBoundary` evita la caída total de React y muestra fallback con acción de retorno a `/dashboard`.
 El contenido del fallback es i18n y se alimenta desde `appErrorBoundary.*` en locales ES/EN.
+En ambientes no productivos muestra en la misma pantalla el detalle técnico (`error.message` + `componentStack`) para acelerar diagnóstico, ocultándolo en producción.
+En ese modo incorpora un botón con icono para copiar el stack al portapapeles y usa un contenedor más ancho para mejorar legibilidad del detalle.
+Además, cuando el runtime entrega ubicación (`archivo:línea:columna`), el fallback muestra el stack de runtime y un preview del código con indicador de columna en formato de bloque técnico.
+El preview de código reutiliza la misma librería de resaltado (`react-syntax-highlighter` + `atomOneDark`) usada en la sección Developers del landing para mantener consistencia visual y técnica.
+El layout del fallback ocupa el viewport completo sin alargar la página: el panel central tiene scroll interno para detalles extensos y reutiliza `AppFooter` en variante adaptativa para seguir el theme efectivo (`light` / `dark` / `high-contrast`).
+En modo desarrollo, el detalle técnico se presenta en orden: `Source location`, `Component stack` y `Runtime stack`; los stacks disponen de copia al portapapeles por bloque.
+Las acciones del fallback ya no asumen que `/dashboard` es sano: el CTA principal recarga la ruta actual y el secundario deriva a una salida segura contextual (`/logout` en áreas autenticadas, `/` en áreas públicas).
 
 **Integración:**
 - `AuthGuard` / `RoleGuard` → `src/auth/roleGuard.tsx`
@@ -1058,16 +1065,17 @@ export type AppRole = (typeof APP_ROLES)[number]
 interface CurrentUser { sub: string; email?: string; username?: string; displayName?: string; roles: string[] }
 
 function useCurrentUser(): CurrentUser | null {
-  const { idToken, roles } = useTokenStore()
+  const { idToken, accessToken, roles } = useTokenStore()
   if (!idToken) return null
-  const claims = decodeJwt(idToken)  // decode solo, sin verificar (el token ya fue verificado al login)
+  // decode solo, sin verificar (el token ya fue verificado al login)
+  // tenantSlug: id_token.tenant_slug -> access_token.tenant_slug -> parseo de iss
   // displayName = username ?? email ?? sub
 }
 ```
 
-**Integración:** Usado en `src/layouts/AdminLayout.tsx` para mostrar nombre, iniciales y rol en sidebar y header. También expone `tenantSlug` para páginas tenant-scoped en `/dashboard/tenant/*`.
+**Integración:** Usado en `src/layouts/AdminLayout.tsx` para mostrar nombre, iniciales y rol en sidebar y header. También expone `tenantSlug` para páginas tenant-scoped en `/dashboard/tenant/*` y para el home de `/dashboard` en roles `ADMIN_TENANT` y `USER_TENANT`.
 
-**Decisión de diseño:** `decodeJwt` (sin verify) es suficiente aquí porque: el token ya fue verificado criptográficamente en `jwksVerify.ts` al recibirlo, y este hook es solo para display — no para decisiones de seguridad.
+**Decisión de diseño:** `decodeJwt` (sin verify) es suficiente aquí porque: el token ya fue verificado criptográficamente en `jwksVerify.ts` al recibirlo, y este hook es solo para display — no para decisiones de seguridad. Para reducir dependencia de un único claim, el tenant activo se resuelve en cascada desde `id_token`, luego `access_token` y, si falta, desde `iss`.
 
 ---
 
@@ -1822,6 +1830,8 @@ initMutation.isSuccess                                  → LoginForm
 - Si es `USER_TENANT`, ejecuta queries locales para `getSessions` y `getAccountAccess`, y calcula tarjetas reales (sesiones activas, ultimo acceso, apps con acceso).
 - Cada tarjeta resuelve `loading/error/data` de forma local (`...`, `N/D` o valor final), sin bloquear toda la pantalla.
 - Si no existe `tenantSlug` en la sesion, muestra alerta local de contexto invalido para evitar llamadas fuera de scope.
+- El mensaje de tenant no resuelto se renderiza via i18n (`dashboard.tenantResolutionError`) para respetar `es-CL`/`en-US`.
+- Las métricas consumen normalización defensiva de colecciones (`array`, `items`, `content`, `rows`, `data`) antes de aplicar `filter`/`length`, evitando crash de runtime cuando backend o intermediarios devuelven envelopes paginados.
 
 **Integración:** se monta como `index` route de `/dashboard` en `src/App.tsx`.
 

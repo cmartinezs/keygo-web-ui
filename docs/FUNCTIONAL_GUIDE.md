@@ -194,6 +194,15 @@ La pantalla muestra:
 - Instrucciones para contactar soporte técnico o administrador.
 - Un código de referencia visible (`KG-NO-ROLE`) para reportar el caso rápidamente.
 - Datos de referencia para soporte (ID de usuario `sub`, usuario, correo, roles detectados, tenant del JWT, tenant esperado por la UI, client ID de la UI e issuer).
+
+Cuando ocurre un error de render no controlado a nivel de aplicación, la UI muestra una pantalla de contingencia con acción de retorno al dashboard. Esa pantalla:
+- respeta el idioma activo y el theme efectivo del usuario/sistema,
+- mantiene el footer institucional visible,
+- y, si el detalle técnico es largo, desplaza el contenido dentro del panel sin extender toda la página.
+
+La recuperación ya no depende de volver siempre al dashboard:
+- permite recargar la ruta actual,
+- y ofrece una salida segura contextual según la zona donde ocurrió el error.
 - Botón para copiar los datos al portapapeles.
 - Acciones configurables según el problema (por ejemplo: cerrar mensaje, cerrar sesión, navegar a login).
 
@@ -629,6 +638,10 @@ Comportamiento en red lenta:
 - Las consultas GET usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 - Si una consulta falla tras reintentos, la tarjeta afectada muestra `N/D` y mensaje local de error.
 
+Comportamiento de contexto de sesión:
+- Si la sesión no permite resolver tenant activo, la vista no ejecuta consultas tenant-scoped y muestra una alerta local solicitando volver a iniciar sesión.
+- Ese mensaje respeta el idioma activo de la interfaz (`es-CL` / `en-US`).
+
 ### 3.2 Usuarios del tenant
 
 **Ruta:** `/dashboard/tenant/users`
@@ -704,6 +717,10 @@ Comportamiento en red lenta:
 - Cada tarjeta se resuelve con carga local (sin bloquear toda la pantalla).
 - Las consultas GET usan timeout de 10 segundos y reintentos automáticos cada 5 segundos (máximo 3).
 - Si una consulta falla tras reintentos, la tarjeta afectada muestra `N/D` y mensaje local de error.
+
+Comportamiento de contexto de sesión:
+- Si la sesión no permite resolver tenant activo, la vista no ejecuta consultas tenant-scoped y muestra una alerta local solicitando volver a iniciar sesión.
+- Ese mensaje respeta el idioma activo de la interfaz (`es-CL` / `en-US`).
 
 ### 4.2 Mi acceso
 

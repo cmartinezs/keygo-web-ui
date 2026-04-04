@@ -37,8 +37,17 @@
   },
   "appErrorBoundary": {
     "title": "Ocurrio un error inesperado",
-    "description": "Puedes volver al dashboard para continuar trabajando. Si el problema persiste, recarga la pagina.",
-    "action": "Volver al dashboard"
+    "description": "La aplicacion entro en una pantalla de recuperacion. Recarga esta pagina o sal a una ruta segura para continuar.",
+    "reloadAction": "Recargar pagina",
+    "safeExitAction": "Salir de esta pantalla",
+    "debugTitle": "Detalle tecnico (solo desarrollo)",
+    "debugRuntimeStackTitle": "Stack de runtime",
+    "debugSourceTitle": "Ubicacion de fuente",
+    "debugSourceUnavailable": "No se pudo cargar el preview de codigo para este frame.",
+    "debugStackTitle": "Traza de componentes",
+    "debugCopyStackLabel": "Copiar stack",
+    "debugCopySuccess": "Stack copiado al portapapeles.",
+    "debugCopyError": "No se pudo copiar el stack. Copialo manualmente."
   },
   "theme": {
     "system": "Sistema",
@@ -553,7 +562,8 @@
     "home": "Inicio",
     "myAccess": "Mi acceso",
     "activity": "Actividad",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "tenantResolutionError": "No se pudo resolver el tenant activo desde tu sesion. Vuelve a iniciar sesion para continuar."
   },
   "accountSettings": {
     "title": "Configuracion de cuenta",
