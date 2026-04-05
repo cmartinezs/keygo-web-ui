@@ -116,7 +116,11 @@
     "errors": {
       "invalidEmail": "Enter a valid email.",
       "tokenRequired": "Recovery token is required.",
-      "passwordMin": "Password must be at least 8 characters.",
+      "passwordMin": "Password must be at least 12 characters.",
+      "passwordUppercase": "Must contain at least one uppercase letter.",
+      "passwordLowercase": "Must contain at least one lowercase letter.",
+      "passwordDigit": "Must contain at least one number.",
+      "passwordSpecial": "Must contain at least one special character (non-alphanumeric).",
       "confirmPasswordRequired": "Please confirm the new password.",
       "passwordsMismatch": "Passwords do not match.",
       "temporaryPasswordRequired": "Temporary password is required."
@@ -144,16 +148,26 @@
       "timeoutAction": "password recovery"
     },
     "reset": {
-      "title": "Reset with temporary password",
-      "subtitle": "If you received a temporary password, confirm your email and set a new password.",
-      "temporaryPasswordLabel": "Temporary password",
-      "submit": "Confirm new password",
-      "submitting": "Confirming...",
-      "successMessage": "Password updated. Your account can sign in normally now.",
-      "successToast": "Reset completed successfully.",
+      "title": "Update your password",
+      "subtitle": "Your account requires a new password. Enter the verification code sent to your email, your current password, and choose a new one.",
+      "verificationCodeLabel": "Verification code",
+      "verificationCodeHint": "6-digit code sent to your email address.",
+      "codeSentTo": "We sent a verification code to {{email}}",
+      "temporaryPasswordLabel": "Current password (temporary)",
+      "newPasswordHint": "Minimum 12 characters: uppercase, lowercase, number and special character.",
+      "submit": "Set new password",
+      "submitting": "Saving...",
+      "successMessage": "Password updated successfully. You can sign in with your new password.",
+      "successToast": "Password updated successfully.",
       "goToLogin": "Go to sign in",
-      "needRecoveryToken": "I prefer recovering with email token",
-      "timeoutAction": "temporary password reset"
+      "invalidLinkTitle": "Invalid link",
+      "invalidLinkMessage": "This password reset link is not valid. Please sign in to generate a new one.",
+      "timeoutAction": "password update",
+      "errors": {
+        "verificationCodeRequired": "Verification code is required.",
+        "verificationCodeLength": "The code must be exactly 6 digits.",
+        "verificationCodeFormat": "The code must contain only numeric digits."
+      }
     }
   },
   "landing": {
@@ -1106,5 +1120,70 @@
     "available": "Available",
     "persistenceTitle": "Session persistence",
     "persistenceBody": "Refresh token in sessionStorage: {{availability}}."
+  },
+  "register": {
+    "steps": {
+      "ariaNb": "Registration steps",
+      "company": "Your company",
+      "personal": "Your details"
+    },
+    "company": {
+      "title": "Identify your company",
+      "description": "Enter your company identifier in KeyGo. If you don't know it, ask your organization's administrator.",
+      "tenantSlugLabel": "Company identifier",
+      "tenantSlugPlaceholder": "e.g. my-company",
+      "tenantSlugHint": "Lowercase letters, numbers and hyphens only. Example:",
+      "clientIdLabel": "Application ID",
+      "clientIdPlaceholder": "e.g. my-company-app",
+      "clientIdHint": "Provided by your organization's administrator along with the company identifier.",
+      "continueBtn": "Continue",
+      "noTenantQuestion": "Is your company not yet on KeyGo?",
+      "noTenantCta": "Get KeyGo for your organization",
+      "errors": {
+        "tenantSlugRequired": "Company identifier is required",
+        "tenantSlugPattern": "Lowercase letters, numbers and hyphens only",
+        "clientIdRequired": "Application ID is required"
+      }
+    },
+    "personal": {
+      "title": "Your personal details",
+      "description": "Fill in your information. Your company administrator will need to approve your request before you can access.",
+      "firstNameLabel": "First name",
+      "firstNamePlaceholder": "John",
+      "lastNameLabel": "Last name",
+      "lastNamePlaceholder": "Smith",
+      "usernameLabel": "Username",
+      "usernamePlaceholder": "johnsmith",
+      "emailLabel": "Corporate email",
+      "emailPlaceholder": "john@mycompany.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Repeat your password",
+      "backBtn": "Back",
+      "submitBtn": "Create account",
+      "submittingBtn": "Registering…",
+      "errors": {
+        "usernameRequired": "Username is required",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Enter a valid email",
+        "passwordMin": "Password must be at least 8 characters",
+        "confirmPasswordRequired": "Please confirm your password",
+        "passwordMismatch": "Passwords do not match"
+      }
+    },
+    "success": {
+      "title": "Request sent!",
+      "sentEmailPre": "We have sent a verification email to",
+      "pendingApprovalBody": "Once you verify your email, your company administrator will review and approve your access. You will receive a notification when it's ready.",
+      "linkExpiryPre": "The verification link expires in",
+      "linkExpiryDuration": "30 minutes",
+      "linkExpirySuffix": ". Check your spam folder if you can't find it.",
+      "goToLoginBtn": "Go to login"
+    },
+    "errors": {
+      "tenantOrAppNotFound": "Company or application not found. Verify the identifier with your administrator.",
+      "duplicateAccount": "An account with that email or username already exists."
+    }
   }
 }

@@ -116,7 +116,11 @@
     "errors": {
       "invalidEmail": "Ingresa un correo valido.",
       "tokenRequired": "El token de recuperacion es obligatorio.",
-      "passwordMin": "La contrasena debe tener al menos 8 caracteres.",
+      "passwordMin": "La contrasena debe tener al menos 12 caracteres.",
+      "passwordUppercase": "Debe contener al menos una letra mayuscula.",
+      "passwordLowercase": "Debe contener al menos una letra minuscula.",
+      "passwordDigit": "Debe contener al menos un numero.",
+      "passwordSpecial": "Debe contener al menos un caracter especial (no alfanumerico).",
       "confirmPasswordRequired": "Confirma la nueva contrasena.",
       "passwordsMismatch": "Las contrasenas no coinciden.",
       "temporaryPasswordRequired": "La contrasena temporal es obligatoria."
@@ -144,16 +148,26 @@
       "timeoutAction": "recuperacion de contrasena"
     },
     "reset": {
-      "title": "Reset con contrasena temporal",
-      "subtitle": "Si recibiste una contrasena temporal, confirma tu correo y define una nueva contrasena.",
-      "temporaryPasswordLabel": "Contrasena temporal",
-      "submit": "Confirmar nueva contrasena",
-      "submitting": "Confirmando...",
-      "successMessage": "Contrasena actualizada. Tu cuenta ya puede iniciar sesion normalmente.",
-      "successToast": "Reset completado correctamente.",
+      "title": "Actualiza tu contrasena",
+      "subtitle": "Tu cuenta requiere una nueva contrasena. Ingresa el codigo de verificacion enviado a tu correo, tu contrasena actual y define una nueva.",
+      "verificationCodeLabel": "Codigo de verificacion",
+      "verificationCodeHint": "Codigo de 6 digitos enviado a tu correo electronico.",
+      "codeSentTo": "Enviamos un codigo de verificacion a {{email}}",
+      "temporaryPasswordLabel": "Contrasena actual (temporal)",
+      "newPasswordHint": "Minimo 12 caracteres: mayuscula, minuscula, numero y caracter especial.",
+      "submit": "Establecer nueva contrasena",
+      "submitting": "Guardando...",
+      "successMessage": "Contrasena actualizada correctamente. Ya puedes iniciar sesion con tu nueva contrasena.",
+      "successToast": "Contrasena actualizada correctamente.",
       "goToLogin": "Ir a iniciar sesion",
-      "needRecoveryToken": "Prefiero recuperar por token de correo",
-      "timeoutAction": "reset de contrasena temporal"
+      "invalidLinkTitle": "Enlace invalido",
+      "invalidLinkMessage": "Este enlace de restablecimiento no es valido. Por favor, inicia sesion para generar uno nuevo.",
+      "timeoutAction": "actualizacion de contrasena",
+      "errors": {
+        "verificationCodeRequired": "El codigo de verificacion es obligatorio.",
+        "verificationCodeLength": "El codigo debe tener exactamente 6 digitos.",
+        "verificationCodeFormat": "El codigo debe contener solo digitos numericos."
+      }
     }
   },
   "landing": {
@@ -1106,5 +1120,70 @@
     "available": "Disponible",
     "persistenceTitle": "Persistencia de sesion",
     "persistenceBody": "Refresh token en sessionStorage: {{availability}}."
+  },
+  "register": {
+    "steps": {
+      "ariaNb": "Pasos del registro",
+      "company": "Tu empresa",
+      "personal": "Tus datos"
+    },
+    "company": {
+      "title": "Identifica tu empresa",
+      "description": "Ingresa el identificador de tu empresa en KeyGo. Si no lo conoces, consulta con el administrador de tu organización.",
+      "tenantSlugLabel": "Identificador de empresa",
+      "tenantSlugPlaceholder": "ej: mi-empresa",
+      "tenantSlugHint": "Solo minúsculas, números y guiones. Ejemplo:",
+      "clientIdLabel": "ID de aplicación",
+      "clientIdPlaceholder": "ej: mi-empresa-app",
+      "clientIdHint": "Proporcionado por el administrador de tu organización junto con el identificador de empresa.",
+      "continueBtn": "Continuar",
+      "noTenantQuestion": "¿Tu empresa aún no usa KeyGo?",
+      "noTenantCta": "Contratar KeyGo para tu organización",
+      "errors": {
+        "tenantSlugRequired": "El identificador de empresa es obligatorio",
+        "tenantSlugPattern": "Solo letras en minúscula, números y guiones",
+        "clientIdRequired": "El ID de aplicación es obligatorio"
+      }
+    },
+    "personal": {
+      "title": "Tus datos personales",
+      "description": "Completa tu información. El administrador de tu empresa deberá aprobar tu solicitud antes de que puedas acceder.",
+      "firstNameLabel": "Nombre",
+      "firstNamePlaceholder": "Juan",
+      "lastNameLabel": "Apellido",
+      "lastNamePlaceholder": "Pérez",
+      "usernameLabel": "Nombre de usuario",
+      "usernamePlaceholder": "juanperez",
+      "emailLabel": "Correo corporativo",
+      "emailPlaceholder": "juan@miempresa.com",
+      "passwordLabel": "Contraseña",
+      "passwordPlaceholder": "Mínimo 8 caracteres",
+      "confirmPasswordLabel": "Confirmar contraseña",
+      "confirmPasswordPlaceholder": "Repite la contraseña",
+      "backBtn": "Atrás",
+      "submitBtn": "Crear cuenta",
+      "submittingBtn": "Registrando…",
+      "errors": {
+        "usernameRequired": "El nombre de usuario es obligatorio",
+        "emailRequired": "El correo es obligatorio",
+        "emailInvalid": "Ingresa un correo válido",
+        "passwordMin": "La contraseña debe tener al menos 8 caracteres",
+        "confirmPasswordRequired": "Confirma tu contraseña",
+        "passwordMismatch": "Las contraseñas no coinciden"
+      }
+    },
+    "success": {
+      "title": "¡Solicitud enviada!",
+      "sentEmailPre": "Hemos enviado un correo de verificación a",
+      "pendingApprovalBody": "Una vez que verifiques tu correo, el administrador de tu empresa revisará y aprobará tu acceso. Recibirás una notificación cuando esté listo.",
+      "linkExpiryPre": "El enlace de verificación caduca en",
+      "linkExpiryDuration": "30 minutos",
+      "linkExpirySuffix": ". Revisa tu bandeja de spam si no lo encuentras.",
+      "goToLoginBtn": "Ir al inicio de sesión"
+    },
+    "errors": {
+      "tenantOrAppNotFound": "No se encontró la empresa o la aplicación. Verifica el identificador con tu administrador.",
+      "duplicateAccount": "Ya existe una cuenta con ese correo o nombre de usuario."
+    }
   }
 }

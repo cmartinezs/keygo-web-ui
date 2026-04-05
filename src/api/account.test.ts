@@ -44,7 +44,7 @@ describe('account api wrappers', () => {
     expect(ACCOUNT_QUERY_KEYS.connections('acme')).toEqual(['account', 'connections', 'acme'])
   })
 
-  it('maps change-password request from snake_case to wire camelCase', async () => {
+  it('sends change-password request with correct snake_case payload', async () => {
     apiClientMock.post.mockResolvedValueOnce({
       data: {
         date: '2026-04-02T12:00:00Z',
@@ -60,7 +60,7 @@ describe('account api wrappers', () => {
 
     expect(apiClientMock.post).toHaveBeenCalledWith(
       '/api/v1/tenants/acme/account/change-password',
-      { currentPassword: 'old-pass', newPassword: 'new-pass' },
+      { current_password: 'old-pass', new_password: 'new-pass' },
       {
         signal: undefined,
         timeout: 10_000,
@@ -70,22 +70,22 @@ describe('account api wrappers', () => {
     expect(result).toEqual({ changed: true })
   })
 
-  it('maps sessions wire response to internal snake_case shape', async () => {
+  it('returns parsed sessions from backend response', async () => {
     apiClientMock.get.mockResolvedValueOnce({
       data: {
         date: '2026-04-02T12:00:00Z',
         data: [
           {
-            sessionId: 'sess-1',
+            session_id: 'sess-1',
             status: 'ACTIVE',
             browser: 'Chrome',
             os: 'Linux',
-            deviceType: 'Desktop',
-            ipAddress: '127.0.0.1',
-            createdAt: '2026-04-01T10:00:00Z',
-            lastAccessedAt: '2026-04-02T11:00:00Z',
-            expiresAt: '2026-04-03T11:00:00Z',
-            isCurrent: true,
+            device_type: 'Desktop',
+            ip_address: '127.0.0.1',
+            created_at: '2026-04-01T10:00:00Z',
+            last_accessed_at: '2026-04-02T11:00:00Z',
+            expires_at: '2026-04-03T11:00:00Z',
+            is_current: true,
           },
         ],
       },
@@ -113,13 +113,13 @@ describe('account api wrappers', () => {
     ])
   })
 
-  it('maps revoke-session response from wire fields to internal fields', async () => {
+  it('returns parsed revoke-session result from backend response', async () => {
     apiClientMock.delete.mockResolvedValueOnce({
       data: {
         date: '2026-04-02T12:00:00Z',
         data: {
-          sessionId: 'sess-9',
-          alreadyClosed: false,
+          session_id: 'sess-9',
+          already_closed: false,
         },
       },
     })
@@ -133,16 +133,16 @@ describe('account api wrappers', () => {
     expect(result).toEqual({ session_id: 'sess-9', already_closed: false })
   })
 
-  it('maps notification preferences in both directions (wire <-> internal)', async () => {
+  it('sends and receives notification preferences with correct snake_case shape', async () => {
     apiClientMock.get.mockResolvedValueOnce({
       data: {
         date: '2026-04-02T12:00:00Z',
         data: {
-          securityAlertsEmail: true,
-          securityAlertsInApp: false,
-          billingAlertsEmail: true,
-          productUpdatesEmail: false,
-          weeklyDigest: true,
+          security_alerts_email: true,
+          security_alerts_in_app: false,
+          billing_alerts_email: true,
+          product_updates_email: false,
+          weekly_digest: true,
         },
       },
     })
@@ -161,11 +161,11 @@ describe('account api wrappers', () => {
       data: {
         date: '2026-04-02T12:00:00Z',
         data: {
-          securityAlertsEmail: false,
-          securityAlertsInApp: true,
-          billingAlertsEmail: false,
-          productUpdatesEmail: true,
-          weeklyDigest: false,
+          security_alerts_email: false,
+          security_alerts_in_app: true,
+          billing_alerts_email: false,
+          product_updates_email: true,
+          weekly_digest: false,
         },
       },
     })
@@ -185,11 +185,11 @@ describe('account api wrappers', () => {
     expect(apiClientMock.patch).toHaveBeenCalledWith(
       '/api/v1/tenants/acme/account/notification-preferences',
       {
-        securityAlertsEmail: false,
-        securityAlertsInApp: true,
-        billingAlertsEmail: false,
-        productUpdatesEmail: true,
-        weeklyDigest: false,
+        security_alerts_email: false,
+        security_alerts_in_app: true,
+        billing_alerts_email: false,
+        product_updates_email: true,
+        weekly_digest: false,
       },
       {
         signal: undefined,
@@ -213,9 +213,9 @@ describe('account api wrappers', () => {
         date: '2026-04-02T12:00:00Z',
         data: [
           {
-            clientAppId: 'app-1',
-            clientAppName: 'Console',
-            membershipId: 'mem-1',
+            client_app_id: 'app-1',
+            client_app_name: 'Console',
+            membership_id: 'mem-1',
             status: 'ACTIVE',
             roles: ['ADMIN', 'READER'],
           },
@@ -299,7 +299,8 @@ describe('account api wrappers', () => {
     const resetResult = await resetPasswordWithTemporaryPassword(
       'acme',
       {
-        email: 'person@example.com',
+        request_id: 'req-uuid-123',
+        verification_code: '123456',
         temporary_password: 'TempPass123!',
         new_password: 'NewPass123!',
       },
@@ -309,7 +310,8 @@ describe('account api wrappers', () => {
     expect(apiClientMock.post).toHaveBeenCalledWith(
       '/api/v1/tenants/acme/account/reset-password',
       {
-        email: 'person@example.com',
+        request_id: 'req-uuid-123',
+        verification_code: '123456',
         temporary_password: 'TempPass123!',
         new_password: 'NewPass123!',
       },

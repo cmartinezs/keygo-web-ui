@@ -102,9 +102,15 @@ export interface RecoverPasswordResult {
   recovered: boolean
 }
 
-/** Request de POST /tenants/{slug}/account/reset-password (password temporal) */
+/**
+ * Request de POST /tenants/{slug}/account/reset-password
+ * Flujo RESET_PASSWORD_REQUIRED: usuario con status RESET_PASSWORD establece su contrasena definitiva.
+ * Requiere: request_id (UUID del 401 login), codigo de verificacion (6 digitos, enviado por email),
+ * contrasena temporal (asignada por admin) y nueva contrasena permanente.
+ */
 export interface AccountResetPasswordRequest {
-  email: string
+  request_id: string
+  verification_code: string
   temporary_password: string
   new_password: string
 }
@@ -236,59 +242,14 @@ export interface WireLinkAccountConnectionResult {
   connection: WireAccountConnectionData
 }
 
-// ── Wire types — formato exacto del backend (camelCase) ───────────────────────
-// Usados solo en src/api/account.ts como tipos intermedios de Axios.
-// Nunca exponer fuera del módulo API.
-
-/** Wire: POST /account/change-password — body enviado al backend */
-export interface WireChangePasswordRequest {
-  currentPassword: string
-  newPassword: string
-}
-
-/** Wire: GET /account/sessions — cada elemento de la lista */
-export interface WireAccountSessionData {
-  sessionId: string
-  status: string
-  browser: string
-  os: string
-  deviceType: string
-  ipAddress: string
-  createdAt: string
-  lastAccessedAt: string
-  expiresAt: string
-  isCurrent: boolean
-}
-
-/** Wire: DELETE /account/sessions/{sessionId} — respuesta del backend */
-export interface WireRevokeSessionResult {
-  sessionId: string
-  alreadyClosed: boolean
-}
-
-/** Wire: GET /account/notification-preferences — respuesta del backend */
-export interface WireNotificationPreferencesData {
-  securityAlertsEmail: boolean
-  securityAlertsInApp: boolean
-  billingAlertsEmail: boolean
-  productUpdatesEmail: boolean
-  weeklyDigest: boolean
-}
-
-/** Wire: PATCH /account/notification-preferences — body enviado al backend */
-export interface WireUpdateNotificationPreferencesRequest {
-  securityAlertsEmail?: boolean
-  securityAlertsInApp?: boolean
-  billingAlertsEmail?: boolean
-  productUpdatesEmail?: boolean
-  weeklyDigest?: boolean
-}
+// ── Wire types — tipos intermedios de Axios (solo src/api/account.ts) ─────────
+// Solo cuando la forma del wire difiere del DTO interno.
 
 /** Wire: GET /account/access — cada elemento de la lista (= UserAccessData en OpenAPI) */
 export interface WireUserAccessData {
-  clientAppId: string
-  clientAppName: string
-  membershipId: string
+  client_app_id: string
+  client_app_name: string
+  membership_id: string
   status: string
   roles: string[]
 }

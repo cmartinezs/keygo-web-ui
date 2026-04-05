@@ -136,6 +136,25 @@ function extractLoginError(error: unknown): { message: string; sessionExpired: b
   return { message: appError.clientMessage, sessionExpired: false }
 }
 
+/**
+ * Extracts the `reset_code_id` field from the body of a 401 RESET_PASSWORD_REQUIRED error.
+ * The backend may include it under `data.reset_code_id` in the BaseResponse envelope.
+ * Returns null if the field is absent or not a string.
+ */
+function extractResetRequestId(error: unknown): string | null {
+  try {
+    const axiosError = error as { response?: { data?: unknown } }
+    const body = axiosError?.response?.data
+    if (typeof body !== 'object' || body === null) return null
+    const data = (body as Record<string, unknown>)['data']
+    if (typeof data !== 'object' || data === null) return null
+    const id = (data as Record<string, unknown>)['reset_code_id']
+    return typeof id === 'string' ? id : null
+  } catch {
+    return null
+  }
+}
+
 // ── Sub-components ───────────────────────────────────────────────────────────
 
 /** Shown while Pasos 0-1 are running (before the user sees anything interactive). */
@@ -584,7 +603,7 @@ export default function LoginPage() {
       }
       // Sin roles: el useEffect detecta accessToken sin roles y activa el modal bloqueante
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       const phase = loginPhaseRef.current
       loginPhaseRef.current = 'login' // reset for next attempt
       const appError = getAppApiError(error)
@@ -609,6 +628,16 @@ export default function LoginPage() {
       }
 
       // phase === 'login': error from POST /account/login
+      // RESET_PASSWORD_REQUIRED: redirect to reset-password page with request_id from response
+      if (appError.code === 'RESET_PASSWORD_REQUIRED') {
+        const requestId = extractResetRequestId(error)
+        navigate('/reset-password', {
+          state: { requestId, emailOrUsername: variables.emailOrUsername },
+          replace: true,
+        })
+        return
+      }
+
       const { sessionExpired } = extractLoginError(error)
       if (sessionExpired) {
         toast.warning(t('auth.errors.sessionExpiredReconnecting'))

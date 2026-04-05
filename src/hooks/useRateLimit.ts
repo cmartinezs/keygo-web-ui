@@ -40,18 +40,28 @@ function computeRemaining(lockedUntil: number | null): number {
 }
 
 /**
+ * Rate limiting is disabled in development (MODE=development) to avoid friction
+ * during local work. It remains active in test (MODE=test) and production.
+ */
+const IS_DEVELOPMENT = import.meta.env.MODE === 'development'
+
+/**
  * Client-side rate limiting with progressive lockout.
  * State persists in localStorage so it survives page refreshes.
  * Store only non-sensitive counters — no tokens or credentials.
+ *
+ * Disabled in development mode. Active in test and production.
  */
 export function useRateLimit(formKey: string) {
   const storageKey = `keygo_rl_${formKey}`
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [remainingSeconds, setRemainingSeconds] = useState(() =>
-    computeRemaining(readState(storageKey).lockedUntil),
+    IS_DEVELOPMENT ? 0 : computeRemaining(readState(storageKey).lockedUntil),
   )
-  const [attempts, setAttempts] = useState(() => readState(storageKey).attempts)
+  const [attempts, setAttempts] = useState(() =>
+    IS_DEVELOPMENT ? 0 : readState(storageKey).attempts,
+  )
 
   function startCountdown(lockedUntil: number) {
     if (intervalRef.current) clearInterval(intervalRef.current)
@@ -67,6 +77,7 @@ export function useRateLimit(formKey: string) {
 
   // Kick off countdown if already locked (e.g. after page refresh)
   useEffect(() => {
+    if (IS_DEVELOPMENT) return
     const { lockedUntil } = readState(storageKey)
     if (lockedUntil && lockedUntil > Date.now()) startCountdown(lockedUntil)
     return () => {
@@ -78,6 +89,7 @@ export function useRateLimit(formKey: string) {
   }, [storageKey])
 
   const recordFailure = useCallback(() => {
+    if (IS_DEVELOPMENT) return
     const state = readState(storageKey)
     const newAttempts = state.attempts + 1
     const lockMs = getLockoutMs(newAttempts)
@@ -91,6 +103,7 @@ export function useRateLimit(formKey: string) {
   }, [storageKey])
 
   const recordSuccess = useCallback(() => {
+    if (IS_DEVELOPMENT) return
     localStorage.removeItem(storageKey)
     setAttempts(0)
     setRemainingSeconds(0)

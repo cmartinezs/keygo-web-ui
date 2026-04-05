@@ -96,9 +96,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -106,9 +103,6 @@
             "in": "path",
             "description": "User UUID",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "a1b2c3d4-e5f6-..."
           }
         ],
@@ -116,11 +110,7 @@
           "200": {
             "description": "User retrieved successfully (code: USER_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserData"
-                }
-              }
+
             }
           },
           "401": {
@@ -128,7 +118,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -138,7 +128,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -183,9 +173,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -193,18 +180,13 @@
             "in": "path",
             "description": "User UUID",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "a1b2c3d4-e5f6-..."
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserRequest"
-              }
+
             }
           },
           "required": true
@@ -213,11 +195,7 @@
           "200": {
             "description": "User updated successfully (code: USER_UPDATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserData"
-                }
-              }
+
             }
           },
           "401": {
@@ -225,7 +203,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -235,7 +213,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -282,9 +260,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -292,9 +267,6 @@
             "in": "path",
             "description": "User UUID",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "a1b2c3d4-e5f6-..."
           }
         ],
@@ -302,11 +274,7 @@
           "200": {
             "description": "User suspended successfully (code: USER_SUSPENDED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserData"
-                }
-              }
+
             }
           },
           "401": {
@@ -314,7 +282,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -324,7 +292,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -334,7 +302,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -381,9 +349,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -391,9 +356,6 @@
             "in": "path",
             "description": "User UUID",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "a1b2c3d4-e5f6-..."
           }
         ],
@@ -401,11 +363,7 @@
           "200": {
             "description": "User activated successfully (code: USER_ACTIVATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserData"
-                }
-              }
+
             }
           },
           "401": {
@@ -413,7 +371,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -423,7 +381,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -470,9 +428,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -480,9 +435,6 @@
             "in": "path",
             "description": "OAuth2 client_id",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "a1b2c3d4-e5f6-..."
           }
         ],
@@ -490,11 +442,7 @@
           "200": {
             "description": "Client app retrieved successfully (code: CLIENT_APP_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseClientAppData"
-                }
-              }
+
             }
           },
           "401": {
@@ -502,7 +450,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -512,7 +460,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -557,9 +505,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -567,18 +512,13 @@
             "in": "path",
             "description": "OAuth2 client_id",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "a1b2c3d4-e5f6-..."
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateClientAppRequest"
-              }
+
             }
           },
           "required": true
@@ -587,11 +527,7 @@
           "200": {
             "description": "Client app updated successfully (code: CLIENT_APP_UPDATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseClientAppData"
-                }
-              }
+
             }
           },
           "400": {
@@ -599,7 +535,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -609,7 +545,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -619,7 +555,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -666,9 +602,6 @@
             "in": "path",
             "description": "Unique slug identifier of the tenant",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
@@ -676,11 +609,7 @@
           "200": {
             "description": "Tenant suspended successfully (code: TENANT_SUSPENDED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseTenantData"
-                }
-              }
+
             }
           },
           "401": {
@@ -688,7 +617,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -698,7 +627,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -708,7 +637,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -755,9 +684,6 @@
             "in": "path",
             "description": "Unique slug identifier of the tenant",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
@@ -765,11 +691,7 @@
           "200": {
             "description": "Tenant activated successfully (code: TENANT_ACTIVATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseTenantData"
-                }
-              }
+
             }
           },
           "401": {
@@ -777,7 +699,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -787,7 +709,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -833,36 +755,19 @@
             "name": "status",
             "in": "query",
             "description": "Filter by tenant status (ACTIVE, SUSPENDED, PENDING)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "SUSPENDED",
-                "PENDING",
-                "DELETED"
-              ]
-            }
+            "required": false
           },
           {
             "name": "name_like",
             "in": "query",
             "description": "Partial match on tenant name (case-insensitive)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "page",
             "in": "query",
             "description": "Zero-based page number",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            },
             "example": 0
           },
           {
@@ -870,30 +775,19 @@
             "in": "query",
             "description": "Page size (1–200)",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            },
             "example": 20
           },
           {
             "name": "sort",
             "in": "query",
             "description": "Sort field (name, status, createdAt)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "order",
             "in": "query",
             "description": "Sort order (ASC, DESC)",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
             "example": "ASC"
           }
         ],
@@ -901,11 +795,7 @@
           "200": {
             "description": "Tenant list retrieved successfully (code: TENANT_LIST_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponsePagedDataTenantData"
-                }
-              }
+
             }
           },
           "400": {
@@ -913,7 +803,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -923,7 +813,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -965,9 +855,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTenantRequest"
-              }
+
             }
           },
           "required": true
@@ -976,11 +864,7 @@
           "201": {
             "description": "Tenant created successfully (code: TENANT_CREATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseTenantData"
-                }
-              }
+
             }
           },
           "400": {
@@ -988,7 +872,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -998,7 +882,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1008,7 +892,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1055,54 +939,31 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "status",
             "in": "query",
             "description": "Filter by user status (ACTIVE, SUSPENDED, PENDING, RESET_PASSWORD)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "SUSPENDED",
-                "PENDING",
-                "RESET_PASSWORD"
-              ]
-            }
+            "required": false
           },
           {
             "name": "username_like",
             "in": "query",
             "description": "Partial match on username (case-insensitive)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "email_like",
             "in": "query",
             "description": "Partial match on email (case-insensitive)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "page",
             "in": "query",
             "description": "Zero-based page number",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            },
             "example": 0
           },
           {
@@ -1110,30 +971,19 @@
             "in": "query",
             "description": "Page size (1–200)",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            },
             "example": 20
           },
           {
             "name": "sort",
             "in": "query",
             "description": "Sort field (username, email, status, createdAt)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "order",
             "in": "query",
             "description": "Sort order (ASC, DESC)",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
             "example": "ASC"
           }
         ],
@@ -1141,11 +991,7 @@
           "200": {
             "description": "User list retrieved successfully (code: USER_LIST_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponsePagedDataUserData"
-                }
-              }
+
             }
           },
           "400": {
@@ -1153,7 +999,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1163,7 +1009,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1173,7 +1019,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1218,18 +1064,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateUserRequest"
-              }
+
             }
           },
           "required": true
@@ -1238,11 +1079,7 @@
           "201": {
             "description": "User created successfully (code: USER_CREATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserData"
-                }
-              }
+
             }
           },
           "400": {
@@ -1250,7 +1087,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1260,7 +1097,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1270,7 +1107,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1280,7 +1117,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1327,9 +1164,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -1337,18 +1171,13 @@
             "in": "path",
             "description": "User UUID",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "a1b2c3d4-e5f6-..."
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetPasswordRequest"
-              }
+
             }
           },
           "required": true
@@ -1357,11 +1186,7 @@
           "200": {
             "description": "Password reset successfully (code: USER_PASSWORD_RESET)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserData"
-                }
-              }
+
             }
           },
           "400": {
@@ -1369,7 +1194,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1379,7 +1204,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1389,7 +1214,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1436,18 +1261,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ValidateCredentialsRequest"
-              }
+
             }
           },
           "required": true
@@ -1456,11 +1276,7 @@
           "200": {
             "description": "Credentials valid (code: CREDENTIALS_VALID)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserData"
-                }
-              }
+
             }
           },
           "400": {
@@ -1468,7 +1284,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1478,7 +1294,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1488,7 +1304,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1498,7 +1314,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1545,18 +1361,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TokenRequest"
-              }
+
             }
           },
           "required": true
@@ -1565,11 +1376,7 @@
           "200": {
             "description": "Token(s) issued successfully (code: TOKEN_ISSUED / REFRESH_TOKEN_ROTATED / CLIENT_CREDENTIALS_TOKEN_ISSUED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseTokenData"
-                }
-              }
+
             }
           },
           "400": {
@@ -1577,7 +1384,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1587,7 +1394,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1597,7 +1404,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1639,18 +1446,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RevokeTokenRequest"
-              }
+
             }
           },
           "required": true
@@ -1659,11 +1461,7 @@
           "200": {
             "description": "Token revoked — or silently ignored if unknown (code: TOKEN_REVOKED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
+
             }
           },
           "400": {
@@ -1671,7 +1469,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1712,41 +1510,25 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "user_id",
             "in": "query",
             "description": "Filter by user ID",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": false
           },
           {
             "name": "client_app_id",
             "in": "query",
             "description": "Filter by client app ID",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": false
           },
           {
             "name": "page",
             "in": "query",
             "description": "Zero-based page number",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            },
             "example": 0
           },
           {
@@ -1754,30 +1536,19 @@
             "in": "query",
             "description": "Page size (1–200)",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            },
             "example": 20
           },
           {
             "name": "sort",
             "in": "query",
             "description": "Sort field (createdAt)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "order",
             "in": "query",
             "description": "Sort order (ASC, DESC)",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
             "example": "ASC"
           }
         ],
@@ -1785,11 +1556,7 @@
           "200": {
             "description": "Memberships retrieved (code: MEMBERSHIP_LIST_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponsePagedDataMembershipData"
-                }
-              }
+
             }
           },
           "400": {
@@ -1797,7 +1564,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1807,7 +1574,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1851,18 +1618,13 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateMembershipRequest"
-              }
+
             }
           },
           "required": true
@@ -1871,11 +1633,7 @@
           "201": {
             "description": "Membership created (code: MEMBERSHIP_CREATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseMembershipData"
-                }
-              }
+
             }
           },
           "400": {
@@ -1883,7 +1641,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1893,7 +1651,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1903,7 +1661,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1913,7 +1671,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1923,7 +1681,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -1970,44 +1728,25 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "status",
             "in": "query",
             "description": "Filter by application status (ACTIVE, SUSPENDED, PENDING)",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "enum": [
-                "ACTIVE",
-                "SUSPENDED",
-                "PENDING"
-              ]
-            }
+            "required": false
           },
           {
             "name": "name_like",
             "in": "query",
             "description": "Partial match on application name (case-insensitive)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "page",
             "in": "query",
             "description": "Zero-based page number",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            },
             "example": 0
           },
           {
@@ -2015,30 +1754,19 @@
             "in": "query",
             "description": "Page size (1–200)",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            },
             "example": 20
           },
           {
             "name": "sort",
             "in": "query",
             "description": "Sort field (name, status, createdAt)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "order",
             "in": "query",
             "description": "Sort order (ASC, DESC)",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
             "example": "ASC"
           }
         ],
@@ -2046,11 +1774,7 @@
           "200": {
             "description": "Client apps retrieved successfully (code: CLIENT_APP_LIST_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponsePagedDataClientAppData"
-                }
-              }
+
             }
           },
           "400": {
@@ -2058,7 +1782,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2068,7 +1792,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2078,7 +1802,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2123,18 +1847,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateClientAppRequest"
-              }
+
             }
           },
           "required": true
@@ -2143,11 +1862,7 @@
           "201": {
             "description": "Client app created successfully (code: CLIENT_APP_CREATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseClientAppSecretData"
-                }
-              }
+
             }
           },
           "400": {
@@ -2155,7 +1870,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2165,7 +1880,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2175,7 +1890,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2221,27 +1936,19 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientId",
             "in": "path",
             "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyEmailRequest"
-              }
+
             }
           },
           "required": true
@@ -2250,11 +1957,7 @@
           "200": {
             "description": "Email verified — user is now active (code: EMAIL_VERIFIED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
+
             }
           },
           "400": {
@@ -2262,7 +1965,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2272,7 +1975,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2282,7 +1985,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2324,9 +2027,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -2334,9 +2034,6 @@
             "in": "path",
             "description": "OAuth2 client_id",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "a1b2c3d4-e5f6-..."
           }
         ],
@@ -2344,11 +2041,7 @@
           "200": {
             "description": "Client secret rotated successfully (code: CLIENT_APP_SECRET_ROTATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseClientAppSecretData"
-                }
-              }
+
             }
           },
           "401": {
@@ -2356,7 +2049,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2366,7 +2059,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2412,27 +2105,19 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientId",
             "in": "path",
             "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResendVerificationRequest"
-              }
+
             }
           },
           "required": true
@@ -2441,11 +2126,7 @@
           "200": {
             "description": "New verification email sent (code: EMAIL_VERIFICATION_RESENT)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
+
             }
           },
           "404": {
@@ -2453,7 +2134,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2463,7 +2144,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2504,27 +2185,19 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientId",
             "in": "path",
             "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterRequest"
-              }
+
             }
           },
           "required": true
@@ -2533,11 +2206,7 @@
           "201": {
             "description": "User registered — verification email sent (code: USER_REGISTERED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseRegistrationData"
-                }
-              }
+
             }
           },
           "400": {
@@ -2545,7 +2214,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2555,7 +2224,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2565,7 +2234,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2606,30 +2275,20 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug (creado por el Contractor)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientId",
             "in": "path",
             "description": "Client app client_id (proveedor)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Cancellation scheduled (code: APP_SUBSCRIPTION_CANCELLED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppSubscriptionData"
-                }
-              }
+
             }
           },
           "401": {
@@ -2637,7 +2296,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2647,7 +2306,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2657,7 +2316,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2704,9 +2363,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "keygo"
           },
           {
@@ -2714,18 +2370,13 @@
             "in": "path",
             "description": "Client app client_id",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "keygo-ui"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAppPlanRequest"
-              }
+
             }
           },
           "required": true
@@ -2734,11 +2385,7 @@
           "201": {
             "description": "Plan created successfully (code: APP_PLAN_CREATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppPlanData"
-                }
-              }
+
             }
           },
           "400": {
@@ -2746,7 +2393,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2756,7 +2403,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2766,7 +2413,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2776,7 +2423,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2822,40 +2469,25 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientAppId",
             "in": "path",
             "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           },
           {
             "name": "name_like",
             "in": "query",
             "description": "Partial match on role name (case-insensitive)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "page",
             "in": "query",
             "description": "Zero-based page number",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 0
-            },
             "example": 0
           },
           {
@@ -2863,30 +2495,19 @@
             "in": "query",
             "description": "Page size (1–200)",
             "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            },
             "example": 20
           },
           {
             "name": "sort",
             "in": "query",
             "description": "Sort field (name, createdAt)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "order",
             "in": "query",
             "description": "Sort order (ASC, DESC)",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
             "example": "ASC"
           }
         ],
@@ -2894,11 +2515,7 @@
           "200": {
             "description": "Roles retrieved (code: ROLE_LIST_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponsePagedDataAppRoleData"
-                }
-              }
+
             }
           },
           "400": {
@@ -2906,7 +2523,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2916,7 +2533,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2926,7 +2543,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -2970,28 +2587,19 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientAppId",
             "in": "path",
             "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAppRoleRequest"
-              }
+
             }
           },
           "required": true
@@ -3000,11 +2608,7 @@
           "201": {
             "description": "Role created (code: ROLE_CREATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppRoleData"
-                }
-              }
+
             }
           },
           "400": {
@@ -3012,7 +2616,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3022,7 +2626,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3032,7 +2636,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3042,7 +2646,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3052,7 +2656,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3098,37 +2702,25 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientAppId",
             "in": "path",
             "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           },
           {
             "name": "roleCode",
             "in": "path",
             "description": "Child role code",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AssignRoleParentRequest"
-              }
+
             }
           },
           "required": true
@@ -3137,11 +2729,7 @@
           "200": {
             "description": "Parent assigned (code: ROLE_PARENT_ASSIGNED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
+
             }
           },
           "400": {
@@ -3149,7 +2737,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3159,7 +2747,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3169,7 +2757,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3213,40 +2801,26 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientAppId",
             "in": "path",
             "description": "Client app ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           },
           {
             "name": "roleCode",
             "in": "path",
             "description": "Role code",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Parent removed (code: ROLE_PARENT_REMOVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
+
             }
           },
           "401": {
@@ -3254,7 +2828,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3264,7 +2838,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3303,7 +2877,7 @@
           "Account Settings"
         ],
         "summary": "Reset password with temporary password",
-        "description": "Allows a user in RESET_PASSWORD status to set their permanent password using the temporary password assigned by the administrator. No Bearer token required — authenticated via email + temporary password.",
+        "description": "Allows a user in RESET_PASSWORD status to set their permanent password using the temporary password assigned by the administrator. Requires the `request_id` (UUID returned in the 401 login response), the 6-digit verification code received by email, the temporary password, and the new password (with confirmation). No Bearer token required.",
         "operationId": "resetPassword_1",
         "parameters": [
           {
@@ -3311,18 +2885,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AccountResetPasswordRequest"
-              }
+
             }
           },
           "required": true
@@ -3331,19 +2900,15 @@
           "200": {
             "description": "Password reset successfully (code: ACCOUNT_PASSWORD_RESET)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseResetPasswordResult"
-                }
-              }
+
             }
           },
           "400": {
-            "description": "New password violates policy (code: INVALID_INPUT)",
+            "description": "New password violates policy, passwords don't match, invalid code format or invalid request_id format (code: INVALID_INPUT)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3353,17 +2918,27 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
           },
           "404": {
-            "description": "Tenant or user not found (code: RESOURCE_NOT_FOUND)",
+            "description": "Reset request not found or user not found in tenant (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Verification code expired (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -3405,18 +2980,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RecoverPasswordRequest"
-              }
+
             }
           },
           "required": true
@@ -3425,11 +2995,7 @@
           "200": {
             "description": "Password recovered successfully (code: ACCOUNT_PASSWORD_RECOVERED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseRecoverPasswordResult"
-                }
-              }
+
             }
           },
           "400": {
@@ -3437,7 +3003,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3447,7 +3013,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3457,7 +3023,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3491,7 +3057,7 @@
           "OAuth2 / Authorization"
         ],
         "summary": "Submit credentials and issue authorization code",
-        "description": "Authenticates the user within the tenant and issues a one-time authorization code. Requires an active authorization session established by `GET /oauth2/authorize`.\n\nThe returned `code` must be exchanged for tokens via `POST /oauth2/token` (`grant_type=authorization_code`) using the original PKCE `code_verifier`.",
+        "description": "Authenticates the user within the tenant and issues a one-time authorization code. Requires an active authorization session established by `GET /oauth2/authorize`.\n\nThe returned `code` must be exchanged for tokens via `POST /oauth2/token` (`grant_type=authorization_code`) using the original PKCE `code_verifier`.\n\nIf the user account has `status=RESET_PASSWORD`, the login is blocked (401) and a 6-digit verification code is sent to their email. The frontend should redirect to the reset-password form.",
         "operationId": "login",
         "parameters": [
           {
@@ -3499,18 +3065,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginRequest"
-              }
+
             }
           },
           "required": true
@@ -3519,11 +3080,7 @@
           "200": {
             "description": "Login successful — authorization code issued (code: LOGIN_SUCCESSFUL)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseLoginData"
-                }
-              }
+
             }
           },
           "400": {
@@ -3531,17 +3088,17 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
           },
           "401": {
-            "description": "Invalid credentials (code: AUTHENTICATION_REQUIRED)",
+            "description": "Invalid credentials or password reset required (code: AUTHENTICATION_REQUIRED | RESET_PASSWORD_REQUIRED)",
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3551,7 +3108,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3593,18 +3150,13 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ForgotPasswordRequest"
-              }
+
             }
           },
           "required": true
@@ -3613,11 +3165,7 @@
           "200": {
             "description": "Recovery email sent (or email not found — not revealed) (code: ACCOUNT_PASSWORD_RECOVERY_SENT)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseForgotPasswordResult"
-                }
-              }
+
             }
           },
           "404": {
@@ -3625,7 +3173,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3667,26 +3215,18 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ChangePasswordRequest"
-              }
+
             }
           },
           "required": true
@@ -3695,11 +3235,7 @@
           "200": {
             "description": "Password changed successfully (code: ACCOUNT_PASSWORD_CHANGED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseChangePasswordResult"
-                }
-              }
+
             }
           },
           "400": {
@@ -3707,7 +3243,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3717,7 +3253,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3727,7 +3263,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3766,9 +3302,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAppContractRequest"
-              }
+
             }
           },
           "required": true
@@ -3777,11 +3311,7 @@
           "201": {
             "description": "Contract initiated (code: APP_CONTRACT_CREATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppContractData"
-                }
-              }
+
             }
           },
           "404": {
@@ -3789,7 +3319,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3830,19 +3360,13 @@
             "name": "contractId",
             "in": "path",
             "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyContractEmailRequest"
-              }
+
             }
           },
           "required": true
@@ -3851,11 +3375,7 @@
           "200": {
             "description": "Email verified — contract now in PENDING_PAYMENT (code: APP_CONTRACT_EMAIL_VERIFIED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppContractData"
-                }
-              }
+
             }
           },
           "400": {
@@ -3863,7 +3383,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3873,7 +3393,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3883,7 +3403,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3924,22 +3444,14 @@
             "name": "contractId",
             "in": "path",
             "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Verification code resent successfully (code: APP_CONTRACT_VERIFICATION_RESENT)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppContractData"
-                }
-              }
+
             }
           },
           "404": {
@@ -3947,7 +3459,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3957,7 +3469,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -3998,22 +3510,14 @@
             "name": "contractId",
             "in": "path",
             "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Payment approved (code: APP_CONTRACT_PAYMENT_APPROVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppContractData"
-                }
-              }
+
             }
           },
           "404": {
@@ -4021,7 +3525,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4031,7 +3535,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4072,22 +3576,14 @@
             "name": "contractId",
             "in": "path",
             "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Contract activated (code: APP_CONTRACT_ACTIVATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppContractData"
-                }
-              }
+
             }
           },
           "404": {
@@ -4095,7 +3591,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4105,7 +3601,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4147,29 +3643,19 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "responses": {
           "200": {
             "description": "Profile retrieved successfully (code: USER_PROFILE_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserProfileData"
-                }
-              }
+
             }
           },
           "401": {
@@ -4177,7 +3663,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4187,7 +3673,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4227,26 +3713,18 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserProfileRequest"
-              }
+
             }
           },
           "required": true
@@ -4255,11 +3733,7 @@
           "200": {
             "description": "Profile updated successfully (code: USER_PROFILE_UPDATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserProfileData"
-                }
-              }
+
             }
           },
           "401": {
@@ -4267,7 +3741,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4277,7 +3751,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4319,29 +3793,19 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "responses": {
           "200": {
             "description": "Preferences retrieved (code: ACCOUNT_NOTIFICATION_PREFERENCES_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseNotificationPreferencesData"
-                }
-              }
+
             }
           },
           "401": {
@@ -4349,7 +3813,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4389,26 +3853,18 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateNotificationPreferencesRequest"
-              }
+
             }
           },
           "required": true
@@ -4417,11 +3873,7 @@
           "200": {
             "description": "Preferences updated (code: ACCOUNT_NOTIFICATION_PREFERENCES_UPDATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseNotificationPreferencesData"
-                }
-              }
+
             }
           },
           "400": {
@@ -4429,7 +3881,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4439,7 +3891,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4481,9 +3933,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
@@ -4491,9 +3940,6 @@
             "in": "header",
             "description": "Bearer access token",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
             "example": "Bearer eyJhbGci..."
           }
         ],
@@ -4501,11 +3947,7 @@
           "200": {
             "description": "User info claims retrieved (code: USER_INFO_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseUserInfoResult"
-                }
-              }
+
             }
           },
           "401": {
@@ -4513,7 +3955,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4523,7 +3965,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4565,85 +4007,57 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "client_id",
             "in": "query",
             "description": "OAuth2 client_id",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "redirect_uri",
             "in": "query",
             "description": "Registered redirect URI",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "scope",
             "in": "query",
             "description": "Requested scopes (space-separated)",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "openid profile email"
           },
           {
             "name": "response_type",
             "in": "query",
             "description": "Must be `code`",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "state",
             "in": "query",
             "description": "Optional opaque value to maintain state",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "code_challenge_method",
             "in": "query",
             "description": "PKCE method — must be `S256`",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           },
           {
             "name": "code_challenge",
             "in": "query",
             "description": "PKCE code challenge (BASE64URL of SHA-256 of verifier)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "responses": {
           "200": {
             "description": "Authorization initiated — client app metadata returned (code: AUTHORIZATION_INITIATED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAuthorizationInitiatedData"
-                }
-              }
+
             }
           },
           "400": {
@@ -4651,7 +4065,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4661,7 +4075,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4702,30 +4116,20 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug (creado por el Contractor)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientId",
             "in": "path",
             "description": "Client app client_id (proveedor)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Subscription retrieved (code: APP_SUBSCRIPTION_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppSubscriptionData"
-                }
-              }
+
             }
           },
           "401": {
@@ -4733,7 +4137,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4743,7 +4147,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4789,30 +4193,20 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug (creado por el Contractor)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "clientId",
             "in": "path",
             "description": "Client app client_id (proveedor)",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Invoices retrieved",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListAppInvoiceData"
-                }
-              }
+
             }
           },
           "404": {
@@ -4820,7 +4214,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4830,7 +4224,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4877,9 +4271,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "keygo"
           },
           {
@@ -4887,9 +4278,6 @@
             "in": "path",
             "description": "Client app client_id",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "keygo-ui"
           }
         ],
@@ -4897,11 +4285,7 @@
           "200": {
             "description": "Plan catalog retrieved successfully (code: APP_PLAN_CATALOG_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListAppPlanData"
-                }
-              }
+
             }
           },
           "404": {
@@ -4909,7 +4293,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -4951,9 +4335,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "keygo"
           },
           {
@@ -4961,9 +4342,6 @@
             "in": "path",
             "description": "Client app client_id",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "keygo-ui"
           },
           {
@@ -4971,9 +4349,6 @@
             "in": "path",
             "description": "Plan code (e.g. FREE, STARTER, BUSINESS)",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "FREE"
           }
         ],
@@ -4981,11 +4356,7 @@
           "200": {
             "description": "Plan detail retrieved successfully (code: APP_PLAN_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppPlanData"
-                }
-              }
+
             }
           },
           "404": {
@@ -4993,7 +4364,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5035,29 +4406,19 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "responses": {
           "200": {
             "description": "Sessions retrieved successfully (code: ACCOUNT_SESSIONS_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListAccountSessionData"
-                }
-              }
+
             }
           },
           "401": {
@@ -5065,7 +4426,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5107,29 +4468,19 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "responses": {
           "200": {
             "description": "Access retrieved (code: ACCOUNT_ACCESS_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseListUserAccessData"
-                }
-              }
+
             }
           },
           "401": {
@@ -5137,7 +4488,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5179,9 +4530,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
@@ -5197,14 +4545,7 @@
           "404": {
             "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
 
-                  }
-                }
-              }
             }
           },
           "500": {
@@ -5244,9 +4585,6 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
@@ -5262,14 +4600,7 @@
           "404": {
             "description": "Tenant not found (code: RESOURCE_NOT_FOUND)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
 
-                  }
-                }
-              }
             }
           },
           "500": {
@@ -5309,9 +4640,6 @@
             "in": "path",
             "description": "Unique slug identifier of the tenant",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           }
         ],
@@ -5319,11 +4647,7 @@
           "200": {
             "description": "Tenant retrieved successfully (code: TENANT_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseTenantData"
-                }
-              }
+
             }
           },
           "401": {
@@ -5331,7 +4655,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5341,7 +4665,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5386,11 +4710,7 @@
           "200": {
             "description": "Service information retrieved successfully",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseServiceInfoData"
-                }
-              }
+
             }
           },
           "500": {
@@ -5428,11 +4748,7 @@
           "200": {
             "description": "Response code catalog retrieved successfully",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseResponseCodeCatalog"
-                }
-              }
+
             }
           },
           "500": {
@@ -5470,11 +4786,7 @@
           "200": {
             "description": "Platform statistics retrieved successfully (code: PLATFORM_STATS_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponsePlatformStatsData"
-                }
-              }
+
             }
           },
           "401": {
@@ -5482,7 +4794,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5492,7 +4804,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5538,22 +4850,14 @@
             "name": "contractId",
             "in": "path",
             "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Contract retrieved (code: APP_CONTRACT_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppContractData"
-                }
-              }
+
             }
           },
           "404": {
@@ -5561,7 +4865,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5602,22 +4906,14 @@
             "name": "contractId",
             "in": "path",
             "description": "Contract UUID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Onboarding state retrieved successfully (code: APP_CONTRACT_ONBOARDING_RESUMED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseAppContractResumeData"
-                }
-              }
+
             }
           },
           "404": {
@@ -5625,7 +4921,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5635,7 +4931,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5675,11 +4971,7 @@
           "200": {
             "description": "Platform dashboard retrieved successfully (code: PLATFORM_DASHBOARD_RETRIEVED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponsePlatformDashboardData"
-                }
-              }
+
             }
           },
           "401": {
@@ -5687,7 +4979,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5697,7 +4989,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5743,31 +5035,20 @@
             "name": "tenantSlug",
             "in": "path",
             "description": "Tenant slug",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "membershipId",
             "in": "path",
             "description": "Membership ID",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "required": true
           }
         ],
         "responses": {
           "200": {
             "description": "Membership revoked (code: MEMBERSHIP_REVOKED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
-                }
-              }
+
             }
           },
           "401": {
@@ -5775,7 +5056,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5785,7 +5066,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5832,38 +5113,25 @@
             "in": "path",
             "description": "Tenant slug",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
             "example": "my-company"
           },
           {
             "name": "sessionId",
             "in": "path",
             "description": "Session UUID to revoke",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
+            "required": true
           },
           {
             "name": "Authorization",
             "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
+            "required": false
           }
         ],
         "responses": {
           "200": {
             "description": "Session revoked or already closed (code: ACCOUNT_SESSION_REVOKED or ACCOUNT_SESSION_ALREADY_CLOSED)",
             "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/BaseResponseRevokeUserSessionResult"
-                }
-              }
+
             }
           },
           "401": {
@@ -5871,7 +5139,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5881,7 +5149,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "string"
                 }
               }
             }
@@ -5911,3126 +5179,6 @@
     }
   },
   "components": {
-    "schemas": {
-      "UpdateUserRequest": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "zoneinfo": {
-            "type": "string"
-          },
-          "profilePictureUrl": {
-            "type": "string"
-          },
-          "birthdate": {
-            "type": "string"
-          },
-          "website": {
-            "type": "string"
-          }
-        }
-      },
-      "ErrorData": {
-        "type": "object",
-        "properties": {
-          "traceId": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "layer": {
-            "type": "string"
-          },
-          "origin": {
-            "type": "string",
-            "enum": [
-              "CLIENT_REQUEST",
-              "BUSINESS_RULE",
-              "SERVER_PROCESSING"
-            ]
-          },
-          "clientRequestCause": {
-            "type": "string",
-            "enum": [
-              "CLIENT_TECHNICAL",
-              "USER_INPUT"
-            ]
-          },
-          "clientMessage": {
-            "type": "string"
-          },
-          "detail": {
-            "type": "string"
-          },
-          "exception": {
-            "type": "string"
-          },
-          "fieldErrors": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FieldValidationError"
-            }
-          }
-        }
-      },
-      "ErrorResponse": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/ErrorData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "FieldValidationError": {
-        "type": "object",
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "rejectedValue": {
-
-          }
-        }
-      },
-      "MessageResponse": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseUserData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/UserData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "UserData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "tenantId": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "zoneinfo": {
-            "type": "string"
-          },
-          "profilePictureUrl": {
-            "type": "string"
-          },
-          "birthdate": {
-            "type": "string"
-          },
-          "website": {
-            "type": "string"
-          }
-        }
-      },
-      "UpdateClientAppRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": {
-            "type": "string"
-          },
-          "redirectUris": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
-          },
-          "grants": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "AUTHORIZATION_CODE",
-                "CLIENT_CREDENTIALS",
-                "REFRESH_TOKEN",
-                "IMPLICIT"
-              ]
-            },
-            "minItems": 1,
-            "uniqueItems": true
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
-          }
-        },
-        "required": [
-          "grants",
-          "name"
-        ]
-      },
-      "BaseResponseClientAppData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/ClientAppData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "ClientAppData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "clientId": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "redirectUris": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "grants": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BaseResponseTenantData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/TenantData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "TenantData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "ownerEmail": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateTenantRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 0
-          },
-          "ownerEmail": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "name",
-          "ownerEmail"
-        ]
-      },
-      "CreateUserRequest": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "maxLength": 100,
-            "minLength": 3
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 2147483647,
-            "minLength": 8
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password",
-          "username"
-        ]
-      },
-      "ResetPasswordRequest": {
-        "type": "object",
-        "properties": {
-          "newPassword": {
-            "type": "string",
-            "maxLength": 2147483647,
-            "minLength": 8
-          }
-        },
-        "required": [
-          "newPassword"
-        ]
-      },
-      "ValidateCredentialsRequest": {
-        "type": "object",
-        "properties": {
-          "credential": {
-            "type": "string",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "credential",
-          "password"
-        ]
-      },
-      "TokenRequest": {
-        "type": "object",
-        "properties": {
-          "grantType": {
-            "type": "string"
-          },
-          "clientId": {
-            "type": "string",
-            "minLength": 1
-          },
-          "clientSecret": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "codeVerifier": {
-            "type": "string"
-          },
-          "redirectUri": {
-            "type": "string"
-          },
-          "refreshToken": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "clientId"
-        ]
-      },
-      "BaseResponseTokenData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/TokenData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "TokenData": {
-        "type": "object",
-        "properties": {
-          "access_token": {
-            "type": "string"
-          },
-          "id_token": {
-            "type": "string"
-          },
-          "refresh_token": {
-            "type": "string"
-          },
-          "token_type": {
-            "type": "string"
-          },
-          "expires_in": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "scope": {
-            "type": "string"
-          },
-          "authorization_code_id": {
-            "type": "string"
-          }
-        }
-      },
-      "RevokeTokenRequest": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "minLength": 1
-          },
-          "tokenTypeHint": {
-            "type": "string"
-          },
-          "clientId": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "clientId",
-          "token"
-        ]
-      },
-      "BaseResponseVoid": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateMembershipRequest": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "roleCodes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "minItems": 1,
-            "uniqueItems": true
-          }
-        },
-        "required": [
-          "clientAppId",
-          "roleCodes",
-          "userId"
-        ]
-      },
-      "BaseResponseMembershipData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/MembershipData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "MembershipData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "PENDING"
-            ]
-          },
-          "roleIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "uniqueItems": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "CreateClientAppRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "description": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "PUBLIC",
-              "CONFIDENTIAL"
-            ]
-          },
-          "redirectUris": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
-          },
-          "grants": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "AUTHORIZATION_CODE",
-                "CLIENT_CREDENTIALS",
-                "REFRESH_TOKEN",
-                "IMPLICIT"
-              ]
-            },
-            "minItems": 1,
-            "uniqueItems": true
-          },
-          "scopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "uniqueItems": true
-          }
-        },
-        "required": [
-          "grants",
-          "name",
-          "type"
-        ]
-      },
-      "BaseResponseClientAppSecretData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/ClientAppSecretData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "ClientAppSecretData": {
-        "type": "object",
-        "properties": {
-          "clientId": {
-            "type": "string"
-          },
-          "clientSecret": {
-            "type": "string"
-          }
-        }
-      },
-      "VerifyEmailRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          },
-          "code": {
-            "type": "string",
-            "maxLength": 6,
-            "minLength": 6
-          }
-        },
-        "required": [
-          "code",
-          "email"
-        ]
-      },
-      "ResendVerificationRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "email"
-        ]
-      },
-      "RegisterRequest": {
-        "type": "object",
-        "properties": {
-          "username": {
-            "type": "string",
-            "minLength": 1
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 2147483647,
-            "minLength": 8
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password",
-          "username"
-        ]
-      },
-      "BaseResponseRegistrationData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/RegistrationData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "RegistrationData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "username": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "ACTIVE",
-              "SUSPENDED",
-              "PENDING",
-              "RESET_PASSWORD"
-            ]
-          }
-        }
-      },
-      "AppSubscriptionData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "appPlanVersionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "contractorId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "currentPeriodStart": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "currentPeriodEnd": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "cancelAtPeriodEnd": {
-            "type": "boolean"
-          },
-          "nextBillingAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "autoRenew": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BaseResponseAppSubscriptionData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AppSubscriptionData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "BillingOptionRequest": {
-        "type": "object",
-        "properties": {
-          "billingPeriod": {
-            "type": "string",
-            "enum": [
-              "MONTHLY",
-              "YEARLY",
-              "ONE_TIME"
-            ]
-          },
-          "basePrice": {
-            "type": "number"
-          },
-          "discountPct": {
-            "type": "number"
-          },
-          "isDefault": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CreateAppPlanRequest": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "isPublic": {
-            "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "version": {
-            "type": "string"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "trialDays": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "effectiveFrom": {
-            "type": "string",
-            "format": "date"
-          },
-          "billingOptions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BillingOptionRequest"
-            }
-          },
-          "entitlements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/EntitlementRequest"
-            }
-          }
-        }
-      },
-      "EntitlementRequest": {
-        "type": "object",
-        "properties": {
-          "metricCode": {
-            "type": "string"
-          },
-          "metricType": {
-            "type": "string",
-            "enum": [
-              "QUOTA",
-              "BOOLEAN",
-              "RATE"
-            ]
-          },
-          "limitValue": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "periodType": {
-            "type": "string",
-            "enum": [
-              "NONE",
-              "DAY",
-              "MONTH"
-            ]
-          },
-          "enforcementMode": {
-            "type": "string",
-            "enum": [
-              "HARD",
-              "SOFT"
-            ]
-          },
-          "isEnabled": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AppPlanBillingOptionData": {
-        "type": "object",
-        "properties": {
-          "billingPeriod": {
-            "type": "string"
-          },
-          "basePrice": {
-            "type": "number"
-          },
-          "discountPct": {
-            "type": "number"
-          },
-          "isDefault": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AppPlanData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "isPublic": {
-            "type": "boolean"
-          },
-          "sortOrder": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "versions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppPlanVersionData"
-            }
-          },
-          "entitlements": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppPlanEntitlementData"
-            }
-          }
-        }
-      },
-      "AppPlanEntitlementData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "metricCode": {
-            "type": "string"
-          },
-          "metricType": {
-            "type": "string",
-            "enum": [
-              "QUOTA",
-              "BOOLEAN",
-              "RATE"
-            ]
-          },
-          "limitValue": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "periodType": {
-            "type": "string",
-            "enum": [
-              "NONE",
-              "DAY",
-              "MONTH"
-            ]
-          },
-          "enforcementMode": {
-            "type": "string",
-            "enum": [
-              "HARD",
-              "SOFT"
-            ]
-          },
-          "isEnabled": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AppPlanVersionData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "string"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "setupFee": {
-            "type": "number"
-          },
-          "trialDays": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "effectiveFrom": {
-            "type": "string",
-            "format": "date"
-          },
-          "effectiveTo": {
-            "type": "string",
-            "format": "date"
-          },
-          "status": {
-            "type": "string"
-          },
-          "free": {
-            "type": "boolean"
-          },
-          "billingOptions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppPlanBillingOptionData"
-            }
-          }
-        }
-      },
-      "BaseResponseAppPlanData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AppPlanData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateAppRoleRequest": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "code"
-        ]
-      },
-      "AppRoleData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BaseResponseAppRoleData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AppRoleData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "AssignRoleParentRequest": {
-        "type": "object",
-        "properties": {
-          "parentRoleCode": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "parentRoleCode"
-        ]
-      },
-      "AccountResetPasswordRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string"
-          },
-          "temporaryPassword": {
-            "type": "string"
-          },
-          "newPassword": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseResetPasswordResult": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/ResetPasswordResult"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "ResetPasswordResult": {
-        "type": "object",
-        "properties": {
-          "reset": {
-            "type": "boolean"
-          }
-        }
-      },
-      "RecoverPasswordRequest": {
-        "type": "object",
-        "properties": {
-          "recoveryToken": {
-            "type": "string"
-          },
-          "newPassword": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseRecoverPasswordResult": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/RecoverPasswordResult"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "RecoverPasswordResult": {
-        "type": "object",
-        "properties": {
-          "recovered": {
-            "type": "boolean"
-          }
-        }
-      },
-      "LoginRequest": {
-        "type": "object",
-        "properties": {
-          "emailOrUsername": {
-            "type": "string",
-            "minLength": 1
-          },
-          "password": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "emailOrUsername",
-          "password"
-        ]
-      },
-      "BaseResponseLoginData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/LoginData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "LoginData": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "redirect_uri": {
-            "type": "string"
-          }
-        }
-      },
-      "ForgotPasswordRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseForgotPasswordResult": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/ForgotPasswordResult"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "ForgotPasswordResult": {
-        "type": "object",
-        "properties": {
-          "sent": {
-            "type": "boolean"
-          }
-        }
-      },
-      "ChangePasswordRequest": {
-        "type": "object",
-        "properties": {
-          "currentPassword": {
-            "type": "string"
-          },
-          "newPassword": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseChangePasswordResult": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/ChangePasswordResult"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "ChangePasswordResult": {
-        "type": "object",
-        "properties": {
-          "changed": {
-            "type": "boolean"
-          }
-        }
-      },
-      "CreateAppContractRequest": {
-        "type": "object",
-        "properties": {
-          "clientAppId": {
-            "type": "string"
-          },
-          "planVersionId": {
-            "type": "string"
-          },
-          "billingPeriod": {
-            "type": "string",
-            "enum": [
-              "MONTHLY",
-              "YEARLY",
-              "ONE_TIME"
-            ]
-          },
-          "contractorEmail": {
-            "type": "string"
-          },
-          "contractorFirstName": {
-            "type": "string"
-          },
-          "contractorLastName": {
-            "type": "string"
-          },
-          "companyName": {
-            "type": "string"
-          },
-          "companyTaxId": {
-            "type": "string"
-          },
-          "companyAddress": {
-            "type": "string"
-          }
-        }
-      },
-      "AppContractData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "selectedPlanVersionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "billingPeriod": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "contractorEmail": {
-            "type": "string"
-          },
-          "contractorFirstName": {
-            "type": "string"
-          },
-          "contractorLastName": {
-            "type": "string"
-          },
-          "companyName": {
-            "type": "string"
-          },
-          "contractorId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "emailVerified": {
-            "type": "boolean"
-          },
-          "paymentVerified": {
-            "type": "boolean"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BaseResponseAppContractData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AppContractData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "VerifyContractEmailRequest": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          }
-        }
-      },
-      "UpdateUserProfileRequest": {
-        "type": "object",
-        "properties": {
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "zoneinfo": {
-            "type": "string"
-          },
-          "profilePictureUrl": {
-            "type": "string"
-          },
-          "birthdate": {
-            "type": "string"
-          },
-          "website": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseUserProfileData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/UserProfileData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "UserProfileData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "tenantId": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "firstName": {
-            "type": "string"
-          },
-          "lastName": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "zoneinfo": {
-            "type": "string"
-          },
-          "profilePictureUrl": {
-            "type": "string"
-          },
-          "birthdate": {
-            "type": "string"
-          },
-          "website": {
-            "type": "string"
-          }
-        }
-      },
-      "UpdateNotificationPreferencesRequest": {
-        "type": "object",
-        "properties": {
-          "securityAlertsEmail": {
-            "type": "boolean"
-          },
-          "securityAlertsInApp": {
-            "type": "boolean"
-          },
-          "billingAlertsEmail": {
-            "type": "boolean"
-          },
-          "productUpdatesEmail": {
-            "type": "boolean"
-          },
-          "weeklyDigest": {
-            "type": "boolean"
-          }
-        }
-      },
-      "BaseResponseNotificationPreferencesData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/NotificationPreferencesData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "NotificationPreferencesData": {
-        "type": "object",
-        "properties": {
-          "securityAlertsEmail": {
-            "type": "boolean"
-          },
-          "securityAlertsInApp": {
-            "type": "boolean"
-          },
-          "billingAlertsEmail": {
-            "type": "boolean"
-          },
-          "productUpdatesEmail": {
-            "type": "boolean"
-          },
-          "weeklyDigest": {
-            "type": "boolean"
-          }
-        }
-      },
-      "BaseResponsePagedDataTenantData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/PagedDataTenantData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "PagedDataTenantData": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TenantData"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          }
-        }
-      },
-      "BaseResponsePagedDataUserData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/PagedDataUserData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "PagedDataUserData": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserData"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          }
-        }
-      },
-      "BaseResponseUserInfoResult": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/UserInfoResult"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "UserInfoResult": {
-        "type": "object",
-        "properties": {
-          "sub": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "preferredUsername": {
-            "type": "string"
-          },
-          "givenName": {
-            "type": "string"
-          },
-          "familyName": {
-            "type": "string"
-          },
-          "picture": {
-            "type": "string"
-          },
-          "locale": {
-            "type": "string"
-          },
-          "zoneinfo": {
-            "type": "string"
-          },
-          "birthdate": {
-            "type": "string"
-          },
-          "website": {
-            "type": "string"
-          },
-          "phoneNumber": {
-            "type": "string"
-          }
-        }
-      },
-      "AuthorizationInitiatedData": {
-        "type": "object",
-        "properties": {
-          "client_id": {
-            "type": "string"
-          },
-          "client_name": {
-            "type": "string"
-          },
-          "redirect_uri": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseAuthorizationInitiatedData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AuthorizationInitiatedData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponsePagedDataMembershipData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/PagedDataMembershipData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "PagedDataMembershipData": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MembershipData"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          }
-        }
-      },
-      "BaseResponsePagedDataClientAppData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/PagedDataClientAppData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "PagedDataClientAppData": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ClientAppData"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AppInvoiceData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "subscriptionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "invoiceNumber": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "issueDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "dueDate": {
-            "type": "string",
-            "format": "date"
-          },
-          "periodStart": {
-            "type": "string",
-            "format": "date"
-          },
-          "periodEnd": {
-            "type": "string",
-            "format": "date"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "subtotal": {
-            "type": "number"
-          },
-          "taxAmount": {
-            "type": "number"
-          },
-          "total": {
-            "type": "number"
-          },
-          "billingNameSnapshot": {
-            "type": "string"
-          },
-          "planVersionSnapshot": {
-            "type": "string"
-          },
-          "pdfUrl": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BaseResponseListAppInvoiceData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppInvoiceData"
-            }
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseListAppPlanData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppPlanData"
-            }
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponsePagedDataAppRoleData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/PagedDataAppRoleData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "PagedDataAppRoleData": {
-        "type": "object",
-        "properties": {
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AppRoleData"
-            }
-          },
-          "page": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "last": {
-            "type": "boolean"
-          }
-        }
-      },
-      "AccountSessionData": {
-        "type": "object",
-        "properties": {
-          "sessionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "browser": {
-            "type": "string"
-          },
-          "os": {
-            "type": "string"
-          },
-          "deviceType": {
-            "type": "string"
-          },
-          "ipAddress": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastAccessedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "isCurrent": {
-            "type": "boolean"
-          }
-        }
-      },
-      "BaseResponseListAccountSessionData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AccountSessionData"
-            }
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseListUserAccessData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UserAccessData"
-            }
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "UserAccessData": {
-        "type": "object",
-        "properties": {
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppName": {
-            "type": "string"
-          },
-          "membershipId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "BaseResponseServiceInfoData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/ServiceInfoData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "ServiceInfoData": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          },
-          "environment": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
-      "BaseResponseResponseCodeCatalog": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/ResponseCodeCatalog"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "ResponseCodeCatalog": {
-        "type": "object",
-        "properties": {
-          "successCodes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResponseCodeInfo"
-            }
-          },
-          "failureCodes": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResponseCodeInfo"
-            }
-          }
-        }
-      },
-      "ResponseCodeInfo": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          }
-        }
-      },
-      "AppStats": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "BaseResponsePlatformStatsData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/PlatformStatsData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "PlatformStatsData": {
-        "type": "object",
-        "properties": {
-          "tenants": {
-            "$ref": "#/components/schemas/TenantStats"
-          },
-          "users": {
-            "$ref": "#/components/schemas/UserStats"
-          },
-          "apps": {
-            "$ref": "#/components/schemas/AppStats"
-          },
-          "signingKeys": {
-            "$ref": "#/components/schemas/SigningKeyStats"
-          }
-        }
-      },
-      "SigningKeyStats": {
-        "type": "object",
-        "properties": {
-          "active": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "TenantStats": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "active": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "suspended": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pending": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "UserStats": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "active": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pending": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "suspended": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "AppContractResumeData": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clientAppId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "selectedPlanVersionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "billingPeriod": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "contractorEmail": {
-            "type": "string"
-          },
-          "contractorFirstName": {
-            "type": "string"
-          },
-          "contractorLastName": {
-            "type": "string"
-          },
-          "companyName": {
-            "type": "string"
-          },
-          "contractorId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "emailVerified": {
-            "type": "boolean"
-          },
-          "paymentVerified": {
-            "type": "boolean"
-          },
-          "verificationCodeExpired": {
-            "type": "boolean"
-          },
-          "nextAction": {
-            "type": "string"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "BaseResponseAppContractResumeData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/AppContractResumeData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "ActivityItem": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "route": {
-            "type": "string"
-          }
-        }
-      },
-      "AlertItem": {
-        "type": "object",
-        "properties": {
-          "level": {
-            "type": "string"
-          },
-          "code": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      },
-      "AppSummary": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "active": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pending": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "suspended": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "publicCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "confidentialCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "withoutRedirectUris": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "BaseResponsePlatformDashboardData": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/PlatformDashboardData"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "CountSummary": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "active": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pending": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "suspended": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "recentlyCreated": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "MembershipSummary": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "active": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pending": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "suspended": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "usersWithoutMembership": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "PendingActionItem": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string"
-          },
-          "count": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "route": {
-            "type": "string"
-          }
-        }
-      },
-      "PlatformDashboardData": {
-        "type": "object",
-        "properties": {
-          "service": {
-            "$ref": "#/components/schemas/ServiceSummary"
-          },
-          "security": {
-            "$ref": "#/components/schemas/SecuritySummary"
-          },
-          "tenants": {
-            "$ref": "#/components/schemas/CountSummary"
-          },
-          "users": {
-            "$ref": "#/components/schemas/CountSummary"
-          },
-          "apps": {
-            "$ref": "#/components/schemas/AppSummary"
-          },
-          "memberships": {
-            "$ref": "#/components/schemas/MembershipSummary"
-          },
-          "registration": {
-            "$ref": "#/components/schemas/RegistrationSummary"
-          },
-          "topology": {
-            "$ref": "#/components/schemas/TopologySummary"
-          },
-          "rankings": {
-            "$ref": "#/components/schemas/RankingSummary"
-          },
-          "pendingActions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/PendingActionItem"
-            }
-          },
-          "recentActivity": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ActivityItem"
-            }
-          },
-          "quickActions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/QuickActionItem"
-            }
-          }
-        }
-      },
-      "QuickActionItem": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "route": {
-            "type": "string"
-          }
-        }
-      },
-      "RankEntry": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "tenantSlug": {
-            "type": "string"
-          },
-          "count": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "RankingSummary": {
-        "type": "object",
-        "properties": {
-          "topTenantsByUsers": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RankEntry"
-            }
-          },
-          "topAppsByMemberships": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RankEntry"
-            }
-          }
-        }
-      },
-      "RegistrationSummary": {
-        "type": "object",
-        "properties": {
-          "pendingEmailVerifications": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "expiredPendingVerifications": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "recentRegistrations": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "recentVerifications": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "SecurityCounts": {
-        "type": "object",
-        "properties": {
-          "activeSigningKeys": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "retiredSigningKeys": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "revokedSigningKeys": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "activeSessions": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "expiredSessions": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "terminatedSessions": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "activeRefreshTokens": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "usedRefreshTokens": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "expiredRefreshTokens": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "revokedRefreshTokens": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "pendingAuthorizationCodes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "usedAuthorizationCodes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "expiredAuthorizationCodes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "revokedAuthorizationCodes": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "SecuritySummary": {
-        "type": "object",
-        "properties": {
-          "activeSigningKey": {
-            "$ref": "#/components/schemas/SigningKeySummary"
-          },
-          "counts": {
-            "$ref": "#/components/schemas/SecurityCounts"
-          },
-          "alerts": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlertItem"
-            }
-          }
-        }
-      },
-      "ServiceSummary": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          },
-          "environment": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          }
-        }
-      },
-      "SigningKeySummary": {
-        "type": "object",
-        "properties": {
-          "kid": {
-            "type": "string"
-          },
-          "algorithm": {
-            "type": "string"
-          },
-          "activatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "ageDays": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "TopologySummary": {
-        "type": "object",
-        "properties": {
-          "avgUsersPerTenant": {
-            "type": "number",
-            "format": "double"
-          },
-          "avgAppsPerTenant": {
-            "type": "number",
-            "format": "double"
-          },
-          "avgMembershipsPerApp": {
-            "type": "number",
-            "format": "double"
-          },
-          "tenantsWithoutApps": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "tenantsWithoutUsers": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "BaseResponseRevokeUserSessionResult": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "success": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "failure": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "data": {
-            "$ref": "#/components/schemas/RevokeUserSessionResult"
-          },
-          "debug": {
-            "$ref": "#/components/schemas/MessageResponse"
-          },
-          "throwable": {
-            "type": "string"
-          }
-        }
-      },
-      "RevokeUserSessionResult": {
-        "type": "object",
-        "properties": {
-          "sessionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "alreadyClosed": {
-            "type": "boolean"
-          }
-        }
-      }
-    },
     "securitySchemes": {
       "BearerAuth": {
         "type": "http",

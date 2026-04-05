@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { getAppApiError } from '@/api/errorNormalizer'
@@ -8,28 +9,40 @@ import { registerUser } from '@/api/users'
 import { useHoneypot } from '@/hooks/useHoneypot'
 import { HoneypotField } from '@/components/HoneypotField'
 import { TurnstileWidget } from '@/components/TurnstileWidget'
+import { LocaleSwitcher } from '@/components/LocaleSwitcher'
 import { env } from '@/config/env'
 import { AppFooter } from '@/components/AppFooter'
 
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
 
-// ── Steps ─────────────────────────────────────────────────────────────────────
+// ── Step definitions ──────────────────────────────────────────────────────────
 
-const STEPS = [
-  { label: 'Tu empresa' },
-  { label: 'Tus datos' },
-] as const
+const STEP_KEYS = ['company', 'personal'] as const
+type StepKey = (typeof STEP_KEYS)[number]
+
+// ── TypeScript types ──────────────────────────────────────────────────────────
+
+type CompanyValues = { tenantSlug: string; clientId: string }
+type PersonalValues = {
+  firstName?: string
+  lastName?: string
+  username: string
+  email: string
+  password: string
+  confirmPassword: string
+}
 
 // ── Step indicator ────────────────────────────────────────────────────────────
 
 function StepIndicator({ current }: { current: number }) {
+  const { t } = useTranslation()
   return (
-    <nav aria-label="Pasos del registro" className="flex items-center justify-center gap-0 mb-8">
-      {STEPS.map((step, idx) => {
+    <nav aria-label={t('register.steps.ariaNb')} className="flex items-center justify-center gap-0 mb-8">
+      {STEP_KEYS.map((key, idx) => {
         const isDone = idx < current
         const isActive = idx === current
         return (
-          <div key={step.label} className="flex items-center">
+          <div key={key} className="flex items-center">
             <div className="flex flex-col items-center gap-1">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
@@ -50,10 +63,10 @@ function StepIndicator({ current }: { current: number }) {
                 )}
               </div>
               <span className={`text-xs font-medium hidden sm:block ${isActive ? 'text-indigo-700' : isDone ? 'text-emerald-600' : 'text-slate-400'}`}>
-                {step.label}
+                {t(`register.steps.${key as StepKey}`)}
               </span>
             </div>
-            {idx < STEPS.length - 1 && (
+            {idx < STEP_KEYS.length - 1 && (
               <div className={`w-16 sm:w-24 h-0.5 mx-1 mb-4 ${isDone ? 'bg-emerald-400' : 'bg-slate-200'}`} aria-hidden="true" />
             )}
           </div>
@@ -65,18 +78,6 @@ function StepIndicator({ current }: { current: number }) {
 
 // ── Step 1 — Company ──────────────────────────────────────────────────────────
 
-const companySchema = z.object({
-  tenantSlug: z
-    .string()
-    .min(1, 'El identificador de empresa es obligatorio')
-    .regex(/^[a-z0-9-]+$/, 'Solo letras en minúscula, números y guiones'),
-  clientId: z
-    .string()
-    .min(1, 'El ID de aplicación es obligatorio'),
-})
-
-type CompanyValues = z.infer<typeof companySchema>
-
 function CompanyStep({
   defaultValues,
   onNext,
@@ -84,22 +85,32 @@ function CompanyStep({
   defaultValues: Partial<CompanyValues>
   onNext: (data: CompanyValues) => void
 }) {
+  const { t } = useTranslation()
+  const schema = z.object({
+    tenantSlug: z
+      .string()
+      .min(1, t('register.company.errors.tenantSlugRequired'))
+      .regex(/^[a-z0-9-]+$/, t('register.company.errors.tenantSlugPattern')),
+    clientId: z
+      .string()
+      .min(1, t('register.company.errors.clientIdRequired')),
+  })
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<CompanyValues>({
-    resolver: zodResolver(companySchema),
+    resolver: zodResolver(schema),
     defaultValues,
   })
 
   return (
     <form onSubmit={handleSubmit(onNext)} noValidate>
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Identifica tu empresa</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('register.company.title')}</h2>
         <p className="text-slate-500 text-sm max-w-md mx-auto">
-          Ingresa el identificador de tu empresa en KeyGo. Si no lo conoces, consulta
-          con el administrador de tu organización.
+          {t('register.company.description')}
         </p>
       </div>
 
@@ -107,13 +118,13 @@ function CompanyStep({
         {/* Tenant slug */}
         <div>
           <label htmlFor="tenantSlug" className="block text-sm font-medium text-slate-700 mb-1.5">
-            Identificador de empresa <span className="text-red-500" aria-hidden="true">*</span>
+            {t('register.company.tenantSlugLabel')} <span className="text-red-500" aria-hidden="true">*</span>
           </label>
           <input
             id="tenantSlug"
             type="text"
             autoComplete="off"
-            placeholder="ej: mi-empresa"
+            placeholder={t('register.company.tenantSlugPlaceholder')}
             {...register('tenantSlug')}
             className={`w-full rounded-lg border px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 bg-white outline-none transition-colors
               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
@@ -123,20 +134,20 @@ function CompanyStep({
             <p className="mt-1.5 text-xs text-red-600" role="alert">{errors.tenantSlug.message}</p>
           )}
           <p className="mt-1.5 text-xs text-slate-400">
-            Solo minúsculas, números y guiones. Ejemplo: <code className="font-mono bg-slate-100 px-1 rounded">acme-corp</code>
+            {t('register.company.tenantSlugHint')} <code className="font-mono bg-slate-100 px-1 rounded">acme-corp</code>
           </p>
         </div>
 
         {/* Client ID */}
         <div>
           <label htmlFor="clientId" className="block text-sm font-medium text-slate-700 mb-1.5">
-            ID de aplicación <span className="text-red-500" aria-hidden="true">*</span>
+            {t('register.company.clientIdLabel')} <span className="text-red-500" aria-hidden="true">*</span>
           </label>
           <input
             id="clientId"
             type="text"
             autoComplete="off"
-            placeholder="ej: mi-empresa-app"
+            placeholder={t('register.company.clientIdPlaceholder')}
             {...register('clientId')}
             className={`w-full rounded-lg border px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 bg-white outline-none transition-colors
               focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
@@ -146,7 +157,7 @@ function CompanyStep({
             <p className="mt-1.5 text-xs text-red-600" role="alert">{errors.clientId.message}</p>
           )}
           <p className="mt-1.5 text-xs text-slate-400">
-            Proporcionado por el administrador de tu organización junto con el identificador de empresa.
+            {t('register.company.clientIdHint')}
           </p>
         </div>
 
@@ -155,7 +166,7 @@ function CompanyStep({
             type="submit"
             className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
-            Continuar
+            {t('register.company.continueBtn')}
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
@@ -166,7 +177,7 @@ function CompanyStep({
       {/* No tenant CTA */}
       <div className="mt-8 pt-6 border-t border-slate-100 text-center">
         <p className="text-sm text-slate-500 mb-3">
-          ¿Tu empresa aún no usa KeyGo?
+          {t('register.company.noTenantQuestion')}
         </p>
         <Link
           to="/subscribe"
@@ -175,7 +186,7 @@ function CompanyStep({
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
-          Contratar KeyGo para tu organización
+          {t('register.company.noTenantCta')}
         </Link>
       </div>
     </form>
@@ -183,20 +194,6 @@ function CompanyStep({
 }
 
 // ── Step 2 — Personal data ────────────────────────────────────────────────────
-
-const personalSchema = z.object({
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
-  username: z.string().min(1, 'El nombre de usuario es obligatorio').max(100),
-  email: z.string().min(1, 'El correo es obligatorio').email('Ingresa un correo válido'),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
-  confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
-}).refine((d) => d.password === d.confirmPassword, {
-  message: 'Las contraseñas no coinciden',
-  path: ['confirmPassword'],
-})
-
-type PersonalValues = z.infer<typeof personalSchema>
 
 function PersonalStep({
   onBack,
@@ -209,11 +206,24 @@ function PersonalStep({
   isSubmitting: boolean
   error: string | null
 }) {
+  const { t } = useTranslation()
+  const schema = z.object({
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    username: z.string().min(1, t('register.personal.errors.usernameRequired')).max(100),
+    email: z.string().min(1, t('register.personal.errors.emailRequired')).email(t('register.personal.errors.emailInvalid')),
+    password: z.string().min(8, t('register.personal.errors.passwordMin')),
+    confirmPassword: z.string().min(1, t('register.personal.errors.confirmPasswordRequired')),
+  }).refine((d) => d.password === d.confirmPassword, {
+    message: t('register.personal.errors.passwordMismatch'),
+    path: ['confirmPassword'],
+  })
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<PersonalValues>({ resolver: zodResolver(personalSchema) })
+  } = useForm<PersonalValues>({ resolver: zodResolver(schema) })
 
   const honeypot = useHoneypot()
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
@@ -259,22 +269,21 @@ function PersonalStep({
       <HoneypotField name="website" {...honeypot.fieldProps} />
 
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">Tus datos personales</h2>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('register.personal.title')}</h2>
         <p className="text-slate-500 text-sm max-w-md mx-auto">
-          Completa tu información. El administrador de tu empresa deberá aprobar
-          tu solicitud antes de que puedas acceder.
+          {t('register.personal.description')}
         </p>
       </div>
 
       <div className="max-w-md mx-auto space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          {field('firstName', 'Nombre', 'text', false, 'Juan')}
-          {field('lastName', 'Apellido', 'text', false, 'Pérez')}
+          {field('firstName', t('register.personal.firstNameLabel'), 'text', false, t('register.personal.firstNamePlaceholder'))}
+          {field('lastName', t('register.personal.lastNameLabel'), 'text', false, t('register.personal.lastNamePlaceholder'))}
         </div>
-        {field('username', 'Nombre de usuario', 'text', true, 'juanperez')}
-        {field('email', 'Correo corporativo', 'email', true, 'juan@miempresa.com')}
-        {field('password', 'Contraseña', 'password', true, 'Mínimo 8 caracteres')}
-        {field('confirmPassword', 'Confirmar contraseña', 'password', true, 'Repite la contraseña')}
+        {field('username', t('register.personal.usernameLabel'), 'text', true, t('register.personal.usernamePlaceholder'))}
+        {field('email', t('register.personal.emailLabel'), 'email', true, t('register.personal.emailPlaceholder'))}
+        {field('password', t('register.personal.passwordLabel'), 'password', true, t('register.personal.passwordPlaceholder'))}
+        {field('confirmPassword', t('register.personal.confirmPasswordLabel'), 'password', true, t('register.personal.confirmPasswordPlaceholder'))}
 
         {error && (
           <div className="flex items-start gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-4 py-3" role="alert">
@@ -292,7 +301,7 @@ function PersonalStep({
             disabled={isSubmitting}
             className="flex-1 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50"
           >
-            Atrás
+            {t('register.personal.backBtn')}
           </button>
 
           <div className="flex-1 flex flex-col gap-2">
@@ -310,10 +319,10 @@ function PersonalStep({
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Registrando…
+                  {t('register.personal.submittingBtn')}
                 </>
               ) : (
-                'Crear cuenta'
+                t('register.personal.submitBtn')
               )}
             </button>
           </div>
@@ -326,6 +335,7 @@ function PersonalStep({
 // ── Success state ─────────────────────────────────────────────────────────────
 
 function SuccessState({ email }: { email: string }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   return (
     <div className="text-center py-6 max-w-md mx-auto">
@@ -335,15 +345,14 @@ function SuccessState({ email }: { email: string }) {
         </svg>
       </div>
 
-      <h2 className="text-2xl font-bold text-slate-900 mb-3">¡Solicitud enviada!</h2>
+      <h2 className="text-2xl font-bold text-slate-900 mb-3">{t('register.success.title')}</h2>
 
       <p className="text-slate-500 text-sm mb-2">
-        Hemos enviado un correo de verificación a{' '}
+        {t('register.success.sentEmailPre')}{' '}
         <strong className="text-slate-700">{email}</strong>.
       </p>
       <p className="text-slate-500 text-sm mb-6">
-        Una vez que verifiques tu correo, el administrador de tu empresa revisará
-        y aprobará tu acceso. Recibirás una notificación cuando esté listo.
+        {t('register.success.pendingApprovalBody')}
       </p>
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-left mb-6">
@@ -352,7 +361,9 @@ function SuccessState({ email }: { email: string }) {
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           <p className="text-xs text-amber-700">
-            El enlace de verificación caduca en <strong>30 minutos</strong>. Revisa tu bandeja de spam si no lo encuentras.
+            {t('register.success.linkExpiryPre')}{' '}
+            <strong>{t('register.success.linkExpiryDuration')}</strong>
+            {t('register.success.linkExpirySuffix')}
           </p>
         </div>
       </div>
@@ -361,7 +372,7 @@ function SuccessState({ email }: { email: string }) {
         onClick={() => navigate('/login')}
         className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
-        Ir al inicio de sesión
+        {t('register.success.goToLoginBtn')}
       </button>
     </div>
   )
@@ -370,6 +381,7 @@ function SuccessState({ email }: { email: string }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function UserRegisterPage() {
+  const { t } = useTranslation()
   const [step, setStep] = useState(0)
   const [company, setCompany] = useState<{ tenantSlug: string; clientId: string } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -399,15 +411,13 @@ export default function UserRegisterPage() {
     } catch (err) {
       const appError = getAppApiError(err)
       if (appError.code === 'RESOURCE_NOT_FOUND') {
-        setSubmitError(
-          'No se encontró la empresa o la aplicación. Verifica el identificador con tu administrador.',
-        )
+        setSubmitError(t('register.errors.tenantOrAppNotFound'))
       } else if (
         appError.code === 'DUPLICATE_RESOURCE'
         || appError.code === 'CONFLICT'
         || appError.httpStatus === 409
       ) {
-        setSubmitError('Ya existe una cuenta con ese correo o nombre de usuario.')
+        setSubmitError(t('register.errors.duplicateAccount'))
       } else {
         setSubmitError(appError.clientMessage)
       }
@@ -420,21 +430,27 @@ export default function UserRegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 flex flex-col">
       {/* Top bar */}
       <header className="py-4 px-6 border-b border-white/60 bg-white/70 backdrop-blur-sm">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg"
-            aria-label="Volver al inicio"
-          >
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg" aria-label={t('subscribe.header.backHomeAria')}>
             <svg className="w-6 h-6 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
             </svg>
-            <span className="font-bold text-slate-900">KeyGo</span>
+            <span className="hidden sm:inline font-bold text-slate-900">KeyGo</span>
           </Link>
-          <Link to="/login" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">
-            ¿Ya tienes cuenta?{' '}
-            <span className="font-semibold text-indigo-600">Iniciar sesión</span>
-          </Link>
+          <div className="flex items-center gap-3">
+            <LocaleSwitcher
+              compact
+              triggerClassName="h-10 border border-slate-300 bg-white px-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-indigo-500"
+              panelClassName="absolute right-0 top-full mt-2 w-full rounded-lg border border-slate-200 bg-white py-1 shadow-xl z-50"
+              optionClassName="text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+              activeOptionClassName="text-indigo-700 bg-indigo-50 font-semibold"
+              selectedValueClassName="hidden sm:inline font-semibold text-slate-900"
+            />
+            <Link to="/login" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">
+              <span className="hidden sm:inline">{t('subscribe.header.alreadyHaveAccount')}{' '}</span>
+              <span className="font-semibold text-indigo-600">{t('subscribe.header.login')}</span>
+            </Link>
+          </div>
         </div>
       </header>
 

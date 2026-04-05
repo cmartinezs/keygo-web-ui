@@ -28,11 +28,6 @@ import type {
   UnlinkAccountConnectionResult,
   WireAccountConnectionData,
   WireLinkAccountConnectionResult,
-  WireChangePasswordRequest,
-  WireAccountSessionData,
-  WireRevokeSessionResult,
-  WireNotificationPreferencesData,
-  WireUpdateNotificationPreferencesRequest,
   WireUserAccessData,
 } from '@/types/user'
 import { unwrapResponseData } from './response'
@@ -69,61 +64,14 @@ const connectionUrl = (tenantSlug: string, connectionId: string) =>
   `${connectionsUrl(tenantSlug)}/${encodeURIComponent(connectionId)}`
 
 // ── Mappers (boundary wire ↔ internal) ────────────────────────────────────────
-// Convierten entre el formato camelCase del backend y los DTOs snake_case internos.
+// Solo cuando la forma del wire difiere del DTO interno.
 // Solo se usan dentro de este módulo; nunca exponer al exterior.
-
-function toWireChangePassword(req: ChangePasswordRequest): WireChangePasswordRequest {
-  return { currentPassword: req.current_password, newPassword: req.new_password }
-}
-
-function fromWireSession(wire: WireAccountSessionData): AccountSessionData {
-  return {
-    session_id: wire.sessionId,
-    status: wire.status,
-    browser: wire.browser,
-    os: wire.os,
-    device_type: wire.deviceType,
-    ip_address: wire.ipAddress,
-    created_at: wire.createdAt,
-    last_accessed_at: wire.lastAccessedAt,
-    expires_at: wire.expiresAt,
-    is_current: wire.isCurrent,
-  }
-}
-
-function fromWireRevokeSession(wire: WireRevokeSessionResult): RevokeAccountSessionResult {
-  return { session_id: wire.sessionId, already_closed: wire.alreadyClosed }
-}
-
-function fromWireNotificationPreferences(
-  wire: WireNotificationPreferencesData,
-): NotificationPreferencesData {
-  return {
-    security_alerts_email: wire.securityAlertsEmail,
-    security_alerts_in_app: wire.securityAlertsInApp,
-    billing_alerts_email: wire.billingAlertsEmail,
-    product_updates_email: wire.productUpdatesEmail,
-    weekly_digest: wire.weeklyDigest,
-  }
-}
-
-function toWireUpdateNotificationPreferences(
-  req: UpdateNotificationPreferencesRequest,
-): WireUpdateNotificationPreferencesRequest {
-  return {
-    ...(req.security_alerts_email !== undefined && { securityAlertsEmail: req.security_alerts_email }),
-    ...(req.security_alerts_in_app !== undefined && { securityAlertsInApp: req.security_alerts_in_app }),
-    ...(req.billing_alerts_email !== undefined && { billingAlertsEmail: req.billing_alerts_email }),
-    ...(req.product_updates_email !== undefined && { productUpdatesEmail: req.product_updates_email }),
-    ...(req.weekly_digest !== undefined && { weeklyDigest: req.weekly_digest }),
-  }
-}
 
 function fromWireUserAccess(wire: WireUserAccessData): AccountAccessData {
   return {
-    app_id: wire.clientAppId,
-    app_name: wire.clientAppName,
-    membership_id: wire.membershipId,
+    app_id: wire.client_app_id,
+    app_name: wire.client_app_name,
+    membership_id: wire.membership_id,
     status: wire.status,
     roles: wire.roles,
   }
@@ -192,7 +140,7 @@ export async function changePassword(
 ): Promise<ChangePasswordResult> {
   const res = await apiClient.post<BaseResponse<ChangePasswordResult>>(
     changePasswordUrl(tenantSlug),
-    toWireChangePassword(data),
+    data,
     {
       signal: options?.signal,
       timeout: options?.timeoutMs,
@@ -281,11 +229,11 @@ export async function getSessions(
   tenantSlug: string,
   options?: RequestOptions,
 ): Promise<AccountSessionData[]> {
-  const res = await apiClient.get<BaseResponse<WireAccountSessionData[]>>(sessionsUrl(tenantSlug), {
+  const res = await apiClient.get<BaseResponse<AccountSessionData[]>>(sessionsUrl(tenantSlug), {
     signal: options?.signal,
     timeout: options?.timeoutMs,
   })
-  return unwrapResponseData(res.data, 'Error al obtener sesiones activas').map(fromWireSession)
+  return unwrapResponseData(res.data, 'Error al obtener sesiones activas')
 }
 
 /**
@@ -297,14 +245,14 @@ export async function revokeSession(
   sessionId: string,
   options?: RequestOptions,
 ): Promise<RevokeAccountSessionResult> {
-  const res = await apiClient.delete<BaseResponse<WireRevokeSessionResult>>(
+  const res = await apiClient.delete<BaseResponse<RevokeAccountSessionResult>>(
     sessionUrl(tenantSlug, sessionId),
     {
       signal: options?.signal,
       timeout: options?.timeoutMs,
     },
   )
-  return fromWireRevokeSession(unwrapResponseData(res.data, 'Error al cerrar la sesion seleccionada'))
+  return unwrapResponseData(res.data, 'Error al cerrar la sesion seleccionada')
 }
 
 /**
@@ -315,16 +263,14 @@ export async function getNotificationPreferences(
   tenantSlug: string,
   options?: RequestOptions,
 ): Promise<NotificationPreferencesData> {
-  const res = await apiClient.get<BaseResponse<WireNotificationPreferencesData>>(
+  const res = await apiClient.get<BaseResponse<NotificationPreferencesData>>(
     notificationPreferencesUrl(tenantSlug),
     {
       signal: options?.signal,
       timeout: options?.timeoutMs,
     },
   )
-  return fromWireNotificationPreferences(
-    unwrapResponseData(res.data, 'Error al obtener preferencias de notificacion'),
-  )
+  return unwrapResponseData(res.data, 'Error al obtener preferencias de notificacion')
 }
 
 /**
@@ -336,9 +282,9 @@ export async function updateNotificationPreferences(
   data: UpdateNotificationPreferencesRequest,
   options?: RequestOptions,
 ): Promise<NotificationPreferencesData> {
-  const res = await apiClient.patch<BaseResponse<WireNotificationPreferencesData>>(
+  const res = await apiClient.patch<BaseResponse<NotificationPreferencesData>>(
     notificationPreferencesUrl(tenantSlug),
-    toWireUpdateNotificationPreferences(data),
+    data,
     {
       signal: options?.signal,
       timeout: options?.timeoutMs,
@@ -347,9 +293,7 @@ export async function updateNotificationPreferences(
         : undefined,
     },
   )
-  return fromWireNotificationPreferences(
-    unwrapResponseData(res.data, 'Error al actualizar preferencias de notificacion'),
-  )
+  return unwrapResponseData(res.data, 'Error al actualizar preferencias de notificacion')
 }
 
 /**
