@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -92,10 +92,18 @@
       #kg-boot .wrap {
         width: min(92vw, 560px);
         padding: 1.5rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        /* Remove initial border to avoid visible white edge on some browsers */
+        border: none;
         border-radius: 20px;
         background: rgba(15, 23, 42, 0.85);
         box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+      }
+
+      /* Ensure no white background shows around rounded elements before app loads */
+      html, body {
+        background: #020617;
+        margin: 0;
+        height: 100%;
       }
       #kg-boot .row {
         display: flex;
@@ -138,8 +146,8 @@
           <div class="row">
             <span class="spinner" aria-hidden="true"></span>
             <div>
-              <h1>Cargando KeyGo</h1>
-              <p>Estamos iniciando la aplicacion. Esto puede tardar unos segundos.</p>
+              <h1>Loading KeyGo</h1>
+              <p>We are starting the application. This may take a few seconds.</p>
             </div>
           </div>
         </div>
