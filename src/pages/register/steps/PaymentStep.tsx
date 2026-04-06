@@ -83,11 +83,12 @@ export function PaymentStep({ plan, version, billingOption, isProcessing, error,
             </svg>
             <span>{t('subscribe.steps.payment.devMode')}</span>
           </div>
+          <div className="flex justify-end">
           <button
             type="button"
             onClick={onMockApprove}
             disabled={isProcessing}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"
+            className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"
           >
             {isProcessing ? (
               <>
@@ -101,6 +102,7 @@ export function PaymentStep({ plan, version, billingOption, isProcessing, error,
                 t('subscribe.steps.payment.confirmMockPayment')
             )}
           </button>
+          </div>
         </div>
       ) : (
         /* PROD: pasarela de pago real pendiente */

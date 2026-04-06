@@ -117,4 +117,33 @@ describe('errorNormalizer', () => {
     expect(isAppApiError(normalized)).toBe(true)
     expect(isAppApiError(new Error('Nope'))).toBe(false)
   })
+
+  it('maps snake_case backend fields: client_message and trace_id', () => {
+    // Real backend 500 payload uses snake_case inside data
+    const error = createAxiosLikeError({
+      status: 500,
+      data: {
+        date: '2026-04-05T20:51:47.740944735',
+        failure: { code: 'OPERATION_FAILED', message: 'Operation failed to complete' },
+        data: {
+          client_message: "We couldn't complete the request. Try again in a few moments.",
+          code: 'OPERATION_FAILED',
+          detail: "Contract cannot perform 'verifyCode' in state: PENDING_PAYMENT",
+          exception: 'ContractStateViolationException',
+          layer: 'DOMAIN',
+          origin: 'SERVER_PROCESSING',
+          trace_id: 'a5c9268a-0ca5-4d1c-b712-3f3b7b4e4cb7',
+        } as unknown as import('@/types/base').ErrorData,
+      },
+    })
+
+    const normalized = normalizeApiError(error)
+
+    // client_message must win over failure.message
+    expect(normalized.clientMessage).toBe("We couldn't complete the request. Try again in a few moments.")
+    expect(normalized.traceId).toBe('a5c9268a-0ca5-4d1c-b712-3f3b7b4e4cb7')
+    expect(normalized.origin).toBe('SERVER_PROCESSING')
+    expect(normalized.code).toBe('OPERATION_FAILED')
+    expect(normalized.retryable).toBe(true)
+  })
 })

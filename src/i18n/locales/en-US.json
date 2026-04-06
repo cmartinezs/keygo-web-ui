@@ -191,7 +191,7 @@
       "descriptionPrefix": "KeyGo is the identity management platform that centralizes user access, protects your applications, and lets each person see",
       "descriptionEmphasis": "exactly what they need",
       "descriptionSuffix": "without friction and with the security your organization deserves.",
-      "startNow": "Start now ->",
+      "startNow": "Start now",
       "viewFeatures": "View features",
       "stats": {
         "secureAccess": {
@@ -358,8 +358,8 @@
       "optional": "optional"
     },
     "actions": {
-      "continue": "Continue ->",
-      "back": "<- Back",
+      "continue": "Continue",
+      "back": "Back",
       "processing": "Processing..."
     },
     "layout": {
@@ -387,11 +387,13 @@
       "description": "Enter the contract ID to continue from step 4 of this flow.",
       "contractIdLabel": "Contract ID",
       "contractIdHint": "You can find this ID in the email you received when starting the subscription.",
-      "backToNew": "<- Back to new flow",
+      "backToNew": "Back to new flow",
       "searching": "Searching...",
-      "continueContract": "Continue contract ->",
+      "continueContract": "Continue contract",
       "ctaPrefix": "Started a subscription before?",
       "ctaAction": "Continue at step 4 with an existing contract",
+      "ctaNewProcessPrefix": "Want to start from the beginning?",
+      "ctaNewProcessAction": "Start a new process",
       "errors": {
         "planNotAvailable": "We could not associate this contract with an active catalog plan. Start a new subscription.",
         "alreadyProcessed": "This contract is already processed. You can sign in with your active account.",
@@ -486,7 +488,7 @@
         "acceptPrivacySuffix": ", including the processing of my personal data.",
         "termsModalTitle": "Terms of Use and Service",
         "privacyModalTitle": "Privacy Policy",
-        "confirmAndContinue": "Confirm and continue ->"
+        "confirmAndContinue": "Confirm and continue"
       },
       "email": {
         "title": "Verify your email",
@@ -496,7 +498,7 @@
         "descriptionSuffix": "Enter it below to continue.",
         "helpText": "The code is valid for 30 minutes. If you do not see the email, check your spam folder.",
         "verifying": "Verifying...",
-        "verifyCode": "Verify code ->",
+        "verifyCode": "Verify code",
         "resending": "Sending...",
         "resendIn": "Resend code in {{seconds}}s",
         "resend": "Did not receive the code? Resend"
@@ -510,7 +512,7 @@
         "oneTimePayment": "One-time payment",
         "trialInfo": "The first {{days}} days are free. Billing starts after the trial period.",
         "devMode": "Development mode - simulated payment",
-        "confirmMockPayment": "Confirm payment (simulated) ->",
+        "confirmMockPayment": "Confirm payment (simulated)",
         "gatewayPending": "The payment gateway will be available soon. Our team will contact you."
       },
       "success": {
@@ -519,8 +521,8 @@
         "descriptionSuffix": "has been activated successfully.",
         "accessEmailLabel": "Access email",
         "helpText": "You will receive an email with your access credentials shortly. Use the button below to sign in.",
-        "goToLogin": "Go to sign in ->",
-        "backToHome": "<- Back to home"
+        "goToLogin": "Go to sign in",
+        "backToHome": "Back to home"
       }
     },
     "resumeLookup": {
@@ -529,7 +531,7 @@
       "contractIdLabel": "Contract ID",
       "contractIdHint": "You can find it in the confirmation email you received when starting the process.",
       "searching": "Searching...",
-      "continue": "Continue ->",
+      "continue": "Continue",
       "noContractYet": "Do not have a contract yet?",
       "startContract": "Start subscription"
     },
@@ -545,14 +547,14 @@
       "description": "Your subscription has been activated successfully.",
       "accessEmailLabel": "Access email",
       "helpText": "You will receive an email with your credentials shortly.",
-      "goToLogin": "Go to sign in ->"
+      "goToLogin": "Go to sign in"
     },
     "terminal": {
       "activeTitle": "Contract already activated",
       "unrecoverableTitle": "Contract unavailable",
       "activeDescription": "This contract has already been processed. Your account is active and you can sign in.",
       "unrecoverableDescription": "This contract has expired or was cancelled. Please start a new subscription process.",
-      "goToLogin": "Go to sign in ->",
+      "goToLogin": "Go to sign in",
       "newContract": "New subscription"
     }
   },

@@ -263,7 +263,7 @@ function ResumeLookupStep({
   onSubmit,
   isLoading,
   error,
-  onExit,
+  onExit: _onExit,
 }: ResumeLookupStepProps) {
   const { t } = useTranslation()
   return (
@@ -301,20 +301,18 @@ function ResumeLookupStep({
         )}
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onExit}
-          className="flex-1 sm:flex-none border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
-        >
-          {t('subscribe.resume.backToNew')}
-        </button>
+      <div className="flex justify-end gap-3 pt-2">
         <button
           type="submit"
           disabled={!inputId.trim() || isLoading}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
         >
-          {isLoading ? t('subscribe.resume.searching') : t('subscribe.resume.continueContract')}
+          {isLoading ? t('subscribe.resume.searching') : (
+            <>
+              {t('subscribe.resume.continueContract')}
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+            </>
+          )}
         </button>
       </div>
     </form>
@@ -703,10 +701,7 @@ export default function NewContractPage() {
               activeOptionClassName="text-indigo-700 bg-indigo-50 font-semibold"
               selectedValueClassName="hidden sm:inline font-semibold text-slate-900"
             />
-            <Link to="/login" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">
-              <span className="hidden sm:inline">{t('subscribe.header.alreadyHaveAccount')}{' '}</span>
-              <span className="font-semibold text-indigo-600">{t('subscribe.header.login')}</span>
-            </Link>
+
           </div>
         </div>
       </header>
@@ -803,16 +798,39 @@ export default function NewContractPage() {
                       />
                     )}
 
-                    <p className="text-center text-sm text-slate-500 mt-6 pt-4 border-t border-slate-100">
-                      {t('subscribe.resume.ctaPrefix')}{' '}
-                      <button
-                        type="button"
-                        onClick={startResumeMode}
-                        className="text-indigo-600 font-semibold hover:text-indigo-500 underline-offset-2 hover:underline"
-                      >
-                        {t('subscribe.resume.ctaAction')}
-                      </button>
-                    </p>
+                    <div className="mt-6 pt-4 border-t border-slate-100 flex flex-col items-center gap-2 text-center text-sm text-slate-500">
+                      <p>
+                        {isResumeMode ? (
+                          <>
+                            {t('subscribe.resume.ctaNewProcessPrefix')}{' '}
+                            <button
+                              type="button"
+                              onClick={stopResumeMode}
+                              className="text-indigo-600 font-semibold hover:text-indigo-500 underline-offset-2 hover:underline"
+                            >
+                              {t('subscribe.resume.ctaNewProcessAction')}
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {t('subscribe.resume.ctaPrefix')}{' '}
+                            <button
+                              type="button"
+                              onClick={startResumeMode}
+                              className="text-indigo-600 font-semibold hover:text-indigo-500 underline-offset-2 hover:underline"
+                            >
+                              {t('subscribe.resume.ctaAction')}
+                            </button>
+                          </>
+                        )}
+                      </p>
+                      <p>
+                        {t('subscribe.header.alreadyHaveAccount')}{' '}
+                        <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-500 underline-offset-2 hover:underline">
+                          {t('subscribe.header.login')}
+                        </Link>
+                      </p>
+                    </div>
                   </>
                 )}
               </div>

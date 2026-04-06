@@ -20,6 +20,8 @@ export interface AppApiError extends Error {
   clientMessage: string
   detail?: string
   exception?: string
+  /** Identificador de traza del backend (enviado como `trace_id` en la respuesta). */
+  traceId?: string
   fieldErrors: FieldValidationError[]
   retryable: boolean
   raw: unknown
@@ -49,7 +51,18 @@ function extractErrorData(body: unknown): Partial<ErrorData> | undefined {
   if (!isRecord(body)) return undefined
   const data = body['data']
   if (!isRecord(data)) return undefined
-  return data as Partial<ErrorData>
+
+  // Normalize snake_case keys sent by the backend to the camelCase fields used in ErrorData.
+  // Both forms are supported so mocks and legacy payloads continue to work.
+  const normalized: Record<string, unknown> = { ...data }
+  if ('client_message' in data && !('clientMessage' in data)) {
+    normalized['clientMessage'] = data['client_message']
+  }
+  if ('trace_id' in data && !('traceId' in data)) {
+    normalized['traceId'] = data['trace_id']
+  }
+
+  return normalized as Partial<ErrorData>
 }
 
 function extractFailure(body: unknown): { code?: string; message?: string } {
@@ -111,6 +124,7 @@ export function normalizeApiError(error: unknown): AppApiError {
   normalized.clientMessage = message
   normalized.detail = typeof errorData?.detail === 'string' ? errorData.detail : undefined
   normalized.exception = typeof errorData?.exception === 'string' ? errorData.exception : undefined
+  normalized.traceId = typeof errorData?.traceId === 'string' ? errorData.traceId : undefined
   normalized.fieldErrors = resolveFieldErrors(errorData)
   normalized.retryable = isRetryable({
     status,
@@ -157,6 +171,7 @@ export function buildAppApiErrorFromBaseResponse<T>(
   normalized.clientMessage = message
   normalized.detail = typeof errorData?.detail === 'string' ? errorData.detail : undefined
   normalized.exception = typeof errorData?.exception === 'string' ? errorData.exception : undefined
+  normalized.traceId = typeof errorData?.traceId === 'string' ? errorData.traceId : undefined
   normalized.fieldErrors = resolveFieldErrors(errorData)
   normalized.retryable = isRetryable({
     status: undefined,

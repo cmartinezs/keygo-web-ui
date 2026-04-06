@@ -212,6 +212,26 @@ Actualizado automáticamente por el agente al final de cada implementación.
 
 > No bloquean funcionalidad actual pero mejoran mantenibilidad, DX o UX.
 
+### [MEJORA] Botón "Enviar reporte" para errores de servidor (SERVER_PROCESSING)
+- **Detectado en:** conversación de diseño de manejo de errores 2026-04-05
+- **Descripción:** Cuando ocurre un error `SERVER_PROCESSING` o 5xx, el DevConsole ya registra `trace_id`, `exception`, `detail` y el `clientMessage` correcto. El siguiente paso natural es ofrecer al usuario un botón "Enviar reporte" que envíe ese paquete diagnóstico al backend (o al menos lo copie al portapapeles como soporte de texto).
+- **Requisitos previos:**
+  1. Endpoint backend `POST /api/v1/error-reports` (pendiente de diseño con el equipo).
+  2. Definir política de rate-limit y almacenamiento en backend.
+  3. Decidir si el botón aparece en un toast expandible, en el DevConsole, o en un modal ad-hoc.
+- **Alternativa inmediata disponible:** el DevConsole ya muestra los detalles con comando `detail <N>`. Se puede usar copiar texto hasta tener el endpoint.
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-04-05
+
+### [MEJORA] Diseño formal de manejo de errores controlados vs. descontrolados
+- **Detectado en:** conversación de diseño de manejo de errores 2026-04-05
+- **Descripción:** Definir y documentar la estrategia completa para:
+  - **Controlados** (`CLIENT_REQUEST`, `BUSINESS_RULE`): mostrar `clientMessage` en toast o inline; no loguear detalles técnicos al DevConsole.
+  - **Descontrolados** (`SERVER_PROCESSING`, red, timeout): mostrar `clientMessage` al usuario + loguear `trace_id`, `exception`, `detail`, `layer` al DevConsole (ya implementado). Eventual botón de reporte.
+  - **Unhandled** (crash de React → `AppErrorBoundary`): ya tiene su propio flujo.
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-04-05
+
 ### [MEJORA] Telemetría de crashes desde AppErrorBoundary
 - **Detectado en:** `src/components/AppErrorBoundary.tsx`, `src/App.tsx`
 - **Descripción:** Cuando ocurra un crash de render, enviar un evento al backend con contexto mínimo para observabilidad (mensaje, `componentStack`, ruta actual, timestamp, `userAgent`, rol activo y tenant si existe), almacenarlo y exponerlo en un panel de monitoreo para soporte y diagnóstico.

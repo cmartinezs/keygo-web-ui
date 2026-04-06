@@ -181,20 +181,21 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
       {/* Cloudflare Turnstile CAPTCHA */}
       <TurnstileWidget onTokenChange={setCaptchaToken} />
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex justify-between gap-3 pt-2">
         <button
           type="button"
           onClick={onBack}
           disabled={isSubmitting}
-          className="flex-1 sm:flex-none border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
+          className="flex items-center gap-2 border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
+          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
           {t('subscribe.actions.back')}
         </button>
         <button
           type="button"
           onClick={onSubmit}
           disabled={!canSubmit}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"
+          className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>
@@ -205,7 +206,10 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
               {t('subscribe.actions.processing')}
             </>
           ) : (
-            t('subscribe.steps.terms.confirmAndContinue')
+            <>
+              {t('subscribe.steps.terms.confirmAndContinue')}
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+            </>
           )}
         </button>
       </div>

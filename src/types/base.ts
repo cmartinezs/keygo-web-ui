@@ -96,6 +96,11 @@ export interface ErrorData {
   exception?: string
   /** Errores de validación por campo (si aplica) */
   fieldErrors?: FieldValidationError[]
+  /**
+   * Identificador de traza del backend para correlación de logs.
+   * Enviado como `trace_id` (snake_case) en la respuesta — normalizado a camelCase por el frontend.
+   */
+  traceId?: string
 }
 
 /** Alias tipado para respuestas de error de la API */

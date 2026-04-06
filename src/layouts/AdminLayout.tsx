@@ -14,7 +14,6 @@ import type { SidebarMenuSection } from '@/components/dashboard/SidebarMenu'
 import type { DropdownOption } from '@/types/dropdown'
 import { resolvePrimaryRole } from '@/types/roles'
 import type { AppRole } from '@/types/roles'
-import { DevConsole } from '@/components/DevConsole'
 import {
   IconKey,
   IconChevronLeft,
@@ -543,8 +542,6 @@ export default function AdminLayout() {
           <Outlet />
         </main>
 
-        {/* DevConsole — visible only for ADMIN role */}
-        {sidebarRole === 'ADMIN' && <DevConsole />}
       </div>
     </div>
   )

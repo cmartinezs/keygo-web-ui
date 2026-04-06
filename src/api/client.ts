@@ -53,6 +53,16 @@ authClient.interceptors.request.use(attachTraceId)
 function onRejectedWithNormalizedError(error: unknown): Promise<never> {
   const appApiError = normalizeApiError(error)
 
+  // Push structured diagnostics to the DevConsole output for server-side errors so
+  // operators can inspect detail / exception / layer / trace_id without opening DevTools.
+  if (appApiError.origin === 'SERVER_PROCESSING' || (appApiError.httpStatus !== undefined && appApiError.httpStatus >= 500)) {
+    const store = useDevConsoleStore.getState()
+    store.push({ type: 'error', text: `[API ${appApiError.httpStatus ?? '5xx'}] ${appApiError.code ?? 'ERROR'} — ${appApiError.clientMessage}` })
+    if (appApiError.traceId)   store.push({ type: 'output', text: `  trace_id  ${appApiError.traceId}` })
+    if (appApiError.exception) store.push({ type: 'output', text: `  exception ${appApiError.exception}` })
+    if (appApiError.detail)    store.push({ type: 'output', text: `  detail    ${appApiError.detail}` })
+  }
+
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosErrorWithAppApiError
     axiosError.appApiError = appApiError
@@ -120,9 +130,10 @@ function finalizeDevConsoleError(error: unknown) {
     const start = error.config._devConsoleStart
     if (id) {
       useDevConsoleStore.getState().finalizeRequest(id, {
-        status:   error.response?.status,
-        duration: start !== undefined ? performance.now() - start : undefined,
-        error:    error.message,
+        status:       error.response?.status,
+        duration:     start !== undefined ? performance.now() - start : undefined,
+        responseBody: error.response?.data as unknown,
+        error:        error.message,
       })
     }
   }

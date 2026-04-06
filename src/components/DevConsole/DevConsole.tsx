@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useDevConsoleStore } from '@/lib/devConsole/store'
-import { runCommand } from '@/lib/devConsole/commands'
-import type { OutputLine, HttpLogEntry } from '@/lib/devConsole/store'
+import { runCommand, handleWizardInput } from '@/lib/devConsole/commands'
+import type { OutputLine, HttpLogEntry, ConsoleTab } from '@/lib/devConsole/store'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -46,9 +46,109 @@ function fmtMs(ms?: number): string {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+// ── TabBar ────────────────────────────────────────────────────────────────────
+
+function TabBar() {
+  const tabs         = useDevConsoleStore((s) => s.tabs)
+  const activeTabId  = useDevConsoleStore((s) => s.activeTabId)
+  const setActiveTab = useDevConsoleStore((s) => s.setActiveTab)
+  const addTab       = useDevConsoleStore((s) => s.addTab)
+  const closeTab     = useDevConsoleStore((s) => s.closeTab)
+  const renameTab    = useDevConsoleStore((s) => s.renameTab)
+
+  const [renamingId,  setRenamingId]  = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+  const renameRef = useRef<HTMLInputElement>(null)
+
+  function startRename(tab: ConsoleTab) {
+    setRenamingId(tab.id)
+    setRenameValue(tab.label)
+    requestAnimationFrame(() => renameRef.current?.select())
+  }
+
+  function commitRename() {
+    if (renamingId && renameValue.trim()) renameTab(renamingId, renameValue.trim())
+    setRenamingId(null)
+  }
+
+  function onRenameKey(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') commitRename()
+    if (e.key === 'Escape') setRenamingId(null)
+    e.stopPropagation()
+  }
+
+  return (
+    <div
+      className="flex items-stretch border-b border-white/10 shrink-0 overflow-x-auto"
+      role="tablist"
+      aria-label="Pestañas de consola"
+    >
+      {tabs.map((tab) => {
+        const isActive   = tab.id === activeTabId
+        const isRenaming = tab.id === renamingId
+        return (
+          <div
+            key={tab.id}
+            id={`devconsole-tab-${tab.id}`}
+            role="tab"
+            aria-selected={isActive}
+            aria-controls="dev-console-body"
+            onClick={() => { if (!isRenaming) setActiveTab(tab.id) }}
+            onDoubleClick={() => startRename(tab)}
+            className={[
+              'group flex items-center gap-1 px-3 h-7 border-r border-white/8',
+              'cursor-pointer whitespace-nowrap shrink-0 transition-colors select-none',
+              isActive
+                ? 'bg-white/8 text-white'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-white/4',
+            ].join(' ')}
+          >
+            {isRenaming ? (
+              <input
+                ref={renameRef}
+                type="text"
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                onKeyDown={onRenameKey}
+                onBlur={commitRename}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-transparent text-white outline-none w-24 font-mono text-[11px]"
+                autoComplete="off"
+                spellCheck={false}
+              />
+            ) : (
+              <span className="font-mono text-[11px]">{tab.label}</span>
+            )}
+            {tabs.length > 1 && !isRenaming && (
+              <button
+                onClick={(e) => { e.stopPropagation(); closeTab(tab.id) }}
+                aria-label={`Cerrar ${tab.label}`}
+                tabIndex={-1}
+                className="opacity-0 group-hover:opacity-100 w-3.5 h-3.5 flex items-center justify-center rounded hover:bg-white/15 text-slate-500 hover:text-white transition-all ml-0.5 shrink-0 text-base leading-none"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        )
+      })}
+      <button
+        onClick={() => addTab()}
+        aria-label="Nueva pestaña de consola"
+        title="Nueva pestaña (Alt+T)"
+        className="px-2.5 h-7 text-slate-600 hover:text-slate-300 hover:bg-white/5 transition-colors shrink-0 text-base leading-none"
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
+// ── HTTP helpers ──────────────────────────────────────────────────────────────
+
 function HttpTableHeader() {
   return (
-    <div className="flex gap-2 py-0.5 border-b border-white/5 mt-1 font-mono text-[10px] text-slate-600 select-none">
+    <div className="flex gap-2 py-0.5 border-b border-white/5 mt-1 font-mono text-[12px] text-slate-600 select-none">
       <span className="w-[68px] shrink-0">Hora</span>
       <span className="w-12   shrink-0">Metodo</span>
       <span className="flex-1 min-w-0">URL</span>
@@ -66,7 +166,7 @@ function HttpRow({ entry }: { entry: HttpLogEntry }) {
 
   return (
     <div
-      className="flex gap-2 py-0.5 font-mono text-[10px] items-center hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
+      className="flex gap-2 py-0.5 font-mono text-[12px] items-center hover:bg-white/5 rounded px-1 -mx-1 transition-colors"
       title={entry.url}
     >
       <span className="w-[68px] shrink-0 text-slate-500">{time}</span>
@@ -97,17 +197,41 @@ function OutputLineItem({ line }: { line: OutputLine }) {
     return <HttpRow entry={line.entry} />
   }
 
+  if (line.type === 'command') {
+    const tokens = line.text.trim().split(/\s+/)
+    return (
+      <div className="py-0.5 font-mono text-[13px] leading-relaxed">
+        <span className="text-indigo-300 select-none">❯ </span>
+        {tokens.map((token, i) => {
+          let cls: string
+          if (i === 0) {
+            cls = 'text-yellow-300'           // nombre del comando
+          } else if (token.startsWith('-')) {
+            cls = 'text-emerald-400'           // flag / config
+          } else if (tokens[i - 1]?.startsWith('-')) {
+            cls = 'text-orange-300'            // valor de flag
+          } else {
+            cls = 'text-cyan-300'              // argumento posicional
+          }
+          return (
+            <span key={i} className={cls}>
+              {token}{i < tokens.length - 1 ? ' ' : ''}
+            </span>
+          )
+        })}
+      </div>
+    )
+  }
+
   const cls: Record<string, string> = {
-    command: 'text-indigo-300',
     output:  'text-slate-300',
     error:   'text-red-400',
     info:    'text-cyan-400',
   }
-  const prefix = line.type === 'command' ? '❯ ' : '  '
 
   return (
-    <div className={`py-0.5 font-mono text-[11px] whitespace-pre-wrap break-all leading-relaxed ${cls[line.type] ?? 'text-slate-300'}`}>
-      {prefix}{line.text}
+    <div className={`py-0.5 font-mono text-[13px] whitespace-pre-wrap break-all leading-relaxed ${cls[line.type] ?? 'text-slate-300'}`}>
+      {'  '}{line.text}
     </div>
   )
 }
@@ -115,33 +239,73 @@ function OutputLineItem({ line }: { line: OutputLine }) {
 // ── Command input ─────────────────────────────────────────────────────────────
 
 function CommandInput({ focusRef }: { focusRef: React.RefObject<HTMLInputElement> }) {
-  const push        = useDevConsoleStore((s) => s.push)
-  const clearOutput = useDevConsoleStore((s) => s.clearOutput)
-  const httpLog     = useDevConsoleStore((s) => s.httpLog)
-  const addHistory  = useDevConsoleStore((s) => s.addHistory)
-  const history     = useDevConsoleStore((s) => s.history)
+  const push         = useDevConsoleStore((s) => s.push)
+  const clearOutput  = useDevConsoleStore((s) => s.clearOutput)
+  const httpLog      = useDevConsoleStore((s) => s.httpLog)
+  const addHistory   = useDevConsoleStore((s) => s.addHistory)
+  const setOpacity   = useDevConsoleStore((s) => s.setOpacity)
+  const opacity      = useDevConsoleStore((s) => s.opacity)
+  const addTab       = useDevConsoleStore((s) => s.addTab)
+  const closeTab     = useDevConsoleStore((s) => s.closeTab)
+  const renameTab    = useDevConsoleStore((s) => s.renameTab)
+  const tabs         = useDevConsoleStore((s) => s.tabs)
+  const activeTabId  = useDevConsoleStore((s) => s.activeTabId)
+  const setActiveTab = useDevConsoleStore((s) => s.setActiveTab)
+  const history      = useDevConsoleStore((s) => s.tabs.find((t) => t.id === s.activeTabId)?.history ?? [])
+  const wizard       = useDevConsoleStore((s) => s.wizard)
+  const setWizard    = useDevConsoleStore((s) => s.setWizard)
 
   const [value,   setValue]   = useState('')
   const [histIdx, setHistIdx] = useState(-1)
 
-  function submit() {
+  // Wizard placeholders per field
+  const wizardPlaceholders: Record<string, string> = {
+    method:  'GET | POST | PUT | PATCH | DELETE',
+    url:     '/api/v1/...  o  https://...',
+    body:    'JSON body  (Enter para omitir)',
+    headers: 'Clave:Valor, Clave2:Valor2  (Enter para omitir)',
+  }
+  const currentWizardField = wizard?.pendingFields[0]
+  const inputPlaceholder = currentWizardField
+    ? (wizardPlaceholders[currentWizardField] ?? 'Responde...')
+    : 'Escribe un comando… (help para ver opciones)'
+
+  async function submit() {
     const cmd = value.trim()
-    if (!cmd) return
-    addHistory(cmd)
-    runCommand(cmd, { httpLog, push, clear: clearOutput })
     setValue('')
     setHistIdx(-1)
+
+    if (wizard) {
+      await handleWizardInput(cmd, wizard, { push, setWizard })
+      return
+    }
+
+    if (!cmd) return
+    addHistory(cmd)
+    runCommand(cmd, {
+      httpLog, push, clear: clearOutput, setOpacity, opacity,
+      addTab,
+      closeTab: () => closeTab(activeTabId),
+      renameActiveTab: (name) => renameTab(activeTabId, name),
+      tabs, activeTabId, setActiveTab,
+      wizard, setWizard,
+    })
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
-      submit()
-    } else if (e.key === 'ArrowUp') {
+      void submit()
+    } else if (e.key === 'Escape' && wizard) {
+      e.preventDefault()
+      setWizard(null)
+      push({ type: 'info', text: '  Wizard cancelado.' })
+      setValue('')
+    } else if (e.key === 'ArrowUp' && !wizard) {
       e.preventDefault()
       const next = Math.min(histIdx + 1, history.length - 1)
       setHistIdx(next)
       setValue(history[next] ?? '')
-    } else if (e.key === 'ArrowDown') {
+    } else if (e.key === 'ArrowDown' && !wizard) {
       e.preventDefault()
       const next = Math.max(histIdx - 1, -1)
       setHistIdx(next)
@@ -151,16 +315,21 @@ function CommandInput({ focusRef }: { focusRef: React.RefObject<HTMLInputElement
 
   return (
     <div className="flex items-center gap-2 border-t border-white/10 px-3 py-1.5 shrink-0">
-      <span className="text-indigo-400 font-mono text-xs select-none" aria-hidden="true">❯</span>
+      <span
+        className={`font-mono text-sm select-none transition-colors ${wizard ? 'text-yellow-400' : 'text-indigo-400'}`}
+        aria-hidden="true"
+      >
+        {wizard ? '?' : '❯'}
+      </span>
       <input
         ref={focusRef}
         type="text"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={onKeyDown}
-        className="flex-1 bg-transparent text-slate-200 font-mono text-xs outline-none placeholder:text-slate-600 caret-indigo-400"
-        placeholder="Escribe un comando… (help para ver opciones)"
-        aria-label="Entrada de comando de consola"
+        className="flex-1 bg-transparent text-slate-200 font-mono text-sm outline-none placeholder:text-slate-600 caret-indigo-400"
+        placeholder={inputPlaceholder}
+        aria-label={wizard ? `Wizard HTTP — ${currentWizardField}` : 'Entrada de comando de consola'}
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
@@ -186,13 +355,18 @@ function RequestsBadge({ count }: { count: number }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function DevConsole() {
-  const open      = useDevConsoleStore((s) => s.open)
-  const height    = useDevConsoleStore((s) => s.height)
-  const output    = useDevConsoleStore((s) => s.output)
-  const httpLog   = useDevConsoleStore((s) => s.httpLog)
-  const toggle    = useDevConsoleStore((s) => s.toggle)
-  const setOpen   = useDevConsoleStore((s) => s.setOpen)
-  const setHeight = useDevConsoleStore((s) => s.setHeight)
+  const open         = useDevConsoleStore((s) => s.open)
+  const height       = useDevConsoleStore((s) => s.height)
+  const opacity      = useDevConsoleStore((s) => s.opacity)
+  const activeOutput = useDevConsoleStore((s) => s.tabs.find((t) => t.id === s.activeTabId)?.output ?? [])
+  const activeTabId  = useDevConsoleStore((s) => s.activeTabId)
+  const httpLog      = useDevConsoleStore((s) => s.httpLog)
+  const tabs         = useDevConsoleStore((s) => s.tabs)
+  const toggle       = useDevConsoleStore((s) => s.toggle)
+  const addTab       = useDevConsoleStore((s) => s.addTab)
+  const closeTab     = useDevConsoleStore((s) => s.closeTab)
+  const setActiveTab = useDevConsoleStore((s) => s.setActiveTab)
+  const setHeight    = useDevConsoleStore((s) => s.setHeight)
 
   const outputRef  = useRef<HTMLDivElement>(null)
   const inputRef   = useRef<HTMLInputElement>(null) as React.RefObject<HTMLInputElement>
@@ -205,7 +379,7 @@ export function DevConsole() {
     if (open && outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight
     }
-  }, [output, open])
+  }, [activeOutput, open])
 
   // ── Focus input when opening ────────────────────────────────────────────────
   useEffect(() => {
@@ -214,17 +388,33 @@ export function DevConsole() {
     }
   }, [open])
 
-  // ── Keyboard shortcut Ctrl+` ────────────────────────────────────────────────
+  // ── Keyboard shortcut Ctrl+` / Alt+T / Alt+W / Alt+] Alt+[ ─────────────────
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.ctrlKey && e.key === '`') {
         e.preventDefault()
         toggle()
+      } else if (e.altKey && e.key === 't') {
+        e.preventDefault()
+        addTab()
+      } else if (e.altKey && e.key === 'w') {
+        e.preventDefault()
+        if (tabs.length > 1) closeTab(activeTabId)
+      } else if (e.altKey && e.key === ']') {
+        e.preventDefault()
+        const idx = tabs.findIndex((t) => t.id === activeTabId)
+        const next = tabs[(idx + 1) % tabs.length]
+        if (next) setActiveTab(next.id)
+      } else if (e.altKey && e.key === '[') {
+        e.preventDefault()
+        const idx = tabs.findIndex((t) => t.id === activeTabId)
+        const prev = tabs[(idx - 1 + tabs.length) % tabs.length]
+        if (prev) setActiveTab(prev.id)
       }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [toggle])
+  }, [toggle, addTab, closeTab, tabs, activeTabId, setActiveTab])
 
   // ── Drag-to-resize ──────────────────────────────────────────────────────────
   const maxHeight = typeof window !== 'undefined'
@@ -257,27 +447,69 @@ export function DevConsole() {
 
   return (
     <div
-      className="shrink-0 bg-[#0d1117] border-t border-white/10 flex flex-col overflow-hidden"
-      style={{ height: open ? height : 28 }}
+      className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-stretch"
       role="region"
       aria-label="Consola de desarrollo KeyGo"
     >
-      {/* Drag handle — only when open */}
+      {/* ── Panel — visible when open, grows upward ── */}
       {open && (
         <div
-          className="h-1 w-full cursor-ns-resize bg-transparent hover:bg-indigo-500/30 shrink-0 transition-colors"
-          onMouseDown={onDragStart}
-          aria-hidden="true"
-          title="Arrastrar para redimensionar"
-        />
+          className="flex flex-col border border-b-0 border-white/10 rounded-t-lg overflow-hidden shadow-2xl shadow-black/60"
+          style={{ height, backgroundColor: `color-mix(in srgb, #0d1117 ${opacity}%, transparent)` }}
+        >
+          {/* Drag handle */}
+          <div
+            className="h-1 w-full cursor-ns-resize bg-transparent hover:bg-indigo-500/30 shrink-0 transition-colors"
+            onMouseDown={onDragStart}
+            aria-hidden="true"
+            title="Arrastrar para redimensionar"
+          />
+
+          {/* Tab bar */}
+          <TabBar />
+
+          {/* Output + input */}
+          <div id="dev-console-body" className="flex flex-col flex-1 min-h-0" role="tabpanel" aria-labelledby={`devconsole-tab-${activeTabId}`}>
+            <div
+              ref={outputRef}
+              className="flex-1 overflow-y-auto px-3 py-2 min-h-0 scroll-smooth"
+              role="log"
+              aria-live="polite"
+              aria-atomic="false"
+              aria-label="Salida de la consola"
+            >
+              {activeOutput.length === 0 ? (
+                <p className="text-slate-600 text-[11px] font-mono italic">
+                  Consola lista. Escribe{' '}
+                  <span className="text-indigo-400 not-italic">help</span>
+                  {' '}para ver los comandos disponibles.
+                </p>
+              ) : (
+                activeOutput.map((line) => <OutputLineItem key={line.id} line={line} />)
+              )}
+            </div>
+
+            <CommandInput focusRef={inputRef} />
+          </div>
+        </div>
       )}
 
-      {/* ── Header bar ── */}
-      <div
-        className="h-7 flex items-center gap-2 px-3 shrink-0 border-b border-white/8"
-        onDoubleClick={toggle}
+      {/* ── Tab trigger — always visible ── */}
+      <button
+        onClick={toggle}
+        aria-label={open ? 'Cerrar consola' : 'Abrir consola'}
+        aria-expanded={open}
+        aria-controls={open ? 'dev-console-body' : undefined}
+        className={[
+          'flex items-center gap-2 px-3 h-7 w-full',
+          'bg-[#0d1117]/92 backdrop-blur-md',
+          'border border-white/10',
+          open ? 'border-t-white/5 rounded-none' : 'rounded-t-lg',
+          'text-slate-300 hover:text-white',
+          'transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-indigo-500',
+          'select-none',
+        ].join(' ')}
       >
-        {/* Terminal icon */}
         <svg
           className="w-3.5 h-3.5 text-indigo-400 shrink-0"
           fill="none"
@@ -286,73 +518,29 @@ export function DevConsole() {
           strokeWidth={2}
           aria-hidden="true"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
 
-        <span className="text-[11px] font-semibold text-slate-300 tracking-wide select-none">
-          KeyGo Console
-        </span>
+        <span className="text-[11px] font-semibold tracking-wide font-mono">KeyGo Console</span>
 
         <RequestsBadge count={httpLog.length} />
 
         <div className="flex-1" />
 
-        {/* Keyboard hint */}
-        <kbd className="text-[10px] text-slate-600 font-mono select-none border border-white/10 rounded px-1 py-px">
+        <kbd className="text-[10px] text-slate-600 font-mono border border-white/10 rounded px-1 py-px">
           Ctrl+`
         </kbd>
 
-        {/* Minimize / Expand button */}
-        <button
-          onClick={() => setOpen(!open)}
-          aria-label={open ? 'Minimizar consola' : 'Abrir consola'}
-          aria-expanded={open}
-          aria-controls="dev-console-body"
-          className="w-5 h-5 flex items-center justify-center rounded text-slate-500 hover:text-slate-200 hover:bg-white/10 transition-colors focus-visible:ring-1 focus-visible:ring-indigo-500 focus-visible:outline-none"
-        >
-          {open ? (
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          ) : (
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-            </svg>
-          )}
-        </button>
-      </div>
-
-      {/* ── Body (output + input) — only when open ── */}
-      {open && (
-        <div id="dev-console-body" className="flex flex-col flex-1 min-h-0">
-          {/* Output area */}
-          <div
-            ref={outputRef}
-            className="flex-1 overflow-y-auto px-3 py-2 min-h-0 scroll-smooth"
-            role="log"
-            aria-live="polite"
-            aria-atomic="false"
-            aria-label="Salida de la consola"
-          >
-            {output.length === 0 ? (
-              <p className="text-slate-600 text-[11px] font-mono italic">
-                Consola lista. Escribe{' '}
-                <span className="text-indigo-400 not-italic">help</span>
-                {' '}para ver los comandos disponibles.
-              </p>
-            ) : (
-              output.map((line) => <OutputLineItem key={line.id} line={line} />)
-            )}
-          </div>
-
-          {/* Command input */}
-          <CommandInput focusRef={inputRef} />
-        </div>
-      )}
+        {open ? (
+          <svg className="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        ) : (
+          <svg className="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+          </svg>
+        )}
+      </button>
     </div>
   )
 }

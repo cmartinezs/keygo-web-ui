@@ -34,8 +34,11 @@ import TenantCreatePage from './pages/admin/TenantCreatePage'
 import { BlockingErrorModal } from './components/BlockingErrorModal'
 import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { DevConsole } from './components/DevConsole'
 import { useBlockingErrorStore } from './auth/blockingErrorStore'
 import { useThemeStore } from './hooks/useTheme'
+import { useCurrentUser } from './hooks/useCurrentUser'
+import { env } from './config/env'
 
 const SLOW_REQUEST_THRESHOLD_MS = 5000
 const ROUTE_SETTLING_WINDOW_MS = 1200
@@ -44,6 +47,9 @@ export default function App() {
   const { t } = useTranslation()
   const location = useLocation()
   const accessToken = useTokenStore((state) => state.accessToken)
+  const currentUser = useCurrentUser()
+  // Show DevConsole in all non-prod environments; in prod only for ADMIN users.
+  const showDevConsole = !env.PROD || currentUser?.roles.includes('ADMIN') === true
   const isFetching = useIsFetching()
   const isMutating = useIsMutating()
   const themePreference = useThemeStore((state) => state.preference)
@@ -192,6 +198,7 @@ export default function App() {
           description={t('common.slowLoading')}
         />
         <BlockingErrorModal />
+        {showDevConsole && <DevConsole />}
       </>
     </AppErrorBoundary>
   )

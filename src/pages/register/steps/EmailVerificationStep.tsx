@@ -166,10 +166,11 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
         {t('subscribe.steps.email.helpText')}
       </p>
 
+      <div className="flex justify-end">
       <button
         type="submit"
         disabled={code.length < 6 || isSubmitting}
-        className="w-full max-w-xs bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"
+        className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 flex items-center justify-center gap-2"
       >
         {isSubmitting ? (
           <>
@@ -180,9 +181,13 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
             {t('subscribe.steps.email.verifying')}
           </>
         ) : (
-          t('subscribe.steps.email.verifyCode')
+          <>
+            {t('subscribe.steps.email.verifyCode')}
+            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
+          </>
         )}
       </button>
+      </div>
 
       {onResend && (
         <button

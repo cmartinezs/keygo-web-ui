@@ -191,7 +191,7 @@
       "descriptionPrefix": "KeyGo es la plataforma de gestión de identidades que centraliza el acceso de tus usuarios, protege tus aplicaciones y permite a cada persona ver",
       "descriptionEmphasis": "exactamente lo que necesita",
       "descriptionSuffix": "sin complicaciones y con la seguridad que tu organización merece.",
-      "startNow": "Empezar ahora ->",
+      "startNow": "Empezar ahora",
       "viewFeatures": "Ver características",
       "stats": {
         "secureAccess": {
@@ -358,8 +358,8 @@
       "optional": "opcional"
     },
     "actions": {
-      "continue": "Continuar ->",
-      "back": "<- Atras",
+      "continue": "Continuar",
+      "back": "Atrás",
       "processing": "Procesando..."
     },
     "layout": {
@@ -387,11 +387,13 @@
       "description": "Ingresa el ID de contrato para continuar desde el paso 4 de este flujo.",
       "contractIdLabel": "ID de contrato",
       "contractIdHint": "Puedes encontrar este ID en el correo que recibiste al iniciar la contratación.",
-      "backToNew": "<- Volver al flujo nuevo",
+      "backToNew": "Volver al flujo nuevo",
       "searching": "Buscando...",
-      "continueContract": "Continuar contrato ->",
+      "continueContract": "Continuar contrato",
       "ctaPrefix": "¿Iniciaste una contratación antes?",
       "ctaAction": "Continuar en el paso 4 con un contrato existente",
+      "ctaNewProcessPrefix": "¿Quieres empezar desde el inicio?",
+      "ctaNewProcessAction": "Iniciar proceso nuevo",
       "errors": {
         "planNotAvailable": "No pudimos asociar este contrato a un plan vigente del catálogo. Inicia una nueva contratación.",
         "alreadyProcessed": "Este contrato ya está procesado. Puedes iniciar sesión con tu cuenta activa.",
@@ -486,7 +488,7 @@
         "acceptPrivacySuffix": ", incluyendo el tratamiento de mis datos personales.",
         "termsModalTitle": "Terms of Use and Service",
         "privacyModalTitle": "Privacy Policy",
-        "confirmAndContinue": "Confirmar y continuar ->"
+        "confirmAndContinue": "Confirmar y continuar"
       },
       "email": {
         "title": "Verifica tu correo",
@@ -510,7 +512,7 @@
         "oneTimePayment": "Pago único",
         "trialInfo": "Los primeros {{days}} días son gratuitos. Se cobrarán después del período de prueba.",
         "devMode": "Modo desarrollo - pago simulado",
-        "confirmMockPayment": "Confirmar pago (simulado) ->",
+        "confirmMockPayment": "Confirmar pago (simulado)",
         "gatewayPending": "La pasarela de pago estará disponible próximamente. Nuestro equipo se pondrá en contacto contigo."
       },
       "success": {
@@ -519,8 +521,8 @@
         "descriptionSuffix": "ha sido activada exitosamente.",
         "accessEmailLabel": "Correo de acceso",
         "helpText": "Recibirás un correo con tus credenciales de acceso en breve. Usa el botón de abajo para iniciar sesión.",
-        "goToLogin": "Ir a iniciar sesión ->",
-        "backToHome": "<- Volver al inicio"
+        "goToLogin": "Ir a iniciar sesión",
+        "backToHome": "Volver al inicio"
       }
     },
     "resumeLookup": {
@@ -529,7 +531,7 @@
       "contractIdLabel": "ID de contrato",
       "contractIdHint": "Puedes encontrarlo en el correo de confirmacion que recibiste al iniciar el proceso.",
       "searching": "Buscando...",
-      "continue": "Continuar ->",
+      "continue": "Continuar",
       "noContractYet": "Aun no tienes un contrato?",
       "startContract": "Iniciar contratación"
     },
@@ -545,14 +547,14 @@
       "description": "Tu suscripción ha sido activada exitosamente.",
       "accessEmailLabel": "Correo de acceso",
       "helpText": "Recibirás un correo con tus credenciales en breve.",
-      "goToLogin": "Ir a iniciar sesión ->"
+      "goToLogin": "Ir a iniciar sesión"
     },
     "terminal": {
       "activeTitle": "Contrato ya activado",
       "unrecoverableTitle": "Contrato no disponible",
       "activeDescription": "Este contrato ya fue procesado. Tu cuenta está activa, puedes iniciar sesión.",
       "unrecoverableDescription": "Este contrato ha expirado o fue cancelado. Por favor, inicia un nuevo proceso de contratación.",
-      "goToLogin": "Ir a iniciar sesión ->",
+      "goToLogin": "Ir a iniciar sesión",
       "newContract": "Nueva contratación"
     }
   },
