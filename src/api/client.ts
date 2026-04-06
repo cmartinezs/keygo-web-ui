@@ -7,6 +7,8 @@ import {
 } from './errorNormalizer'
 import { useDevConsoleStore } from '@/lib/devConsole/store'
 import { getTraceId } from '@/lib/traceId'
+import { i18n } from '@/i18n/config'
+import { normalizeLocale } from '@/i18n/localeUtils'
 
 // ── Axios config type augmentation for DevConsole tracking ─────────────────────
 declare module 'axios' {
@@ -47,8 +49,17 @@ function attachTraceId(config: import('axios').InternalAxiosRequestConfig) {
   return config
 }
 
+// Inject Accept-Language based on the active i18n locale (e.g. es-CL, en-US).
+function attachAcceptLanguage(config: import('axios').InternalAxiosRequestConfig) {
+  const locale = normalizeLocale(i18n.resolvedLanguage ?? i18n.language)
+  config.headers['Accept-Language'] = locale
+  return config
+}
+
 apiClient.interceptors.request.use(attachTraceId)
+apiClient.interceptors.request.use(attachAcceptLanguage)
 authClient.interceptors.request.use(attachTraceId)
+authClient.interceptors.request.use(attachAcceptLanguage)
 
 function onRejectedWithNormalizedError(error: unknown): Promise<never> {
   const appApiError = normalizeApiError(error)
