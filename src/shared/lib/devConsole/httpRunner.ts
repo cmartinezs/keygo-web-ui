@@ -101,11 +101,12 @@ export async function executeHttpRequest(params: HttpParams, push: PushFn): Prom
       ? responseBody
       : JSON.stringify(responseBody, null, 2)
     const maxLen   = 2000
-    const display  = bodyStr.length > maxLen
+    const truncated = bodyStr.length > maxLen
+    const display  = truncated
       ? bodyStr.slice(0, maxLen) + `\n  … (truncado, ${bodyStr.length} chars total)`
       : bodyStr
 
-    push({ type: 'output', text: display })
+    push({ type: 'output', text: display, ...(truncated ? { fullText: bodyStr } : {}) })
 
   } catch (err) {
     const duration = Date.now() - startMs

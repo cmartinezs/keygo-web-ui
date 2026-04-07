@@ -4,7 +4,7 @@
 // Semantics: PATCH — solo los campos no-null son actualizados
 // Docs: docs/api-docs.json §Account Profile
 
-import { apiClient, tenantUrl } from '@/shared/api/client'
+import { apiClient, tenantUrl, PLATFORM_URL } from '@/shared/api/client'
 import type { BaseResponse } from '@/shared/types/base'
 import type {
   UserProfileData,
@@ -209,6 +209,75 @@ export async function resetPasswordWithTemporaryPassword(
 ): Promise<AccountResetPasswordResult> {
   const res = await apiClient.post<BaseResponse<AccountResetPasswordResult>>(
     resetPasswordUrl(tenantSlug),
+    data,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al resetear contrasena temporal')
+}
+
+// ── Platform-scoped account endpoints ─────────────────────────────────────────
+// Used for KeyGo's own login flow (no tenantSlug needed).
+
+/**
+ * POST /api/v1/platform/account/forgot-password
+ * ⏳ pendiente — endpoint no existe aún en api-docs; backend lo agregará pronto.
+ */
+export async function platformForgotPassword(
+  data: ForgotPasswordRequest,
+  options?: RequestOptions,
+): Promise<ForgotPasswordResult> {
+  const res = await apiClient.post<BaseResponse<ForgotPasswordResult>>(
+    `${PLATFORM_URL}/account/forgot-password`,
+    data,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al solicitar recuperacion de contrasena')
+}
+
+/**
+ * POST /api/v1/platform/account/recover-password
+ * ⏳ pendiente — endpoint no existe aún en api-docs; backend lo agregará pronto.
+ */
+export async function platformRecoverPassword(
+  data: RecoverPasswordRequest,
+  options?: RequestOptions,
+): Promise<RecoverPasswordResult> {
+  const res = await apiClient.post<BaseResponse<RecoverPasswordResult>>(
+    `${PLATFORM_URL}/account/recover-password`,
+    data,
+    {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    },
+  )
+  return unwrapResponseData(res.data, 'Error al recuperar contrasena')
+}
+
+/**
+ * POST /api/v1/platform/account/reset-password
+ * ⏳ pendiente — endpoint no existe aún en api-docs; backend lo agregará pronto.
+ */
+export async function platformResetPasswordWithTemporaryPassword(
+  data: AccountResetPasswordRequest,
+  options?: RequestOptions,
+): Promise<AccountResetPasswordResult> {
+  const res = await apiClient.post<BaseResponse<AccountResetPasswordResult>>(
+    `${PLATFORM_URL}/account/reset-password`,
     data,
     {
       signal: options?.signal,

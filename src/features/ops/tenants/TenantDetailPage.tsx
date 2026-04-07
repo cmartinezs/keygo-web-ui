@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getTenant, suspendTenant, activateTenant, TENANT_QUERY_KEYS } from '@/features/ops/tenants/api'
 import { toast } from 'sonner'
+import { IconChevronLeft, IconArrowRight, IconXCircle, IconCheckCircle, IconAlertTriangle } from '@/shared/ui/icons'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -144,17 +145,16 @@ export default function TenantDetailPage() {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-[300px] gap-3 text-center">
         <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center">
-          <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-          </svg>
+          <IconAlertTriangle className="w-6 h-6 text-red-500" aria-hidden="true" />
         </div>
         <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
           {error instanceof Error ? error.message : t('adminTenantDetail.loadError')}
         </p>
         <button
           onClick={() => navigate('/dashboard/tenants')}
-          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+          className="inline-flex items-center justify-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
         >
+          <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
           {t('adminTenantDetail.backToList')}
         </button>
       </div>
@@ -203,9 +203,7 @@ export default function TenantDetailPage() {
             onClick={() => navigate(`/tenant-admin?tenant=${tenant.slug}`)}
             className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors border border-slate-200 dark:border-white/10"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-            </svg>
+            <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t('adminTenantDetail.viewAsTenantAdmin')}
           </button>
 
@@ -216,9 +214,11 @@ export default function TenantDetailPage() {
               disabled={isBusy}
               className="flex items-center gap-2 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 text-sm font-medium px-4 py-2 rounded-lg transition-colors border border-red-200 dark:border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-              </svg>
+              {suspendMutation.isPending ? (
+                <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-500 rounded-full animate-spin shrink-0" aria-hidden="true" />
+              ) : (
+                <IconXCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              )}
               {suspendMutation.isPending ? t('adminTenantDetail.suspending') : t('adminTenantDetail.suspend')}
             </button>
           )}
@@ -230,9 +230,11 @@ export default function TenantDetailPage() {
               disabled={isBusy}
               className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-medium px-4 py-2 rounded-lg transition-colors border border-emerald-200 dark:border-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              {activateMutation.isPending ? (
+                <span className="w-4 h-4 border-2 border-emerald-400/30 border-t-emerald-500 rounded-full animate-spin shrink-0" aria-hidden="true" />
+              ) : (
+                <IconCheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              )}
               {activateMutation.isPending ? t('adminTenantDetail.activating') : t('adminTenantDetail.reactivate')}
             </button>
           )}

@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { createPlatformUser, PLATFORM_USER_QUERY_KEYS } from '@/features/ops/platform-users/api'
-import { IconChevronLeft, IconUsers } from '@/shared/ui/icons'
+import { IconChevronLeft, IconUsers, IconX, IconPlus } from '@/shared/ui/icons'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
 
@@ -203,8 +203,9 @@ export default function PlatformUserCreatePage() {
             <button
               type="button"
               onClick={() => navigate('/dashboard/platform-users')}
-              className="px-4 py-2 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-slate-400"
             >
+              <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('platformUserCreate.cancel')}
             </button>
             <button
@@ -218,7 +219,10 @@ export default function PlatformUserCreatePage() {
                   {t('platformUserCreate.creating')}
                 </>
               ) : (
-                t('platformUserCreate.createButton')
+                <>
+                  <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {t('platformUserCreate.createButton')}
+                </>
               )}
             </button>
           </div>

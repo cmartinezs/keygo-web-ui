@@ -2,7 +2,7 @@ import { Component, createRef, type ErrorInfo, type ReactNode } from 'react'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 import { AppFooter } from '@/shared/ui/AppFooter'
-import { IconClipboard } from '@/shared/ui/icons'
+import { IconClipboard, IconRefresh, IconChevronLeft } from '@/shared/ui/icons'
 
 interface AppErrorBoundaryProps {
   children: ReactNode
@@ -470,15 +470,17 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
                       <button
                         type="button"
                         onClick={this.handleReload}
-                        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 high-contrast:border high-contrast:border-white high-contrast:bg-white high-contrast:text-black high-contrast:hover:bg-white/90"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 high-contrast:border high-contrast:border-white high-contrast:bg-white high-contrast:text-black high-contrast:hover:bg-white/90"
                       >
+                        <IconRefresh className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {this.props.reloadLabel}
                       </button>
                       <button
                         type="button"
                         onClick={this.handleSafeExit}
-                        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 high-contrast:border-white high-contrast:bg-black high-contrast:text-white high-contrast:hover:bg-neutral-900"
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:border-white/15 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800 high-contrast:border-white high-contrast:bg-black high-contrast:text-white high-contrast:hover:bg-neutral-900"
                       >
+                        <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
                         {this.props.safeExitLabel}
                       </button>
                     </div>

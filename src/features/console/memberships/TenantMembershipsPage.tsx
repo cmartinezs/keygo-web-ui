@@ -7,6 +7,11 @@ import { toast } from 'sonner'
 import { TENANT } from '@/shared/api/client'
 import { SelectDropdown } from '@/shared/ui/SelectDropdown'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
+import {
+  IconPlus,
+  IconXCircle,
+  IconX,
+} from '@/shared/ui/icons'
 import { listUsers, USER_QUERY_KEYS } from '@/features/console/users/api'
 import { listClientApps, CLIENT_APP_QUERY_KEYS, listAppRoles } from '@/features/console/apps/api'
 import { listMembershipsByUser, createMembership, revokeMembership, MEMBERSHIP_QUERY_KEYS } from '@/features/console/memberships/api'
@@ -184,9 +189,10 @@ export default function TenantMembershipsPage() {
         </header>
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
         >
-          + Crear membership
+          <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Crear membership
         </button>
       </div>
 
@@ -269,8 +275,9 @@ export default function TenantMembershipsPage() {
                     <td className="px-4 py-3">
                       <button
                         onClick={() => setRevokeConfirmId(membership.id)}
-                        className="px-3 py-1 text-xs bg-red-200 dark:bg-red-700/30 text-red-800 dark:text-red-200 rounded hover:bg-red-300 dark:hover:bg-red-700/50 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 text-xs bg-red-200 dark:bg-red-700/30 text-red-800 dark:text-red-200 rounded hover:bg-red-300 dark:hover:bg-red-700/50 transition-colors"
                       >
+                        <IconXCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                         Revocar
                       </button>
                     </td>
@@ -427,15 +434,24 @@ export default function TenantMembershipsPage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
+                  <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 rounded-lg transition-colors"
                 >
+                  {createMutation.isPending ? (
+                    <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  ) : (
+                    <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  )}
                   {createMutation.isPending ? 'Creando...' : 'Crear'}
                 </button>
               </div>
@@ -483,16 +499,25 @@ export default function TenantMembershipsPage() {
                 <button
                   type="button"
                   onClick={() => setRevokeConfirmId(null)}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
+                  <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={() => revokeMutation.mutate(revokeConfirmId)}
                   disabled={revokeMutation.isPending}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 rounded-lg transition-colors"
                 >
+                  {revokeMutation.isPending ? (
+                    <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  ) : (
+                    <IconXCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  )}
                   {revokeMutation.isPending ? 'Revocando...' : 'Revocar'}
                 </button>
               </div>

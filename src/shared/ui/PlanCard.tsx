@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import type { PlanInfo } from './plans'
 
 type DisplayMode = { mode: 'display'; ctaTo: string }
-type SelectMode = { mode: 'select'; selected: boolean; onSelect: () => void }
+type SelectMode = { mode: 'select'; selected: boolean; onSelect: () => void; disabled?: boolean }
 
 type PlanCardProps = { plan: PlanInfo } & (DisplayMode | SelectMode)
 
@@ -25,15 +25,18 @@ export function PlanCard(props: PlanCardProps) {
   const { plan } = props
   const isSelectMode = props.mode === 'select'
   const isSelected = props.mode === 'select' && props.selected
-  const highlighted = plan.highlighted && !isSelected
+  const isDisabled = props.mode === 'select' && !!props.disabled
+  const highlighted = plan.highlighted && !isSelected && !isDisabled
   const ctaTo = props.mode === 'display' ? props.ctaTo : null
 
   const cardBaseClasses = `group relative rounded-2xl ${isSelectMode ? 'p-6' : 'p-8'} flex flex-col h-full overflow-hidden transition-all ${
-    highlighted
-      ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/30 ring-2 ring-indigo-400 ring-offset-2'
-      : isSelected
-        ? 'bg-indigo-50 border-2 border-indigo-500 shadow-md'
-        : 'bg-white border border-slate-200 hover:border-indigo-200'
+    isDisabled
+      ? 'bg-slate-50 border border-slate-200 opacity-60 cursor-not-allowed'
+      : highlighted
+        ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-600/30 ring-2 ring-indigo-400 ring-offset-2'
+        : isSelected
+          ? 'bg-indigo-50 border-2 border-indigo-500 shadow-md'
+          : 'bg-white border border-slate-200 hover:border-indigo-200'
   }`
 
   const inner = (
@@ -126,11 +129,18 @@ export function PlanCard(props: PlanCardProps) {
         {badge}
         <button
           type="button"
-          onClick={props.onSelect}
+          onClick={isDisabled ? undefined : props.onSelect}
+          disabled={isDisabled}
           aria-pressed={props.selected}
+          aria-disabled={isDisabled}
           className={`${cardBaseClasses} text-left w-full focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`}
         >
           {inner}
+          {isDisabled && (
+            <span className="absolute bottom-4 left-0 right-0 text-center text-xs text-slate-400 font-medium">
+              Próximamente
+            </span>
+          )}
         </button>
       </div>
     )

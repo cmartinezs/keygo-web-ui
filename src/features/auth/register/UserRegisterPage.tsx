@@ -12,6 +12,7 @@ import { TurnstileWidget } from '@/shared/ui/TurnstileWidget'
 import { LocaleSwitcher } from '@/shared/ui/LocaleSwitcher'
 import { env } from '@/shared/lib/config/env'
 import { AppFooter } from '@/shared/ui/AppFooter'
+import { IconArrowRight, IconChevronLeft, IconCheckmark, IconPlus } from '@/shared/ui/icons/definitions'
 
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
 
@@ -167,9 +168,7 @@ function CompanyStep({
             className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             {t('register.company.continueBtn')}
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+            <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -183,11 +182,15 @@ function CompanyStep({
           to="/subscribe"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
+          <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
           {t('register.company.noTenantCta')}
         </Link>
+        <p className="text-sm text-slate-500 mt-3">
+          {t('subscribe.header.alreadyHaveAccount')}{' '}
+          <Link to="/login" className="text-indigo-600 font-semibold hover:text-indigo-500 underline-offset-2 hover:underline">
+            {t('subscribe.header.login')}
+          </Link>
+        </p>
       </div>
     </form>
   )
@@ -299,8 +302,9 @@ function PersonalStep({
             type="button"
             onClick={onBack}
             disabled={isSubmitting}
-            className="flex-1 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 border border-slate-300 hover:border-slate-400 text-slate-700 text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50"
           >
+            <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t('register.personal.backBtn')}
           </button>
 
@@ -315,14 +319,17 @@ function PersonalStep({
             >
               {isSubmitting ? (
                 <>
-                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                  <svg className="h-4 w-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                   {t('register.personal.submittingBtn')}
                 </>
               ) : (
-                t('register.personal.submitBtn')
+                <>
+                  <IconCheckmark className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {t('register.personal.submitBtn')}
+                </>
               )}
             </button>
           </div>
@@ -372,6 +379,7 @@ function SuccessState({ email }: { email: string }) {
         onClick={() => navigate('/login')}
         className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
       >
+        <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         {t('register.success.goToLoginBtn')}
       </button>
     </div>
@@ -446,10 +454,6 @@ export default function UserRegisterPage() {
               activeOptionClassName="text-indigo-700 bg-indigo-50 font-semibold"
               selectedValueClassName="hidden sm:inline font-semibold text-slate-900"
             />
-            <Link to="/login" className="text-sm text-slate-500 hover:text-indigo-600 transition-colors">
-              <span className="hidden sm:inline">{t('subscribe.header.alreadyHaveAccount')}{' '}</span>
-              <span className="font-semibold text-indigo-600">{t('subscribe.header.login')}</span>
-            </Link>
           </div>
         </div>
       </header>

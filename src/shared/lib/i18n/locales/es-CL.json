@@ -166,8 +166,15 @@
       "errors": {
         "verificationCodeRequired": "El código de verificación es obligatorio.",
         "verificationCodeLength": "El código debe tener exactamente 6 dígitos.",
-        "verificationCodeFormat": "El código debe contener solo dígitos numéricos."
-      }
+        "verificationCodeFormat": "El código debe contener solo dígitos numéricos.",
+        "requestIdRequired": "El código de solicitud es obligatorio."
+      },
+      "requestIdLabel": "Código de solicitud",
+      "requestIdHint": "ID de solicitud recibido en tu correo electrónico. Se autocompleta si el servidor lo envía.",
+      "requestIdProvidedHint": "Proporcionado automáticamente por el servidor.",
+      "step1": "Ingresa el código de solicitud y el código de verificación de 6 dígitos enviado a tu correo.",
+      "step2": "Ingresa tu contraseña temporal (actual).",
+      "step3": "Define una nueva contraseña segura que cumpla los requisitos indicados."
     }
   },
   "landing": {

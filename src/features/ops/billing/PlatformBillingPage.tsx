@@ -15,6 +15,7 @@ import {
   IconXCircle,
   IconAlertTriangle,
   IconInfo,
+  IconChevronLeft,
 } from '@/shared/ui/icons'
 import {
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -337,14 +338,16 @@ export default function PlatformBillingPage() {
             <button
               onClick={() => cancelMutation.mutate()}
               disabled={cancelMutation.isPending}
-              className="px-4 py-2 text-sm font-semibold rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-red-500"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-red-500"
             >
+              <IconXCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('platformBilling.cancelConfirm')}
             </button>
             <button
               onClick={() => setShowCancelConfirm(false)}
-              className="px-4 py-2 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
             >
+              <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('platformBilling.cancelBack')}
             </button>
           </div>

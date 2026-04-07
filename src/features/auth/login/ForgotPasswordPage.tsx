@@ -6,8 +6,8 @@ import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { forgotPassword } from '@/features/account/api'
-import { TENANT } from '@/shared/api/client'
+import { platformForgotPassword } from '@/features/account/api'
+import { IconArrowRight, IconChevronLeft } from '@/shared/ui/icons/definitions'
 import { getAppApiError } from '@/shared/api/errorNormalizer'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
 
   const mutation = useMutation({
     mutationFn: (values: ForgotPasswordForm) =>
-      forgotPassword(TENANT, { email: values.email }, { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
+      platformForgotPassword({ email: values.email }, { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS }),
     onSuccess: () => {
       setIsSubmitted(true)
       toast.success(t('authRecovery.forgot.successToast'))
@@ -74,14 +74,16 @@ export default function ForgotPasswordPage() {
             <div className="flex flex-col gap-3">
               <Link
                 to="/recover-password"
-                className="rounded-lg bg-indigo-600 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
               >
+                <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {t('authRecovery.forgot.goToRecover')}
               </Link>
               <Link
                 to="/login"
-                className="rounded-lg border border-white/20 px-4 py-2.5 text-center text-sm font-medium text-slate-200 transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                className="flex items-center justify-center gap-2 rounded-lg border border-white/20 px-4 py-2.5 text-center text-sm font-medium text-slate-200 transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
+                <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {t('authRecovery.backToLogin')}
               </Link>
             </div>
@@ -113,16 +115,30 @@ export default function ForgotPasswordPage() {
               type="submit"
               disabled={mutation.isPending}
               aria-busy={mutation.isPending}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center justify-center gap-2 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {mutation.isPending ? t('authRecovery.forgot.submitting') : t('authRecovery.forgot.submit')}
+              {mutation.isPending ? (
+                <>
+                  <svg className="h-4 w-4 shrink-0 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  {t('authRecovery.forgot.submitting')}
+                </>
+              ) : (
+                <>
+                  <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {t('authRecovery.forgot.submit')}
+                </>
+              )}
             </button>
 
             <div className="pt-2 text-center">
               <Link
                 to="/login"
-                className="text-sm text-slate-300 underline-offset-2 transition-colors hover:text-white hover:underline"
+                className="inline-flex items-center gap-1 text-sm text-slate-300 underline-offset-2 transition-colors hover:text-white hover:underline"
               >
+                <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {t('authRecovery.backToLogin')}
               </Link>
             </div>

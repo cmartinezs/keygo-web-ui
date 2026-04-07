@@ -3,8 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
 import { useBlockingErrorStore } from '@/shared/lib/auth/blockingErrorStore'
 import { cancelRefreshTimer } from '@/shared/lib/auth/refresh'
-import { revokeToken } from '@/features/auth/api'
-import { TENANT } from '@/shared/api/client'
+import { platformRevokeToken } from '@/features/auth/api'
 
 /**
  * Clears in-memory session and blocking UI state, then redirects to login.
@@ -18,7 +17,7 @@ export default function LogoutPage() {
   useEffect(() => {
     // Fire-and-forget backend revoke — never blocks UI
     if (refreshToken) {
-      revokeToken({ tenantSlug: TENANT, token: refreshToken }).catch(() => {})
+      platformRevokeToken({ token: refreshToken }).catch(() => {})
     }
     cancelRefreshTimer()
     clearBlockingError()

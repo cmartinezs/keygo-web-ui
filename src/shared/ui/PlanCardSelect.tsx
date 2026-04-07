@@ -23,7 +23,7 @@ export function PlanCardSelect({ plan, selectedVersionId, activePeriod, onSelect
     billingOptions.find((o) => o.is_default) ??
     billingOptions[0] ??
     null
-  const isSelected = version?.id === selectedVersionId
+  const isSelected = version != null && version.id === selectedVersionId
 
   // When the period toggle changes while this card is already selected,
   // propagate the new billing option to the parent immediately.
@@ -33,9 +33,20 @@ export function PlanCardSelect({ plan, selectedVersionId, activePeriod, onSelect
     }
   }, [activePeriod, isSelected, version, activeOption, onSelect, plan])
 
-  if (!version) return null
-
   const planInfo = computePlanInfoForPeriod(plan, activePeriod)
+
+  // Plans without versions can be shown but not selected (no contract possible yet)
+  if (!version) {
+    return (
+      <PlanCard
+        plan={planInfo}
+        mode="select"
+        selected={false}
+        onSelect={() => {}}
+        disabled
+      />
+    )
+  }
 
   return (
     <PlanCard

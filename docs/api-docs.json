@@ -37,6 +37,10 @@
       "description": "Public user self-registration and email verification endpoints"
     },
     {
+      "name": "Platform Auth",
+      "description": "Platform authentication endpoints (PKCE + direct login)"
+    },
+    {
       "name": "Platform",
       "description": "Public platform endpoints — no authentication required"
     },
@@ -4218,6 +4222,78 @@
         ]
       }
     },
+    "/api/v1/platform/oauth2/token": {
+      "post": {
+        "tags": [
+          "Platform Auth"
+        ],
+        "summary": "Intercambio de tokens",
+        "description": "Soporta grant_type=authorization_code (PKCE) y grant_type=refresh_token",
+        "operationId": "token_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens issued or rotated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePlatformTokenData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported grant_type or missing required fields",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePlatformTokenData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid code, PKCE failed, or refresh token invalid/expired",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePlatformTokenData"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/platform/billing/subscription/cancel": {
       "post": {
         "tags": [
@@ -4293,6 +4369,140 @@
             "BearerAuth": []
           }
         ]
+      }
+    },
+    "/api/v1/platform/account/login": {
+      "post": {
+        "tags": [
+          "Platform Auth"
+        ],
+        "summary": "Login de plataforma (flujo PKCE)",
+        "description": "Autentica al usuario y genera un authorization code. Requiere que se haya iniciado el flujo con GET /oauth2/authorize.",
+        "operationId": "login_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Authorization code issued",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePlatformLoginData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No authorization session found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePlatformLoginData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePlatformLoginData"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/account/direct-login": {
+      "post": {
+        "tags": [
+          "Platform Auth"
+        ],
+        "summary": "Login directo (API/CLI)",
+        "description": "Autenticación directa email/password → tokens (sin PKCE, sin sesión HTTP)",
+        "operationId": "directLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Tokens issued",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or password reset required",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/billing/contracts": {
@@ -6155,6 +6365,99 @@
         ]
       }
     },
+    "/api/v1/platform/oauth2/authorize": {
+      "get": {
+        "tags": [
+          "Platform Auth"
+        ],
+        "summary": "Iniciar flujo de autorización PKCE",
+        "description": "Valida redirect_uri contra allowlist y code_challenge_method=S256. Almacena estado PKCE en sesión HTTP.",
+        "operationId": "authorize_1",
+        "parameters": [
+          {
+            "name": "redirect_uri",
+            "in": "query",
+            "description": "Redirect URI (must be in allowlist)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "OAuth2 scopes",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "openid profile platform"
+            },
+            "example": "openid profile platform"
+          },
+          {
+            "name": "code_challenge",
+            "in": "query",
+            "description": "PKCE code challenge (S256)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code_challenge_method",
+            "in": "query",
+            "description": "Challenge method (only S256 supported)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "S256"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Authorization session initiated",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePlatformAuthorizationData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid redirect_uri, missing code_challenge or unsupported method",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePlatformAuthorizationData"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/platform/billing/subscription": {
       "get": {
         "tags": [
@@ -6295,7 +6598,7 @@
           "Platform Billing"
         ],
         "summary": "Get platform plan catalog",
-        "description": "Returns all active public platform-level plans (clientAppId IS NULL). No authentication required.",
+        "description": "Returns all active public platform-level plans (clientAppId IS NULL) with versions, billing options and entitlements. No authentication required.",
         "operationId": "getCatalog_1",
         "responses": {
           "200": {
@@ -7851,16 +8154,22 @@
           "isDefault": {
             "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "basePrice",
+          "billingPeriod"
+        ]
       },
       "CreateAppPlanRequest": {
         "type": "object",
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "description": {
             "type": "string"
@@ -7873,10 +8182,12 @@
             "format": "int32"
           },
           "version": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "currency": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "trialDays": {
             "type": "integer",
@@ -7898,13 +8209,20 @@
               "$ref": "#/components/schemas/EntitlementRequest"
             }
           }
-        }
+        },
+        "required": [
+          "code",
+          "currency",
+          "name",
+          "version"
+        ]
       },
       "EntitlementRequest": {
         "type": "object",
         "properties": {
           "metricCode": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "metricType": {
             "type": "string",
@@ -7936,7 +8254,11 @@
           "isEnabled": {
             "type": "boolean"
           }
-        }
+        },
+        "required": [
+          "metricCode",
+          "metricType"
+        ]
       },
       "AppPlanBillingOptionData": {
         "type": "object",
@@ -8111,7 +8433,8 @@
         "type": "object",
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "displayName": {
             "type": "string"
@@ -8257,12 +8580,24 @@
         "type": "object",
         "properties": {
           "recoveryToken": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "newPassword": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8
+          },
+          "confirmPassword": {
+            "type": "string",
+            "minLength": 1
           }
-        }
+        },
+        "required": [
+          "confirmPassword",
+          "newPassword",
+          "recoveryToken"
+        ]
       },
       "BaseResponseRecoverPasswordResult": {
         "type": "object",
@@ -8358,9 +8693,14 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "minLength": 1
           }
-        }
+        },
+        "required": [
+          "email"
+        ]
       },
       "BaseResponseForgotPasswordResult": {
         "type": "object",
@@ -8485,14 +8825,140 @@
           "roleCode"
         ]
       },
+      "PlatformTokenRequest": {
+        "type": "object",
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "redirect_uri": {
+            "type": "string"
+          },
+          "code_verifier": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "grant_type"
+        ]
+      },
+      "BaseResponsePlatformTokenData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PlatformTokenData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "PlatformTokenData": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "refresh_token": {
+            "type": "string"
+          },
+          "token_type": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PlatformLoginRequest": {
+        "type": "object",
+        "properties": {
+          "emailOrUsername": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "emailOrUsername",
+          "password"
+        ]
+      },
+      "BaseResponsePlatformLoginData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PlatformLoginData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "PlatformLoginData": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "redirect_uri": {
+            "type": "string"
+          },
+          "reset_code_id": {
+            "type": "string"
+          }
+        }
+      },
       "CreateAppContractRequest": {
         "type": "object",
         "properties": {
           "clientAppId": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "planVersionId": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "billingPeriod": {
             "type": "string",
@@ -8503,13 +8969,17 @@
             ]
           },
           "contractorEmail": {
-            "type": "string"
+            "type": "string",
+            "format": "email",
+            "minLength": 1
           },
           "contractorFirstName": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "contractorLastName": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "companyName": {
             "type": "string"
@@ -8520,7 +8990,15 @@
           "companyAddress": {
             "type": "string"
           }
-        }
+        },
+        "required": [
+          "billingPeriod",
+          "clientAppId",
+          "contractorEmail",
+          "contractorFirstName",
+          "contractorLastName",
+          "planVersionId"
+        ]
       },
       "AppContractData": {
         "type": "object",
@@ -8603,9 +9081,13 @@
         "type": "object",
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
-        }
+        },
+        "required": [
+          "code"
+        ]
       },
       "UpdateUserProfileRequest": {
         "type": "object",
@@ -9570,6 +10052,41 @@
           "suspended": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "BaseResponsePlatformAuthorizationData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PlatformAuthorizationData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "PlatformAuthorizationData": {
+        "type": "object",
+        "properties": {
+          "application_name": {
+            "type": "string"
+          },
+          "redirect_uri": {
+            "type": "string"
           }
         }
       },

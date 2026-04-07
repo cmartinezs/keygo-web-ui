@@ -11,6 +11,13 @@ import { TENANT } from '@/shared/api/client'
 import { SelectDropdown } from '@/shared/ui/SelectDropdown'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
 import {
+  IconPlus,
+  IconRefresh,
+  IconX,
+  IconClipboard,
+  IconCheckmark,
+} from '@/shared/ui/icons'
+import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
   NETWORK_RETRY_DELAY_MS,
@@ -142,9 +149,10 @@ export default function TenantAppsPage() {
         </header>
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
         >
-          + Crear aplicación
+          <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Crear aplicación
         </button>
       </div>
 
@@ -185,8 +193,9 @@ export default function TenantAppsPage() {
                   <td className="px-4 py-3">
                     <button
                       onClick={() => setRotateSecretAppId(app.client_id)}
-                      className="px-3 py-1 text-xs bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1 text-xs bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
                     >
+                      <IconRefresh className="h-4 w-4 shrink-0" aria-hidden="true" />
                       Rotar secret
                     </button>
                   </td>
@@ -321,18 +330,20 @@ export default function TenantAppsPage() {
                     <button
                       type="button"
                       onClick={() => removeGrant(index)}
-                      className="px-2 py-2 text-red-600 hover:text-red-700 rounded"
+                      className="inline-flex items-center justify-center px-2 py-2 text-red-600 hover:text-red-700 rounded"
+                      aria-label={`Eliminar grant ${index + 1}`}
                     >
-                      ✕
+                      <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                     </button>
                   </div>
                 ))}
                 <button
                   type="button"
                   onClick={() => appendGrant({ value: 'AUTHORIZATION_CODE' })}
-                  className="text-sm text-indigo-600 hover:text-indigo-700 mt-1"
+                  className="inline-flex items-center gap-1.5 text-sm text-indigo-600 hover:text-indigo-700 mt-1"
                 >
-                  + Agregar grant
+                  <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Agregar grant
                 </button>
                 {createForm.formState.errors.grants && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">{createForm.formState.errors.grants.message}</p>
@@ -343,15 +354,24 @@ export default function TenantAppsPage() {
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
+                  <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={createMutation.isPending}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 rounded-lg transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 rounded-lg transition-colors"
                 >
+                  {createMutation.isPending ? (
+                    <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  ) : (
+                    <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  )}
                   {createMutation.isPending ? 'Creando...' : 'Crear'}
                 </button>
               </div>
@@ -409,8 +429,9 @@ export default function TenantAppsPage() {
                     onClick={() => {
                       navigator.clipboard.writeText(rotatedSecret)
                     }}
-                    className="w-full px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                   >
+                    <IconClipboard className="h-4 w-4 shrink-0" aria-hidden="true" />
                     Copiar al portapapeles
                   </button>
                   <button
@@ -419,8 +440,9 @@ export default function TenantAppsPage() {
                       setRotateSecretAppId(null)
                       setRotatedSecret(null)
                     }}
-                    className="w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
                   >
+                    <IconCheckmark className="h-4 w-4 shrink-0" aria-hidden="true" />
                     Hecho
                   </button>
                 </>
@@ -433,16 +455,25 @@ export default function TenantAppsPage() {
                     <button
                       type="button"
                       onClick={() => setRotateSecretAppId(null)}
-                      className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                     >
+                      <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                       Cancelar
                     </button>
                     <button
                       type="button"
                       onClick={() => rotateMutation.mutate(rotateSecretAppId)}
                       disabled={rotateMutation.isPending}
-                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 rounded-lg transition-colors"
+                      className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 rounded-lg transition-colors"
                     >
+                      {rotateMutation.isPending ? (
+                        <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                      ) : (
+                        <IconRefresh className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      )}
                       {rotateMutation.isPending ? 'Rotando...' : 'Rotar secret'}
                     </button>
                   </div>

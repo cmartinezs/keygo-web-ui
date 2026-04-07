@@ -7,9 +7,8 @@
  *     Using sessionStorage allows the session to survive F5 / hard refresh.
  */
 
-import { refreshToken as apiRefreshToken } from '@/features/auth/api'
-import { TENANT } from '@/shared/api/client'
-import { verifyIdToken, extractRoles } from './jwksVerify'
+import { platformRefreshToken } from '@/features/auth/api'
+import { verifyPlatformIdToken, extractRoles } from './jwksVerify'
 import { useTokenStore } from './tokenStore'
 
 const SESSION_KEY = 'kg_rt'
@@ -52,8 +51,8 @@ async function silentRefresh(): Promise<void> {
   if (!rt) return
 
   try {
-    const tokens = await apiRefreshToken({ tenantSlug: TENANT, refreshToken: rt })
-    const claims = await verifyIdToken(tokens.id_token, TENANT)
+    const tokens = await platformRefreshToken({ refreshToken: rt })
+    const claims = await verifyPlatformIdToken(tokens.id_token)
     const roles = extractRoles(claims)
 
     useTokenStore.getState().setTokens({
@@ -98,8 +97,8 @@ export async function restoreSession(): Promise<boolean> {
   if (!rt) return false
 
   try {
-    const tokens = await apiRefreshToken({ tenantSlug: TENANT, refreshToken: rt })
-    const claims = await verifyIdToken(tokens.id_token, TENANT)
+    const tokens = await platformRefreshToken({ refreshToken: rt })
+    const claims = await verifyPlatformIdToken(tokens.id_token)
     const roles = extractRoles(claims)
 
     useTokenStore.getState().setTokens({

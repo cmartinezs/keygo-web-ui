@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { IconArrowRight } from '@/shared/ui/icons/definitions'
 
 interface SuccessStepProps {
   email: string
@@ -41,8 +42,9 @@ export function SuccessStep({ email, planName }: SuccessStepProps) {
 
       <Link
         to="/login"
-        className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
       >
+        <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         {t('subscribe.steps.success.goToLogin')}
       </Link>
 

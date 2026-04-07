@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { IconX, IconCheckmark } from '@/shared/ui/icons'
 
 interface PolicyModalProps {
   isOpen: boolean
@@ -71,9 +72,7 @@ export function PolicyModal({ isOpen, title, children, onClose, onAccept }: Poli
             className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
             aria-label={t('policyModal.close')}
           >
-            <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
+            <IconX className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -100,16 +99,18 @@ export function PolicyModal({ isOpen, title, children, onClose, onAccept }: Poli
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 sm:flex-none border border-slate-300 text-slate-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none text-sm"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 border border-slate-300 text-slate-600 font-semibold px-5 py-2.5 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none text-sm"
             >
+              <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('policyModal.close')}
             </button>
             <button
               type="button"
               onClick={handleAccept}
               disabled={!hasScrolledToBottom}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 outline-none text-sm"
+              className="flex-1 inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-6 py-2.5 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 outline-none text-sm"
             >
+              <IconCheckmark className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('policyModal.accept')}
             </button>
           </div>

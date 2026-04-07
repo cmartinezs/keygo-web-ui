@@ -25,7 +25,7 @@ export interface HttpLogEntry {
 
 export type OutputInput =
   | { type: 'command';     text: string }
-  | { type: 'output';      text: string }
+  | { type: 'output';      text: string; fullText?: string }
   | { type: 'error';       text: string }
   | { type: 'info';        text: string }
   | { type: 'divider' }

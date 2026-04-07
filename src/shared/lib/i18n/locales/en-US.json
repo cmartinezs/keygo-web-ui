@@ -166,8 +166,15 @@
       "errors": {
         "verificationCodeRequired": "Verification code is required.",
         "verificationCodeLength": "The code must be exactly 6 digits.",
-        "verificationCodeFormat": "The code must contain only numeric digits."
-      }
+        "verificationCodeFormat": "The code must contain only numeric digits.",
+        "requestIdRequired": "Request code is required."
+      },
+      "requestIdLabel": "Request code",
+      "requestIdHint": "Request ID received in your email. Auto-filled when provided by the server.",
+      "requestIdProvidedHint": "Automatically provided by the server.",
+      "step1": "Enter the request code and the 6-digit verification code sent to your email.",
+      "step2": "Enter your temporary (current) password.",
+      "step3": "Set a new secure password meeting the listed requirements."
     }
   },
   "landing": {

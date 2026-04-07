@@ -40,6 +40,7 @@ import {
   runGetWithRecovery,
 } from '@/shared/lib/network/recovery'
 import { normalizeLocale } from '@/shared/lib/i18n/localeUtils'
+import { IconSearch, IconArrowRight } from '@/shared/ui/icons/definitions'
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 
@@ -306,12 +307,20 @@ function ResumeLookupStep({
         <button
           type="submit"
           disabled={!inputId.trim() || isLoading}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
         >
-          {isLoading ? t('subscribe.resume.searching') : (
+          {isLoading ? (
             <>
+              <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+              {t('subscribe.resume.searching')}
+            </>
+          ) : (
+            <>
+              <IconSearch className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('subscribe.resume.continueContract')}
-              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
             </>
           )}
         </button>

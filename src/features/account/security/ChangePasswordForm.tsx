@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { TENANT } from '@/shared/api/client'
 import { changePassword } from '@/features/account/api'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
+import { IconShield } from '@/shared/ui/icons'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { getAppApiError } from '@/shared/api/errorNormalizer'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
@@ -211,8 +212,13 @@ export function ChangePasswordForm() {
           type="submit"
           disabled={mutation.isPending}
           aria-busy={mutation.isPending}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900"
         >
+          {mutation.isPending ? (
+            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" aria-hidden="true" />
+          ) : (
+            <IconShield className="h-4 w-4 shrink-0" aria-hidden="true" />
+          )}
           {mutation.isPending
             ? t('accountSecurity.changePasswordLoading')
             : t('accountSecurity.changePasswordSubmit')}

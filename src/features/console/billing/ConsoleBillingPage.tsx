@@ -17,6 +17,7 @@ import {
   IconXCircle,
   IconAlertTriangle,
   IconInfo,
+  IconChevronLeft,
 } from '@/shared/ui/icons'
 import {
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -342,14 +343,23 @@ export default function ConsoleBillingPage() {
             <button
               onClick={() => cancelMutation.mutate()}
               disabled={cancelMutation.isPending}
-              className="px-4 py-2 text-sm font-semibold rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-red-500"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-md bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-red-500"
             >
+              {cancelMutation.isPending ? (
+                <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              ) : (
+                <IconXCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              )}
               {t('consoleBilling.cancelConfirm')}
             </button>
             <button
               onClick={() => setShowCancelConfirm(false)}
-              className="px-4 py-2 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-md text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
             >
+              <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('consoleBilling.cancelBack')}
             </button>
           </div>

@@ -7,14 +7,13 @@ import { useMutation } from '@tanstack/react-query'
 import { useNavigate, Link } from 'react-router-dom'
 import { decodeJwt } from 'jose'
 import { useTranslation } from 'react-i18next'
-import { authorize, login, exchangeToken } from '@/features/auth/api'
+import { platformAuthorize, platformLogin, platformExchangeToken } from '@/features/auth/api'
 import { getAppApiError } from '@/shared/api/errorNormalizer'
 import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/shared/lib/auth/pkce'
-import { verifyIdToken, extractRoles } from '@/shared/lib/auth/jwksVerify'
+import { verifyPlatformIdToken, extractRoles } from '@/shared/lib/auth/jwksVerify'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
 import { useBlockingErrorStore } from '@/shared/lib/auth/blockingErrorStore'
 import { persistRefreshToken, scheduleProactiveRefresh } from '@/shared/lib/auth/refresh'
-import { TENANT } from '@/shared/api/client'
 import { useRateLimit } from '@/shared/hooks/useRateLimit'
 import { useHoneypot } from '@/shared/hooks/useHoneypot'
 import { HoneypotField } from '@/shared/ui/HoneypotField'
@@ -31,6 +30,7 @@ import {
   isRequestTimeout,
 } from '@/shared/lib/network/recovery'
 import { i18n } from '@/shared/lib/i18n/config'
+import { IconRefresh, IconChevronLeft, IconArrowRight } from '@/shared/ui/icons/definitions'
 import type { PlatformRole } from '@/shared/types/roles'
 import type { AuthorizeData } from '@/shared/types/auth'
 
@@ -125,8 +125,16 @@ function extractLoginError(error: unknown): { message: string; sessionExpired: b
     return { message: i18n.t('auth.errors.userNotFound'), sessionExpired: false }
   }
 
-  // INVALID_INPUT in this step -> no prior session; Pasos 0-1 must be re-run
+  // INVALID_INPUT from a missing/invalid session → Pasos 0-1 must be re-run.
+  // But if the origin is CLIENT_REQUEST (e.g. validation error on the request body),
+  // it's a request formatting issue — show the actual error, don't flag as session expired.
   if (appError.code === 'INVALID_INPUT') {
+    if (appError.origin === 'CLIENT_REQUEST') {
+      return {
+        message: appError.detail ?? appError.clientMessage,
+        sessionExpired: false,
+      }
+    }
     return {
       message: i18n.t('auth.errors.sessionExpired'),
       sessionExpired: true,
@@ -211,15 +219,17 @@ function InitErrorState({ message, retryable, onRetry, onGoHome }: InitErrorStat
         {retryable && (
           <button
             onClick={onRetry}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400"
+            className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
+            <IconRefresh className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t('common.retryNow')}
           </button>
         )}
         <button
           onClick={onGoHome}
-          className="flex-1 border border-white/20 hover:border-white/40 hover:bg-white/5 text-slate-300 text-sm font-medium py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-white/30"
+          className="flex-1 flex items-center justify-center gap-2 border border-white/20 hover:border-white/40 hover:bg-white/5 text-slate-300 text-sm font-medium py-2.5 px-4 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-white/30"
         >
+          <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
           {t('common.comeBackLater')}
         </button>
       </div>
@@ -412,7 +422,7 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
           {isPending && !isReiniting ? (
             <>
               <svg
-                className="w-4 h-4 animate-spin"
+                className="h-4 w-4 shrink-0 animate-spin"
                 viewBox="0 0 24 24"
                 fill="none"
                 aria-hidden="true"
@@ -434,7 +444,10 @@ function LoginForm({ clientName, isReiniting, isPending, error, onSubmit, isLock
               {t('auth.authenticating')}
             </>
           ) : (
-            t('auth.submit')
+            <>
+              <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {t('auth.submit')}
+            </>
           )}
         </button>
       </form>
@@ -540,8 +553,8 @@ export default function LoginPage() {
       const challenge = await generateCodeChallenge(verifier)
       const state = generateState()
       codeVerifierRef.current = verifier
-      return authorize(
-        { tenantSlug: TENANT, codeChallenge: challenge, state },
+      return platformAuthorize(
+        { codeChallenge: challenge, state },
         { timeoutMs: AUTH_TIMEOUT_MS },
       )
     },
@@ -566,26 +579,25 @@ export default function LoginPage() {
       if (!codeVerifier) throw new Error('PKCE verifier missing')
 
       loginPhaseRef.current = 'login'
-      const loginResult = await login({
-        tenantSlug: TENANT,
+      const loginResult = await platformLogin({
         emailOrUsername: values.emailOrUsername,
         password: values.password,
       }, {
         timeoutMs: AUTH_TIMEOUT_MS,
-        idempotencyKey: `kg-login-${TENANT}-${values.emailOrUsername.toLowerCase()}`,
+        idempotencyKey: `kg-login-platform-${values.emailOrUsername.toLowerCase()}`,
       })
 
       // Authorization code obtained — any error from here on must trigger re-init
       // because the code is single-use and the session state is now uncertain.
       loginPhaseRef.current = 'post-login'
-      const tokens = await exchangeToken(
-        { tenantSlug: TENANT, code: loginResult.code, codeVerifier },
+      const tokens = await platformExchangeToken(
+        { code: loginResult.code, codeVerifier },
         {
           timeoutMs: AUTH_TIMEOUT_MS,
-          idempotencyKey: `kg-token-exchange-${TENANT}-${loginResult.code}`,
+          idempotencyKey: `kg-token-exchange-platform-${loginResult.code}`,
         },
       )
-      const claims = await verifyIdToken(tokens.id_token, TENANT)
+      const claims = await verifyPlatformIdToken(tokens.id_token)
       const roles = extractRoles(claims)
       return { tokens, roles, message: loginResult.message }
     },
@@ -644,12 +656,16 @@ export default function LoginPage() {
       if (sessionExpired) {
         toast.warning(t('auth.errors.sessionExpiredReconnecting'))
         triggerInit(true)
-      } else if (appError.retryable) {
+      } else if (appError.httpStatus === undefined && appError.retryable) {
+        // True network error (no HTTP response received) — auto-reconnect
         toast.warning(t('auth.errors.cannotConnectReconnecting'))
         triggerInit(true)
       } else {
-        // Credential error (wrong password, account suspended, etc.) — count against rate limit
-        rateLimit.recordFailure()
+        // Server responded with an error. The LoginForm error banner shows the message.
+        // Only count credential/business errors against rate limit — not server processing issues.
+        if (appError.origin !== 'SERVER_PROCESSING') {
+          rateLimit.recordFailure()
+        }
       }
     },
   })

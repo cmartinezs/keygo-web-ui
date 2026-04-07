@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { IconArrowRight, IconAlertTriangle } from '@/shared/ui/icons'
 
 interface PanelCardProps {
   title: string
@@ -61,6 +62,7 @@ export function PrimaryActionButton({
   disabled,
   onClick,
   type = 'button',
+  icon,
 }: {
   label: string
   pendingLabel: string
@@ -68,15 +70,22 @@ export function PrimaryActionButton({
   disabled: boolean
   onClick?: () => void
   type?: 'button' | 'submit'
+  icon?: ReactNode
 }) {
+  const renderedIcon = icon ?? <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
       aria-busy={pending}
-      className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900"
+      className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:focus-visible:ring-offset-slate-900"
     >
+      {pending ? (
+        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" aria-hidden="true" />
+      ) : (
+        renderedIcon
+      )}
       {pending ? pendingLabel : label}
     </button>
   )
@@ -88,21 +97,29 @@ export function DangerActionButton({
   pending,
   disabled,
   onClick,
+  icon,
 }: {
   label: string
   pendingLabel: string
   pending: boolean
   disabled: boolean
   onClick: () => void
+  icon?: ReactNode
 }) {
+  const renderedIcon = icon ?? <IconAlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       aria-busy={pending}
-      className="shrink-0 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus-visible:ring-offset-slate-900"
+      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus-visible:ring-offset-slate-900"
     >
+      {pending ? (
+        <span className="w-4 h-4 border-2 border-red-400/30 border-t-red-500 rounded-full animate-spin shrink-0" aria-hidden="true" />
+      ) : (
+        renderedIcon
+      )}
       {pending ? pendingLabel : label}
     </button>
   )

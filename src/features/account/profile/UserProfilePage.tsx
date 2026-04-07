@@ -10,7 +10,7 @@ import { ACCOUNT_QUERY_KEYS, getAccountAccess, getProfile, getSessions, updatePr
 import { TENANT } from '@/shared/api/client'
 import { getAppApiError } from '@/shared/api/errorNormalizer'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
-import { IconDashboard, IconUser, IconShield, IconClock } from '@/shared/ui/icons'
+import { IconDashboard, IconUser, IconShield, IconClock, IconCheckmark } from '@/shared/ui/icons'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -394,8 +394,13 @@ export default function UserProfilePage() {
                 <button
                   type="submit"
                   disabled={updateMutation.isPending}
-                  className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 >
+                  {updateMutation.isPending ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin shrink-0" aria-hidden="true" />
+                  ) : (
+                    <IconCheckmark className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  )}
                   {updateMutation.isPending
                     ? t('userDashboardProfile.form.saving')
                     : t('userDashboardProfile.form.saveChanges')}

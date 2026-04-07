@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { IconCheckmark, IconRefresh } from '@/shared/ui/icons/definitions'
 
 interface EmailVerificationStepProps {
   email: string
@@ -174,7 +175,7 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
       >
         {isSubmitting ? (
           <>
-            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
@@ -182,8 +183,8 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
           </>
         ) : (
           <>
+            <IconCheckmark className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t('subscribe.steps.email.verifyCode')}
-            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
           </>
         )}
       </button>
@@ -194,13 +195,24 @@ export function EmailVerificationStep({ email, isSubmitting, error, onSubmit, on
           type="button"
           onClick={handleResend}
           disabled={cooldown > 0 || isResending || isSubmitting}
-          className="text-sm text-indigo-600 hover:text-indigo-500 disabled:text-slate-400 disabled:cursor-not-allowed underline-offset-2 hover:underline transition-colors"
+          className="inline-flex items-center justify-center gap-2 text-sm text-indigo-600 hover:text-indigo-500 disabled:text-slate-400 disabled:cursor-not-allowed underline-offset-2 hover:underline transition-colors"
         >
-          {isResending
-            ? t('subscribe.steps.email.resending')
-            : cooldown > 0
-              ? t('subscribe.steps.email.resendIn', { seconds: cooldown })
-              : t('subscribe.steps.email.resend')}
+          {isResending ? (
+            <>
+              <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+              {t('subscribe.steps.email.resending')}
+            </>
+          ) : (
+            <>
+              <IconRefresh className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {cooldown > 0
+                ? t('subscribe.steps.email.resendIn', { seconds: cooldown })
+                : t('subscribe.steps.email.resend')}
+            </>
+          )}
         </button>
       )}
     </form>

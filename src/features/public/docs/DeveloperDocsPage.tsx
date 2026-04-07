@@ -4,6 +4,7 @@ import SyntaxHighlighter from 'react-syntax-highlighter'
 import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 import { AppFooter } from '@/shared/ui/AppFooter'
 import { ScrollToTop } from '@/shared/ui/ScrollToTop'
+import { IconCode } from '@/shared/ui/icons'
 
 const prerequisites = [
   'Un tenant activo con slug conocido.',
@@ -506,12 +507,13 @@ function EndpointIoTabs({ endpointKey, queryParams, requestBody, response }: End
             aria-selected={activeTab === 'request'}
             aria-controls={requestPanelId}
             onClick={() => setManuallySelectedTab('request')}
-            className={`rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+            className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
               activeTab === 'request'
                 ? 'bg-indigo-500 text-white'
                 : 'text-slate-300 hover:bg-white/5 hover:text-white'
             }`}
           >
+            <IconCode className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             Request
           </button>
         ) : null}
@@ -523,10 +525,11 @@ function EndpointIoTabs({ endpointKey, queryParams, requestBody, response }: End
           aria-selected={activeTab === 'response'}
           aria-controls={responsePanelId}
           onClick={() => setManuallySelectedTab('response')}
-          className={`rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+          className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-colors focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
             activeTab === 'response' ? 'bg-indigo-500 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'
           }`}
         >
+          <IconCode className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           Response
         </button>
       </div>

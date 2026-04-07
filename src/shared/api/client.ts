@@ -24,6 +24,7 @@ export const TENANT = env.TENANT_SLUG
 export const CLIENT_ID = env.CLIENT_ID
 export const REDIRECT_URI = env.REDIRECT_URI
 
+export const PLATFORM_URL = `${API_V1}/platform`
 export const tenantUrl = (slug: string) => `${API_V1}/tenants/${slug}`
 export const appUrl = (slug: string, clientId: string) => `${tenantUrl(slug)}/apps/${clientId}`
 export const keygoUrl = tenantUrl(TENANT)

@@ -27,6 +27,16 @@ import {
   USER_QUERY_KEYS,
 } from '@/features/console/users/api'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
+import {
+  IconPlus,
+  IconEdit,
+  IconKey,
+  IconCheckCircle,
+  IconXCircle,
+  IconClock,
+  IconX,
+  IconCheckmark,
+} from '@/shared/ui/icons'
 import type {
   CreateUserRequest,
   ResetPasswordRequest,
@@ -307,8 +317,9 @@ export default function TenantUsersPage() {
         <button
           type="button"
           onClick={() => setIsCreateOpen(true)}
-          className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
         >
+          <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
           Crear usuario
         </button>
       </div>
@@ -361,23 +372,26 @@ export default function TenantUsersPage() {
                       <button
                         type="button"
                         onClick={() => openEditModal(item)}
-                        className="rounded bg-slate-200 px-3 py-1 text-xs text-slate-800 transition-colors hover:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                        className="inline-flex items-center gap-1.5 rounded bg-slate-200 px-3 py-1 text-xs text-slate-800 transition-colors hover:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
                       >
+                        <IconEdit className="h-4 w-4 shrink-0" aria-hidden="true" />
                         Editar
                       </button>
                       <button
                         type="button"
                         onClick={() => setResetPasswordUser(item)}
-                        className="rounded bg-slate-200 px-3 py-1 text-xs text-slate-800 transition-colors hover:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                        className="inline-flex items-center gap-1.5 rounded bg-slate-200 px-3 py-1 text-xs text-slate-800 transition-colors hover:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
                       >
+                        <IconKey className="h-4 w-4 shrink-0" aria-hidden="true" />
                         Resetear contrasena
                       </button>
                       {item.status === 'SUSPENDED' ? (
                         <button
                           type="button"
                           onClick={() => setConfirmStatusUser(item)}
-                          className="rounded bg-emerald-100 px-3 py-1 text-xs text-emerald-800 transition-colors hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30"
+                          className="inline-flex items-center gap-1.5 rounded bg-emerald-100 px-3 py-1 text-xs text-emerald-800 transition-colors hover:bg-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-300 dark:hover:bg-emerald-500/30"
                         >
+                          <IconCheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                           Activar
                         </button>
                       ) : null}
@@ -385,16 +399,18 @@ export default function TenantUsersPage() {
                         <button
                           type="button"
                           onClick={() => setConfirmStatusUser(item)}
-                          className="rounded bg-amber-100 px-3 py-1 text-xs text-amber-800 transition-colors hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
+                          className="inline-flex items-center gap-1.5 rounded bg-amber-100 px-3 py-1 text-xs text-amber-800 transition-colors hover:bg-amber-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 dark:bg-amber-500/20 dark:text-amber-300 dark:hover:bg-amber-500/30"
                         >
+                          <IconXCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
                           Suspender
                         </button>
                       ) : null}
                       <button
                         type="button"
                         onClick={() => setViewingSessionsUser(item)}
-                        className="rounded bg-slate-200 px-3 py-1 text-xs text-slate-800 transition-colors hover:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                        className="inline-flex items-center gap-1.5 rounded bg-slate-200 px-3 py-1 text-xs text-slate-800 transition-colors hover:bg-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
                       >
+                        <IconClock className="h-4 w-4 shrink-0" aria-hidden="true" />
                         Sesiones
                       </button>
                     </div>
@@ -515,15 +531,24 @@ export default function TenantUsersPage() {
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(false)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
               >
+                <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
+                {createMutation.isPending ? (
+                  <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                ) : (
+                  <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
+                )}
                 {createMutation.isPending ? 'Creando...' : 'Crear'}
               </button>
             </div>
@@ -582,15 +607,24 @@ export default function TenantUsersPage() {
               <button
                 type="button"
                 onClick={() => setEditingUser(null)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
               >
+                <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={updateMutation.isPending}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
+                {updateMutation.isPending ? (
+                  <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                ) : (
+                  <IconCheckmark className="h-4 w-4 shrink-0" aria-hidden="true" />
+                )}
                 {updateMutation.isPending ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </div>
@@ -637,15 +671,24 @@ export default function TenantUsersPage() {
               <button
                 type="button"
                 onClick={() => setResetPasswordUser(null)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
               >
+                <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={resetMutation.isPending}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:bg-indigo-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
+                {resetMutation.isPending ? (
+                  <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                ) : (
+                  <IconKey className="h-4 w-4 shrink-0" aria-hidden="true" />
+                )}
                 {resetMutation.isPending ? 'Restableciendo...' : 'Confirmar'}
               </button>
             </div>
@@ -674,8 +717,9 @@ export default function TenantUsersPage() {
               <button
                 type="button"
                 onClick={() => setConfirmStatusUser(null)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
               >
+                <IconX className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Cancelar
               </button>
               {confirmStatusUser.status === 'SUSPENDED' ? (
@@ -683,8 +727,16 @@ export default function TenantUsersPage() {
                   type="button"
                   disabled={activateMutation.isPending}
                   onClick={() => activateMutation.mutate(confirmStatusUser.id)}
-                  className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
+                  {activateMutation.isPending ? (
+                    <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  ) : (
+                    <IconCheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  )}
                   {activateMutation.isPending ? 'Activando...' : 'Activar'}
                 </button>
               ) : (
@@ -692,8 +744,16 @@ export default function TenantUsersPage() {
                   type="button"
                   disabled={suspendMutation.isPending}
                   onClick={() => suspendMutation.mutate(confirmStatusUser.id)}
-                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:bg-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
                 >
+                  {suspendMutation.isPending ? (
+                    <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                  ) : (
+                    <IconXCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  )}
                   {suspendMutation.isPending ? 'Suspendiendo...' : 'Suspender'}
                 </button>
               )}
@@ -763,8 +823,9 @@ export default function TenantUsersPage() {
               <button
                 type="button"
                 onClick={() => setViewingSessionsUser(null)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
+                className="flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-slate-300 dark:hover:bg-slate-800"
               >
+                <IconCheckmark className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Cerrar
               </button>
             </div>

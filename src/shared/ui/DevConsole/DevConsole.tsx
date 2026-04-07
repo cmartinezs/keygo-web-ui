@@ -1,6 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
+import SyntaxHighlighter from 'react-syntax-highlighter'
+import { atomOneDark } from 'react-syntax-highlighter/dist/esm/styles/hljs'
 import { useDevConsoleStore } from '@/shared/lib/devConsole/store'
 import { runCommand, handleWizardInput } from '@/shared/lib/devConsole/commands'
+import { IconDocument } from '@/shared/ui/icons'
 import type { OutputLine, HttpLogEntry, ConsoleTab } from '@/shared/lib/devConsole/store'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -44,6 +47,19 @@ function fmtMs(ms?: number): string {
   return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(2)}s`
 }
 
+function isJsonLike(text: string): boolean {
+  const trimmed = text.trimStart()
+  return trimmed.startsWith('{') || trimmed.startsWith('[')
+}
+
+const highlighterStyle: React.CSSProperties = {
+  margin: 0,
+  padding: 0,
+  background: 'transparent',
+  fontSize: 'inherit',
+  lineHeight: 'inherit',
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 // ── TabBar ────────────────────────────────────────────────────────────────────
@@ -79,7 +95,7 @@ function TabBar() {
 
   return (
     <div
-      className="flex items-stretch border-b border-white/10 shrink-0 overflow-x-auto"
+      className="flex items-stretch border-b border-white/10 shrink-0 overflow-x-auto dev-console-scroll"
       role="tablist"
       aria-label="Pestañas de consola"
     >
@@ -184,7 +200,83 @@ function HttpRow({ entry }: { entry: HttpLogEntry }) {
   )
 }
 
+// ── Full output modal ─────────────────────────────────────────────────────────
+
+function FullOutputModal({ text, onClose }: { text: string; onClose: () => void }) {
+  const backdropRef = useRef<HTMLDivElement>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  return (
+    <div
+      ref={backdropRef}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === backdropRef.current) onClose() }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Salida completa"
+    >
+      <div className="bg-[#1e1e2e] border border-white/10 rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <span className="text-sm font-semibold text-slate-300">
+            Salida completa ({text.length.toLocaleString()} caracteres)
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="text-xs text-slate-400 hover:text-slate-200 transition-colors px-2 py-1 rounded bg-white/5 hover:bg-white/10 focus-visible:ring-1 focus-visible:ring-indigo-400"
+            >
+              {copied ? '✓ Copiado' : 'Copiar'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-slate-400 hover:text-white transition-colors p-1 rounded focus-visible:ring-1 focus-visible:ring-indigo-400"
+              aria-label="Cerrar"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-auto px-4 py-3 font-mono text-[13px] leading-relaxed dev-console-scroll">
+          {isJsonLike(text) ? (
+            <SyntaxHighlighter
+              language="json"
+              style={atomOneDark}
+              customStyle={highlighterStyle}
+              wrapLongLines
+            >
+              {text}
+            </SyntaxHighlighter>
+          ) : (
+            <pre className="text-slate-300 whitespace-pre-wrap break-all">{text}</pre>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function OutputLineItem({ line }: { line: OutputLine }) {
+  const [showFull, setShowFull] = useState(false)
+
   if (line.type === 'divider') {
     return <hr className="border-white/10 my-1" aria-hidden="true" />
   }
@@ -229,10 +321,44 @@ function OutputLineItem({ line }: { line: OutputLine }) {
     info:    'text-cyan-400',
   }
 
+  const hasFullText = line.type === 'output' && !!line.fullText
+  const isOutput = line.type === 'output'
+  const useHighlight = isOutput && isJsonLike(line.text)
+
   return (
-    <div className={`py-0.5 font-mono text-[13px] whitespace-pre-wrap break-all leading-relaxed ${cls[line.type] ?? 'text-slate-300'}`}>
-      {'  '}{line.text}
-    </div>
+    <>
+      <div className={`py-0.5 font-mono text-[13px] leading-relaxed ${cls[line.type] ?? 'text-slate-300'}`}>
+        {useHighlight ? (
+          <SyntaxHighlighter
+            language="json"
+            style={atomOneDark}
+            customStyle={highlighterStyle}
+            wrapLongLines
+          >
+            {line.text}
+          </SyntaxHighlighter>
+        ) : (
+          <span className="whitespace-pre-wrap break-all">{'  '}{line.text}</span>
+        )}
+        {hasFullText && (
+          <button
+            type="button"
+            onClick={() => setShowFull(true)}
+            className="ml-2 inline-flex items-center gap-1 text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold transition-colors focus-visible:ring-1 focus-visible:ring-indigo-400 rounded px-1.5 py-0.5 bg-indigo-400/10 hover:bg-indigo-400/20"
+          >
+            <IconDocument className="h-3 w-3 shrink-0" aria-hidden="true" />
+            Ver completo
+          </button>
+        )}
+      </div>
+
+      {hasFullText && showFull && (
+        <FullOutputModal
+          text={line.fullText!}
+          onClose={() => setShowFull(false)}
+        />
+      )}
+    </>
   )
 }
 
@@ -472,7 +598,7 @@ export function DevConsole() {
           <div id="dev-console-body" className="flex flex-col flex-1 min-h-0" role="tabpanel" aria-labelledby={`devconsole-tab-${activeTabId}`}>
             <div
               ref={outputRef}
-              className="flex-1 overflow-y-auto px-3 py-2 min-h-0 scroll-smooth"
+              className="flex-1 overflow-y-auto px-3 py-2 min-h-0 scroll-smooth dev-console-scroll"
               role="log"
               aria-live="polite"
               aria-atomic="false"

@@ -4,6 +4,7 @@ import type { AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPerio
 import { PlanCard } from './PlanCard'
 import { PlanCardSelect } from './PlanCardSelect'
 import { computePlanInfoForPeriod } from './plans'
+import { IconRefresh, IconChevronLeft, IconChevronRight } from '@/shared/ui/icons'
 
 type DisplayMode = {
   mode: 'display'
@@ -65,8 +66,9 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
           <button
             type="button"
             onClick={onRetry}
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-500 underline-offset-2 hover:underline transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+            className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-500 underline-offset-2 hover:underline transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
           >
+            <IconRefresh className="h-4 w-4 shrink-0" aria-hidden="true" />
             Reintentar
           </button>
         )}
@@ -224,9 +226,7 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
             aria-label="Plan anterior"
             className="w-9 h-9 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
           >
-            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
+            <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
           </button>
 
           {/* Dots — one per "position" */}
@@ -255,9 +255,7 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
             aria-label="Plan siguiente"
             className="w-9 h-9 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
           >
-            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
+            <IconChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />
           </button>
         </div>
       )}

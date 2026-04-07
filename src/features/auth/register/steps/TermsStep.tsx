@@ -8,6 +8,7 @@ import { TermsOfServiceContent } from '@/shared/ui/TermsOfServiceContent'
 import { PrivacyPolicyContent } from '@/shared/ui/PrivacyPolicyContent'
 import { env } from '@/shared/lib/config/env'
 import { normalizeLocale } from '@/shared/lib/i18n/localeUtils'
+import { IconChevronLeft, IconCheckmark, IconDocument, IconShield } from '@/shared/ui/icons/definitions'
 
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
 
@@ -118,8 +119,9 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
             <button
               type="button"
               onClick={() => setShowTermsModal(true)}
-              className="text-indigo-600 hover:underline font-medium focus-visible:ring-2 focus-visible:ring-indigo-500 rounded outline-none"
+              className="inline-flex items-center gap-1 text-indigo-600 hover:underline font-medium focus-visible:ring-2 focus-visible:ring-indigo-500 rounded outline-none"
             >
+              <IconDocument className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('subscribe.steps.terms.termsLink')}
             </button>{' '}
             {t('subscribe.steps.terms.acceptTermsSuffix')} <span aria-hidden="true" className="text-red-500">*</span>
@@ -139,8 +141,9 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
             <button
               type="button"
               onClick={() => setShowPrivacyModal(true)}
-              className="text-indigo-600 hover:underline font-medium focus-visible:ring-2 focus-visible:ring-indigo-500 rounded outline-none"
+              className="inline-flex items-center gap-1 text-indigo-600 hover:underline font-medium focus-visible:ring-2 focus-visible:ring-indigo-500 rounded outline-none"
             >
+              <IconShield className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('subscribe.steps.terms.privacyLink')}
             </button>
             {t('subscribe.steps.terms.acceptPrivacySuffix')}{' '}
@@ -186,9 +189,9 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
           type="button"
           onClick={onBack}
           disabled={isSubmitting}
-          className="flex items-center gap-2 border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
+          className="flex items-center justify-center gap-2 border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
-          <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+          <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
           {t('subscribe.actions.back')}
         </button>
         <button
@@ -199,7 +202,7 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
         >
           {isSubmitting ? (
             <>
-              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
@@ -207,8 +210,8 @@ export function TermsStep({ plan, version, billingOption, contractor, acceptTerm
             </>
           ) : (
             <>
+              <IconCheckmark className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('subscribe.steps.terms.confirmAndContinue')}
-              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" /></svg>
             </>
           )}
         </button>

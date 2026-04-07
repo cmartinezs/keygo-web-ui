@@ -6,11 +6,11 @@ import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { resetPasswordWithTemporaryPassword } from '@/features/account/api'
-import { TENANT } from '@/shared/api/client'
+import { platformResetPasswordWithTemporaryPassword } from '@/features/account/api'
 import { getAppApiError } from '@/shared/api/errorNormalizer'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
+import { IconShield, IconArrowRight, IconChevronLeft } from '@/shared/ui/icons/definitions'
 import { LocaleSwitcher } from '@/shared/ui/LocaleSwitcher'
 
 // ── OTP input ─────────────────────────────────────────────────────────────────
@@ -97,6 +97,7 @@ interface ResetPasswordLocationState {
 function buildSchema(t: ReturnType<typeof useTranslation>['t']) {
   return z
     .object({
+      request_id: z.string().min(1, t('authRecovery.reset.errors.requestIdRequired')),
       verification_code: z
         .string()
         .min(1, t('authRecovery.reset.errors.verificationCodeRequired'))
@@ -119,6 +120,7 @@ function buildSchema(t: ReturnType<typeof useTranslation>['t']) {
 }
 
 type ResetTemporaryPasswordForm = {
+  request_id: string
   verification_code: string
   temporary_password: string
   new_password: string
@@ -140,13 +142,18 @@ export default function ResetPasswordPage() {
 
   const schema = useMemo(() => buildSchema(t), [t])
 
+  const hasRequestIdFromState = Boolean(requestId)
+
   const {
     register,
     handleSubmit,
     control,
     watch,
     formState: { errors },
-  } = useForm<ResetTemporaryPasswordForm>({ resolver: zodResolver(schema) })
+  } = useForm<ResetTemporaryPasswordForm>({
+    resolver: zodResolver(schema),
+    defaultValues: { request_id: requestId ?? '' },
+  })
 
   const { field: otpField } = useController({ name: 'verification_code', control, defaultValue: '' })
 
@@ -164,10 +171,9 @@ export default function ResetPasswordPage() {
 
   const mutation = useMutation({
     mutationFn: (values: ResetTemporaryPasswordForm) =>
-      resetPasswordWithTemporaryPassword(
-        TENANT,
+      platformResetPasswordWithTemporaryPassword(
         {
-          request_id: requestId ?? '',
+          request_id: values.request_id,
           verification_code: values.verification_code,
           temporary_password: values.temporary_password,
           new_password: values.new_password,
@@ -192,62 +198,9 @@ export default function ResetPasswordPage() {
     mutation.mutate(values)
   }
 
-  // Si no hay requestId, el usuario llegó directamente a esta URL sin pasar por login.
-  // Se muestra un aviso y se redirige al login.
-  if (!requestId) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 px-4 py-10">
-        <div className="relative w-full max-w-md">
-          <div className="mb-4 flex justify-end">
-            <LocaleSwitcher
-              compact
-              triggerClassName="h-10 border border-white/15 bg-slate-900/60 px-3 text-slate-200 hover:bg-slate-800/70 hover:text-white focus-visible:ring-indigo-400"
-              panelClassName="absolute right-0 top-full mt-2 w-full rounded-lg bg-slate-900 border border-white/15 shadow-xl py-1 z-50"
-              optionClassName="text-slate-200 hover:bg-white/10 hover:text-white"
-              activeOptionClassName="text-indigo-300 bg-indigo-500/15 font-semibold"
-              selectedValueClassName="font-semibold text-white"
-            />
-          </div>
-          <section
-            className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-800/70 p-8 shadow-2xl backdrop-blur text-center"
-            aria-labelledby="reset-invalid-title"
-            role="alert"
-          >
-          <svg
-            className="mx-auto mb-4 w-10 h-10 text-amber-400"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-          </svg>
-          <h1 id="reset-invalid-title" className="text-xl font-bold text-white mb-2">
-            {t('authRecovery.reset.invalidLinkTitle')}
-          </h1>
-          <p className="text-sm text-slate-300 mb-6">
-            {t('authRecovery.reset.invalidLinkMessage')}
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate('/login', { replace: true })}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-          >
-            {t('authRecovery.backToLogin')}
-          </button>
-        </section>
-        <footer className="mt-4 text-center text-xs text-slate-600" role="contentinfo">
-          © {new Date().getFullYear()} KeyGo - {t('auth.copyright')}
-        </footer>
-        </div>
-      </main>
-    )
-  }
-
   return (
     <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 px-4 py-10">
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md lg:max-w-4xl">
         <div className="mb-4 flex justify-end">
           <LocaleSwitcher
             compact
@@ -259,38 +212,105 @@ export default function ResetPasswordPage() {
           />
         </div>
         <section
-          className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-800/70 p-8 shadow-2xl backdrop-blur"
+          className="w-full rounded-2xl border border-white/10 bg-slate-800/70 p-8 shadow-2xl backdrop-blur"
           aria-labelledby="reset-password-title"
         >
-        <h1 id="reset-password-title" className="text-2xl font-bold text-white">
-          {t('authRecovery.reset.title')}
-        </h1>
-        <p className="mt-2 text-sm text-slate-300">{t('authRecovery.reset.subtitle')}</p>
+        <div className="lg:grid lg:grid-cols-2 lg:gap-10">
+          {/* ── Left column: info & instructions ──────────────────────── */}
+          <div className="mb-6 lg:mb-0 lg:flex lg:flex-col lg:justify-center">
+            <h1 id="reset-password-title" className="text-2xl font-bold text-white">
+              {t('authRecovery.reset.title')}
+            </h1>
+            <p className="mt-2 text-sm text-slate-300">{t('authRecovery.reset.subtitle')}</p>
 
-        {emailHint && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-950/40 px-3 py-2 text-xs text-indigo-300">
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-              <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-            </svg>
-            <span>{t('authRecovery.reset.codeSentTo', { email: emailHint })}</span>
+            {emailHint && (
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-950/40 px-3 py-2 text-xs text-indigo-300">
+                <svg className="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                  <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                </svg>
+                <span>{t('authRecovery.reset.codeSentTo', { email: emailHint })}</span>
+              </div>
+            )}
+
+            {/* Steps guide — visible only on lg */}
+            <ol className="mt-6 hidden lg:flex lg:flex-col gap-3 text-sm text-slate-400">
+              <li className="flex items-start gap-2.5">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600/30 text-xs font-semibold text-indigo-300" aria-hidden="true">1</span>
+                <span>{t('authRecovery.reset.step1')}</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600/30 text-xs font-semibold text-indigo-300" aria-hidden="true">2</span>
+                <span>{t('authRecovery.reset.step2')}</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600/30 text-xs font-semibold text-indigo-300" aria-hidden="true">3</span>
+                <span>{t('authRecovery.reset.step3')}</span>
+              </li>
+            </ol>
+
+            <div className="mt-6 hidden lg:block">
+              <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-slate-300 underline-offset-2 hover:text-white hover:underline">
+                <IconChevronLeft className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                {t('authRecovery.backToLogin')}
+              </Link>
+            </div>
           </div>
-        )}
 
+          {/* ── Right column: form ────────────────────────────────────── */}
+          <div>
         {isReset ? (
-          <div className="mt-6 space-y-4">
+          <div className="space-y-4 lg:flex lg:flex-col lg:justify-center lg:min-h-[300px]">
             <p role="status" aria-live="polite" className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-300">
               {t('authRecovery.reset.successMessage')}
             </p>
             <Link
               to="/login"
-              className="block rounded-lg bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+              className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
             >
+              <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('authRecovery.reset.goToLogin')}
             </Link>
           </div>
         ) : (
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+
+            {/* Request ID — visible readonly when provided by backend, editable when manual entry */}
+            <div>
+              <label htmlFor="request-id" className="mb-1 block text-sm font-medium text-slate-200">
+                {t('authRecovery.reset.requestIdLabel')} <span className="text-red-400" aria-hidden="true">*</span>
+              </label>
+              <input
+                id="request-id"
+                type="text"
+                autoComplete="off"
+                readOnly={hasRequestIdFromState}
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                className={`w-full rounded-lg border bg-slate-900/70 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition font-mono ${
+                  hasRequestIdFromState
+                    ? 'border-white/10 text-slate-400 cursor-not-allowed'
+                    : 'focus-visible:ring-2 focus-visible:ring-indigo-500'
+                } ${
+                  errors.request_id
+                    ? 'border-red-500'
+                    : hasRequestIdFromState ? '' : 'border-white/15'
+                }`}
+                aria-invalid={Boolean(errors.request_id)}
+                aria-describedby={errors.request_id ? 'request-id-error' : 'request-id-hint'}
+                {...register('request_id')}
+              />
+              {errors.request_id ? (
+                <p id="request-id-error" role="alert" className="mt-1 text-xs text-red-400">
+                  {errors.request_id.message}
+                </p>
+              ) : (
+                <p id="request-id-hint" className="mt-1 text-xs text-slate-500">
+                  {hasRequestIdFromState
+                    ? t('authRecovery.reset.requestIdProvidedHint')
+                    : t('authRecovery.reset.requestIdHint')}
+                </p>
+              )}
+            </div>
 
             {/* Verification code */}
             <div>
@@ -475,18 +495,30 @@ export default function ResetPasswordPage() {
               type="submit"
               disabled={mutation.isPending}
               aria-busy={mutation.isPending}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
+              {mutation.isPending ? (
+                <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+              ) : (
+                <IconShield className="h-4 w-4 shrink-0" aria-hidden="true" />
+              )}
               {mutation.isPending ? t('authRecovery.reset.submitting') : t('authRecovery.reset.submit')}
             </button>
 
-            <div className="flex justify-end pt-1 text-sm">
-              <Link to="/login" className="text-slate-300 underline-offset-2 hover:text-white hover:underline">
+            {/* Back to login — visible only on mobile (lg uses left column link) */}
+            <div className="flex justify-end pt-1 text-sm lg:hidden">
+              <Link to="/login" className="inline-flex items-center gap-1.5 text-slate-300 underline-offset-2 hover:text-white hover:underline">
+                <IconChevronLeft className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 {t('authRecovery.backToLogin')}
               </Link>
             </div>
           </form>
         )}
+          </div>
+        </div>
         </section>
         <footer className="mt-4 text-center text-xs text-slate-600" role="contentinfo">
           © {new Date().getFullYear()} KeyGo - {t('auth.copyright')}

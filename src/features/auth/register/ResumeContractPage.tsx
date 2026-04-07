@@ -14,6 +14,7 @@ import { env } from '@/shared/lib/config/env'
 import { LocaleSwitcher } from '@/shared/ui/LocaleSwitcher'
 import { EmailVerificationStep } from './steps/EmailVerificationStep'
 import { AppFooter } from '@/shared/ui/AppFooter'
+import { IconSearch, IconCreditCard, IconChevronLeft, IconArrowRight, IconPlus } from '@/shared/ui/icons/definitions'
 
 const IS_DEV = env.DEV
 
@@ -80,14 +81,17 @@ function LookupForm({ inputId, onChange, onSubmit, isLoading, error }: LookupFor
       >
         {isLoading ? (
           <>
-            <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
             </svg>
             {t('subscribe.resumeLookup.searching')}
           </>
         ) : (
-          t('subscribe.resumeLookup.continue')
+          <>
+            <IconSearch className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {t('subscribe.resumeLookup.continue')}
+          </>
         )}
       </button>
 
@@ -152,14 +156,17 @@ function PaymentView({ isProcessing, error, onConfirm }: PaymentViewProps) {
           >
             {isProcessing ? (
               <>
-                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <svg className="h-4 w-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
                 {t('subscribe.actions.processing')}
               </>
             ) : (
-              t('subscribe.resumePayment.simulatePayment')
+              <>
+                <IconCreditCard className="h-4 w-4 shrink-0" aria-hidden="true" />
+                {t('subscribe.resumePayment.simulatePayment')}
+              </>
             )}
           </button>
         </div>
@@ -204,8 +211,9 @@ function DoneView({ email }: { email: string }) {
 
       <Link
         to="/login"
-        className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
       >
+        <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
         {t('subscribe.resumeDone.goToLogin')}
       </Link>
     </div>
@@ -251,23 +259,26 @@ function TerminalView({ type }: TerminalViewProps) {
         {isActive ? (
           <Link
             to="/login"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+            className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
           >
+            <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t('subscribe.terminal.goToLogin')}
           </Link>
         ) : (
           <>
             <Link
               to="/subscribe"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
             >
+              <IconPlus className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('subscribe.terminal.newContract')}
             </Link>
             <button
               type="button"
               onClick={() => window.history.back()}
-              className="border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
+              className="flex items-center justify-center gap-2 border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
             >
+              <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('subscribe.actions.back')}
             </button>
           </>

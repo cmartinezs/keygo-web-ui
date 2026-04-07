@@ -6,8 +6,8 @@ import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { recoverPassword } from '@/features/account/api'
-import { TENANT } from '@/shared/api/client'
+import { platformRecoverPassword } from '@/features/account/api'
+import { IconShield, IconArrowRight, IconChevronLeft } from '@/shared/ui/icons/definitions'
 import { getAppApiError } from '@/shared/api/errorNormalizer'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
@@ -52,8 +52,7 @@ export default function RecoverPasswordPage() {
 
   const mutation = useMutation({
     mutationFn: (values: RecoverPasswordForm) =>
-      recoverPassword(
-        TENANT,
+      platformRecoverPassword(
         {
           recovery_token: values.recovery_token,
           new_password: values.new_password,
@@ -96,8 +95,9 @@ export default function RecoverPasswordPage() {
             </p>
             <Link
               to="/login"
-              className="block rounded-lg bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+              className="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
             >
+              <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
               {t('authRecovery.recover.goToLogin')}
             </Link>
           </div>
@@ -189,16 +189,31 @@ export default function RecoverPasswordPage() {
               type="submit"
               disabled={mutation.isPending}
               aria-busy={mutation.isPending}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex items-center justify-center gap-2 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {mutation.isPending ? t('authRecovery.recover.submitting') : t('authRecovery.recover.submit')}
+              {mutation.isPending ? (
+                <>
+                  <svg className="h-4 w-4 shrink-0 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  {t('authRecovery.recover.submitting')}
+                </>
+              ) : (
+                <>
+                  <IconShield className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  {t('authRecovery.recover.submit')}
+                </>
+              )}
             </button>
 
             <div className="flex justify-between pt-1 text-sm">
-              <Link to="/forgot-password" className="text-slate-300 underline-offset-2 hover:text-white hover:underline">
+              <Link to="/forgot-password" className="inline-flex items-center gap-1 text-slate-300 underline-offset-2 hover:text-white hover:underline">
+                <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {t('authRecovery.recover.needToken')}
               </Link>
-              <Link to="/login" className="text-slate-300 underline-offset-2 hover:text-white hover:underline">
+              <Link to="/login" className="inline-flex items-center gap-1 text-slate-300 underline-offset-2 hover:text-white hover:underline">
+                <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
                 {t('authRecovery.backToLogin')}
               </Link>
             </div>

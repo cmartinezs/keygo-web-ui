@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { LocaleSwitcher } from '@/shared/ui/LocaleSwitcher'
+import { IconChevronDown } from '@/shared/ui/icons'
 
 function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -82,16 +83,10 @@ export function LandingNav() {
               className="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               {t('landing.nav.startHere')}
-              <svg
-                className={`w-4 h-4 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+              <IconChevronDown
+                className={`h-4 w-4 shrink-0 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`}
                 aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              />
             </button>
 
             {menuOpen && (

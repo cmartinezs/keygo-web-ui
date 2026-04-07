@@ -9,6 +9,7 @@ import {
   NETWORK_RETRY_DELAY_MS,
 } from '@/shared/lib/config/network'
 import { runGetWithRecovery } from '@/shared/lib/network/recovery'
+import { IconRefresh, IconDashboard } from '@/shared/ui/icons'
 import { CardSkeleton, ErrorAlert, SectionTitle } from './components/DashboardPrimitives'
 import { ServiceStatusRow } from './components/ServiceStatusRow'
 import { IamCoreRow } from './components/IamCoreRow'
@@ -107,12 +108,7 @@ export default function AdminDashboardPage() {
             aria-label={t('adminDashboard.refreshAria')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
           >
-            <svg
-              className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+            <IconRefresh className={`h-4 w-4 shrink-0 ${isFetching ? 'animate-spin' : ''}`} aria-hidden="true" />
             {t('adminDashboard.refresh')}
           </button>
 
@@ -121,9 +117,7 @@ export default function AdminDashboardPage() {
             type="button"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <IconDashboard className="h-4 w-4 shrink-0" aria-hidden="true" />
             {t('adminDashboard.quickActions')}
           </button>
         </div>

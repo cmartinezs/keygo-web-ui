@@ -2,7 +2,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import type { KeyGoJwtClaims } from '@/shared/types/auth'
 import { PLATFORM_ROLES } from '@/shared/types/roles'
 import type { PlatformRole } from '@/shared/types/roles'
-import { API_V1 } from '@/shared/api/client'
+import { API_V1, PLATFORM_URL } from '@/shared/api/client'
 
 const jwksCache = new Map<string, ReturnType<typeof createRemoteJWKSet>>()
 
@@ -14,6 +14,26 @@ function getJwks(tenantSlug: string) {
   return jwksCache.get(tenantSlug)!
 }
 
+const PLATFORM_CACHE_KEY = '__platform__'
+
+function getPlatformJwks() {
+  if (!jwksCache.has(PLATFORM_CACHE_KEY)) {
+    const url = new URL(`${PLATFORM_URL}/.well-known/jwks.json`)
+    jwksCache.set(PLATFORM_CACHE_KEY, createRemoteJWKSet(url))
+  }
+  return jwksCache.get(PLATFORM_CACHE_KEY)!
+}
+
+/** Verify id_token issued by the platform (KeyGo's own login). */
+export async function verifyPlatformIdToken(
+  idToken: string,
+): Promise<KeyGoJwtClaims> {
+  const jwks = getPlatformJwks()
+  const { payload } = await jwtVerify(idToken, jwks, { algorithms: ['RS256'] })
+  return payload as unknown as KeyGoJwtClaims
+}
+
+/** Verify id_token issued by a tenant-scoped OAuth2 flow. */
 export async function verifyIdToken(
   idToken: string,
   tenantSlug: string,

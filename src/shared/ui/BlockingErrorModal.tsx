@@ -11,6 +11,7 @@ import { useTokenStore } from '@/shared/lib/auth/tokenStore'
 import { getProfile, ACCOUNT_QUERY_KEYS } from '@/features/account/api'
 import { TENANT } from '@/shared/api/client'
 import { env } from '@/shared/lib/config/env'
+import { IconClipboard } from '@/shared/ui/icons'
 
 const DEFAULT_NO_ROLE_ACTIONS: BlockingErrorAction[] = [
   { id: 'close-modal', label: 'Cerrar mensaje', kind: 'close', variant: 'secondary' },
@@ -138,8 +139,13 @@ function NoRoleContent({ error, actions, onAction }: NoRoleContentProps) {
           type="button"
           onClick={handleCopy}
           disabled={isCopying}
-          className="flex-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold px-4 py-2.5 transition-colors disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-amber-300"
+          className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-900 font-semibold px-4 py-2.5 transition-colors disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-amber-300"
         >
+          {isCopying ? (
+            <span className="w-4 h-4 border-2 border-slate-900/30 border-t-slate-900 rounded-full animate-spin shrink-0" aria-hidden="true" />
+          ) : (
+            <IconClipboard className="h-4 w-4 shrink-0" aria-hidden="true" />
+          )}
           {isCopying ? 'Copiando...' : 'Copiar datos para soporte'}
         </button>
         {actions.map((action) => (
