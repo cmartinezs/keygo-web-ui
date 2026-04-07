@@ -31,29 +31,36 @@ Este análisis cubre los cambios más recientes en la documentación del proyect
 | 08 | [Visión de Implementación](./08-vision-implementacion.md) | Cómo veo la implementación: fases, riesgos, dependencias, recomendaciones |
 | 09 | [Restructuración del Repositorio](./09-restructuracion-repositorio.md) | Análisis de la estructura feature-first propuesta: mapeo de archivos, 5 contextos, compatibilidad dual-auth |
 | 10 | [Flujo Login Tenant (Hosted Login)](./10-flujo-login-tenant-hosted.md) | Cómo KeyGo UI actúa como hosted login para apps de terceros: estándar de industria, diagrama de flujo, qué falta implementar |
-| 11 | [Gaps y Dependencias Backend](./11-gaps-y-dependencias-backend.md) | Auditoría completa: 18 endpoints bloqueantes, 12 módulos frontend cojos, 8 preguntas abiertas de diseño |
+| 11 | [Gaps y Dependencias Backend](./11-gaps-y-dependencias-backend.md) | Auditoría completa: 20 endpoints bloqueantes, 12 módulos frontend cojos, 7 preguntas de diseño (todas resueltas) |
+| 12 | [Cross-Reference api-docs.json](./12-cross-reference-api-docs.md) | **Auditoría definitiva** del api-docs.json actualizado (65 endpoints). Hallazgo: solo 3 gaps reales, no 20. Auth y self-service van por tenant keygo. |
 
-## Estado del backend
+## Estado del backend (actualizado 2026-04-07)
 
-Según la Endpoint Status Matrix (2026-04-03):
+Según el `api-docs.json` regenerado:
 
-- **56 endpoints productivos** de 58 totales
-- **2 parciales** (pendientes de decisión de producto)
-- **0 endpoints sin implementar** en el core
+- **65 endpoints documentados** en OpenAPI
+- **62 disponibles** para el frontend
+- **3 gaps reales** (list platform users, update platform user, list user platform-roles)
+- **~30 endpoints nuevos** no anticipados en el análisis previo (contracts, app roles, memberships, billing por app, registration, account settings, dashboard)
 
-## Decisiones clave pendientes del frontend
+## Decisiones de diseño resueltas
 
-1. **Dual auth stack** — implementar ambos flujos PKCE (platform y tenant app) en la misma SPA.
-2. **Compatibilidad de roles** — reconocer formatos legacy (`ADMIN`) y nuevos (`KEYGO_ADMIN`) en paralelo.
-3. **Billing platform** — nuevos endpoints de catálogo, suscripción e invoices a nivel plataforma.
-4. **Tipos wire format** — migrar DTOs a `snake_case` real del backend (corregir camelCase del generador).
-5. **Restructuración de rutas** — separar contexto platform de contexto tenant en la SPA.
-6. **Restructuración del repositorio** — migrar de organización type-first a feature-first con 5 contextos semánticos.
+| # | Decisión | Resultado |
+|---|----------|-----------|
+| 1 | Auth context | **Single-context.** Platform users = users del tenant keygo. Un solo JWT. |
+| 2 | Navegación de roles | **Dropdown existente.** Ya funciona. |
+| 3 | Hosted login branding | **Condicional al plan.** KeyGo default si no tiene. |
+| 4 | Roles legacy | **Eliminados.** Sin transición, reemplazo directo. |
+| 5 | Forgot password | **Solo vía platform** (tenant keygo). Único punto de entrada. |
+| 6 | Consent screen | **No.** Implícito en el contrato del plan. |
+| 7 | Subdominios | **Diferido.** Single domain por ahora. |
 
 ## Cómo usar este análisis
 
-- **Para planificar:** Leer `01-resumen-ejecutivo.md` + `08-vision-implementacion.md`.
-- **Para implementar tipos:** Leer `07-impacto-tipos-frontend.md`.
+- **Para planificar:** Leer `01-resumen-ejecutivo.md` + `12-cross-reference-api-docs.md` (más actualizado que 08).
+- **Para implementar tipos/API:** Leer `12-cross-reference-api-docs.md` § DTOs y § Plan revisado.
 - **Para entender un RFC específico:** Leer el documento correspondiente (03, 04, o 05).
 - **Para diseñar pantallas de cuenta:** Leer `06-account-ui-proposal.md`.
 - **Para evaluar la restructuración del repo:** Leer `09-restructuracion-repositorio.md`.
+- **Para entender gaps resueltos vs pendientes:** Leer `11-gaps-y-dependencias-backend.md` + `12-cross-reference-api-docs.md`.
+- **Para el flujo de hosted login:** Leer `10-flujo-login-tenant-hosted.md`.

@@ -1,0 +1,85 @@
+import type { BaseResponse } from '@/shared/types/base'
+import type { AuthorizeData, LoginData, TokenData } from '@/shared/types/auth'
+import { authClient, API_V1, CLIENT_ID, REDIRECT_URI } from '@/shared/api/client'
+import { unwrapResponseData } from '@/shared/api/response'
+import type { RequestOptions } from '@/shared/api/requestOptions'
+
+export async function refreshToken(params: {
+  tenantSlug: string
+  refreshToken: string
+}): Promise<TokenData> {
+  const url = `${API_V1}/tenants/${params.tenantSlug}/oauth2/token`
+  const response = await authClient.post<BaseResponse<TokenData>>(url, {
+    grant_type: 'refresh_token',
+    client_id: CLIENT_ID,
+    refresh_token: params.refreshToken,
+  })
+  const body = response.data
+  return unwrapResponseData(body, 'Token refresh failed')
+}
+
+export async function authorize(params: {
+  tenantSlug: string
+  codeChallenge: string
+  state: string
+}, options?: RequestOptions): Promise<AuthorizeData> {
+  const url = `${API_V1}/tenants/${params.tenantSlug}/oauth2/authorize`
+  const response = await authClient.get<BaseResponse<AuthorizeData>>(url, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    params: {
+      client_id: CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      scope: 'openid profile',
+      response_type: 'code',
+      code_challenge: params.codeChallenge,
+      code_challenge_method: 'S256',
+      state: params.state,
+    },
+  })
+  const body = response.data
+  return unwrapResponseData(body, 'Authorization initiation failed')
+}
+
+export async function login(params: {
+  tenantSlug: string
+  emailOrUsername: string
+  password: string
+}, options?: RequestOptions): Promise<LoginData> {
+  const url = `${API_V1}/tenants/${params.tenantSlug}/account/login`
+  const response = await authClient.post<BaseResponse<LoginData>>(url, {
+    email_or_username: params.emailOrUsername,
+    password: params.password,
+  }, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
+  const body = response.data
+  return unwrapResponseData(body, 'Login failed')
+}
+
+export async function exchangeToken(params: {
+  tenantSlug: string
+  code: string
+  codeVerifier: string
+}, options?: RequestOptions): Promise<TokenData> {
+  const url = `${API_V1}/tenants/${params.tenantSlug}/oauth2/token`
+  const response = await authClient.post<BaseResponse<TokenData>>(url, {
+    grant_type: 'authorization_code',
+    client_id: CLIENT_ID,
+    code: params.code,
+    code_verifier: params.codeVerifier,
+    redirect_uri: REDIRECT_URI,
+  }, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
+  const body = response.data
+  return unwrapResponseData(body, 'Token exchange failed')
+}

@@ -5,9 +5,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import App from './App'
 import './styles/index.css'
-import { restoreSession } from './auth/refresh'
-import { env } from './config/env'
-import { GlobalLoaderOverlay } from './components/GlobalLoaderOverlay'
+import { restoreSession } from '@/shared/lib/auth/refresh'
+import { env } from '@/shared/lib/config/env'
+import { GlobalLoaderOverlay } from '@/shared/ui/GlobalLoaderOverlay'
 import './i18n/config'
 
 // ⏳ pendiente backend (modulos varios) — Activa MSW para endpoints temporales
@@ -15,7 +15,7 @@ import './i18n/config'
 // VITE_MOCK_CONNECTIONS=true. Solo opera en modo desarrollo.
 async function prepareMocks(): Promise<void> {
   if (!env.MOCK_CONNECTIONS || !env.DEV) return
-  const { worker } = await import('./mocks/browser')
+  const { worker } = await import('@/shared/mocks/browser')
   await worker.start({ onUnhandledRequest: 'bypass' })
 }
 
