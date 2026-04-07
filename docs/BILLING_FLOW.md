@@ -3,7 +3,7 @@
 > Guía de referencia del modelo de billing: concepto de contratante, ciclo de vida de contratos,
 > gestión de tenants por plan y flujos de activación / upgrade.
 >
-> Fecha de actualización: **2026-03-30** | Estado: **Modelo v2 — rediseño estructural**
+> Fecha de actualización: **2026-04-07** | Estado: **Modelo v2 — rediseño estructural + identidad de plataforma**
 
 ---
 
@@ -15,15 +15,17 @@
 4. [Estados del contrato](#estados-del-contrato)
 5. [Restricción: un solo contrato vigente](#restricción-un-solo-contrato-vigente)
 6. [Seguridad de endpoints](#seguridad-de-endpoints)
-7. [Flujo principal: primer contrato (onboarding)](#flujo-principal-primer-contrato-onboarding)
-8. [Flujo de upgrade de plan](#flujo-de-upgrade-de-plan)
-9. [Creación de tenants por el contratante](#creación-de-tenants-por-el-contratante)
-10. [Gestión post-activación](#gestión-post-activación)
-11. [Gestión de catálogo (admin proveedor)](#gestión-de-catálogo-admin-proveedor)
-12. [Referencia de endpoints](#referencia-de-endpoints)
-13. [Cuerpos de request y respuesta](#cuerpos-de-request-y-respuesta)
-14. [Manejo de errores](#manejo-de-errores)
-15. [Referencias cruzadas](#referencias-cruzadas)
+7. [Autenticación del contratante](#autenticación-del-contratante)
+8. [Flujo principal: primer contrato (onboarding)](#flujo-principal-primer-contrato-onboarding)
+9. [Flujo de upgrade de plan](#flujo-de-upgrade-de-plan)
+10. [Creación de tenants por el contratante](#creación-de-tenants-por-el-contratante)
+11. [Gestión post-activación](#gestión-post-activación)
+12. [Gestión de catálogo (admin proveedor)](#gestión-de-catálogo-admin-proveedor)
+13. [Referencia de endpoints](#referencia-de-endpoints)
+14. [Cuerpos de request y respuesta](#cuerpos-de-request-y-respuesta)
+15. [Manejo de errores](#manejo-de-errores)
+16. [Integración con identidad de plataforma (Fase I)](#integración-con-identidad-de-plataforma-fase-i)
+17. [Referencias cruzadas](#referencias-cruzadas)
 
 ---
 
@@ -47,20 +49,28 @@
 
 ```mermaid
 classDiagram
+    class PlatformUser {
+        UUID id
+        String email
+        String displayName
+        PlatformUserStatus status
+    }
+
+    class TenantUser {
+        UUID id
+        UUID tenantId
+        UUID platformUserId
+        String email
+        String username
+        UserStatus status
+    }
+
     class Contractor {
         UUID id
         UUID tenantUserId
         ContractorStatus status
         Timestamp createdAt
         Timestamp updatedAt
-    }
-
-    class TenantUser {
-        UUID id
-        UUID tenantId
-        String email
-        String username
-        UserStatus status
     }
 
     class AppContract {
@@ -77,6 +87,7 @@ classDiagram
         UUID contractorId
     }
 
+    PlatformUser "1" --> "0..1" TenantUser : linked via platform_user_id (nullable)
     Contractor "1" --> "1" TenantUser : is represented by (UNIQUE)
     Contractor "1" --> "0..*" AppContract : holds (solo 1 ACTIVE)
     Contractor "1" --> "0..*" Tenant : creates within plan limits
@@ -84,21 +95,39 @@ classDiagram
 
 Un **contratante** (`contractor`) es la persona física o entidad que firma contratos con la plataforma KeyGo.
 
+La **cadena completa de identidad** del contratante es:
+
+```
+PlatformUser (identidad global KeyGo)
+  ↓ platform_user_id FK (nullable)
+TenantUser (cuenta en tenant proveedor, p. ej. "keygo")
+  ↓ tenant_user_id FK (UNIQUE)
+Contractor (entidad de billing)
+  ↓ contractor_id FK
+AppContract → AppSubscription → Invoice
+```
+
 | Propiedad | Descripción |
 |---|---|
-| Identidad digital | Tiene una cuenta (`TenantUser`) **en el tenant del proveedor** (p. ej. tenant `keygo`). |
+| Identidad global | Tiene un registro `PlatformUser` en `platform_users` (identidad global KeyGo). |
+| Identidad en tenant proveedor | Tiene una cuenta (`TenantUser`) **en el tenant del proveedor** (p. ej. tenant `keygo`), vinculada al `PlatformUser` via `platform_user_id`. |
 | Relación 1:1 | `contractors.tenant_user_id` tiene constraint `UNIQUE` — un contratante, una cuenta. |
 | Historial de contratos | Puede tener muchos contratos a lo largo del tiempo. |
 | Contrato vigente | **Solo uno puede estar `ACTIVE`** en cualquier momento. |
 | Tenants propios | Crea sus propios tenants **después** de contratar, dentro del límite `MAX_TENANTS` del plan. |
 | Upgrade | Nuevo contrato → el anterior pasa a `SUPERSEDED`. |
+| Roles de plataforma | Al activar su primer contrato recibe automáticamente el rol `KEYGO_TENANT_ADMIN` en `platform_user_roles`. |
 
 ### Relación con el tenant proveedor
 
 ```mermaid
 graph LR
+    subgraph "Identidad de plataforma"
+        PU["PlatformUser\ncontractor@example.com\n(identidad global)"]
+    end
+
     subgraph "Tenant proveedor (keygo)"
-        TU["TenantUser\ncontractor@example.com"]
+        TU["TenantUser\ncontractor@example.com\nplatform_user_id → PU"]
         C["Contractor"]
     end
 
@@ -107,12 +136,15 @@ graph LR
         T2["Tenant B\ncontractor_id → C"]
     end
 
+    PU -- "platform_user_id FK" --> TU
     C -- "1:1" --> TU
     C -- "crea, dentro del límite MAX_TENANTS" --> T1
     C -- "crea, dentro del límite MAX_TENANTS" --> T2
 ```
 
-El `TenantUser` del contratante vive en el **tenant del proveedor** (quien ofrece los planes, p. ej. `keygo`). Cuando el contratante crea sus propios tenants, el sistema automáticamente le crea un `TenantUser` en cada uno con rol `ADMIN_TENANT`.
+El contratante es principalmente un **usuario de plataforma** (`PlatformUser`) con identidad global en KeyGo. Esta identidad global se vincula a un `TenantUser` en el **tenant del proveedor** (quien ofrece los planes, p. ej. `keygo`) mediante la FK `platform_user_id`. El registro `Contractor` (entidad de billing) se vincula 1:1 a ese `TenantUser`.
+
+Cuando el contratante crea sus propios tenants, el sistema automáticamente le crea un `TenantUser` en cada uno con rol `ADMIN_TENANT`.
 
 ---
 
@@ -199,12 +231,74 @@ Al hacer un upgrade:
 | `POST /billing/contracts/{contractId}/verify-email` | **Público** |
 | `POST /billing/contracts/{contractId}/mock-approve-payment` | **Público (solo DEV)** — `keygo.billing.mock-payment-enabled=true` |
 | `POST /billing/contracts/{contractId}/activate` | **Público** — contrato en `READY_TO_ACTIVATE` |
-| `GET /billing/subscription` | **Bearer ADMIN_TENANT** del contratante |
-| `POST /billing/subscription/cancel` | **Bearer ADMIN_TENANT** del contratante |
-| `GET /billing/invoices` | **Bearer ADMIN_TENANT** del contratante |
-| `POST /billing/plans` | **Bearer ADMIN_TENANT** del proveedor |
+| `GET /billing/subscription` | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT` |
+| `POST /billing/subscription/cancel` | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT` |
+| `GET /billing/invoices` | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT` |
+| `POST /billing/plans` | **Bearer plataforma** — rol `KEYGO_ADMIN` o `ADMIN_TENANT` del proveedor |
 
 > Los sufijos `/billing/catalog` y `/billing/contracts` están declarados como públicos en `KeyGoBootstrapProperties`.
+
+> **Nota:** Los endpoints protegidos de billing validan roles de plataforma (`KEYGO_TENANT_ADMIN`, `KEYGO_ADMIN`)
+> provenientes del JWT emitido por el flujo de autenticación de plataforma. Los roles legacy (`ADMIN_TENANT`, `ADMIN`)
+> se aceptan por compatibilidad con `@PreAuthorize("hasAnyRole('ADMIN','ADMIN_TENANT','KEYGO_ADMIN','KEYGO_TENANT_ADMIN')")`.
+
+---
+
+## Autenticación del contratante
+
+El contratante se autentica mediante el **flujo de autenticación de plataforma**, independiente del flujo OAuth2 multi-tenant.
+
+### Flujo de autenticación
+
+```mermaid
+sequenceDiagram
+    actor U as Contratante
+    participant C as Cliente (SPA)
+    participant K as KeyGo Server
+    participant DB as Base de datos
+
+    U->>C: Ingresa email + contraseña
+    C->>K: POST /keygo-server/api/v1/platform/account/login
+    Note right of C: body: { email, password }
+    K->>DB: Buscar PlatformUser por email
+    K->>DB: Validar credenciales (bcrypt)
+    K->>DB: Obtener roles de plataforma\n(platform_user_roles → platform_roles)
+    K->>DB: Crear Session\n(platform_user_id, client_app_id = null)
+    K-->>C: 200 JWT (access_token + refresh_token)
+    Note left of K: Claims del JWT:\n- sub: platform_user_id\n- roles: [keygo_tenant_admin, keygo_user]\n- type: platform
+```
+
+### JWT del contratante
+
+El JWT emitido por `POST /api/v1/platform/account/login` contiene:
+
+| Claim | Valor | Descripción |
+|---|---|---|
+| `sub` | UUID del `PlatformUser` | Identifica al usuario de plataforma |
+| `email` | Email del `PlatformUser` | Email global del contratante |
+| `roles` | `["keygo_tenant_admin", "keygo_user"]` | Roles de plataforma asignados |
+| `type` | `"platform"` | Distingue de tokens OAuth2 multi-tenant |
+
+### Diferencia con OAuth2 multi-tenant
+
+| Aspecto | Auth plataforma (billing) | OAuth2 multi-tenant (apps) |
+|---|---|---|
+| Endpoint de login | `POST /api/v1/platform/account/login` | `POST /api/v1/tenants/{slug}/account/login` |
+| Identidad | `PlatformUser` (global) | `TenantUser` (scoped a un tenant) |
+| Roles en JWT | Roles de plataforma: `keygo_user`, `keygo_tenant_admin`, `keygo_admin` | Roles de app: `admin_tenant`, `user_tenant`, etc. |
+| Sesión | `sessions.platform_user_id` = UUID, `client_app_id` = null | `sessions.tenant_user_id` = UUID, `client_app_id` = UUID |
+| Uso principal | Gestión de billing, contratos, suscripciones | Acceso a aplicaciones multi-tenant |
+
+### Roles de plataforma relevantes para billing
+
+| Rol | Asignación | Permisos de billing |
+|---|---|---|
+| `KEYGO_USER` | Automático al crear `PlatformUser` | Consultar catálogo (público), iniciar contrato |
+| `KEYGO_TENANT_ADMIN` | Automático al activar primer contrato | Gestionar suscripción, facturas, crear tenants, cancelar suscripción |
+| `KEYGO_ADMIN` | Solo asignación manual | Gestión completa de catálogo, planes, dashboard admin |
+
+> **⚠️ Importante:** El contratante **no** usa el flujo OAuth2 de un tenant (`/tenants/{slug}/oauth2/authorize`)
+> para acceder a funcionalidades de billing. Usa exclusivamente el flujo de plataforma.
 
 ---
 
@@ -253,8 +347,12 @@ sequenceDiagram
     Note over C,K: Paso 6 — Activación
     C->>K: POST .../billing/contracts/{contractId}/activate
     K->>DB: Verificar: contractor sin contrato ACTIVE previo
+    K->>DB: Crear/vincular PlatformUser (si no existe) con email del contratante
+    K->>DB: Asignar rol KEYGO_USER al PlatformUser (si es nuevo)
+    K->>DB: Vincular TenantUser.platform_user_id → PlatformUser.id
     K->>DB: TenantUser.status → ACTIVE
     K->>DB: Contractor.status → ACTIVE
+    K->>DB: Asignar rol KEYGO_TENANT_ADMIN al PlatformUser (platform_user_roles)
     K->>DB: Crear AppSubscription (status=ACTIVE, contractor_id)
     K->>DB: Generar Invoice (status=ISSUED, INV-XXXXXXXX)
     K->>DB: Contrato → ACTIVE
@@ -265,13 +363,20 @@ sequenceDiagram
 
 | Entidad | Descripción |
 |---|---|
-| `TenantUser` (tenant proveedor) | Cuenta del contratante. `status → ACTIVE`. |
+| `PlatformUser` | Identidad global del contratante en KeyGo. Si no existía, se crea con `status → ACTIVE`. Si ya existía (upgrade), se reutiliza. |
+| `platform_user_roles` | Asignación del rol `KEYGO_TENANT_ADMIN` al `PlatformUser` (además del `KEYGO_USER` base). |
+| `TenantUser` (tenant proveedor) | Cuenta del contratante. `status → ACTIVE`. Se vincula al `PlatformUser` via `platform_user_id`. |
 | `Contractor` | Entidad de billing 1:1 con el `TenantUser`. `status → ACTIVE`. |
 | `AppSubscription` | Suscripción activa vinculada a `contractor_id`. |
 | `Invoice` | Primera factura del período. |
 
 > ⚠️ **Lo que ya NO ocurre al activar:** no se crea ningún `Tenant` propio del contratante.
 > Los tenants los crea el contratante mismo posteriormente, dentro del límite `MAX_TENANTS` del plan.
+>
+> 🚧 **Fase I (pendiente de implementación):** La creación automática de `PlatformUser` y la asignación
+> de `KEYGO_TENANT_ADMIN` durante la activación del contrato es el **comportamiento objetivo** documentado
+> aquí. La implementación actual puede no incluir estos pasos aún. Ver sección
+> [Integración con identidad de plataforma (Fase I)](#integración-con-identidad-de-plataforma-fase-i).
 
 ---
 
@@ -319,9 +424,10 @@ sequenceDiagram
     participant DB as Base de datos
 
     C->>K: POST /keygo-server/api/v1/tenants
-    Note right of C: Authorization: Bearer <jwt>\n body: { name, slug, ... }
+    Note right of C: Authorization: Bearer <jwt plataforma>\n(rol: KEYGO_TENANT_ADMIN)\nbody: { name, slug, ... }
 
-    K->>DB: Resolver contractor_id desde JWT (tenant_user_id → contractors)
+    K->>DB: Validar JWT de plataforma (platform_user_id + roles)
+    K->>DB: Resolver contractor_id:\nplatform_user_id → tenant_users.platform_user_id → contractors.tenant_user_id
     K->>DB: Obtener contrato ACTIVE del contractor
     K->>DB: Verificar entitlement MAX_TENANTS:\n COUNT(tenants WHERE contractor_id = X AND status != DELETED) < limit_value
 
@@ -354,8 +460,8 @@ sequenceDiagram
     participant DB as Base de datos
 
     C->>K: GET /keygo-server/api/v1/tenants/{providerSlug}/apps/{clientId}/billing/subscription
-    Note right of C: Authorization: Bearer <jwt>
-    K->>DB: Resolver contractor_id desde JWT
+    Note right of C: Authorization: Bearer <jwt plataforma>\n(rol: KEYGO_TENANT_ADMIN)
+    K->>DB: Resolver contractor_id desde JWT de plataforma\n(platform_user_id → tenant_user → contractor)
     K->>DB: findActiveSubscriptionByContractorId(contractorId)
     K-->>C: 200 APP_SUBSCRIPTION_RETRIEVED
 
@@ -400,9 +506,9 @@ sequenceDiagram
 | POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/verify-email` | Público | `APP_CONTRACT_EMAIL_VERIFIED` | Verificar código → crea TenantUser + Contractor si es nuevo |
 | POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/mock-approve-payment` | Público (DEV) | `APP_CONTRACT_PAYMENT_APPROVED` | Simular pago |
 | POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/activate` | Público | `APP_CONTRACT_ACTIVATED` | Activar → suscripción + factura; supercede contrato anterior si lo hay |
-| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/subscription` | Bearer ADMIN_TENANT (contratante) | `APP_SUBSCRIPTION_RETRIEVED` | Suscripción activa del contratante |
-| POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/subscription/cancel` | Bearer ADMIN_TENANT (contratante) | `APP_SUBSCRIPTION_CANCELLED` | Cancelar al fin del período |
-| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/invoices` | Bearer ADMIN_TENANT (contratante) | `APP_INVOICE_LIST_RETRIEVED` | Lista de facturas |
+| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/subscription` | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_SUBSCRIPTION_RETRIEVED` | Suscripción activa del contratante |
+| POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/subscription/cancel` | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_SUBSCRIPTION_CANCELLED` | Cancelar al fin del período |
+| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/invoices` | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_INVOICE_LIST_RETRIEVED` | Lista de facturas |
 
 ---
 
@@ -557,13 +663,75 @@ sequenceDiagram
 
 ---
 
+## Integración con identidad de plataforma (Fase I)
+
+> 🚧 **Estado: Pendiente de implementación.** Esta sección documenta el comportamiento objetivo
+> una vez completada la Fase I del RFC `restructure-multitenant`.
+
+### Cambios planificados en `ActivateAppContractUseCase`
+
+La activación del contrato (`POST /billing/contracts/{id}/activate`) incorporará los siguientes pasos adicionales:
+
+```mermaid
+flowchart TD
+    A[Contrato en READY_TO_ACTIVATE] --> B{¿Existe PlatformUser\ncon el email del contratante?}
+    B -- No --> C[Crear PlatformUser\nstatus=ACTIVE]
+    B -- Sí --> D[Reutilizar PlatformUser existente]
+    C --> E[Asignar rol KEYGO_USER]
+    E --> F[Vincular TenantUser.platform_user_id → PlatformUser.id]
+    D --> F
+    F --> G[Asignar rol KEYGO_TENANT_ADMIN\nen platform_user_roles]
+    G --> H[Activar TenantUser + Contractor]
+    H --> I[Crear Suscripción + Factura]
+    I --> J[Contrato → ACTIVE]
+```
+
+### Cambios planificados en `CreateAppContractUseCase`
+
+Al crear el contrato (`POST /billing/contracts`), se auto-creará un `PlatformUser` si no existe uno con el email proporcionado:
+
+| Paso | Acción | Condición |
+|---|---|---|
+| 1 | Buscar `PlatformUser` por `contractorEmail` | Siempre |
+| 2 | Crear `PlatformUser` con `status=PENDING` | Solo si no existe |
+| 3 | Asignar rol `KEYGO_USER` | Solo si se creó nuevo |
+| 4 | Continuar flujo normal de contrato | Siempre |
+
+### Modelo de sesión para billing
+
+Las sesiones de plataforma (billing) se distinguen de las sesiones OAuth2 multi-tenant:
+
+| Campo en `sessions` | Sesión de plataforma (billing) | Sesión OAuth2 (multi-tenant) |
+|---|---|---|
+| `platform_user_id` | UUID del `PlatformUser` | `null` |
+| `tenant_user_id` | `null` | UUID del `TenantUser` |
+| `client_app_id` | `null` (contexto global) | UUID de la `ClientApp` |
+| `tenant_id` | `null` o tenant proveedor | UUID del tenant |
+
+### Puertos nuevos requeridos
+
+| Puerto | Módulo | Descripción |
+|---|---|---|
+| `FindPlatformUserPort` | `keygo-app` | Buscar `PlatformUser` por email o ID |
+| `SavePlatformUserPort` | `keygo-app` | Crear/actualizar `PlatformUser` |
+| `AssignPlatformRolePort` | `keygo-app` | Asignar rol de plataforma a un `PlatformUser` |
+
+### Compatibilidad hacia atrás
+
+- Los endpoints protegidos de billing aceptan **tanto** roles de plataforma (`KEYGO_TENANT_ADMIN`) como roles legacy (`ADMIN_TENANT`) durante la transición.
+- El `@PreAuthorize` usa `hasAnyRole('ADMIN','ADMIN_TENANT','KEYGO_ADMIN','KEYGO_TENANT_ADMIN')` para garantizar compatibilidad.
+- Una vez completada la migración a Fase I, los roles legacy se deprecarán gradualmente.
+
+---
+
 ## Referencias cruzadas
 
 | Documento | Ruta | Relevancia |
 |---|---|---|
 | Flujo de Autenticación | `docs/api/AUTH_FLOW.md` | Prerequisito para endpoints con Bearer |
+| Identidad de Plataforma | RFC `restructure-multitenant` | Modelo `platform_users` + `platform_roles` + flujo de auth de plataforma |
 | Guía Frontend | `docs/keygo-ui/FRONTEND_DEVELOPER_GUIDE.md` | Sección §14.3 — inventario de endpoints de billing |
-| Modelo de datos | `docs/data/DATA_MODEL.md` | Diccionario de `contractors`, `app_contracts`, `app_subscriptions` |
+| Modelo de datos | `docs/data/DATA_MODEL.md` | Diccionario de `contractors`, `app_contracts`, `app_subscriptions`, `platform_users` |
 | Relaciones E/R | `docs/data/ENTITY_RELATIONSHIPS.md` | Contexto 9 — diagrama de billing |
 | Migraciones | `docs/data/MIGRATIONS.md` | V19+ — schema de billing v2 |
 | Colección Postman | `docs/postman/KeyGo-Server.postman_collection.json` | Requests con scripts de test |

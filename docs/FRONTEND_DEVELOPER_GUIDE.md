@@ -12,13 +12,13 @@
 1. [Visión general y modelo unificado](#1-visión-general-y-modelo-unificado)
 2. [Stack tecnológico recomendado](#2-stack-tecnológico-recomendado)
 3. [Estructura del proyecto](#3-estructura-del-proyecto)
-4. [Prerequisito: el tenant `keygo` y la ClientApp `keygo-ui`](#4-prerequisito-el-tenant-keygo-y-la-clientapp-keygo-ui)
+4. [Prerequisitos de backend para KeyGo-UI](#4-prerequisitos-del-backend-para-keygo-ui)
 5. [Convenciones fundamentales del backend](#5-convenciones-fundamentales-del-backend)
-6. [Flujo de autenticación OAuth2/PKCE — login único para todos los roles](#6-flujo-de-autenticación-oauth2pkce--login-único-para-todos-los-roles)
+6. [Flujos de autenticación — plataforma y tenant app](#6-flujos-de-autenticación--plataforma-y-tenant-app)
 7. [Gestión de roles y routing condicional](#7-gestión-de-roles-y-routing-condicional)
-8. [Vistas del rol `ADMIN` — Administrador Global de KeyGo](#8-vistas-del-rol-admin--administrador-global-de-keygo)
-9. [Vistas del rol `ADMIN_TENANT` — Administrador de Tenant](#9-vistas-del-rol-admin_tenant--administrador-de-tenant)
-10. [Vistas del rol `USER_TENANT` — Usuario del sistema](#10-vistas-del-rol-user_tenant--usuario-del-sistema)
+8. [Vistas del rol `ADMIN` / `KEYGO_ADMIN` — Administrador Global de KeyGo](#8-vistas-del-rol-admin--administrador-global-de-keygo)
+9. [Vistas del rol `ADMIN_TENANT` / `KEYGO_TENANT_ADMIN` — Administrador de Tenant](#9-vistas-del-rol-admin_tenant--administrador-de-tenant)
+10. [Vistas del rol `USER_TENANT` / `KEYGO_USER` — Usuario del sistema](#10-vistas-del-rol-user_tenant--usuario-del-sistema)
 11. [Perfil de usuario — compartido por todos los roles](#11-perfil-de-usuario--compartido-por-todos-los-roles)
 12. [Gestión segura de tokens](#12-gestión-segura-de-tokens)
 13. [Interceptores HTTP y manejo de errores](#13-interceptores-http-y-manejo-de-errores)
@@ -36,56 +36,70 @@
 
 `keygo-ui` debe entenderse en **dos modos complementarios**:
 
-1. **Modo plataforma:** `keygo-ui` como aplicación React registrada como `ClientApp` en el tenant raíz `keygo`.
-2. **Modo hosted login:** la misma UI de login reutilizada por otra SPA/app de otro tenant, pero usando el `tenantSlug` + `client_id` + `redirect_uri` de la app origen.
+1. **Modo plataforma:** `keygo-ui` como aplicación React principal del SaaS. Usa **OAuth2 PKCE** contra los endpoints de plataforma (`/api/v1/platform/...`) para operadores y administradores. También existe un endpoint `direct-login` para uso desde API/CLI.
+2. **Modo hosted login:** la misma UI de login reutilizada por otra SPA/app de otro tenant, usando el flujo **OAuth2/PKCE** con el `tenantSlug` + `client_id` + `redirect_uri` de la app origen.
 
-En ambos casos se reutiliza el **mismo flujo OAuth2/PKCE** y la misma experiencia de login.
-Lo que cambia es **quién es el cliente OAuth final** que recibirá y almacenará los tokens.
+Ambos modos usan el **mismo patrón PKCE** (generate verifier → authorize → login → token exchange). Lo que cambia es **la base de la URL** (`/platform/` vs `/tenants/{slug}/`) y **si se envía `client_id`**.
 
 ```mermaid
 graph TB
     subgraph "keygo-ui (una sola app React)"
-        L["🔐 Login unificado<br/>OAuth2 + PKCE"]
-        L -->|"rol: ADMIN"| VA["📋 Vistas de<br/>Administrador Global"]
-        L -->|"rol: ADMIN_TENANT"| VB["🏢 Vistas de<br/>Administrador de Tenant"]
-        L -->|"rol: USER_TENANT"| VC["👤 Vistas de<br/>Usuario del Sistema"]
+        L["🔐 Login unificado"]
+        L -->|"modo plataforma<br/>OAuth2 PKCE — /platform/"| LP["🔑 PKCE Plataforma"]
+        L -->|"modo hosted login<br/>OAuth2 PKCE — /tenants/{slug}/"| LH["🔑 PKCE Tenant"]
+        LP -->|"rol: KEYGO_ADMIN"| VA["📋 Vistas de<br/>Administrador Global"]
+        LP -->|"rol: KEYGO_TENANT_ADMIN"| VB["🏢 Vistas de<br/>Administrador de Tenant"]
+        LP -->|"rol: KEYGO_USER"| VC["👤 Vistas de<br/>Usuario del Sistema"]
     end
 
     subgraph "KeyGo Server"
+        P["Platform Users<br/>(tabla global)"]
         T["Tenant: keygo<br/>(tenant raíz)"]
-        A["ClientApp: keygo-ui<br/>(registrada en tenant keygo)"]
+        A["ClientApp: keygo-ui<br/>(hosted login)"]
         T --> A
-        A -->|"ADMIN"| U1["usuario: admin@keygo.io"]
-        A -->|"ADMIN_TENANT"| U2["usuario: ops@acme.io"]
-        A -->|"USER_TENANT"| U3["usuario: dev@keygo.io"]
+        P -->|"KEYGO_ADMIN"| U1["admin@keygo.local"]
+        P -->|"KEYGO_TENANT_ADMIN"| U2["tenant-admin@keygo.local"]
+        P -->|"KEYGO_USER"| U3["user@keygo.local"]
     end
 
-    L -->|"POST /oauth2/token<br/>(tenant: keygo)"| T
+    LP -->|"PKCE /platform/oauth2/authorize<br/>→ /platform/account/login<br/>→ /platform/oauth2/token"| P
+    LH -->|"PKCE /tenants/{slug}/oauth2/authorize<br/>→ /tenants/{slug}/account/login<br/>→ /tenants/{slug}/oauth2/token"| T
 ```
 
-> Este diagrama representa el **modo plataforma**. Si `keygo-ui` opera como login central para otra app,
-> la UI puede seguir siendo la misma, pero el `tenantSlug`, el `client_id`, la `redirect_uri` y el
-> almacenamiento final de tokens pertenecen a la **app origen**, no al tenant `keygo`.
+> Este diagrama representa ambos modos. Ambos usan **OAuth2 PKCE** pero contra endpoints distintos.
+> En **modo plataforma**, `keygo-ui` ejecuta PKCE contra `/platform/` y autentica `platform_users`.
+> En **modo hosted login**, la UI reutiliza el formulario de login pero ejecuta PKCE contra `/tenants/{slug}/` de la app origen.
 
-### 1.2. Los tres roles
+### 1.2. Los tres roles (nombres actualizados)
 
-| Rol | ¿Quién es? | ¿Qué gestiona? |
+| Rol nuevo | Rol legacy (aceptado) | ¿Quién es? | ¿Qué gestiona? |
+|---|---|---|---|
+| `KEYGO_ADMIN` | `ADMIN` | Operador del SaaS KeyGo (usuario de plataforma) | Todos los tenants, configuración global, usuarios de plataforma |
+| `KEYGO_TENANT_ADMIN` | `ADMIN_TENANT` | Administrador de una organización | Su tenant: apps, usuarios, memberships, roles |
+| `KEYGO_USER` | `USER_TENANT` | Cualquier usuario registrado en keygo-ui | Su perfil, contraseña, sesiones activas |
+
+> ⚠️ **Compatibilidad:** el backend acepta **ambos** nombres (legacy y nuevo) en `@PreAuthorize`. Los JWT de plataforma emiten los nombres nuevos (`keygo_admin`, `keygo_tenant_admin`, `keygo_user`). El frontend debe reconocer ambos formatos durante la transición.
+
+### 1.3. Modelo de autenticación — dos flujos diferenciados
+
+Con la incorporación de la **capa de identidad de plataforma**, `keygo-ui` ahora utiliza **dos flujos de autenticación** según el contexto:
+
+| Aspecto | Flujo de plataforma (KeyGo UI) | Flujo de tenant app (OAuth2/PKCE) |
 |---|---|---|
-| `ADMIN` | Operador del SaaS KeyGo | Todos los tenants, configuración global de la plataforma |
-| `ADMIN_TENANT` | Administrador de una organización | Su tenant: apps, usuarios, memberships, roles |
-| `USER_TENANT` | Cualquier usuario registrado en keygo-ui | Su perfil, contraseña, sesiones activas |
+| Caso de uso | Login de operadores de plataforma en `keygo-ui` | Login de usuarios de apps de tenant (hosted login o SPA propia) |
+| Endpoints | `GET /platform/oauth2/authorize` → `POST /platform/account/login` → `POST /platform/oauth2/token` | `GET /tenants/{slug}/oauth2/authorize` → `POST /tenants/{slug}/account/login` → `POST /tenants/{slug}/oauth2/token` |
+| Tipo de flujo | **OAuth2 Authorization Code + PKCE** | OAuth2 Authorization Code + PKCE |
+| Alternativa API/CLI | `POST /platform/account/direct-login` (sin PKCE, para scripts/CLI) | — |
+| Identidad | `platform_users` (tabla global, sin tenant) | `tenant_users` (scoped por tenant) |
+| Roles en JWT | `keygo_admin`, `keygo_tenant_admin`, `keygo_user` | Roles de app vía memberships |
+| Parámetro `client_id` | **No requerido** (implícito a la plataforma) | Requerido en authorize y token |
+| Token refresh | `POST /api/v1/platform/oauth2/token` | `POST /tenants/{slug}/oauth2/token` |
+| Token revoke | `POST /api/v1/platform/oauth2/revoke` | `POST /tenants/{slug}/oauth2/revoke` |
+| Claims JWT | `sub`, `roles`, `email`, `type` — **sin** `tenant_slug`, `aud`, `scope` | `sub`, `roles`, `tenant_slug`, `aud`, `scope`, `iss` |
 
-### 1.3. Modelo de autenticación — estado actual vs. objetivo
-
-| Aspecto | Estado actual (backend) | Estado objetivo |
-|---|---|---|
-| Login | OAuth2/PKCE ✅ | OAuth2/PKCE ✅ |
-| Roles en JWT | Claim `roles` implementado en tokens de usuario ✅ | Mantener y endurecer validaciones por permiso |
-| Scope de tenant en seguridad admin | Claim `tenant_slug` en access token + fallback `iss` ✅ | Mantener contrato estable para UI + APIs admin |
-| Protección endpoints admin | JWT Bearer + `@PreAuthorize` (`ADMIN`/`ADMIN_TENANT` con tenant match) ✅ | Evolución a RBAC más granular (F-040) |
-
-> ✅ **Estado actual:** El backend valida Bearer JWT en endpoints admin y aplica autorización por
-> `@PreAuthorize` con validación de tenant (`tenant_slug` o `iss` vs `tenantSlug` en path).
+> ✅ **Estado actual:** ambos flujos usan el **mismo patrón PKCE** (generate verifier → authorize → login → token exchange). La diferencia es la base de la URL (`/platform/` vs `/tenants/{slug}/`) y la presencia de `client_id`.
+>
+> **Regla clave:** si el usuario accede a `keygo-ui` como operador/administrador de la plataforma, usa PKCE contra `/platform/`. Si `keygo-ui` presta su pantalla de login a una app de otro tenant, usa PKCE contra `/tenants/{slug}/` con el `client_id` de esa app. El endpoint `direct-login` existe exclusivamente para API/CLI — la SPA **nunca** lo usa.
 
 ---
 
@@ -119,12 +133,15 @@ keygo-ui/
 │   │   ├── pkce.ts            # generateCodeVerifier, generateCodeChallenge, generateState
 │   │   ├── tokenStore.ts      # Zustand store: accessToken, idToken, refreshToken, roles
 │   │   ├── roleGuard.tsx      # <RoleGuard> y <AuthGuard> para proteger rutas
-│   │   ├── refresh.ts         # Silent refresh automático (80% del TTL)
+│   │   ├── refresh.ts         # Silent refresh automático (80% del TTL) — flujo tenant app
+│   │   ├── platformRefresh.ts # Silent refresh para tokens de plataforma (§6.0b)
 │   │   ├── jwksVerify.ts      # Verificación RS256 con jose + JWKS + decodeIdToken
-│   │   └── logout.ts          # POST /oauth2/revoke + limpiar store
+│   │   ├── logout.ts          # POST /oauth2/revoke + limpiar store (flujo tenant app)
+│   │   └── platformLogout.ts  # POST /platform/oauth2/revoke + limpiar store
 │   │
 │   ├── api/
 │   │   ├── client.ts          # Instancia Axios base + interceptores + constantes
+│   │   ├── platformUsers.ts   # Endpoints CRUD de usuarios de plataforma (KEYGO_ADMIN)
 │   │   ├── tenants.ts         # Endpoints de Control Plane (ADMIN)
 │   │   ├── clientApps.ts      # Endpoints de ClientApps (ADMIN_TENANT)
 │   │   ├── users.ts           # Endpoints de Usuarios (ADMIN_TENANT)
@@ -139,17 +156,19 @@ keygo-ui/
 │   │
 │   ├── pages/
 │   │   ├── login/
-│   │   │   ├── LoginPage.tsx        # Formulario de credenciales (Pasos 0, 1 y 2)
+│   │   │   ├── LoginPage.tsx        # Formulario de credenciales (flujo tenant app — Pasos 0, 1 y 2)
+│   │   │   ├── PlatformLoginPage.tsx # Login PKCE de plataforma (§6.0b)
 │   │   │   └── CallbackPage.tsx     # Intercambio code → token (Paso 3) + routing por rol
 │   │   ├── register/
 │   │   │   ├── RegisterPage.tsx     # Auto-registro (público)
 │   │   │   ├── VerifyEmailPage.tsx  # Verificar código recibido por email
 │   │   │   └── ResendPage.tsx       # Reenviar código si expiró
-│   │   ├── admin/                   # Solo accesible con rol ADMIN
+│   │   ├── admin/                   # Solo accesible con rol ADMIN / KEYGO_ADMIN
 │   │   │   ├── DashboardPage.tsx
 │   │   │   ├── TenantsPage.tsx      # ⏳ Listar tenants (mock)
 │   │   │   ├── CreateTenantPage.tsx
-│   │   │   └── TenantDetailPage.tsx
+│   │   │   ├── TenantDetailPage.tsx
+│   │   │   └── PlatformUsersPage.tsx # ✅ Gestión de platform_users (§8.6)
 │   │   ├── tenant-admin/            # Accesible con ADMIN o ADMIN_TENANT
 │   │   │   ├── DashboardPage.tsx
 │   │   │   ├── AppsPage.tsx
@@ -180,8 +199,8 @@ keygo-ui/
 │   │   ├── tenant.ts     # TenantData, CreateTenantRequest
 │   │   ├── clientapp.ts  # ClientAppData, CreateClientAppRequest
 │   │   ├── user.ts       # TenantUserData, CreateUserRequest
-│   │   ├── auth.ts       # TokenData, UserInfoData, KeyGoJwtClaims
-│   │   └── roles.ts      # AppRole enum (ADMIN | ADMIN_TENANT | USER_TENANT)
+│   │   ├── auth.ts       # TokenData, PlatformTokenData, UserInfoData, KeyGoJwtClaims, PlatformJwtClaims
+│   │   └── roles.ts      # AppRole enum + PlatformRole enum + helpers (isAdmin, isTenantAdmin)
 │   │
 │   ├── mocks/
 │   │   ├── handlers.ts   # MSW — handlers para endpoints pendientes
@@ -198,74 +217,79 @@ keygo-ui/
 
 ---
 
-## 4. Prerequisito: el tenant `keygo` y la ClientApp `keygo-ui`
+## 4. Prerequisitos del backend para `keygo-ui`
 
-Antes de que cualquier usuario pueda acceder a `keygo-ui`, el backend debe tener configurado el tenant
-raíz y la app. Esto se hace **una sola vez** al inicializar el entorno.
+KeyGo UI opera en **dos modos** que requieren pre-requisitos distintos:
+
+| Modo             | Descripción                               | Prerequisito                                                |
+|------------------|-------------------------------------------|-------------------------------------------------------------|
+| **Plataforma**   | Admin global, gestión de tenants, billing | `platform_users` + `platform_roles` (pre-sembrados por V29) |
+| **Hosted login** | Login page para apps de otros tenants     | Tenant `keygo` + ClientApp `keygo-ui` (opcional)            |
 
 ### 4.1. Estructura requerida en el backend
 
 ```mermaid
-graph LR
-    T["Tenant: keygo<br/>slug: keygo<br/>status: ACTIVE"]
-    A["ClientApp: keygo-ui<br/>type: PUBLIC<br/>grants: authorization_code + refresh_token"]
-    T --> A
+graph TB
+    subgraph "Identidad de plataforma (obligatorio)"
+        PU1["PlatformUser: keygo_admin<br/>email: admin@keygo.local<br/>roles: KEYGO_ADMIN, KEYGO_USER"]
+        PU2["PlatformUser: keygo_tenant_admin<br/>email: tenant-admin@keygo.local<br/>roles: KEYGO_TENANT_ADMIN, KEYGO_USER"]
+        PU3["PlatformUser: keygo_user<br/>email: user@keygo.local<br/>roles: KEYGO_USER"]
+    end
 
-    U1["admin@keygo.io<br/>rol: ADMIN"]
-    U2["ops@acme.io<br/>rol: ADMIN_TENANT<br/>tenant_slug en access_token: acme-corp"]
-    U3["user@keygo.io<br/>rol: USER_TENANT"]
+    subgraph "Hosted login (opcional — solo si se usa como login central)"
+        T["Tenant: keygo<br/>slug: keygo<br/>status: ACTIVE"]
+        A["ClientApp: keygo-ui<br/>type: PUBLIC<br/>grants: authorization_code + refresh_token"]
+        T --> A
+        TU["TenantUsers con<br/>platform_user_id → PlatformUser"]
+        A -->|Membership| TU
+    end
 
-    A -->|Membership ACTIVE| U1
-    A -->|Membership ACTIVE| U2
-    A -->|Membership ACTIVE| U3
+    PU1 -.->|platform_user_id| TU
+    PU2 -.->|platform_user_id| TU
 ```
 
-### 4.2. Script de bootstrap
+> **Nota:** la autenticación de plataforma (`/api/v1/platform/oauth2/authorize`) **no requiere** tenant ni ClientApp — usa la tabla `platform_users` directamente y valida redirect URIs contra la configuración `keygo.platform.allowed-redirect-uris`.
+
+### 4.2. Setup inicial
+
+> ⚠️ **Los usuarios de plataforma son pre-sembrados** por la migración `V29`. No es necesario crearlos manualmente. Solo ejecuta las migraciones Flyway.
 
 ```bash
 BASE="http://localhost:8080/keygo-server/api/v1"
-TOKEN="<admin_bearer_jwt>"
 
-# 1. Crear tenant raíz "keygo" (slug se deriva del nombre)
+# ── Paso 0: los platform_users ya existen tras migrar ────────────────────────
+# La migración V29 siembra estos usuarios en `platform_users`:
+#   - admin@keygo.local      (KEYGO_ADMIN + KEYGO_USER)      — Admin global
+#   - tenant-admin@keygo.local (KEYGO_TENANT_ADMIN + KEYGO_USER) — Admin de tenant
+#   - user@keygo.local       (KEYGO_USER)                     — Usuario básico
+#   - contractor@keygo.local (KEYGO_TENANT_ADMIN + KEYGO_USER) — Contractor
+# Contraseña compartida (dev): Admin1234!
+
+# ── Paso 1: obtener token de plataforma (direct-login, solo scripts/CLI) ─────
+TOKEN=$(curl -s -X POST "$BASE/platform/account/direct-login" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@keygo.local","password":"Admin1234!"}' | jq -r '.data.access_token')
+echo "TOKEN: $TOKEN"
+# Nota: keygo-ui usa el flujo PKCE completo (authorize → login → token)
+
+# ── Paso 2 (opcional): crear tenant keygo + ClientApp para hosted login ──────
+# Solo necesario si keygo-ui opera como hosted login para apps de otros tenants.
 curl -s -X POST "$BASE/tenants" \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"name":"KeyGo Platform","ownerEmail":"admin@keygo.io"}' | jq .
+  -d '{"name":"KeyGo Platform","ownerEmail":"admin@keygo.local"}' | jq .
 
-# 2. Crear la ClientApp keygo-ui (PUBLIC — SPA, sin client_secret)
 RESP=$(curl -s -X POST "$BASE/tenants/keygo/apps" \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{
     "name": "KeyGo UI",
-    "description": "SPA oficial de KeyGo",
+    "description": "SPA oficial de KeyGo — hosted login",
     "type": "PUBLIC",
     "grants": ["AUTHORIZATION_CODE","REFRESH_TOKEN"],
     "scopes": ["openid","profile","email"],
     "redirectUris": ["http://localhost:5173/callback"]
   }')
 CLIENT_ID=$(echo "$RESP" | jq -r '.data.clientId')
-echo "CLIENT_ID: $CLIENT_ID"   # Usa este valor en VITE_CLIENT_ID
-
-# 2.1 Resolver UUID interno de la app (requerido por memberships/roles)
-APP_ID=$(curl -s -X GET "$BASE/tenants/keygo/apps" \
-  -H "Authorization: Bearer $TOKEN" | jq -r --arg cid "$CLIENT_ID" '.data[] | select(.clientId==$cid) | .id')
-echo "APP_ID: $APP_ID"
-
-# 3. Crear usuario administrador global
-USER_RESP=$(curl -s -X POST "$BASE/tenants/keygo/users" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"email":"admin@keygo.io","username":"admin","password":"Admin1234!","firstName":"KeyGo","lastName":"Admin"}')
-USER_ID=$(echo "$USER_RESP" | jq -r '.data.id')
-
-# 4. Crear rol ADMIN en keygo-ui (usa APP_ID UUID)
-ROLE_RESP=$(curl -s -X POST "$BASE/tenants/keygo/apps/$APP_ID/roles" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"code":"ADMIN","displayName":"Administrador Global","description":"Rol de plataforma"}')
-ROLE_ID=$(echo "$ROLE_RESP" | jq -r '.data.id')
-
-# 5. Crear membership del admin en keygo-ui (ruta actual: /memberships)
-curl -s -X POST "$BASE/tenants/keygo/memberships" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d "{\"userId\":\"$USER_ID\",\"clientAppId\":\"$APP_ID\",\"roleCodes\":[\"ADMIN\"]}" | jq .
+echo "CLIENT_ID: $CLIENT_ID"   # Usa este valor en VITE_HOSTED_LOGIN_CLIENT_ID
 ```
 
 ### 4.3. Variables de entorno del frontend
@@ -273,15 +297,17 @@ curl -s -X POST "$BASE/tenants/keygo/memberships" \
 ```bash
 # .env.local — NO commitear este archivo
 VITE_KEYGO_BASE=http://localhost:8080/keygo-server
-VITE_TENANT_SLUG=keygo
-VITE_CLIENT_ID=keygo-ui                         # clientId devuelto en el paso 2 del bootstrap
-VITE_REDIRECT_URI=http://localhost:5173/callback
 
-# Backend admin auth es Bearer-only
+# ── Auth de plataforma (siempre requerido) ───────────────────────────────────
+VITE_PLATFORM_REDIRECT_URI=http://localhost:5173/callback
+
+# ── Hosted login para tenant apps (opcional) ─────────────────────────────────
+VITE_HOSTED_LOGIN_TENANT_SLUG=keygo
+VITE_HOSTED_LOGIN_CLIENT_ID=keygo-ui    # clientId del paso 2 del bootstrap
 
 # MSW — mocks para endpoints pendientes (solo desarrollo)
 VITE_MOCK_ENABLED=true
-VITE_MOCK_ROLE=ADMIN          # ADMIN | ADMIN_TENANT | USER_TENANT
+VITE_MOCK_ROLE=KEYGO_ADMIN    # KEYGO_ADMIN | KEYGO_TENANT_ADMIN | KEYGO_USER
 VITE_MOCK_TENANT_SLUG=acme-corp
 ```
 
@@ -412,19 +438,74 @@ export type ErrorResponse = BaseResponse<ErrorData>;
 
 ```typescript
 // src/types/roles.ts
+
+/** Roles legacy (aún aceptados por @PreAuthorize del backend) */
 export const AppRole = {
   ADMIN:        'ADMIN',
   ADMIN_TENANT: 'ADMIN_TENANT',
   USER_TENANT:  'USER_TENANT',
 } as const;
 
+/** Roles de plataforma (nuevos, emitidos en JWT de platform_users) */
+export const PlatformRole = {
+  KEYGO_ADMIN:        'KEYGO_ADMIN',
+  KEYGO_TENANT_ADMIN: 'KEYGO_TENANT_ADMIN',
+  KEYGO_USER:         'KEYGO_USER',
+} as const;
+
+/** Unión de todos los roles reconocidos por la UI */
+export const AllRoles = { ...AppRole, ...PlatformRole } as const;
+export type AllRoleValue = typeof AllRoles[keyof typeof AllRoles];
+
+/** Helpers para verificar equivalencias legacy ↔ nuevo */
+export function isAdmin(role: string): boolean {
+  return role === AppRole.ADMIN || role === PlatformRole.KEYGO_ADMIN;
+}
+export function isTenantAdmin(role: string): boolean {
+  return role === AppRole.ADMIN_TENANT || role === PlatformRole.KEYGO_TENANT_ADMIN;
+}
+export function isUser(role: string): boolean {
+  return role === AppRole.USER_TENANT || role === PlatformRole.KEYGO_USER;
+}
+
 export type AppRoleValue = typeof AppRole[keyof typeof AppRole];
 ```
 
 ### 5.3. Claims del JWT de KeyGo
 
+Existen **dos estructuras de claims** según el flujo de autenticación:
+
+#### 5.3.1. Claims del JWT de plataforma (`POST /platform/oauth2/token` o `POST /platform/account/direct-login`)
+
 ```typescript
 // src/types/auth.ts
+export interface PlatformJwtClaims {
+  sub:     string;    // UUID del PlatformUser
+  email:   string;
+  roles:   string[];  // ["keygo_admin", "keygo_user"]
+  type:    'access_token' | 'refresh_token';
+  iat:     number;
+  exp:     number;
+  // ⚠️ NO tiene: tenant_slug, aud, scope, iss, client_id
+}
+```
+
+Ejemplo de payload decodificado:
+
+```json
+{
+  "sub": "00000000-0000-4000-a000-000000000001",
+  "roles": ["keygo_admin", "keygo_user"],
+  "email": "admin@keygo.local",
+  "type": "access_token",
+  "iat": 1712345678,
+  "exp": 1712349278
+}
+```
+
+#### 5.3.2. Claims del JWT de tenant app (OAuth2/PKCE)
+
+```typescript
 export interface KeyGoJwtClaims {
   sub:                 string;    // UUID del TenantUser (o client_id en M2M)
   email?:              string;
@@ -435,7 +516,7 @@ export interface KeyGoJwtClaims {
   iat:                 number;
   exp:                 number;
   scope:               string;
-  roles?:              string[];  // ✅ Implementado para tokens de usuario
+  roles?:              string[];  // ✅ Roles de app vía memberships
   tenant_slug?:        string;    // ✅ Access token admin: scope de tenant para autorización
 }
 ```
@@ -457,31 +538,334 @@ export const keygoUrl  = tenantUrl(TENANT);   // Atajo para tenant keygo
 
 ---
 
-## 6. Flujo de autenticación OAuth2/PKCE — login único para todos los roles
+## 6. Flujos de autenticación — plataforma y tenant app
 
-La mecánica OAuth2 es la misma en ambos escenarios, pero hay que distinguir el contexto:
+`keygo-ui` soporta **dos flujos de autenticación** independientes, ambos basados en **OAuth2 PKCE**. El frontend debe determinar cuál usar según el contexto:
 
-| Escenario | ¿Quién recibe los tokens finales? | Tenant del flujo |
+| Flujo | Cuándo usarlo | Sección |
 |---|---|---|
-| **Modo plataforma** (`keygo-ui` como app SaaS principal) | `keygo-ui` | `keygo` |
-| **Modo hosted login** (`keygo-ui` como login central) | La app origen | El tenant de la app origen |
+| **Plataforma: OAuth2 PKCE** | `keygo-ui` como app principal del SaaS (administradores, operadores) | §6.0b |
+| **Tenant App: OAuth2/PKCE** | `keygo-ui` como hosted login para apps de otros tenants | §6.1–6.4 |
 
-Regla de oro frontend: **reutilizar la pantalla de login no implica reutilizar la `ClientApp keygo-ui` ni el tenant `keygo`**.
+```mermaid
+graph TB
+    subgraph "keygo-ui (una sola app React)"
+        L["🔐 ¿Qué flujo?"]
+        L -->|"Modo plataforma"| PA["🔑 OAuth2 PKCE<br/>GET /platform/oauth2/authorize<br/>→ login → token exchange"]
+        L -->|"Modo hosted login"| PB["🔑 OAuth2 PKCE<br/>GET /tenants/{slug}/oauth2/authorize<br/>→ login → token exchange"]
+    end
 
-### 6.0. Dos variantes del mismo flujo
+    PA -->|"rol: KEYGO_ADMIN"| VA["📋 Vistas de<br/>Administrador Global"]
+    PA -->|"rol: KEYGO_TENANT_ADMIN"| VB["🏢 Vistas de<br/>Administrador de Tenant"]
+    PA -->|"rol: KEYGO_USER"| VC["👤 Vistas de<br/>Usuario del Sistema"]
 
-- **Variante A — plataforma:** el ejemplo clasico de esta guia. `keygo-ui` inicia `/authorize`, hace login, canjea `code` y conserva los tokens.
-- **Variante B — hosted login:** la app origen genera PKCE + `state`, navega al login central de `keygo-ui`, y luego ella misma canjea el `code` al volver a su callback.
+    PB -->|"roles de app"| VD["🔀 Routing según<br/>roles del membership"]
+```
 
-En ambos casos, el backend sigue siendo el mismo: `/oauth2/authorize` -> `/account/login` -> `/oauth2/token`.
+### 6.0. Dos flujos diferenciados
 
-### 6.1. Diagrama del flujo base (modo plataforma, tenant `keygo`)
+- **Flujo de plataforma (§6.0b):** `keygo-ui` ejecuta el flujo completo OAuth2 PKCE contra los endpoints `/api/v1/platform/`. Genera `code_verifier`/`code_challenge`, llama a `GET /platform/oauth2/authorize`, luego `POST /platform/account/login` para obtener un authorization code, y finalmente intercambia el code por tokens en `POST /platform/oauth2/token`. **No requiere `client_id` ni contexto de tenant.**
+
+- **Flujo de tenant app (§6.1–6.4):** cuando `keygo-ui` actúa como hosted login para una app de otro tenant, sigue el mismo patrón PKCE pero contra `/api/v1/tenants/{slug}/`. Requiere `client_id` y `redirect_uri` de la app destino.
+
+> 💡 **Nota:** existe `POST /api/v1/platform/account/direct-login` como alternativa **solo para API/CLI** (email+password → tokens en un solo paso, sin PKCE). La SPA **nunca** debe usar este endpoint.
+
+### 6.0b. Flujo de plataforma: OAuth2 PKCE
+
+Este flujo es el que usa `keygo-ui` para su login principal. Sigue el **mismo patrón PKCE** que el flujo de tenant app pero contra los endpoints `/api/v1/platform/` y **sin `client_id`**.
 
 ```mermaid
 sequenceDiagram
-    actor U as 👤 Usuario (cualquier rol)
+    actor U as 👤 Operador de plataforma
     participant UI as keygo-ui (React)
-    participant KG as KeyGo Server<br/>(tenant: keygo)
+    participant KG as KeyGo Server<br/>(/api/v1/platform/...)
+
+    Note over UI: Paso 0: Generar PKCE + state
+    UI->>UI: codeVerifier = generateCodeVerifier()
+    UI->>UI: codeChallenge = SHA256(verifier)
+    UI->>UI: state = crypto.randomUUID()
+    UI->>UI: sessionStorage ← {verifier, state}
+
+    Note over U,KG: Paso 1: Iniciar autorización
+    U->>UI: Accede a /login (modo plataforma)
+    UI->>KG: GET /api/v1/platform/oauth2/authorize<br/>?redirect_uri=http://localhost:5173/callback<br/>&scope=openid profile platform<br/>&response_type=code&code_challenge=...&code_challenge_method=S256&state=...
+    KG-->>UI: 200 OK — BaseResponse<PlatformAuthorizationData><br/>{ applicationName, redirectUri }
+
+    Note over U,KG: Paso 2: Enviar credenciales
+    U->>UI: email + contraseña
+    UI->>KG: POST /api/v1/platform/account/login<br/>{ "email": "admin@keygo.local", "password": "..." }
+    KG-->>UI: 200 OK — BaseResponse<PlatformLoginData><br/>{ message, code, redirect_uri }
+
+    Note over UI,KG: Paso 3: code → tokens (intercambio PKCE)
+    UI->>KG: POST /api/v1/platform/oauth2/token<br/>{ grant_type: "authorization_code",<br/>  code: "...", redirect_uri: "...",<br/>  code_verifier: "..." }
+    KG-->>UI: 200 OK — BaseResponse<PlatformTokenData><br/>{ access_token, refresh_token, token_type, expires_in }
+
+    Note over UI: Paso 4: Almacenar tokens y extraer roles
+    UI->>UI: Decodifica access_token → extrae roles[]
+    UI->>UI: Almacena tokens en Zustand (memoria)
+
+    Note over UI: Paso 5: Routing por rol
+    UI->>UI: KEYGO_ADMIN → /admin/dashboard<br/>KEYGO_TENANT_ADMIN → /tenant-admin/dashboard<br/>KEYGO_USER → /dashboard
+
+    Note over UI,KG: Refresh token (cuando access_token está por expirar)
+    UI->>KG: POST /api/v1/platform/oauth2/token<br/>{ "grant_type": "refresh_token", "refresh_token": "..." }
+    KG-->>UI: 200 OK — { access_token, refresh_token, expires_in }
+
+    Note over UI,KG: Logout
+    UI->>KG: POST /api/v1/platform/oauth2/revoke<br/>{ "token": "<refresh_token>" }
+    UI->>UI: Limpiar store → /login
+```
+
+> 💡 **`direct-login` (solo API/CLI):** existe `POST /api/v1/platform/account/direct-login` que acepta email+password y retorna tokens en un solo paso, **sin PKCE**. Este endpoint es exclusivo para scripts, CLI y pruebas automatizadas. La SPA **nunca** debe usarlo porque no tiene protección contra ataques de intercepción.
+
+#### Tipos TypeScript para el flujo de plataforma
+
+```typescript
+// src/types/auth.ts
+
+// Respuesta del paso 1: authorize
+export interface PlatformAuthorizationData {
+  applicationName: string;
+  redirectUri:     string;
+}
+
+// Respuesta del paso 2: login → authorization code
+export interface PlatformLoginData {
+  message:      string;
+  code:         string;
+  redirect_uri: string;
+}
+
+// Respuesta del paso 3: token exchange
+export interface PlatformTokenData {
+  access_token:  string;
+  refresh_token: string;
+  token_type:    'Bearer';
+  expires_in:    number;   // segundos
+}
+
+export interface PlatformLoginRequest {
+  email:    string;
+  password: string;
+}
+```
+
+#### Ejemplo de implementación: PlatformLoginPage (PKCE)
+
+```typescript
+// src/pages/login/PlatformLoginPage.tsx
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTokenStore } from '@/auth/tokenStore';
+import { API_V1 } from '@/api/client';
+import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/auth/pkce';
+import type {
+  PlatformAuthorizationData,
+  PlatformLoginData,
+  PlatformTokenData,
+  PlatformJwtClaims,
+} from '@/types/auth';
+import type { BaseResponse, ErrorData } from '@/types/base';
+import { isAdmin, isTenantAdmin } from '@/types/roles';
+import { decodeJwt } from 'jose';
+
+const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI
+  ?? 'http://localhost:5173/callback';
+
+export function PlatformLoginPage() {
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
+  const { setTokens } = useTokenStore();
+  const navigate = useNavigate();
+
+  // Paso 0 + 1: generar PKCE y llamar a authorize
+  useEffect(() => {
+    (async () => {
+      const verifier  = generateCodeVerifier();
+      const challenge = await generateCodeChallenge(verifier);
+      const state     = generateState();
+
+      sessionStorage.setItem('platform_pkce_verifier', verifier);
+      sessionStorage.setItem('platform_pkce_state', state);
+
+      const params = new URLSearchParams({
+        redirect_uri:          REDIRECT_URI,
+        scope:                 'openid profile platform',
+        response_type:         'code',
+        code_challenge:        challenge,
+        code_challenge_method: 'S256',
+        state,
+      });
+
+      const res = await fetch(
+        `${API_V1}/platform/oauth2/authorize?${params}`
+      );
+      const body: BaseResponse<PlatformAuthorizationData> = await res.json();
+
+      if (!res.ok || body.failure) {
+        setError(body.failure?.message ?? 'Error al iniciar autorización');
+        return;
+      }
+      setAuthorized(true);
+    })();
+  }, []);
+
+  // Paso 2: enviar credenciales → obtener code
+  // Paso 3: intercambiar code por tokens
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const fd = new FormData(e.currentTarget);
+
+    // Paso 2: login → authorization code
+    const loginRes = await fetch(`${API_V1}/platform/account/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email:    fd.get('email'),
+        password: fd.get('password'),
+      }),
+    });
+    const loginBody: BaseResponse<PlatformLoginData> = await loginRes.json();
+
+    if (!loginRes.ok || loginBody.failure) {
+      setLoading(false);
+      const errorData = loginBody.data as unknown as ErrorData | undefined;
+      setError(errorData?.clientMessage ?? loginBody.failure?.message ?? 'Error de autenticación');
+      return;
+    }
+
+    const { code, redirect_uri } = loginBody.data!;
+    const verifier = sessionStorage.getItem('platform_pkce_verifier')!;
+
+    // Paso 3: code → tokens (PKCE exchange)
+    const tokenRes = await fetch(`${API_V1}/platform/oauth2/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        grant_type:    'authorization_code',
+        code,
+        redirect_uri,
+        code_verifier: verifier,
+      }),
+    });
+    const tokenBody: BaseResponse<PlatformTokenData> = await tokenRes.json();
+    setLoading(false);
+
+    if (!tokenRes.ok || tokenBody.failure) {
+      setError(tokenBody.failure?.message ?? 'Error al obtener tokens');
+      return;
+    }
+
+    // Limpiar PKCE de sessionStorage
+    sessionStorage.removeItem('platform_pkce_verifier');
+    sessionStorage.removeItem('platform_pkce_state');
+
+    const { access_token, refresh_token, expires_in } = tokenBody.data!;
+    const claims = decodeJwt(access_token) as PlatformJwtClaims;
+    const roles = claims.roles ?? [];
+
+    setTokens({
+      accessToken: access_token,
+      refreshToken: refresh_token,
+      expiresIn: expires_in,
+      roles,
+    });
+
+    schedulePlatformRefresh(expires_in);
+
+    // Routing por rol de plataforma
+    if (roles.some(isAdmin))            navigate('/admin/dashboard');
+    else if (roles.some(isTenantAdmin)) navigate('/tenant-admin/dashboard');
+    else                                navigate('/dashboard');
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 p-8 rounded-xl shadow">
+        <h1 className="text-2xl font-bold text-center">KeyGo Platform</h1>
+        {error && <p className="text-destructive text-sm">{error}</p>}
+        {!authorized && !error && <p className="text-muted-foreground text-sm">Iniciando...</p>}
+        <input name="email" type="email" placeholder="Email" required className="input" disabled={!authorized} />
+        <input name="password" type="password" placeholder="Contraseña" required className="input" disabled={!authorized} />
+        <button type="submit" disabled={loading || !authorized} className="btn btn-primary w-full">
+          {loading ? 'Iniciando...' : 'Iniciar sesión'}
+        </button>
+      </form>
+    </div>
+  );
+}
+```
+
+#### Refresh y logout de plataforma
+
+```typescript
+// src/auth/platformRefresh.ts
+import { useTokenStore } from './tokenStore';
+import { API_V1 } from '@/api/client';
+import { decodeJwt } from 'jose';
+
+let timer: ReturnType<typeof setTimeout> | null = null;
+
+export function schedulePlatformRefresh(expiresIn: number) {
+  if (timer) clearTimeout(timer);
+  timer = setTimeout(async () => {
+    const { refreshToken, setTokens, clearTokens } = useTokenStore.getState();
+    if (!refreshToken) return;
+    try {
+      const res = await fetch(`${API_V1}/platform/oauth2/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ grant_type: 'refresh_token', refresh_token: refreshToken }),
+      });
+      const body = await res.json();
+      if (body.failure) throw new Error();
+      const { access_token, refresh_token: newRT, expires_in } = body.data;
+      const claims = decodeJwt(access_token) as { roles?: string[] };
+      setTokens({
+        accessToken: access_token,
+        refreshToken: newRT,
+        expiresIn: expires_in,
+        roles: claims.roles ?? [],
+      });
+      schedulePlatformRefresh(expires_in);
+    } catch {
+      clearTokens();
+      window.location.href = '/login';
+    }
+  }, expiresIn * 0.8 * 1000);
+}
+
+export async function platformLogout() {
+  const { refreshToken, clearTokens } = useTokenStore.getState();
+  if (refreshToken) {
+    await fetch(`${API_V1}/platform/oauth2/revoke`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: refreshToken }),
+    }).catch(() => {});
+  }
+  clearTokens();
+  window.location.href = '/login';
+}
+```
+
+### 6.1. Flujo de tenant app: OAuth2/PKCE — diagrama base (modo hosted login)
+
+> 📌 **Nota:** el flujo de plataforma (§6.0b) sigue **el mismo patrón PKCE** descrito aquí. Las diferencias son:
+> - **Plataforma:** endpoints bajo `/api/v1/platform/`, sin `tenantSlug` ni `client_id` en la URL/params.
+> - **Tenant app:** endpoints bajo `/api/v1/tenants/{slug}/`, requiere `client_id` en authorize y token exchange.
+> - El componente `LoginPage` detecta qué flujo usar según el contexto. El componente `CallbackPage` envía el code al endpoint de token correcto.
+> - Las utilidades PKCE (`generateCodeVerifier`, `generateCodeChallenge`, `generateState`) son **idénticas** para ambos flujos.
+
+```mermaid
+sequenceDiagram
+    actor U as 👤 Usuario de tenant app
+    participant UI as keygo-ui (React)<br/>modo hosted login
+    participant KG as KeyGo Server<br/>(tenant: {slug})
 
     Note over UI: Paso 0: PKCE + state
     UI->>UI: codeVerifier = generateCodeVerifier()
@@ -490,24 +874,26 @@ sequenceDiagram
     UI->>UI: sessionStorage ← {verifier, state}
 
     Note over U,KG: Paso 1: Iniciar autorización
-    U->>UI: Accede a /login
-    UI->>KG: GET /api/v1/tenants/keygo/oauth2/authorize<br/>?client_id=keygo-ui&scope=openid profile email<br/>&response_type=code&code_challenge=...&state=...
+    U->>UI: Accede a /login?tenant={slug}&client_id={appClientId}
+    UI->>KG: GET /api/v1/tenants/{slug}/oauth2/authorize<br/>?client_id={appClientId}&scope=openid profile email<br/>&response_type=code&code_challenge=...&state=...
     KG-->>UI: 200 OK — { client_id, client_name, redirect_uri }
 
     Note over U,KG: Paso 2: Enviar credenciales
     U->>UI: email/usuario + contraseña
-    UI->>KG: POST /api/v1/tenants/keygo/account/login<br/>Cookie: JSESSIONID
+    UI->>KG: POST /api/v1/tenants/{slug}/account/login<br/>Cookie: JSESSIONID
     KG-->>UI: 200 OK — { code, redirect_uri }
 
     Note over UI,KG: Paso 3: code → tokens
-    UI->>KG: POST /api/v1/tenants/keygo/oauth2/token<br/>{ client_id, code, code_verifier, redirect_uri }
+    UI->>KG: POST /api/v1/tenants/{slug}/oauth2/token<br/>{ client_id, code, code_verifier, redirect_uri }
     KG-->>UI: 200 OK — { access_token, id_token, refresh_token, expires_in }
 
     UI->>UI: Decodifica id_token → extrae roles[]
-    UI->>UI: Redirige según rol:<br/>ADMIN → /admin/dashboard<br/>ADMIN_TENANT → /tenant-admin/dashboard<br/>USER_TENANT → /dashboard
+    UI->>UI: Redirige según roles del membership de la app
 ```
 
-### 6.2. Utilidades PKCE
+> **Nota:** Este flujo se usa exclusivamente cuando `keygo-ui` actúa como hosted login para una app de otro tenant. Para el login principal de `keygo-ui`, usar el flujo de plataforma (§6.0b).
+
+### 6.2. Utilidades PKCE (flujo tenant app)
 
 ```typescript
 // src/auth/pkce.ts
@@ -528,10 +914,11 @@ export async function generateCodeChallenge(verifier: string): Promise<string> {
 export const generateState = () => crypto.randomUUID();
 ```
 
-### 6.3. LoginPage — Pasos 0, 1 y 2
+### 6.3. LoginPage — Pasos 0, 1 y 2 (flujo tenant app / hosted login)
 
-> El siguiente ejemplo corresponde al **modo plataforma** (tenant fijo `keygo`).
-> Si `keygo-ui` opera como hosted login central, el contexto OAuth debe resolverse dinamicamente y no desde constantes fijas.
+> El siguiente ejemplo corresponde al **modo hosted login** donde `keygo-ui` presta su pantalla de login a una app de otro tenant.
+> Para el login principal de operadores de plataforma, ver §6.0b (`PlatformLoginPage`).
+> Si `keygo-ui` opera como hosted login central, el contexto OAuth debe resolverse dinámicamente y no desde constantes fijas.
 
 ```typescript
 // src/pages/login/LoginPage.tsx
@@ -657,7 +1044,7 @@ Notas prácticas para `LoginPage`:
 - Si `data.origin=BUSINESS_RULE`, la solicitud fue técnicamente correcta pero bloqueada por reglas del dominio (ej. email no verificado).
 - Si `data.origin=SERVER_PROCESSING`, mostrar mensaje genérico y recomendar reintento.
 
-### 6.4. CallbackPage — Paso 3 + routing por rol
+### 6.4. CallbackPage — Paso 3 + routing por rol (flujo tenant app)
 
 ```typescript
 // src/pages/login/CallbackPage.tsx
@@ -754,11 +1141,31 @@ Nota de UX para callback:
 ```typescript
 // src/hooks/useHasRole.ts
 import { useTokenStore } from '@/auth/tokenStore';
-import { AppRole } from '@/types/roles';
+import { AppRole, PlatformRole, isAdmin, isTenantAdmin } from '@/types/roles';
+import type { AllRoleValue } from '@/types/roles';
 
-export function useHasRole(...roles: AppRole[]): boolean {
+/**
+ * Comprueba si el usuario tiene al menos uno de los roles indicados.
+ * Acepta tanto roles legacy (ADMIN, ADMIN_TENANT, USER_TENANT) como
+ * roles de plataforma (KEYGO_ADMIN, KEYGO_TENANT_ADMIN, KEYGO_USER).
+ */
+export function useHasRole(...roles: AllRoleValue[]): boolean {
   const { roles: userRoles } = useTokenStore();
   return roles.some(r => userRoles.includes(r));
+}
+
+/**
+ * Variante semántica: verifica si el usuario es admin de plataforma,
+ * aceptando tanto el rol legacy como el nuevo.
+ */
+export function useIsAdmin(): boolean {
+  const { roles: userRoles } = useTokenStore();
+  return userRoles.some(isAdmin);
+}
+
+export function useIsTenantAdmin(): boolean {
+  const { roles: userRoles } = useTokenStore();
+  return userRoles.some(r => isAdmin(r) || isTenantAdmin(r));
 }
 ```
 
@@ -899,13 +1306,12 @@ export const router = createBrowserRouter([
 
 ```typescript
 // src/components/RoleAwareNav.tsx
-import { useHasRole } from '@/hooks/useHasRole';
-import { AppRole } from '@/types/roles';
+import { useIsAdmin, useIsTenantAdmin } from '@/hooks/useHasRole';
 import { NavLink } from 'react-router-dom';
 
 export function RoleAwareNav() {
-  const isAdmin       = useHasRole(AppRole.ADMIN);
-  const isTenantAdmin = useHasRole(AppRole.ADMIN, AppRole.ADMIN_TENANT);
+  const isAdmin       = useIsAdmin();
+  const isTenantAdmin = useIsTenantAdmin();
 
   return (
     <nav>
@@ -916,7 +1322,7 @@ export function RoleAwareNav() {
       <NavLink to="/notification-preferences">Preferencias de notificación</NavLink>
       <NavLink to="/access">Mis accesos</NavLink>
 
-      {/* ADMIN o ADMIN_TENANT */}
+      {/* ADMIN/KEYGO_ADMIN o ADMIN_TENANT/KEYGO_TENANT_ADMIN */}
       {isTenantAdmin && (
         <section>
           <h4>Administración del Tenant</h4>
@@ -926,11 +1332,12 @@ export function RoleAwareNav() {
         </section>
       )}
 
-      {/* Solo ADMIN */}
+      {/* Solo ADMIN / KEYGO_ADMIN */}
       {isAdmin && (
         <section>
           <h4>Control de Plataforma</h4>
           <NavLink to="/admin/tenants">Tenants</NavLink>
+          <NavLink to="/admin/platform-users">Usuarios de plataforma</NavLink>
           <NavLink to="/admin/dashboard">Dashboard Global</NavLink>
         </section>
       )}
@@ -1147,9 +1554,93 @@ apiClient.put<BaseResponse<TenantData>>(`/tenants/${slug}/activate`);
 ```
 
 **Endpoint:** `PUT /api/v1/tenants/{slug}/activate` — ✅ **Disponible** (implementado 2026-03-28)  
-**Auth:** `Authorization: Bearer <adminToken>` con rol `ADMIN`  
+**Auth:** `Authorization: Bearer <adminToken>` con rol `ADMIN` o `KEYGO_ADMIN`  
 **ResponseCode:** `TENANT_ACTIVATED`  
 > `GET /api/v1/platform/audit` — No implementado (**F-034**)
+
+---
+
+### 8.6. Gestión de usuarios de plataforma ✅ NUEVO
+
+> **Auth requerida:** `Authorization: Bearer <jwt>` con rol `KEYGO_ADMIN` (o `ADMIN` legacy).
+
+Los usuarios de plataforma (`platform_users`) son independientes de los `tenant_users`. Representan a los operadores del SaaS KeyGo.
+
+```typescript
+// src/api/platformUsers.ts
+import { apiClient } from './client';
+import type { BaseResponse } from '@/types/base';
+
+export interface PlatformUserData {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
+  platformRoles: string[];   // ["KEYGO_ADMIN", "KEYGO_USER"]
+  createdAt: string;
+}
+
+export interface CreatePlatformUserRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+// CRUD de usuarios de plataforma
+export const createPlatformUser = (data: CreatePlatformUserRequest) =>
+  apiClient.post<BaseResponse<PlatformUserData>>('/platform/users', data);
+
+export const getPlatformUser = (userId: string) =>
+  apiClient.get<BaseResponse<PlatformUserData>>(`/platform/users/${userId}`);
+
+export const suspendPlatformUser = (userId: string) =>
+  apiClient.put<BaseResponse<PlatformUserData>>(`/platform/users/${userId}/suspend`);
+
+export const activatePlatformUser = (userId: string) =>
+  apiClient.put<BaseResponse<PlatformUserData>>(`/platform/users/${userId}/activate`);
+
+// Gestión de roles de plataforma
+export const assignPlatformRole = (userId: string, roleCode: string) =>
+  apiClient.post<BaseResponse<void>>(`/platform/users/${userId}/platform-roles`, { roleCode });
+
+export const revokePlatformRole = (userId: string, roleCode: string) =>
+  apiClient.delete<BaseResponse<void>>(`/platform/users/${userId}/platform-roles/${roleCode}`);
+```
+
+**Endpoints disponibles:**
+
+| Caso de uso | Método | Endpoint | Auth | Estado |
+|---|---|---|---|---|
+| Crear usuario de plataforma | POST | `/api/v1/platform/users` | Bearer KEYGO_ADMIN | ✅ |
+| Ver usuario de plataforma | GET | `/api/v1/platform/users/{userId}` | Bearer KEYGO_ADMIN | ✅ |
+| Suspender usuario | PUT | `/api/v1/platform/users/{userId}/suspend` | Bearer KEYGO_ADMIN | ✅ |
+| Activar usuario | PUT | `/api/v1/platform/users/{userId}/activate` | Bearer KEYGO_ADMIN | ✅ |
+| Asignar rol de plataforma | POST | `/api/v1/platform/users/{userId}/platform-roles` | Bearer KEYGO_ADMIN | ✅ |
+| Revocar rol de plataforma | DELETE | `/api/v1/platform/users/{userId}/platform-roles/{roleCode}` | Bearer KEYGO_ADMIN | ✅ |
+
+**Vista sugerida (`/admin/platform-users`):**
+
+```typescript
+// src/pages/admin/PlatformUsersPage.tsx
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getPlatformUser, suspendPlatformUser, activatePlatformUser,
+         assignPlatformRole, revokePlatformRole } from '@/api/platformUsers';
+
+export function PlatformUsersPage() {
+  // Listar, crear, suspender/activar, asignar/revocar roles
+  // Usar TanStack Query para caché e invalidación automática
+  return (
+    <div>
+      <h1>Usuarios de Plataforma</h1>
+      {/* Tabla con acciones: Suspender | Activar | Gestionar roles */}
+    </div>
+  );
+}
+```
+
+> ℹ️ Los roles de plataforma válidos son: `KEYGO_ADMIN`, `KEYGO_TENANT_ADMIN`, `KEYGO_USER`.
 
 ---
 
@@ -1246,7 +1737,8 @@ export const resetPassword = (slug: string, userId: string, newPassword: string)
   apiClient.post<BaseResponse<void>>(`/tenants/${slug}/users/${userId}/reset-password`, { newPassword });
 ```
 
-**Disponibles ✅:** `GET`, `POST`, `GET/{userId}`, `PUT/{userId}`, `POST/{userId}/reset-password`, `PUT/{userId}/suspend`, `PUT/{userId}/activate`, `GET/{userId}/sessions`
+**Disponibles ✅:** `GET`, `POST`, `GET/{userId}`, `PUT/{userId}`, `POST/{userId}/reset-password`  
+**Pendientes ⏳:** `PUT/{userId}/suspend` (T-033) · `PUT/{userId}/activate` (T-033) · `GET/{userId}/sessions` (T-072)
 
 ---
 
@@ -1957,7 +2449,159 @@ Esto vincula el evento de Sentry con la búsqueda en Kibana/CloudWatch usando el
 
 ## 14. Inventario de endpoints — disponibles vs. pendientes
 
-### 14.1. Autenticación (tenant: `keygo`, todos los roles)
+### 14.0. Autenticación de plataforma (sin contexto de tenant) ✅ NUEVO
+
+> Estos endpoints son para el login principal de `keygo-ui`. No requieren `tenantSlug` ni `client_id`.
+> El flujo principal es **OAuth2 PKCE** (authorize → login → token). El endpoint `direct-login` es alternativa solo para API/CLI.
+
+| Caso de uso | Método | Endpoint | Auth | `ResponseCode` | Estado |
+|---|---|---|---|---|---|
+| Iniciar autorización PKCE | GET | `/api/v1/platform/oauth2/authorize` | Público | `PLATFORM_AUTHORIZATION_INITIATED` | ✅ |
+| Login de plataforma (→ code) | POST | `/api/v1/platform/account/login` | Público | `PLATFORM_LOGIN_SUCCESS` | ✅ |
+| Intercambio code → tokens | POST | `/api/v1/platform/oauth2/token` | Público | `TOKEN_ISSUED` | ✅ |
+| Login directo (API/CLI) | POST | `/api/v1/platform/account/direct-login` | Público | `PLATFORM_LOGIN_SUCCESS` | ✅ |
+| Revocar token de plataforma | POST | `/api/v1/platform/oauth2/revoke` | Público | `TOKEN_REVOKED` | ✅ |
+
+**Iniciar autorización — `GET /keygo-server/api/v1/platform/oauth2/authorize`:**
+
+Query params:
+- `redirect_uri` (requerido) — debe coincidir con `keygo.platform.allowed-redirect-uris` en config
+- `scope` (requerido) — ej. `openid profile platform`
+- `response_type` (requerido) — debe ser `code`
+- `code_challenge` (requerido) — `BASE64URL(SHA256(code_verifier))`
+- `code_challenge_method` (requerido) — debe ser `S256`
+- `state` (opcional) — valor opaco para protección CSRF
+
+Response (`BaseResponse<PlatformAuthorizationData>`):
+```json
+{
+  "date": "2026-04-07T10:00:00Z",
+  "success": { "code": "PLATFORM_AUTHORIZATION_INITIATED", "message": "..." },
+  "data": {
+    "applicationName": "KeyGo Platform",
+    "redirectUri": "http://localhost:5173/callback"
+  }
+}
+```
+
+**Login de plataforma — `POST /keygo-server/api/v1/platform/account/login`:**
+
+Request body:
+```json
+{ "email": "admin@keygo.local", "password": "Admin1234!" }
+```
+
+Response (`BaseResponse<PlatformLoginData>`):
+```json
+{
+  "date": "2026-04-07T10:00:00Z",
+  "success": { "code": "PLATFORM_LOGIN_SUCCESS", "message": "Platform login successful" },
+  "data": {
+    "message": "Login exitoso",
+    "code": "abc123...",
+    "redirect_uri": "http://localhost:5173/callback"
+  }
+}
+```
+
+**Intercambio PKCE — `POST /keygo-server/api/v1/platform/oauth2/token`:**
+
+Request body (authorization_code):
+```json
+{
+  "grant_type": "authorization_code",
+  "code": "abc123...",
+  "redirect_uri": "http://localhost:5173/callback",
+  "code_verifier": "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"
+}
+```
+
+Request body (refresh_token):
+```json
+{ "grant_type": "refresh_token", "refresh_token": "rt_..." }
+```
+
+Response (`BaseResponse<PlatformTokenData>`):
+```json
+{
+  "date": "2026-04-07T10:00:00Z",
+  "success": { "code": "TOKEN_ISSUED", "message": "Token issued" },
+  "data": {
+    "access_token": "eyJ...",
+    "refresh_token": "rt_...",
+    "token_type": "Bearer",
+    "expires_in": 3600
+  }
+}
+```
+
+**Login directo — `POST /keygo-server/api/v1/platform/account/direct-login`:**
+
+> ⚠️ Solo para API/CLI. La SPA **nunca** debe usar este endpoint.
+
+Request body:
+```json
+{ "email": "admin@keygo.local", "password": "Admin1234!" }
+```
+
+Response (`BaseResponse<PlatformTokenData>`):
+```json
+{
+  "date": "2026-04-07T10:00:00Z",
+  "success": { "code": "PLATFORM_LOGIN_SUCCESS", "message": "Platform login successful" },
+  "data": {
+    "access_token": "eyJ...",
+    "refresh_token": "rt_...",
+    "token_type": "Bearer",
+    "expires_in": 3600
+  }
+}
+```
+
+**Revocación de plataforma — `POST /keygo-server/api/v1/platform/oauth2/revoke`:**
+
+Request body:
+```json
+{ "token": "rt_..." }
+```
+
+### 14.0.1. Gestión de usuarios de plataforma ✅ NUEVO
+
+> Auth requerida: `Authorization: Bearer <jwt>` con rol `KEYGO_ADMIN` (o `ADMIN` legacy).
+
+| Caso de uso | Método | Endpoint | Auth | Estado |
+|---|---|---|---|---|
+| Crear usuario de plataforma | POST | `/api/v1/platform/users` | Bearer KEYGO_ADMIN | ✅ |
+| Ver usuario de plataforma | GET | `/api/v1/platform/users/{userId}` | Bearer KEYGO_ADMIN | ✅ |
+| Suspender usuario | PUT | `/api/v1/platform/users/{userId}/suspend` | Bearer KEYGO_ADMIN | ✅ |
+| Activar usuario | PUT | `/api/v1/platform/users/{userId}/activate` | Bearer KEYGO_ADMIN | ✅ |
+| Asignar rol de plataforma | POST | `/api/v1/platform/users/{userId}/platform-roles` | Bearer KEYGO_ADMIN | ✅ |
+| Revocar rol de plataforma | DELETE | `/api/v1/platform/users/{userId}/platform-roles/{roleCode}` | Bearer KEYGO_ADMIN | ✅ |
+
+**Crear usuario — `POST /keygo-server/api/v1/platform/users`:**
+
+Request body:
+```json
+{
+  "email": "ops@keygo.local",
+  "password": "SecurePass1!",
+  "firstName": "Operador",
+  "lastName": "KeyGo"
+}
+```
+
+**Asignar rol — `POST /keygo-server/api/v1/platform/users/{userId}/platform-roles`:**
+
+Request body:
+```json
+{ "roleCode": "KEYGO_TENANT_ADMIN" }
+```
+
+**Revocar rol — `DELETE /keygo-server/api/v1/platform/users/{userId}/platform-roles/KEYGO_TENANT_ADMIN`:**
+
+Sin body. Respuesta `200 OK`.
+
+### 14.1. Autenticación de tenant app (tenant: `keygo` o cualquier otro, todos los roles)
 
 | Caso de uso | Método | Endpoint | Estado |
 |---|---|---|---|
@@ -1974,15 +2618,15 @@ Esto vincula el evento de Sentry con la búsqueda en Kibana/CloudWatch usando el
 | Reenviar código | POST | `/api/v1/tenants/keygo/apps/keygo-ui/resend-verification` | ✅ |
 | Ver mi perfil | GET | `/api/v1/tenants/keygo/account/profile` | ✅ — Bearer token, NO X-KEYGO-ADMIN |
 | Editar mi perfil | PATCH | `/api/v1/tenants/keygo/account/profile` | ✅ — Bearer token, PATCH semántica, NO X-KEYGO-ADMIN |
-| Olvidé contraseña | POST | `/api/v1/tenants/keygo/account/forgot-password` | ✅ — Sin autenticación; anti-enumeración (siempre 200) |
-| Reset contraseña | POST | `/api/v1/tenants/keygo/account/reset-password` | ✅ — Sin autenticación; validar password temporal + estado RESET_PASSWORD |
+| Olvidé contraseña | POST | `/api/v1/tenants/keygo/account/forgot-password` | ⏳ Pendiente |
+| Reset contraseña | POST | `/api/v1/tenants/keygo/account/reset-password` | ⏳ Pendiente |
 | Cambiar contraseña | POST | `/api/v1/tenants/keygo/account/change-password` | ✅ — Bearer token; 403 si contraseña actual incorrecta |
 | Mis sesiones | GET | `/api/v1/tenants/keygo/account/sessions` | ✅ — Lista ACTIVE; `is_current` por User-Agent+IP; parser UA básico |
 | Cerrar sesión remota | DELETE | `/api/v1/tenants/keygo/account/sessions/{id}` | ✅ — Idempotente; 200 siempre; ownership check (403 si otro usuario) |
 | Preferencias de notificación | GET | `/api/v1/tenants/keygo/account/notification-preferences` | ✅ — Defaults si no existe registro; sin crear fila |
 | Actualizar preferencias | PATCH | `/api/v1/tenants/keygo/account/notification-preferences` | ✅ — Upsert; rechaza campos desconocidos (400) |
 | Vista de acceso | GET | `/api/v1/tenants/keygo/account/access` | ✅ — Membresías del usuario con roles por app; lista vacía si sin membresías |
-| Conexiones vinculadas | GET | `/api/v1/tenants/keygo/account/connections` | ✅ — Integrado en UI (F-042) |
+| Conexiones vinculadas | GET | `/api/v1/tenants/keygo/account/connections` | ⏳ F-042 |
 
 ### 14.1.1. Patron recomendado: login central de `keygo-ui` para apps de otros tenants
 
@@ -2180,15 +2824,21 @@ Reglas rápidas de interpretación en frontend:
 
 ## 14.2. Administración de tenant — `ADMIN` / `ADMIN_TENANT`
 
-> Auth requerida: `Authorization: Bearer <jwt>` con rol `ADMIN` o `ADMIN_TENANT` (scope validado por `tenant_slug` en claims).
+> Auth requerida: `Authorization: Bearer <jwt>` con rol `ADMIN`/`KEYGO_ADMIN` o `ADMIN_TENANT`/`KEYGO_TENANT_ADMIN` (scope validado por `tenant_slug` en claims).
 
-#### 14.2.0. Plataforma global (solo `ADMIN`)
+#### 14.2.0. Plataforma global (solo `ADMIN` / `KEYGO_ADMIN`)
 
 | Caso de uso | Método | Endpoint | Auth | Estado |
 |---|---|---|---|---|
 | Info del servicio | GET | `/api/v1/service/info` | Público | ✅ |
-| Estadísticas de plataforma | GET | `/api/v1/platform/stats` | Bearer ADMIN | ✅ |
-| Dashboard de plataforma | GET | `/api/v1/admin/platform/dashboard` | Bearer ADMIN | ✅ |
+| Estadísticas de plataforma | GET | `/api/v1/platform/stats` | Bearer ADMIN/KEYGO_ADMIN | ✅ |
+| Dashboard de plataforma | GET | `/api/v1/admin/platform/dashboard` | Bearer ADMIN/KEYGO_ADMIN | ✅ |
+| Crear usuario de plataforma | POST | `/api/v1/platform/users` | Bearer KEYGO_ADMIN | ✅ |
+| Ver usuario de plataforma | GET | `/api/v1/platform/users/{userId}` | Bearer KEYGO_ADMIN | ✅ |
+| Suspender usuario de plataforma | PUT | `/api/v1/platform/users/{userId}/suspend` | Bearer KEYGO_ADMIN | ✅ |
+| Activar usuario de plataforma | PUT | `/api/v1/platform/users/{userId}/activate` | Bearer KEYGO_ADMIN | ✅ |
+| Asignar rol de plataforma | POST | `/api/v1/platform/users/{userId}/platform-roles` | Bearer KEYGO_ADMIN | ✅ |
+| Revocar rol de plataforma | DELETE | `/api/v1/platform/users/{userId}/platform-roles/{roleCode}` | Bearer KEYGO_ADMIN | ✅ |
 
 **Respuesta de `/platform/stats`:**
 ```json
@@ -2399,11 +3049,26 @@ Reglas rápidas de interpretación en frontend:
 
 ### 14.3.1. Catálogo de planes (público)
 
+**Catálogo por app (tenant-scoped):**
+
 | Caso de uso | Método | Endpoint | Auth | `ResponseCode` | Estado |
 |---|---|---|---|---|---|
 | Listar catálogo de planes | GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/catalog` | Público | `APP_PLAN_CATALOG_RETRIEVED` | ✅ |
 | Ver detalle de un plan | GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/catalog/{planCode}` | Público | `APP_PLAN_RETRIEVED` | ✅ |
 | Crear plan (admin) | POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/plans` | Bearer ADMIN_TENANT | `APP_PLAN_CREATED` | ✅ |
+
+**Catálogo de plataforma (sin contexto de tenant/app):** ✅ NUEVO
+
+| Caso de uso | Método | Endpoint | Auth | `ResponseCode` | Estado |
+|---|---|---|---|---|---|
+| Listar planes de plataforma | GET | `/api/v1/platform/billing/catalog` | Público | `PLATFORM_PLAN_CATALOG_RETRIEVED` | ✅ |
+| Ver detalle plan plataforma | GET | `/api/v1/platform/billing/catalog/{planCode}` | Público | `PLATFORM_PLAN_RETRIEVED` | ✅ |
+| Ver suscripción plataforma | GET | `/api/v1/platform/billing/subscription` | Bearer KEYGO_ADMIN / KEYGO_TENANT_ADMIN | `PLATFORM_SUBSCRIPTION_RETRIEVED` | ✅ |
+| Cancelar suscripción plataforma | POST | `/api/v1/platform/billing/subscription/cancel` | Bearer KEYGO_ADMIN / KEYGO_TENANT_ADMIN | `PLATFORM_SUBSCRIPTION_CANCELLED` | ✅ |
+| Listar facturas plataforma | GET | `/api/v1/platform/billing/invoices` | Bearer KEYGO_ADMIN / KEYGO_TENANT_ADMIN | `PLATFORM_INVOICES_RETRIEVED` | ✅ |
+
+> **Nota:** Los endpoints de plataforma usan `clientAppId IS NULL` para filtrar planes sin contexto de app.
+> La autenticación se obtiene via `GET /platform/oauth2/authorize` → `POST /platform/account/login` → `POST /platform/oauth2/token`.
 
 **Query param en listado:**
 
@@ -2757,6 +3422,8 @@ const resendCode = (contractId: string) =>
 | `APP_CONTRACT_NOT_READY` | 400 | Intento de activar con status != `READY_TO_ACTIVATE` |
 | `INVALID_INPUT` | 400 | `clientAppId` inválido/no encontrado, campos requeridos faltantes, código de verificación incorrecto |
 | `RESOURCE_NOT_FOUND` | 404 | `tenantSlug`, `clientId` o `clientAppId` no encontrado |
+| `CONTRACTOR_NOT_FOUND` | 404 | Platform user no tiene contractor asociado (billing plataforma) |
+| `SUBSCRIPTION_INVALID_STATE` | 422 | Suscripción no está activa (al intentar cancelar) |
 | `AUTHENTICATION_REQUIRED` | 401 | Bearer token faltante (endpoints de suscripción/facturas) |
 | `INSUFFICIENT_PERMISSIONS` | 403 | Rol insuficiente |
 
@@ -3224,6 +3891,6 @@ cd keygo-ui && pnpm install && pnpm dev   # http://localhost:5173
 
 ---
 
-*Manual actualizado por AI Agent — KeyGo Server 2026-04-01 — Respuestas de error mejoradas: `ErrorData` ahora incluye `layer` (capa arquitectónica) y `fieldErrors` (errores por campo de validación `@Valid`). Tabla completa excepción→HTTP→ResponseCode en §13.3. Tipos TypeScript actualizados en §5.1. Billing model v2 (contractor-centric): paths de contratos simplificados a `/api/v1/billing/contracts`, `contractorId` reemplaza `subscriberTenantId/subscriberType`, estado `ACTIVE` (era `ACTIVATED`), nuevos estados `SUPERSEDED`/`FINALIZED`.*
+*Manual actualizado por AI Agent — KeyGo Server 2026-04-07 — **Identidad de plataforma:** flujo OAuth2 PKCE completo para plataforma (`GET /platform/oauth2/authorize` → `POST /platform/account/login` → `POST /platform/oauth2/token`), endpoint `direct-login` como alternativa API/CLI, tabla `platform_users` separada de `tenant_users`, roles de plataforma (`KEYGO_ADMIN`, `KEYGO_TENANT_ADMIN`, `KEYGO_USER`) con backward compat para roles legacy, endpoints CRUD de usuarios de plataforma (`/api/v1/platform/users`), JWT de plataforma sin claims de tenant. §6 reestructurado — ambos flujos usan PKCE (plataforma vs tenant app). §14 ampliado con §14.0 (auth PKCE de plataforma, 5 endpoints) y §14.0.1 (gestión de platform users).*
 *Actualizar cuando se implementen endpoints marcados ⏳ o cuando cambien la estructura de roles/claims.*
 
