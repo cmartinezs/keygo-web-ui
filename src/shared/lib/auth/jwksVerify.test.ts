@@ -20,32 +20,32 @@ describe('extractRoles', () => {
   it('accepts hierarchical roles as an array', () => {
     const roles = extractRoles(
       claimsWith({
-        roles: ['ADMIN', 'ADMIN_TENANT', 'USER_TENANT'],
+        roles: ['keygo_admin', 'keygo_tenant_admin', 'keygo_user'],
       }),
     )
 
-    expect(roles).toEqual(['ADMIN', 'ADMIN_TENANT', 'USER_TENANT'])
+    expect(roles).toEqual(['keygo_admin', 'keygo_tenant_admin', 'keygo_user'])
   })
 
   it('normalizes lowercase roles and removes duplicates', () => {
     const roles = extractRoles(
       claimsWith({
-        roles: ['admin', 'ADMIN', 'user_tenant'],
+        roles: ['KEYGO_ADMIN', 'keygo_admin', 'KEYGO_USER'],
       }),
     )
 
-    expect(roles).toEqual(['ADMIN', 'USER_TENANT'])
+    expect(roles).toEqual(['keygo_admin', 'keygo_user'])
   })
 
   it('returns empty when roles claim is not a list', () => {
-    const roles = extractRoles(claimsWith({ roles: 'ADMIN_TENANT' as unknown as string[] }))
+    const roles = extractRoles(claimsWith({ roles: 'keygo_tenant_admin' as unknown as string[] }))
 
     expect(roles).toEqual([])
   })
 
   it('filters unknown roles', () => {
-    const roles = extractRoles(claimsWith({ roles: ['ADMIN', 'SUPER_ADMIN'] }))
+    const roles = extractRoles(claimsWith({ roles: ['keygo_admin', 'SUPER_ADMIN'] }))
 
-    expect(roles).toEqual(['ADMIN'])
+    expect(roles).toEqual(['keygo_admin'])
   })
 })

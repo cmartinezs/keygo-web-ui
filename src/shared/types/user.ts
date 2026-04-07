@@ -32,6 +32,12 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   first_name?: string
   last_name?: string
+  phone_number?: string
+  locale?: string
+  zoneinfo?: string
+  profile_picture_url?: string
+  birthdate?: string
+  website?: string
 }
 
 /** Request de POST /tenants/{slug}/users/{userId}/reset-password */
@@ -178,7 +184,7 @@ export interface AccountAccessData {
   app_name: string
   membership_id: string
   status: string
-  /** Lista de codigos de rol ('ADMIN', 'VIEWER', etc.) */
+  /** Lista de codigos de rol ('keygo_admin', 'VIEWER', etc.) */
   roles: string[]
 }
 
@@ -256,10 +262,30 @@ export interface WireUserAccessData {
 
 // ── Self-registration  ────────────────────────────────────────────────────────
 
+/** Request de POST /tenants/{slug}/register */
+export interface RegisterRequest {
+  username: string
+  email: string
+  password: string
+  first_name?: string
+  last_name?: string
+}
+
 /** Datos devueltos por POST /register */
 export interface RegistrationData {
   id: string
   username: string
   email: string
   status: UserStatus
+}
+
+/** Request de POST /tenants/{slug}/register/verify-email */
+export interface VerifyEmailRequest {
+  email: string
+  verification_code: string
+}
+
+/** Request de POST /tenants/{slug}/register/resend-verification */
+export interface ResendVerificationRequest {
+  email: string
 }

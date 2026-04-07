@@ -13,7 +13,7 @@ import { SidebarMenu } from '@/app/layouts/SidebarMenu'
 import type { SidebarMenuSection } from '@/app/layouts/SidebarMenu'
 import type { DropdownOption } from '@/shared/types/dropdown'
 import { resolvePrimaryRole } from '@/shared/types/roles'
-import type { AppRole } from '@/shared/types/roles'
+import type { PlatformRole } from '@/shared/types/roles'
 import {
   IconKey,
   IconChevronLeft,
@@ -82,10 +82,10 @@ const THEME_LABEL_KEYS: Record<ThemePreference, string> = {
   'high-contrast': 'theme.highContrast',
 }
 
-const ROLE_LABEL_KEYS: Record<AppRole, string> = {
-  ADMIN: 'roles.adminGlobal',
-  ADMIN_TENANT: 'roles.adminTenant',
-  USER_TENANT: 'roles.userTenant',
+const ROLE_LABEL_KEYS: Record<PlatformRole, string> = {
+  keygo_admin: 'roles.adminGlobal',
+  keygo_tenant_admin: 'roles.adminTenant',
+  keygo_user: 'roles.userTenant',
 }
 
 const LOCALE_ICONS: Record<SupportedLocale, React.ReactNode> = {
@@ -121,9 +121,9 @@ function ThemeToggle({ value, onChange }: ThemeToggleProps) {
 }
 
 interface RoleSwitcherProps {
-  value: AppRole
-  availableRoles: AppRole[]
-  onChange: (role: AppRole) => void
+  value: PlatformRole
+  availableRoles: PlatformRole[]
+  onChange: (role: PlatformRole) => void
   containerClassName?: string
   triggerClassName?: string
   panelClassName?: string
@@ -131,10 +131,10 @@ interface RoleSwitcherProps {
 }
 
 // Mapeo de iconos para cada rol
-const ROLE_ICONS: Record<AppRole, React.ReactNode> = {
-  ADMIN: <IconShield />,
-  ADMIN_TENANT: <IconBuilding />,
-  USER_TENANT: <IconUser />,
+const ROLE_ICONS: Record<PlatformRole, React.ReactNode> = {
+  keygo_admin: <IconShield />,
+  keygo_tenant_admin: <IconBuilding />,
+  keygo_user: <IconUser />,
 }
 
 function RoleSwitcher({
@@ -147,7 +147,7 @@ function RoleSwitcher({
   selectedValueClassName,
 }: RoleSwitcherProps) {
   const { t } = useTranslation()
-  const options: DropdownOption<AppRole>[] = availableRoles.map((role) => ({
+  const options: DropdownOption<PlatformRole>[] = availableRoles.map((role) => ({
     value: role,
     label: t(ROLE_LABEL_KEYS[role]),
     icon: ROLE_ICONS[role],
@@ -221,9 +221,9 @@ function UserAvatar({ name }: { name: string }) {
   )
 }
 
-function createSidebarByRole(t: (key: string) => string): Record<AppRole, SidebarMenuSection[]> {
+function createSidebarByRole(t: (key: string) => string): Record<PlatformRole, SidebarMenuSection[]> {
   return {
-    ADMIN: [
+    keygo_admin: [
     {
       label: t('dashboard.platform'),
       items: [
@@ -259,7 +259,7 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
       ],
     },
   ],
-    ADMIN_TENANT: [
+    keygo_tenant_admin: [
     {
       label: t('dashboard.myOrganization'),
       items: [
@@ -285,7 +285,7 @@ function createSidebarByRole(t: (key: string) => string): Record<AppRole, Sideba
       ],
     },
   ],
-    USER_TENANT: [
+    keygo_user: [
     {
       label: t('dashboard.home'),
       items: [
@@ -333,7 +333,7 @@ export default function AdminLayout() {
     navigate('/logout', { replace: true })
   }
 
-  function handleRoleChange(nextRole: AppRole) {
+  function handleRoleChange(nextRole: PlatformRole) {
     setActiveRole(nextRole)
     navigate('/dashboard', { replace: true })
   }
@@ -359,7 +359,7 @@ export default function AdminLayout() {
     .filter(Boolean)
     .join(' ')
   const userMenuDisplayName = userMenuFullName || user?.username || displayName
-  const sidebarRole = activeRole ?? resolvePrimaryRole(roles) ?? 'USER_TENANT'
+  const sidebarRole = activeRole ?? resolvePrimaryRole(roles) ?? 'keygo_user'
   const roleLabel = t(ROLE_LABEL_KEYS[sidebarRole])
   const sidebarSections = createSidebarByRole(t)[sidebarRole]
 

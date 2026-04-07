@@ -60,7 +60,7 @@ const mockPendingFeatures: Record<string, MockPendingFeatureSnapshot> = {
     summary: 'Matriz de permisos y roles por aplicacion.',
     columns: ['id', 'rol', 'aplicacion', 'estado'],
     rows: [
-      { id: 'acc-200', rol: 'ADMIN', aplicacion: 'Portal Clientes', estado: 'ACTIVE' },
+      { id: 'acc-200', rol: 'keygo_admin', aplicacion: 'Portal Clientes', estado: 'ACTIVE' },
       { id: 'acc-201', rol: 'VIEWER', aplicacion: 'Backoffice Ventas', estado: 'ACTIVE' },
       { id: 'acc-202', rol: 'EDITOR', aplicacion: 'Soporte Operaciones', estado: 'PENDING' },
     ],
@@ -178,7 +178,7 @@ const mockPendingFeatures: Record<string, MockPendingFeatureSnapshot> = {
     summary: 'Roles y membresias del usuario autenticado por aplicacion.',
     columns: ['id', 'aplicacion', 'rol', 'estado'],
     rows: [
-      { id: 'my-801', aplicacion: 'Portal Clientes', rol: 'ADMIN', estado: 'ACTIVE' },
+      { id: 'my-801', aplicacion: 'Portal Clientes', rol: 'keygo_admin', estado: 'ACTIVE' },
       { id: 'my-802', aplicacion: 'Backoffice Ventas', rol: 'VIEWER', estado: 'ACTIVE' },
     ],
     kpis: [
@@ -231,7 +231,7 @@ function errorResponse(code: string, message: string, status: number) {
 
 export const handlers = [
   /**
-   * GET /api/v1/tenants?owner_email=... ⏳ pendiente — filtro owner_email + acceso ADMIN_TENANT
+   * GET /api/v1/tenants?owner_email=... ⏳ pendiente — filtro owner_email + acceso keygo_tenant_admin
    * Solo intercepta peticiones con owner_email; las demás hacen passthrough al backend real.
    */
   http.get(`${API_V1_GLOB}/tenants`, ({ request }) => {

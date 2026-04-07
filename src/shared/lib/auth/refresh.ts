@@ -14,6 +14,70 @@ import { useTokenStore } from './tokenStore'
 
 const SESSION_KEY = 'kg_rt'
 
+// ── Proactive refresh ────────────────────────────────────────────────────────
+
+const REFRESH_AT_FRACTION = 0.8
+const MIN_TTL_SECONDS = 30
+
+let refreshTimerId: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * Schedules a proactive token refresh at 80% of the access token TTL.
+ * If the remaining TTL is below MIN_TTL_SECONDS, refreshes immediately.
+ */
+export function scheduleProactiveRefresh(expiresIn: number): void {
+  cancelRefreshTimer()
+  const delayMs =
+    expiresIn <= MIN_TTL_SECONDS ? 0 : expiresIn * REFRESH_AT_FRACTION * 1000
+  refreshTimerId = setTimeout(() => {
+    void silentRefresh()
+  }, delayMs)
+}
+
+/** Cancels the proactive refresh timer if it is running. */
+export function cancelRefreshTimer(): void {
+  if (refreshTimerId !== null) {
+    clearTimeout(refreshTimerId)
+    refreshTimerId = null
+  }
+}
+
+/**
+ * Performs a silent token refresh using the persisted refresh token.
+ * On success, persists the rotated refresh token and reschedules the timer.
+ * On failure, clears the session — the user must re-login.
+ */
+async function silentRefresh(): Promise<void> {
+  const rt = sessionStorage.getItem(SESSION_KEY)
+  if (!rt) return
+
+  try {
+    const tokens = await apiRefreshToken({ tenantSlug: TENANT, refreshToken: rt })
+    const claims = await verifyIdToken(tokens.id_token, TENANT)
+    const roles = extractRoles(claims)
+
+    useTokenStore.getState().setTokens({
+      accessToken: tokens.access_token,
+      idToken: tokens.id_token,
+      refreshToken: tokens.refresh_token,
+      roles,
+    })
+
+    persistRefreshToken(tokens.refresh_token)
+    scheduleProactiveRefresh(tokens.expires_in)
+  } catch {
+    clearPersistedRefreshToken()
+    useTokenStore.getState().clearTokens()
+  }
+}
+
+// Auto-cancel the refresh timer when tokens are cleared (e.g. logout).
+useTokenStore.subscribe((state) => {
+  if (!state.accessToken) cancelRefreshTimer()
+})
+
+// ── Persistence helpers ──────────────────────────────────────────────────────
+
 /** Persists the refresh token to sessionStorage. Call after successful login. */
 export function persistRefreshToken(rt: string): void {
   sessionStorage.setItem(SESSION_KEY, rt)
@@ -45,8 +109,9 @@ export async function restoreSession(): Promise<boolean> {
       roles,
     })
 
-    // Persist the rotated refresh token
+    // Persist the rotated refresh token and schedule proactive refresh
     persistRefreshToken(tokens.refresh_token)
+    scheduleProactiveRefresh(tokens.expires_in)
     return true
   } catch {
     clearPersistedRefreshToken()

@@ -1,14 +1,14 @@
-export const APP_ROLES = ['ADMIN', 'ADMIN_TENANT', 'USER_TENANT'] as const
-export type AppRole = (typeof APP_ROLES)[number]
+export const PLATFORM_ROLES = ['keygo_admin', 'keygo_tenant_admin', 'keygo_user'] as const
+export type PlatformRole = (typeof PLATFORM_ROLES)[number]
 
-const ROLE_PRIORITY: AppRole[] = ['ADMIN', 'ADMIN_TENANT', 'USER_TENANT']
+const ROLE_PRIORITY: PlatformRole[] = ['keygo_admin', 'keygo_tenant_admin', 'keygo_user']
 
-export function resolvePrimaryRole(roles: AppRole[]): AppRole | null {
+export function resolvePrimaryRole(roles: PlatformRole[]): PlatformRole | null {
 	return ROLE_PRIORITY.find((role) => roles.includes(role)) ?? null
 }
 
-export const APP_ROLE_LABELS: Record<AppRole, string> = {
-	ADMIN: 'Administrador Global',
-	ADMIN_TENANT: 'Administrador Tenant',
-	USER_TENANT: 'Usuario Tenant',
+export const PLATFORM_ROLE_LABELS: Record<PlatformRole, string> = {
+	keygo_admin: 'Administrador Global',
+	keygo_tenant_admin: 'Administrador Tenant',
+	keygo_user: 'Usuario Tenant',
 }

@@ -11,21 +11,21 @@ interface RoleCard {
 const roles: RoleCard[] = [
   {
     key: 'admin',
-    tag: 'ADMIN',
+    tag: 'keygo_admin',
     tagColor: 'bg-rose-100 text-rose-700',
     accentText: 'text-rose-600',
     borderColor: 'border-rose-100 hover:border-rose-300',
   },
   {
     key: 'tenantAdmin',
-    tag: 'ADMIN_TENANT',
+    tag: 'keygo_tenant_admin',
     tagColor: 'bg-amber-100 text-amber-700',
     accentText: 'text-amber-600',
     borderColor: 'border-amber-100 hover:border-amber-300',
   },
   {
     key: 'tenantUser',
-    tag: 'USER_TENANT',
+    tag: 'keygo_user',
     tagColor: 'bg-emerald-100 text-emerald-700',
     accentText: 'text-emerald-600',
     borderColor: 'border-emerald-100 hover:border-emerald-300',

@@ -688,7 +688,7 @@
       },
       "organizationOverview": {
         "question": "What can I do in My organization?",
-        "answer": "Manage users and applications for your tenant from a central view designed for the ADMIN_TENANT role."
+        "answer": "Manage users and applications for your tenant from a central view designed for the keygo_tenant_admin role."
       },
       "organizationUsersApps": {
         "question": "In what order should I configure Users and Apps?",

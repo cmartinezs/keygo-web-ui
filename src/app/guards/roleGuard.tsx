@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
-import type { AppRole } from '@/shared/types/roles'
+import type { PlatformRole } from '@/shared/types/roles'
 
 interface AuthGuardProps {
   children?: React.ReactNode
@@ -14,7 +14,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 }
 
 interface RoleGuardProps {
-  roles: AppRole[]
+  roles: PlatformRole[]
   redirectTo?: string
   children?: React.ReactNode
 }

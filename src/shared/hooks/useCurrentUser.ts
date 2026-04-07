@@ -1,6 +1,6 @@
 import { decodeJwt } from 'jose'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
-import type { AppRole } from '@/shared/types/roles'
+import type { PlatformRole } from '@/shared/types/roles'
 
 export interface CurrentUser {
   sub: string
@@ -10,8 +10,8 @@ export interface CurrentUser {
   lastName?: string
   displayName?: string
   tenantSlug?: string
-  roles: AppRole[]
-  activeRole: AppRole | null
+  roles: PlatformRole[]
+  activeRole: PlatformRole | null
 }
 
 function readTenantSlugFromClaims(claims: Record<string, unknown>): string | undefined {

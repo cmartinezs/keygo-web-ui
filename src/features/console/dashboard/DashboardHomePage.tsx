@@ -16,7 +16,7 @@ import {
 import { runGetWithRecovery } from '@/shared/lib/network/recovery'
 import { IconUsers, IconApps, IconClock, IconBell } from '@/shared/ui/icons'
 import { resolvePrimaryRole } from '@/shared/types/roles'
-import type { AppRole } from '@/shared/types/roles'
+import type { PlatformRole } from '@/shared/types/roles'
 import type { ReactNode } from 'react'
 
 interface StatCardProps {
@@ -33,7 +33,7 @@ interface StatCardData {
   icon: ReactNode
 }
 
-type NonAdminRole = Exclude<AppRole, 'ADMIN'>
+type NonAdminRole = Exclude<PlatformRole, 'keygo_admin'>
 
 function toArrayPayload<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value
@@ -406,7 +406,7 @@ function UserTenantOverview({ tenantSlug }: { tenantSlug: string }) {
       title="Panel personal"
       subtitle="Accede a tus recursos, historial de accesos y configuraciones personales."
       cards={cards}
-      role="USER_TENANT"
+      role="keygo_user"
     />
   )
 }
@@ -423,7 +423,7 @@ function RoleOverviewLayout({
   role: NonAdminRole
 }) {
   const nextModuleMessage =
-    role === 'ADMIN_TENANT'
+    role === 'keygo_tenant_admin'
       ? 'Este dashboard ya consume datos reales del tenant y seguira ampliandose con nuevos indicadores de administracion.'
       : 'Este dashboard ya consume datos reales de tu cuenta y seguira ampliandose con indicadores de actividad y seguridad.'
 
@@ -453,10 +453,10 @@ function RoleOverviewLayout({
 export default function DashboardHomePage() {
   const { t } = useTranslation()
   const user = useCurrentUser()
-  const role = user?.activeRole ?? resolvePrimaryRole(user?.roles ?? []) ?? 'USER_TENANT'
+  const role = user?.activeRole ?? resolvePrimaryRole(user?.roles ?? []) ?? 'keygo_user'
   const tenantSlug = user?.tenantSlug
 
-  if (role === 'ADMIN') {
+  if (role === 'keygo_admin') {
     return <AdminDashboardPage />
   }
 
@@ -472,7 +472,7 @@ export default function DashboardHomePage() {
     )
   }
 
-  if (role === 'ADMIN_TENANT') {
+  if (role === 'keygo_tenant_admin') {
     return <AdminTenantOverview tenantSlug={tenantSlug} />
   }
 

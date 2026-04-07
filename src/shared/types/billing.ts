@@ -36,6 +36,7 @@ export interface AppPlanVersion {
   setup_fee: number
   trial_days: number
   effective_from: string
+  effective_to: string | null
   status: PlanStatus
   free: boolean
   billing_options: AppPlanVersionBillingOption[]
@@ -49,6 +50,7 @@ export interface AppPlan {
   description: string | null
   status: PlanStatus
   is_public: boolean
+  sort_order: number
   versions: AppPlanVersion[]
   entitlements: AppPlanEntitlement[]
 }

@@ -217,7 +217,7 @@ describe('account api wrappers', () => {
             client_app_name: 'Console',
             membership_id: 'mem-1',
             status: 'ACTIVE',
-            roles: ['ADMIN', 'READER'],
+            roles: ['keygo_admin', 'READER'],
           },
         ],
       },
@@ -235,7 +235,7 @@ describe('account api wrappers', () => {
         app_name: 'Console',
         membership_id: 'mem-1',
         status: 'ACTIVE',
-        roles: ['ADMIN', 'READER'],
+        roles: ['keygo_admin', 'READER'],
       },
     ])
   })

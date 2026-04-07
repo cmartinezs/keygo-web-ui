@@ -13,7 +13,7 @@ import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/sh
 import { verifyIdToken, extractRoles } from '@/shared/lib/auth/jwksVerify'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
 import { useBlockingErrorStore } from '@/shared/lib/auth/blockingErrorStore'
-import { persistRefreshToken } from '@/shared/lib/auth/refresh'
+import { persistRefreshToken, scheduleProactiveRefresh } from '@/shared/lib/auth/refresh'
 import { TENANT } from '@/shared/api/client'
 import { useRateLimit } from '@/shared/hooks/useRateLimit'
 import { useHoneypot } from '@/shared/hooks/useHoneypot'
@@ -31,7 +31,7 @@ import {
   isRequestTimeout,
 } from '@/shared/lib/network/recovery'
 import { i18n } from '@/shared/lib/i18n/config'
-import type { AppRole } from '@/shared/types/roles'
+import type { PlatformRole } from '@/shared/types/roles'
 import type { AuthorizeData } from '@/shared/types/auth'
 
 const TURNSTILE_ENABLED = Boolean(env.TURNSTILE_SITE_KEY)
@@ -55,10 +55,10 @@ type LoginFormValues = {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function resolveRedirectPath(roles: AppRole[]): string {
-  if (roles.includes('ADMIN')) return '/dashboard'
-  if (roles.includes('ADMIN_TENANT')) return '/dashboard'
-  if (roles.includes('USER_TENANT')) return '/dashboard'
+function resolveRedirectPath(roles: PlatformRole[]): string {
+  if (roles.includes('keygo_admin')) return '/dashboard'
+  if (roles.includes('keygo_tenant_admin')) return '/dashboard'
+  if (roles.includes('keygo_user')) return '/dashboard'
   return '/dashboard'
 }
 
@@ -566,7 +566,7 @@ export default function LoginPage() {
       if (!codeVerifier) throw new Error('PKCE verifier missing')
 
       loginPhaseRef.current = 'login'
-      const { code } = await login({
+      const loginResult = await login({
         tenantSlug: TENANT,
         emailOrUsername: values.emailOrUsername,
         password: values.password,
@@ -579,18 +579,19 @@ export default function LoginPage() {
       // because the code is single-use and the session state is now uncertain.
       loginPhaseRef.current = 'post-login'
       const tokens = await exchangeToken(
-        { tenantSlug: TENANT, code, codeVerifier },
+        { tenantSlug: TENANT, code: loginResult.code, codeVerifier },
         {
           timeoutMs: AUTH_TIMEOUT_MS,
-          idempotencyKey: `kg-token-exchange-${TENANT}-${code}`,
+          idempotencyKey: `kg-token-exchange-${TENANT}-${loginResult.code}`,
         },
       )
       const claims = await verifyIdToken(tokens.id_token, TENANT)
       const roles = extractRoles(claims)
-      return { tokens, roles }
+      return { tokens, roles, message: loginResult.message }
     },
-    onSuccess: ({ tokens, roles }) => {
+    onSuccess: ({ tokens, roles, message }) => {
       rateLimit.recordSuccess()
+      if (message) toast.info(message)
       setTokens({
         accessToken: tokens.access_token,
         idToken: tokens.id_token,
@@ -598,6 +599,7 @@ export default function LoginPage() {
         roles,
       })
       persistRefreshToken(tokens.refresh_token)
+      scheduleProactiveRefresh(tokens.expires_in)
       if (roles.length > 0) {
         navigate(resolveRedirectPath(roles), { replace: true })
       }

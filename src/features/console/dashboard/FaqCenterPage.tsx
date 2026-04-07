@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
 import { resolvePrimaryRole } from '@/shared/types/roles'
-import type { AppRole } from '@/shared/types/roles'
+import type { PlatformRole } from '@/shared/types/roles'
 
 interface FaqItem {
   key: string
@@ -15,8 +15,8 @@ interface FaqTab {
   items: FaqItem[]
 }
 
-const FAQ_TABS_BY_ROLE: Record<AppRole, FaqTab[]> = {
-  ADMIN: [
+const FAQ_TABS_BY_ROLE: Record<PlatformRole, FaqTab[]> = {
+  keygo_admin: [
     {
       key: 'platform',
       labelKey: 'dashboard.platform',
@@ -43,7 +43,7 @@ const FAQ_TABS_BY_ROLE: Record<AppRole, FaqTab[]> = {
       items: [{ key: 'accountWhereChangeLanguage' }, { key: 'accountLanguageAutoDetection' }, { key: 'accountLanguageBrowserConfig' }],
     },
   ],
-  ADMIN_TENANT: [
+  keygo_tenant_admin: [
     {
       key: 'myOrganization',
       labelKey: 'dashboard.myOrganization',
@@ -60,7 +60,7 @@ const FAQ_TABS_BY_ROLE: Record<AppRole, FaqTab[]> = {
       items: [{ key: 'accountWhereChangeLanguage' }, { key: 'accountLanguageAutoDetection' }, { key: 'accountLanguageBrowserConfig' }],
     },
   ],
-  USER_TENANT: [
+  keygo_user: [
     {
       key: 'home',
       labelKey: 'dashboard.home',
@@ -80,7 +80,7 @@ export default function FaqCenterPage() {
   const activeRole = useTokenStore((state) => state.activeRole)
 
   const resolvedRole = useMemo(
-    () => (activeRole ?? resolvePrimaryRole(roles) ?? 'USER_TENANT') as AppRole,
+    () => (activeRole ?? resolvePrimaryRole(roles) ?? 'keygo_user') as PlatformRole,
     [activeRole, roles],
   )
 

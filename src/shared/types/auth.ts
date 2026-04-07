@@ -7,6 +7,8 @@ export interface AuthorizeData {
 export interface LoginData {
   code: string
   redirect_uri: string
+  message?: string
+  reset_code_id?: string
 }
 
 export interface TokenData {

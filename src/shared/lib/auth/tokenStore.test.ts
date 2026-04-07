@@ -33,10 +33,10 @@ describe('tokenStore role context', () => {
       accessToken: 'at',
       idToken: 'it',
       refreshToken: 'rt',
-      roles: ['ADMIN_TENANT', 'USER_TENANT'],
+      roles: ['keygo_tenant_admin', 'keygo_user'],
     })
 
-    expect(useTokenStore.getState().activeRole).toBe('ADMIN_TENANT')
+    expect(useTokenStore.getState().activeRole).toBe('keygo_tenant_admin')
   })
 
   it('allows switching active role only to owned roles', () => {
@@ -44,14 +44,14 @@ describe('tokenStore role context', () => {
       accessToken: 'at',
       idToken: 'it',
       refreshToken: 'rt',
-      roles: ['ADMIN', 'ADMIN_TENANT', 'USER_TENANT'],
+      roles: ['keygo_admin', 'keygo_tenant_admin', 'keygo_user'],
     })
 
-    useTokenStore.getState().setActiveRole('USER_TENANT')
-    expect(useTokenStore.getState().activeRole).toBe('USER_TENANT')
+    useTokenStore.getState().setActiveRole('keygo_user')
+    expect(useTokenStore.getState().activeRole).toBe('keygo_user')
 
-    useTokenStore.getState().setActiveRole('ADMIN')
-    expect(useTokenStore.getState().activeRole).toBe('ADMIN')
+    useTokenStore.getState().setActiveRole('keygo_admin')
+    expect(useTokenStore.getState().activeRole).toBe('keygo_admin')
   })
 
   it('ignores active role changes to roles the user does not own', () => {
@@ -59,10 +59,10 @@ describe('tokenStore role context', () => {
       accessToken: 'at',
       idToken: 'it',
       refreshToken: 'rt',
-      roles: ['USER_TENANT'],
+      roles: ['keygo_user'],
     })
 
-    useTokenStore.getState().setActiveRole('ADMIN')
-    expect(useTokenStore.getState().activeRole).toBe('USER_TENANT')
+    useTokenStore.getState().setActiveRole('keygo_admin')
+    expect(useTokenStore.getState().activeRole).toBe('keygo_user')
   })
 })

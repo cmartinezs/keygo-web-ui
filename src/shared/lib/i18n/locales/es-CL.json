@@ -688,7 +688,7 @@
       },
       "organizationOverview": {
         "question": "Que puedo hacer en Mi organizacion?",
-        "answer": "Administrar usuarios y aplicaciones de tu tenant desde una vista central orientada al rol ADMIN_TENANT."
+        "answer": "Administrar usuarios y aplicaciones de tu tenant desde una vista central orientada al rol keygo_tenant_admin."
       },
       "organizationUsersApps": {
         "question": "En que orden conviene configurar Usuarios y Apps?",

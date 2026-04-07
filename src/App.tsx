@@ -49,7 +49,7 @@ export default function App() {
   const accessToken = useTokenStore((state) => state.accessToken)
   const currentUser = useCurrentUser()
   // Show DevConsole in all non-prod environments; in prod only for ADMIN users.
-  const showDevConsole = !env.PROD || currentUser?.roles.includes('ADMIN') === true
+  const showDevConsole = !env.PROD || currentUser?.roles.includes('keygo_admin') === true
   const isFetching = useIsFetching()
   const isMutating = useIsMutating()
   const themePreference = useThemeStore((state) => state.preference)
@@ -141,7 +141,7 @@ export default function App() {
           <Route path="account/faq" element={<Navigate to="/dashboard/faq" replace />} />
 
           {/* Admin-only sections */}
-          <Route element={<RoleGuard roles={['ADMIN']} redirectTo="/dashboard" />}>
+          <Route element={<RoleGuard roles={['keygo_admin']} redirectTo="/dashboard" />}>
             <Route path="tenants" element={<TenantsPage />}>
               <Route path="new" element={<TenantCreatePage />} />
               <Route path=":slug" element={<TenantDetailPage />} />
@@ -159,14 +159,14 @@ export default function App() {
           <Route path="feature/:featureId" element={<FeaturePlaceholderPage />} />
 
           {/* Admin tenant sections */}
-          <Route element={<RoleGuard roles={['ADMIN', 'ADMIN_TENANT']} redirectTo="/dashboard" />}>
+          <Route element={<RoleGuard roles={['keygo_admin', 'keygo_tenant_admin']} redirectTo="/dashboard" />}>
             <Route path="tenant/users" element={<TenantUsersPage />} />
             <Route path="tenant/apps" element={<TenantAppsPage />} />
             <Route path="tenant/memberships" element={<TenantMembershipsPage />} />
           </Route>
 
           {/* User tenant sections */}
-          <Route element={<RoleGuard roles={['USER_TENANT']} redirectTo="/dashboard" />}>
+          <Route element={<RoleGuard roles={['keygo_user']} redirectTo="/dashboard" />}>
             <Route path="user/my-access" element={<UserMyAccessPage />} />
             <Route path="user/activity" element={<UserActivityPage />} />
             <Route path="user/sessions" element={<Navigate to="/dashboard/account/sessions" replace />} />

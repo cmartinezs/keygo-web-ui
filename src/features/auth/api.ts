@@ -83,3 +83,20 @@ export async function exchangeToken(params: {
   const body = response.data
   return unwrapResponseData(body, 'Token exchange failed')
 }
+
+/**
+ * Revokes a token (RFC 7009). Fire-and-forget on logout.
+ * POST /tenants/{slug}/oauth2/revoke
+ */
+export async function revokeToken(params: {
+  tenantSlug: string
+  token: string
+  tokenTypeHint?: 'refresh_token' | 'access_token'
+}): Promise<void> {
+  const url = `${API_V1}/tenants/${params.tenantSlug}/oauth2/revoke`
+  await authClient.post(url, {
+    token: params.token,
+    token_type_hint: params.tokenTypeHint ?? 'refresh_token',
+    client_id: CLIENT_ID,
+  })
+}
