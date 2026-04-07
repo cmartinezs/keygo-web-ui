@@ -7,6 +7,33 @@ import { http, HttpResponse, passthrough } from 'msw'
 
 const API_V1_GLOB = '*/api/v1'
 
+// ── Datos semilla: platform users ⏳ pendiente backend ─────────────────────────
+
+const mockPlatformUsers = [
+  { id: 'pu-001', email: 'admin@keygo.dev', username: 'admin.platform', first_name: 'Admin', last_name: 'KeyGo', status: 'ACTIVE' },
+  { id: 'pu-002', email: 'ana.mora@keygo.dev', username: 'ana.mora', first_name: 'Ana', last_name: 'Mora', status: 'ACTIVE' },
+  { id: 'pu-003', email: 'diego.paz@keygo.dev', username: 'diego.paz', first_name: 'Diego', last_name: 'Paz', status: 'SUSPENDED' },
+  { id: 'pu-004', email: 'carla.soto@keygo.dev', username: 'carla.soto', first_name: 'Carla', last_name: 'Soto', status: 'PENDING' },
+  { id: 'pu-005', email: 'pablo.rios@keygo.dev', username: 'pablo.rios', first_name: 'Pablo', last_name: 'Rios', status: 'ACTIVE' },
+]
+
+const mockPlatformUserRoles: Record<string, Array<{ role_code: string; assigned_at: string }>> = {
+  'pu-001': [
+    { role_code: 'keygo_admin', assigned_at: '2025-01-10T00:00:00Z' },
+  ],
+  'pu-002': [
+    { role_code: 'keygo_tenant_admin', assigned_at: '2025-03-15T00:00:00Z' },
+  ],
+  'pu-003': [
+    { role_code: 'keygo_user', assigned_at: '2025-06-01T00:00:00Z' },
+  ],
+  'pu-004': [],
+  'pu-005': [
+    { role_code: 'keygo_tenant_admin', assigned_at: '2025-08-20T00:00:00Z' },
+    { role_code: 'keygo_user', assigned_at: '2025-08-20T00:00:00Z' },
+  ],
+}
+
 // ── Datos semilla (mock state en memoria para la sesión del worker) ────────────
 
 interface MockPendingFeatureSnapshot {
@@ -230,6 +257,66 @@ function errorResponse(code: string, message: string, status: number) {
 // ── Handlers ⏳ pendiente backend (F-042) ─────────────────────────────────────
 
 export const handlers = [
+  /**
+   * GET /api/v1/platform/users ⏳ pendiente backend
+   * Listado paginado de usuarios de plataforma con filtros opcionales.
+   */
+  http.get(`${API_V1_GLOB}/platform/users`, ({ request }) => {
+    const url = new URL(request.url)
+    // Si tiene userId en la URL, hacer passthrough al handler real
+    const pathParts = url.pathname.split('/').filter(Boolean)
+    const usersIdx = pathParts.indexOf('users')
+    if (usersIdx >= 0 && usersIdx < pathParts.length - 1) return passthrough()
+
+    const statusFilter = url.searchParams.get('status')
+    const emailFilter = url.searchParams.get('email_like')
+    const page = parseInt(url.searchParams.get('page') ?? '0', 10)
+    const size = parseInt(url.searchParams.get('size') ?? '20', 10)
+
+    let filtered = [...mockPlatformUsers]
+    if (statusFilter) filtered = filtered.filter((u) => u.status === statusFilter)
+    if (emailFilter) filtered = filtered.filter((u) => u.email.toLowerCase().includes(emailFilter.toLowerCase()))
+
+    const start = page * size
+    const content = filtered.slice(start, start + size)
+
+    return successResponse(
+      {
+        content,
+        page,
+        size,
+        total_elements: filtered.length,
+        total_pages: Math.ceil(filtered.length / size),
+        last: start + size >= filtered.length,
+      },
+      'PLATFORM_USERS_RETRIEVED',
+    )
+  }),
+
+  /**
+   * PUT /api/v1/platform/users/:userId ⏳ pendiente backend
+   * Actualización de datos del usuario de plataforma.
+   */
+  http.put(`${API_V1_GLOB}/platform/users/:userId`, async ({ params, request }) => {
+    const userId = params.userId as string
+    const user = mockPlatformUsers.find((u) => u.id === userId)
+    if (!user) return errorResponse('USER_NOT_FOUND', 'Usuario no encontrado', 404)
+
+    const body = (await request.json()) as Record<string, string>
+    const updated = { ...user, ...body }
+    return successResponse(updated, 'PLATFORM_USER_UPDATED')
+  }),
+
+  /**
+   * GET /api/v1/platform/users/:userId/platform-roles ⏳ pendiente backend
+   * Roles de plataforma asignados al usuario.
+   */
+  http.get(`${API_V1_GLOB}/platform/users/:userId/platform-roles`, ({ params }) => {
+    const userId = params.userId as string
+    const roles = mockPlatformUserRoles[userId] ?? []
+    return successResponse(roles, 'PLATFORM_USER_ROLES_RETRIEVED')
+  }),
+
   /**
    * GET /api/v1/tenants?owner_email=... ⏳ pendiente — filtro owner_email + acceso keygo_tenant_admin
    * Solo intercepta peticiones con owner_email; las demás hacen passthrough al backend real.

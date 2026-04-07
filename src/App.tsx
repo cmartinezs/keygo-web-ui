@@ -31,6 +31,11 @@ import AdminLayout from '@/app/layouts/AdminLayout'
 import TenantsPage from '@/features/ops/tenants/TenantsPage'
 import TenantDetailPage from '@/features/ops/tenants/TenantDetailPage'
 import TenantCreatePage from '@/features/ops/tenants/TenantCreatePage'
+import PlatformUsersPage from '@/features/ops/platform-users/PlatformUsersPage'
+import PlatformUserDetailPage from '@/features/ops/platform-users/PlatformUserDetailPage'
+import PlatformUserCreatePage from '@/features/ops/platform-users/PlatformUserCreatePage'
+import PlatformBillingPage from '@/features/ops/billing/PlatformBillingPage'
+import ConsoleBillingPage from '@/features/console/billing/ConsoleBillingPage'
 import { BlockingErrorModal } from '@/shared/ui/BlockingErrorModal'
 import { GlobalLoaderOverlay } from '@/shared/ui/GlobalLoaderOverlay'
 import { AppErrorBoundary } from '@/shared/ui/AppErrorBoundary'
@@ -146,6 +151,11 @@ export default function App() {
               <Route path="new" element={<TenantCreatePage />} />
               <Route path=":slug" element={<TenantDetailPage />} />
             </Route>
+            <Route path="platform-users" element={<PlatformUsersPage />}>
+              <Route path="new" element={<PlatformUserCreatePage />} />
+              <Route path=":userId" element={<PlatformUserDetailPage />} />
+            </Route>
+            <Route path="platform-billing" element={<PlatformBillingPage />} />
             <Route path="feature/api" element={<PlatformStatsPage />} />
           </Route>
 
@@ -163,6 +173,7 @@ export default function App() {
             <Route path="tenant/users" element={<TenantUsersPage />} />
             <Route path="tenant/apps" element={<TenantAppsPage />} />
             <Route path="tenant/memberships" element={<TenantMembershipsPage />} />
+            <Route path="tenant/billing" element={<ConsoleBillingPage />} />
           </Route>
 
           {/* User tenant sections */}

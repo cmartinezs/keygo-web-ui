@@ -25,9 +25,29 @@ export interface CreatePlatformUserRequest {
   last_name?: string
 }
 
-/** Request de POST /platform/users/{userId}/assign-role */
+/** Request de PUT /platform/users/{userId} ⏳ pendiente backend */
+export interface UpdatePlatformUserRequest {
+  first_name?: string
+  last_name?: string
+}
+
+/** Request de POST /platform/users/{userId}/platform-roles */
 export interface AssignPlatformRoleRequest {
   role: string
+}
+
+/** Respuesta de GET /platform/users/{userId}/platform-roles ⏳ pendiente backend */
+export interface PlatformUserRoleData {
+  role_code: string
+  assigned_at: string
+}
+
+/** Parámetros de filtrado para GET /platform/users ⏳ pendiente backend */
+export interface ListPlatformUsersParams {
+  status?: PlatformUserStatus
+  email_like?: string
+  page?: number
+  size?: number
 }
 
 // ── Platform stats ────────────────────────────────────────────────────────────

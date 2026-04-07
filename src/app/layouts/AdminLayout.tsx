@@ -35,6 +35,7 @@ import {
   IconBell,
   IconSettings,
   IconFaq,
+  IconCreditCard,
   IconFlagChile,
   IconFlagUs,
 } from '@/shared/ui/icons'
@@ -229,6 +230,7 @@ function createSidebarByRole(t: (key: string) => string): Record<PlatformRole, S
       items: [
         { to: '/dashboard', exact: true, icon: <IconDashboard />, label: t('dashboard.dashboard') },
         { to: '/dashboard/tenants', icon: <IconBuilding />, label: t('dashboard.tenants') },
+        { to: '/dashboard/platform-users', icon: <IconUsers />, label: t('dashboard.platformUsers') },
         { to: '/dashboard/tenant/apps', icon: <IconApps />, label: t('dashboard.apps') },
         { to: '/dashboard/tenant/users', icon: <IconUsers />, label: t('dashboard.users') },
       ],
@@ -251,6 +253,7 @@ function createSidebarByRole(t: (key: string) => string): Record<PlatformRole, S
     {
       label: t('dashboard.system'),
       items: [
+        { to: '/dashboard/platform-billing', icon: <IconCreditCard />, label: t('dashboard.platformBilling') },
         { to: '/dashboard/feature/api', icon: <IconCloud />, label: t('dashboard.api') },
         { to: '/dashboard/account/sessions', icon: <IconClock />, label: t('dashboard.sessions') },
         { to: '/dashboard/account/settings', icon: <IconSettings />, label: t('common.accountSettings') },
@@ -266,6 +269,7 @@ function createSidebarByRole(t: (key: string) => string): Record<PlatformRole, S
         { to: '/dashboard', exact: true, icon: <IconDashboard />, label: t('dashboard.dashboard') },
         { to: '/dashboard/tenant/users', icon: <IconUsers />, label: t('dashboard.users') },
         { to: '/dashboard/tenant/apps', icon: <IconApps />, label: t('dashboard.apps') },
+        { to: '/dashboard/tenant/billing', icon: <IconCreditCard />, label: t('dashboard.billing') },
       ],
     },
     {

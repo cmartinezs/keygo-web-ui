@@ -579,7 +579,10 @@
     "myAccess": "My access",
     "activity": "Activity",
     "dashboard": "Dashboard",
-    "tenantResolutionError": "We could not resolve the active tenant from your session. Please sign in again to continue."
+    "tenantResolutionError": "We could not resolve the active tenant from your session. Please sign in again to continue.",
+    "platformUsers": "Platform Users",
+    "billing": "Billing",
+    "platformBilling": "Platform Billing"
   },
   "accountSettings": {
     "title": "Account settings",
@@ -1186,6 +1189,160 @@
     "errors": {
       "tenantOrAppNotFound": "Company or application not found. Verify the identifier with your administrator.",
       "duplicateAccount": "An account with that email or username already exists."
+    }
+  },
+  "platformUsers": {
+    "title": "Platform Users",
+    "new": "New",
+    "newUser": "New platform user",
+    "searchPlaceholder": "Search by email...",
+    "searchAria": "Search user by email",
+    "errorLoad": "Error loading users.",
+    "noSearchResults": "No results for your search.",
+    "noCategory": "No users in this category.",
+    "emptyTitle": "Select a user",
+    "emptyBody": "Choose a user from the list to view their details, or create a new one to get started.",
+    "pagination": "{{total}} users - p. {{page}}/{{totalPages}}",
+    "pagePrevious": "Previous page",
+    "pageNext": "Next page",
+    "mobileBack": "Users",
+    "status": {
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "PENDING": "Pending"
+    },
+    "filters": {
+      "ALL": "All",
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "PENDING": "Pending"
+    }
+  },
+  "platformUserDetail": {
+    "infoTitle": "User Information",
+    "id": "ID",
+    "email": "Email",
+    "username": "Username",
+    "fullName": "Full Name",
+    "rolesTitle": "Platform Roles",
+    "noRoles": "This user has no assigned roles.",
+    "selectRole": "Select role",
+    "selectRolePlaceholder": "Select role...",
+    "assignRole": "Assign role",
+    "assignRoleButton": "Assign",
+    "revokeRole": "Revoke role {{role}}",
+    "roleAssigned": "Role assigned successfully.",
+    "roleAssignError": "Error assigning role.",
+    "roleRevoked": "Role revoked successfully.",
+    "roleRevokeError": "Error revoking role.",
+    "suspendAction": "Suspend user",
+    "activateAction": "Activate user",
+    "suspendSuccess": "User suspended successfully.",
+    "suspendError": "Error suspending user.",
+    "activateSuccess": "User activated successfully.",
+    "activateError": "Error activating user.",
+    "errorTitle": "Error loading",
+    "errorDescription": "Could not load user information. Please try again."
+  },
+  "platformUserCreate": {
+    "title": "New Platform User",
+    "back": "Users",
+    "emailLabel": "Email",
+    "usernameLabel": "Username",
+    "passwordLabel": "Password",
+    "firstNameLabel": "First Name",
+    "lastNameLabel": "Last Name",
+    "cancel": "Cancel",
+    "createButton": "Create user",
+    "creating": "Creating...",
+    "createdSuccess": "User {{name}} created successfully.",
+    "validation": {
+      "email": "Enter a valid email address.",
+      "usernameMin": "Username must be at least 3 characters.",
+      "usernameMax": "Username cannot exceed 50 characters.",
+      "passwordMin": "Password must be at least 8 characters."
+    }
+  },
+  "platformBilling": {
+    "title": "Platform Billing",
+    "subscriptionTitle": "Active Subscription",
+    "noSubscription": "No active subscription on the platform.",
+    "periodStart": "Period Start",
+    "periodEnd": "Period End",
+    "autoRenew": "Auto Renew",
+    "cancelAtEnd": "Cancel at period end",
+    "yes": "Yes",
+    "no": "No",
+    "cancelSubscription": "Cancel Subscription",
+    "cancelConfirmMessage": "Are you sure you want to cancel the subscription? It will be cancelled at the end of the current period.",
+    "cancelConfirm": "Yes, cancel",
+    "cancelBack": "Go back",
+    "cancelSuccess": "Subscription cancelled successfully.",
+    "cancelError": "Error cancelling subscription.",
+    "catalogTitle": "Plan Catalog",
+    "noCatalog": "No plans available.",
+    "planName": "Plan",
+    "planCode": "Code",
+    "planStatus": "Status",
+    "versions": "Versions",
+    "invoicesTitle": "Invoices",
+    "noInvoices": "No invoices recorded.",
+    "invoiceNumber": "Invoice #",
+    "issueDate": "Date",
+    "invoiceStatus": "Status",
+    "total": "Total",
+    "subStatus": {
+      "ACTIVE": "Active",
+      "CANCELLED": "Cancelled",
+      "PAST_DUE": "Past Due",
+      "SUSPENDED": "Suspended"
+    },
+    "invStatus": {
+      "PAID": "Paid",
+      "ISSUED": "Issued",
+      "OVERDUE": "Overdue",
+      "VOID": "Void"
+    }
+  },
+  "consoleBilling": {
+    "title": "Billing",
+    "subscriptionTitle": "My Subscription",
+    "noSubscription": "You don't have an active subscription.",
+    "periodStart": "Period Start",
+    "periodEnd": "Period End",
+    "autoRenew": "Auto Renew",
+    "cancelAtEnd": "Cancel at period end",
+    "yes": "Yes",
+    "no": "No",
+    "cancelSubscription": "Cancel Subscription",
+    "cancelConfirmMessage": "Are you sure you want to cancel your subscription? It will be cancelled at the end of the current period.",
+    "cancelConfirm": "Yes, cancel",
+    "cancelBack": "Go back",
+    "cancelSuccess": "Subscription cancelled successfully.",
+    "cancelError": "Error cancelling subscription.",
+    "catalogTitle": "Available Plans",
+    "noCatalog": "No plans available.",
+    "planName": "Plan",
+    "planCode": "Code",
+    "planStatus": "Status",
+    "versions": "Versions",
+    "invoicesTitle": "My Invoices",
+    "noInvoices": "No invoices recorded.",
+    "invoiceNumber": "Invoice #",
+    "issueDate": "Date",
+    "invoiceStatus": "Status",
+    "total": "Total",
+    "subStatus": {
+      "ACTIVE": "Active",
+      "CANCELLED": "Cancelled",
+      "PAST_DUE": "Past Due",
+      "SUSPENDED": "Suspended"
+    },
+    "invStatus": {
+      "PAID": "Paid",
+      "ISSUED": "Issued",
+      "OVERDUE": "Overdue",
+      "VOID": "Void"
     }
   }
 }

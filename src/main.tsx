@@ -8,7 +8,7 @@ import './styles/index.css'
 import { restoreSession } from '@/shared/lib/auth/refresh'
 import { env } from '@/shared/lib/config/env'
 import { GlobalLoaderOverlay } from '@/shared/ui/GlobalLoaderOverlay'
-import './i18n/config'
+import '@/shared/lib/i18n/config'
 
 // ⏳ pendiente backend (modulos varios) — Activa MSW para endpoints temporales
 // (connections, users suspend/activate, user sessions, feature/* pending) cuando
