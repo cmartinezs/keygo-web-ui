@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { PlanCatalogGrid } from '@/shared/ui/PlanCatalogGrid'
-import { getBillingCatalog, BILLING_QUERY_KEYS } from '@/features/console/billing/api'
-import { TENANT, CLIENT_ID } from '@/shared/api/client'
+import { getPlatformBillingCatalog, PLATFORM_BILLING_QUERY_KEYS } from '@/features/ops/billing/api'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -51,7 +50,7 @@ export function PricingSection() {
       retryDelayMs: NETWORK_RETRY_DELAY_MS,
       maxRetries: NETWORK_MAX_RETRIES,
       query: () =>
-        getBillingCatalog(TENANT, CLIENT_ID, {
+        getPlatformBillingCatalog({
           signal,
           timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
         }),
@@ -59,7 +58,7 @@ export function PricingSection() {
   }
 
   const { data: rawPlans = [], isLoading, isError, refetch } = useQuery({
-    queryKey: BILLING_QUERY_KEYS.catalog(TENANT, CLIENT_ID),
+    queryKey: PLATFORM_BILLING_QUERY_KEYS.catalog,
     queryFn: ({ signal }) => fetchCatalogWithRecovery(signal),
     enabled: shouldLoadPlans,
     staleTime: 1000 * 60 * 10,

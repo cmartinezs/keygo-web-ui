@@ -5,16 +5,17 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { getAppApiError } from '@/shared/api/errorNormalizer'
 import {
-  getBillingCatalog,
+  getPlatformBillingCatalog,
+  PLATFORM_BILLING_QUERY_KEYS,
+} from '@/features/ops/billing/api'
+import {
   getBillingContract,
   createBillingContract,
   verifyContractEmail,
   mockApprovePayment,
   activateBillingContract,
   resendContractVerificationEmail,
-  BILLING_QUERY_KEYS,
 } from '@/features/console/billing/api'
-import { TENANT, CLIENT_ID } from '@/shared/api/client'
 import type { AppContract, AppPlan, AppPlanVersion, AppPlanVersionBillingOption, BillingPeriod } from '@/shared/types/billing'
 import { PlanStep } from './steps/PlanStep'
 import { ContractorStep } from './steps/ContractorStep'
@@ -367,7 +368,7 @@ export default function NewContractPage() {
       timeoutMs: CATALOG_TIMEOUT_MS,
       retryDelayMs: CATALOG_RETRY_DELAY_MS,
       maxRetries: CATALOG_MAX_RETRIES,
-      query: () => getBillingCatalog(TENANT, CLIENT_ID, {
+      query: () => getPlatformBillingCatalog({
         signal,
         timeoutMs: CATALOG_TIMEOUT_MS,
       }),
@@ -395,7 +396,7 @@ export default function NewContractPage() {
     isError: catalogError,
     refetch: refetchCatalog,
   } = useQuery({
-    queryKey: BILLING_QUERY_KEYS.catalog(TENANT, CLIENT_ID),
+    queryKey: PLATFORM_BILLING_QUERY_KEYS.catalog,
     queryFn: ({ signal }) => fetchCatalogWithRecovery(signal),
     staleTime: 5 * 60 * 1000, // 5 min
     retry: false,
