@@ -13,9 +13,9 @@ const envSchema = z.object({
   // Usar solo en desarrollo: VITE_MOCK_CONNECTIONS=true npm run dev
   VITE_MOCK_CONNECTIONS: z
     .string()
-    .transform((v) => v === 'true')
     .optional()
-    .default('false'),
+    .default('false')
+    .transform((v) => v === 'true'),
 })
 
 const parsedEnv = envSchema.safeParse(import.meta.env)

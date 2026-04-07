@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { listClientApps, createClientApp, rotateClientAppSecret, CLIENT_APP_QUERY_KEYS, type GrantType, type CreateClientAppRequest } from '@/features/console/apps/api'
+import { listClientApps, createClientApp, rotateClientAppSecret, CLIENT_APP_QUERY_KEYS } from '@/features/console/apps/api'
+import type { GrantType, CreateClientAppRequest } from '@/shared/types/clientapp'
 import { getAppApiError } from '@/shared/api/errorNormalizer'
 import { TENANT } from '@/shared/api/client'
 import { SelectDropdown } from '@/shared/ui/SelectDropdown'
@@ -37,11 +38,13 @@ const GRANT_OPTIONS = [
   { value: 'IMPLICIT', label: 'Implicit' },
 ] as const
 
+const GRANT_TYPES = ['AUTHORIZATION_CODE', 'CLIENT_CREDENTIALS', 'REFRESH_TOKEN', 'IMPLICIT'] as const
+
 const CreateClientAppSchema = z.object({
   name: z.string().min(1, 'Nombre requerido'),
   description: z.string().optional(),
   type: z.enum(['PUBLIC', 'CONFIDENTIAL'] as const),
-  grants: z.array(z.enum(['AUTHORIZATION_CODE', 'CLIENT_CREDENTIALS', 'REFRESH_TOKEN', 'IMPLICIT'] as const)).min(1, 'Selecciona al menos un grant'),
+  grants: z.array(z.object({ value: z.enum(GRANT_TYPES) })).min(1, 'Selecciona al menos un grant'),
   redirect_uris: z.array(z.string().url('URL válida')).optional(),
   scopes: z.array(z.string()).optional(),
 })
@@ -80,7 +83,7 @@ export default function TenantAppsPage() {
 
   const createForm = useForm<CreateClientAppFormData>({
     resolver: zodResolver(CreateClientAppSchema),
-    defaultValues: { name: '', description: '', type: 'PUBLIC', grants: ['AUTHORIZATION_CODE'], redirect_uris: [], scopes: [] },
+    defaultValues: { name: '', description: '', type: 'PUBLIC', grants: [{ value: 'AUTHORIZATION_CODE' }], redirect_uris: [], scopes: [] },
   })
 
   const { fields: grantFields, append: appendGrant, remove: removeGrant } = useFieldArray({
@@ -222,7 +225,13 @@ export default function TenantAppsPage() {
               </button>
             </div>
 
-            <form onSubmit={createForm.handleSubmit((data) => createMutation.mutate(data))} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <form onSubmit={createForm.handleSubmit((formData) => {
+              const payload: CreateClientAppRequest = {
+                ...formData,
+                grants: formData.grants.map((g) => g.value),
+              }
+              createMutation.mutate(payload)
+            })} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               {createMutation.isError && (
                 <div className="rounded-lg border border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-300">
                   {getAppApiError(createMutation.error)?.clientMessage || 'Error al crear aplicación'}
@@ -291,7 +300,7 @@ export default function TenantAppsPage() {
                 {grantFields.map((field, index) => (
                   <div key={field.id} className="flex gap-2 mb-2">
                     <Controller
-                      name={`grants.${index}`}
+                      name={`grants.${index}.value`}
                       control={createForm.control}
                       render={({ field: grantField }) => (
                         <SelectDropdown
@@ -320,7 +329,7 @@ export default function TenantAppsPage() {
                 ))}
                 <button
                   type="button"
-                  onClick={() => appendGrant('AUTHORIZATION_CODE' as GrantType)}
+                  onClick={() => appendGrant({ value: 'AUTHORIZATION_CODE' })}
                   className="text-sm text-indigo-600 hover:text-indigo-700 mt-1"
                 >
                   + Agregar grant
