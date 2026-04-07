@@ -80,6 +80,7 @@ export interface UpdateUserProfileRequest {
 export interface ChangePasswordRequest {
   current_password: string
   new_password: string
+  confirm_new_password: string
 }
 
 /** Respuesta de POST /tenants/{slug}/account/change-password */
@@ -101,6 +102,7 @@ export interface ForgotPasswordResult {
 export interface RecoverPasswordRequest {
   recovery_token: string
   new_password: string
+  confirm_new_password: string
 }
 
 /** Respuesta de POST /tenants/{slug}/account/recover-password */
@@ -119,6 +121,7 @@ export interface AccountResetPasswordRequest {
   verification_code: string
   temporary_password: string
   new_password: string
+  confirm_new_password: string
 }
 
 /** Respuesta de POST /tenants/{slug}/account/reset-password (password temporal) */

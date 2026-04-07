@@ -5,7 +5,9 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { TENANT } from '@/shared/api/client'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
+import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
+import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -185,7 +187,10 @@ export default function TenantUsersPage() {
         notifyMutationTimeout('creacion de usuario')
         return
       }
-      toast.error(getAppApiError(mutationError).clientMessage)
+      const appError = getAppApiError(mutationError)
+      if (!applyFieldErrors(appError, createForm.setError).hasErrors) {
+        toast.error(getUserMessage(appError))
+      }
     },
   })
 
@@ -206,7 +211,10 @@ export default function TenantUsersPage() {
         notifyMutationTimeout('actualizacion de usuario')
         return
       }
-      toast.error(getAppApiError(mutationError).clientMessage)
+      const appError = getAppApiError(mutationError)
+      if (!applyFieldErrors(appError, editForm.setError).hasErrors) {
+        toast.error(getUserMessage(appError))
+      }
     },
   })
 
@@ -226,7 +234,10 @@ export default function TenantUsersPage() {
         notifyMutationTimeout('reseteo de contrasena')
         return
       }
-      toast.error(getAppApiError(mutationError).clientMessage)
+      const appError = getAppApiError(mutationError)
+      if (!applyFieldErrors(appError, resetForm.setError).hasErrors) {
+        toast.error(getUserMessage(appError))
+      }
     },
   })
 
@@ -252,7 +263,7 @@ export default function TenantUsersPage() {
         notifyMutationTimeout('suspension de usuario')
         return
       }
-      toast.error(getAppApiError(mutationError).clientMessage)
+      toast.error(getUserMessage(getAppApiError(mutationError)))
     },
   })
 
@@ -276,7 +287,7 @@ export default function TenantUsersPage() {
         notifyMutationTimeout('activacion de usuario')
         return
       }
-      toast.error(getAppApiError(mutationError).clientMessage)
+      toast.error(getUserMessage(getAppApiError(mutationError)))
     },
   })
 
@@ -527,6 +538,8 @@ export default function TenantUsersPage() {
               </div>
             </div>
 
+            <ServerErrorBanner errors={createForm.formState.errors} />
+
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
@@ -603,6 +616,8 @@ export default function TenantUsersPage() {
               </div>
             </div>
 
+            <ServerErrorBanner errors={editForm.formState.errors} />
+
             <div className="flex justify-end gap-3 pt-2">
               <button
                 type="button"
@@ -666,6 +681,8 @@ export default function TenantUsersPage() {
                 </p>
               ) : null}
             </div>
+
+            <ServerErrorBanner errors={resetForm.formState.errors} />
 
             <div className="flex justify-end gap-3 pt-2">
               <button

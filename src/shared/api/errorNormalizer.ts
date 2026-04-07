@@ -47,6 +47,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
+function normalizeFieldErrors(raw: unknown): FieldValidationError[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((item: unknown) => {
+    if (!isRecord(item)) return {}
+    const fe: FieldValidationError = {
+      field: typeof item['field'] === 'string' ? item['field'] : undefined,
+      message: typeof item['message'] === 'string' ? item['message'] : undefined,
+      rejectedValue: 'rejected_value' in item ? item['rejected_value'] : item['rejectedValue'],
+    }
+    return fe
+  })
+}
+
 function extractErrorData(body: unknown): Partial<ErrorData> | undefined {
   if (!isRecord(body)) return undefined
   const data = body['data']
@@ -60,6 +73,14 @@ function extractErrorData(body: unknown): Partial<ErrorData> | undefined {
   }
   if ('trace_id' in data && !('traceId' in data)) {
     normalized['traceId'] = data['trace_id']
+  }
+  if ('client_request_cause' in data && !('clientRequestCause' in data)) {
+    normalized['clientRequestCause'] = data['client_request_cause']
+  }
+  if ('field_errors' in data && !('fieldErrors' in data)) {
+    normalized['fieldErrors'] = normalizeFieldErrors(data['field_errors'])
+  } else if ('fieldErrors' in data) {
+    normalized['fieldErrors'] = normalizeFieldErrors(data['fieldErrors'])
   }
 
   return normalized as Partial<ErrorData>
@@ -147,6 +168,15 @@ export function getAppApiError(error: unknown): AppApiError {
     if (axiosError.appApiError) return axiosError.appApiError
   }
   return normalizeApiError(error)
+}
+
+/**
+ * Devuelve el mensaje para mostrar al usuario en el toast.
+ * Siempre devuelve `clientMessage` — el detalle de negocio (`detail`)
+ * se maneja aparte como error contextual del formulario via `applyFieldErrors`.
+ */
+export function getUserMessage(error: AppApiError): string {
+  return error.clientMessage
 }
 
 export function buildAppApiErrorFromBaseResponse<T>(

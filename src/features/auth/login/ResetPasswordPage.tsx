@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm, useController } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,11 +7,13 @@ import { useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { platformResetPasswordWithTemporaryPassword } from '@/features/account/api'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
+import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
 import { IconShield, IconArrowRight, IconChevronLeft } from '@/shared/ui/icons/definitions'
 import { LocaleSwitcher } from '@/shared/ui/LocaleSwitcher'
+import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
 
 // ── OTP input ─────────────────────────────────────────────────────────────────
 
@@ -111,11 +113,11 @@ function buildSchema(t: ReturnType<typeof useTranslation>['t']) {
         .regex(/[a-z]/, t('authRecovery.errors.passwordLowercase'))
         .regex(/\d/, t('authRecovery.errors.passwordDigit'))
         .regex(/[^A-Za-z0-9]/, t('authRecovery.errors.passwordSpecial')),
-      confirm_password: z.string().min(1, t('authRecovery.errors.confirmPasswordRequired')),
+      confirm_new_password: z.string().min(1, t('authRecovery.errors.confirmPasswordRequired')),
     })
-    .refine((values) => values.new_password === values.confirm_password, {
+    .refine((values) => values.new_password === values.confirm_new_password, {
       message: t('authRecovery.errors.passwordsMismatch'),
-      path: ['confirm_password'],
+      path: ['confirm_new_password'],
     })
 }
 
@@ -124,15 +126,16 @@ type ResetTemporaryPasswordForm = {
   verification_code: string
   temporary_password: string
   new_password: string
-  confirm_password: string
+  confirm_new_password: string
 }
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const state = (location.state ?? {}) as ResetPasswordLocationState
-  const requestId = state.requestId ?? null
+  const requestId = state.requestId ?? searchParams.get('reset_code_id') ?? null
   const emailHint = state.emailOrUsername ?? null
 
   const [isReset, setIsReset] = useState(false)
@@ -149,6 +152,7 @@ export default function ResetPasswordPage() {
     handleSubmit,
     control,
     watch,
+    setError,
     formState: { errors },
   } = useForm<ResetTemporaryPasswordForm>({
     resolver: zodResolver(schema),
@@ -158,7 +162,7 @@ export default function ResetPasswordPage() {
   const { field: otpField } = useController({ name: 'verification_code', control, defaultValue: '' })
 
   const newPassword = watch('new_password') ?? ''
-  const confirmPassword = watch('confirm_password') ?? ''
+  const confirmPassword = watch('confirm_new_password') ?? ''
 
   const passwordCriteria = [
     { key: 'min',     ok: newPassword.length >= 12,       label: t('authRecovery.errors.passwordMin') },
@@ -177,6 +181,7 @@ export default function ResetPasswordPage() {
           verification_code: values.verification_code,
           temporary_password: values.temporary_password,
           new_password: values.new_password,
+          confirm_new_password: values.confirm_new_password,
         },
         { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS },
       ),
@@ -189,8 +194,11 @@ export default function ResetPasswordPage() {
         notifyMutationTimeout(t('authRecovery.reset.timeoutAction'))
         return
       }
-
-      toast.error(getAppApiError(error).clientMessage)
+      const appError = getAppApiError(error)
+      toast.error(getUserMessage(appError))
+      applyFieldErrors(appError, setError, {
+        knownFields: ['request_id', 'verification_code', 'temporary_password', 'new_password', 'confirm_new_password'],
+      })
     },
   })
 
@@ -224,7 +232,7 @@ export default function ResetPasswordPage() {
             <p className="mt-2 text-sm text-slate-300">{t('authRecovery.reset.subtitle')}</p>
 
             {emailHint && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-950/40 px-3 py-2 text-xs text-indigo-300">
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-indigo-500/30 bg-indigo-950/40 px-4 py-3 text-sm text-indigo-300">
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                   <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                   <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
@@ -446,9 +454,9 @@ export default function ResetPasswordPage() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2.5 pr-12 text-sm text-white placeholder-slate-500 outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500"
-                  aria-invalid={Boolean(errors.confirm_password)}
-                  aria-describedby={errors.confirm_password ? 'confirm-password-error' : undefined}
-                  {...register('confirm_password')}
+                  aria-invalid={Boolean(errors.confirm_new_password)}
+                  aria-describedby={errors.confirm_new_password ? 'confirm-password-error' : undefined}
+                  {...register('confirm_new_password')}
                 />
                 <button
                   type="button"
@@ -470,12 +478,12 @@ export default function ResetPasswordPage() {
                   )}
                 </button>
               </div>
-              {errors.confirm_password && (
+              {errors.confirm_new_password && (
                 <p id="confirm-password-error" role="alert" className="mt-1 text-xs text-red-400">
-                  {errors.confirm_password.message}
+                  {errors.confirm_new_password.message}
                 </p>
               )}
-              {confirmPassword.length > 0 && !errors.confirm_password && (
+              {confirmPassword.length > 0 && !errors.confirm_new_password && (
                 <p className={`mt-1 flex items-center gap-1.5 text-xs ${ passwordsMatch ? 'text-emerald-400' : 'text-slate-400' }`}>
                   {passwordsMatch ? (
                     <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -490,6 +498,9 @@ export default function ResetPasswordPage() {
                 </p>
               )}
             </div>
+
+            {/* Errores del servidor no mapeados a campos específicos */}
+            <ServerErrorBanner errors={errors} className="dark:border-red-500/20 dark:bg-red-950/40" />
 
             <button
               type="submit"

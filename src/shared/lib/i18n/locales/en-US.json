@@ -94,6 +94,7 @@
       "userNotFound": "User not found.",
       "sessionExpired": "Your login session expired. Please try again.",
       "networkAfterLogin": "Connection error while processing access. Please try again.",
+      "missingIdToken": "The server did not return an identity token. Contact the administrator.",
       "reconnecting": "Reconnecting...",
       "connectionRestored": "Connection restored",
       "connectionRetryIn5": "No connection. Retrying in 5 s...",
@@ -587,6 +588,12 @@
     "activity": "Activity",
     "dashboard": "Dashboard",
     "tenantResolutionError": "We could not resolve the active tenant from your session. Please sign in again to continue.",
+    "noTenantAssigned": "You don't have an organization assigned yet. If you just registered, your account will be set up shortly.",
+    "tenantAdmin": {
+      "title": "Administration panel",
+      "noTenantsTitle": "Your organization is being set up",
+      "noTenantsDescription": "You don't have an active organization yet. If you just completed your registration, setup may take a few moments. Reload the page to check the status."
+    },
     "platformUsers": "Platform Users",
     "billing": "Billing",
     "platformBilling": "Platform Billing"

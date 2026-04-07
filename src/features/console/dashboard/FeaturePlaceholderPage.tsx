@@ -9,7 +9,7 @@ import {
 } from '@/shared/api/pendingFeatures'
 import { PendingFeatureBadge } from '@/shared/ui/PendingFeatureBadge'
 import { IconAlertTriangle, IconInfo } from '@/shared/ui/icons'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import {
   NETWORK_REQUEST_TIMEOUT_MS,
   NETWORK_RETRY_DELAY_MS,
@@ -73,7 +73,7 @@ export default function FeaturePlaceholderPage() {
       })
     },
     onError: (mutationError) => {
-      toast.error(getAppApiError(mutationError).clientMessage)
+      toast.error(getUserMessage(getAppApiError(mutationError)))
     },
   })
 

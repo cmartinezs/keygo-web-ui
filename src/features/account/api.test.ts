@@ -54,13 +54,13 @@ describe('account api wrappers', () => {
 
     const result = await changePassword(
       'acme',
-      { current_password: 'old-pass', new_password: 'new-pass' },
+      { current_password: 'old-pass', new_password: 'new-pass', confirm_new_password: 'new-pass' },
       { timeoutMs: 10_000, idempotencyKey: 'idem-1' },
     )
 
     expect(apiClientMock.post).toHaveBeenCalledWith(
       '/api/v1/tenants/acme/account/change-password',
-      { current_password: 'old-pass', new_password: 'new-pass' },
+      { current_password: 'old-pass', new_password: 'new-pass', confirm_new_password: 'new-pass' },
       {
         signal: undefined,
         timeout: 10_000,
@@ -274,13 +274,13 @@ describe('account api wrappers', () => {
 
     const recoverResult = await recoverPassword(
       'acme',
-      { recovery_token: 'token-123', new_password: 'NewPass123!' },
+      { recovery_token: 'token-123', new_password: 'NewPass123!', confirm_new_password: 'NewPass123!' },
       { timeoutMs: 10_000, idempotencyKey: 'idem-rec-1' },
     )
 
     expect(apiClientMock.post).toHaveBeenCalledWith(
       '/api/v1/tenants/acme/account/recover-password',
-      { recovery_token: 'token-123', new_password: 'NewPass123!' },
+      { recovery_token: 'token-123', new_password: 'NewPass123!', confirm_new_password: 'NewPass123!' },
       {
         signal: undefined,
         timeout: 10_000,
@@ -303,6 +303,7 @@ describe('account api wrappers', () => {
         verification_code: '123456',
         temporary_password: 'TempPass123!',
         new_password: 'NewPass123!',
+        confirm_new_password: 'NewPass123!',
       },
       { timeoutMs: 10_000, idempotencyKey: 'idem-rst-1' },
     )
@@ -314,6 +315,7 @@ describe('account api wrappers', () => {
         verification_code: '123456',
         temporary_password: 'TempPass123!',
         new_password: 'NewPass123!',
+        confirm_new_password: 'NewPass123!',
       },
       {
         signal: undefined,

@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { platformRecoverPassword } from '@/features/account/api'
 import { IconShield, IconArrowRight, IconChevronLeft } from '@/shared/ui/icons/definitions'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
 
@@ -17,18 +17,18 @@ function buildSchema(t: ReturnType<typeof useTranslation>['t']) {
     .object({
       recovery_token: z.string().min(1, t('authRecovery.errors.tokenRequired')),
       new_password: z.string().min(8, t('authRecovery.errors.passwordMin')),
-      confirm_password: z.string().min(1, t('authRecovery.errors.confirmPasswordRequired')),
+      confirm_new_password: z.string().min(1, t('authRecovery.errors.confirmPasswordRequired')),
     })
-    .refine((values) => values.new_password === values.confirm_password, {
+    .refine((values) => values.new_password === values.confirm_new_password, {
       message: t('authRecovery.errors.passwordsMismatch'),
-      path: ['confirm_password'],
+      path: ['confirm_new_password'],
     })
 }
 
 type RecoverPasswordForm = {
   recovery_token: string
   new_password: string
-  confirm_password: string
+  confirm_new_password: string
 }
 
 export default function RecoverPasswordPage() {
@@ -47,7 +47,7 @@ export default function RecoverPasswordPage() {
     formState: { errors },
   } = useForm<RecoverPasswordForm>({
     resolver: zodResolver(schema),
-    defaultValues: { recovery_token: tokenFromQuery, new_password: '', confirm_password: '' },
+    defaultValues: { recovery_token: tokenFromQuery, new_password: '', confirm_new_password: '' },
   })
 
   const mutation = useMutation({
@@ -56,6 +56,7 @@ export default function RecoverPasswordPage() {
         {
           recovery_token: values.recovery_token,
           new_password: values.new_password,
+          confirm_new_password: values.confirm_new_password,
         },
         { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS },
       ),
@@ -69,7 +70,7 @@ export default function RecoverPasswordPage() {
         return
       }
 
-      toast.error(getAppApiError(error).clientMessage)
+      toast.error(getUserMessage(getAppApiError(error)))
     },
   })
 
@@ -164,9 +165,9 @@ export default function RecoverPasswordPage() {
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2.5 pr-12 text-sm text-white placeholder-slate-500 outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500"
-                  aria-invalid={Boolean(errors.confirm_password)}
-                  aria-describedby={errors.confirm_password ? 'recover-confirm-password-error' : undefined}
-                  {...register('confirm_password')}
+                  aria-invalid={Boolean(errors.confirm_new_password)}
+                  aria-describedby={errors.confirm_new_password ? 'recover-confirm-password-error' : undefined}
+                  {...register('confirm_new_password')}
                 />
                 <button
                   type="button"
@@ -178,9 +179,9 @@ export default function RecoverPasswordPage() {
                   {showConfirmPassword ? t('authRecovery.hide') : t('authRecovery.show')}
                 </button>
               </div>
-              {errors.confirm_password && (
+              {errors.confirm_new_password && (
                 <p id="recover-confirm-password-error" role="alert" className="mt-1 text-xs text-red-400">
-                  {errors.confirm_password.message}
+                  {errors.confirm_new_password.message}
                 </p>
               )}
             </div>

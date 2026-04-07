@@ -9,7 +9,7 @@ import { TENANT } from '@/shared/api/client'
 import { ACCOUNT_QUERY_KEYS, getSessions, revokeSession } from '@/features/account/api'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
 import { NETWORK_MAX_RETRIES, NETWORK_REQUEST_TIMEOUT_MS, NETWORK_RETRY_DELAY_MS } from '@/shared/lib/config/network'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { isRequestTimeout, notifyMutationTimeout, runGetWithRecovery } from '@/shared/lib/network/recovery'
 import type { AccountSessionData } from '@/shared/types/user'
 import {
@@ -147,7 +147,7 @@ export function SessionsList() {
         notifyMutationTimeout('cierre de sesion remota')
         return
       }
-      toast.error(getAppApiError(err).clientMessage)
+      toast.error(getUserMessage(getAppApiError(err)))
     },
   })
 

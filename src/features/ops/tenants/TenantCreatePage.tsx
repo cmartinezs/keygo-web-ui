@@ -6,6 +6,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { createTenant, TENANT_QUERY_KEYS } from '@/features/ops/tenants/api'
 import { toast } from 'sonner'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
+import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
+import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
 import { i18n } from '@/shared/lib/i18n/config'
@@ -72,6 +75,7 @@ export default function TenantCreatePage() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
@@ -87,7 +91,10 @@ export default function TenantCreatePage() {
         notifyMutationTimeout('creacion del tenant')
         return
       }
-      toast.error(err.message ?? t('adminTenantCreate.createError'))
+      const appError = getAppApiError(err)
+      if (!applyFieldErrors(appError, setError).hasErrors) {
+        toast.error(getUserMessage(appError))
+      }
     },
   })
 
@@ -158,6 +165,8 @@ export default function TenantCreatePage() {
             {t('adminTenantCreate.infoNote')}
           </p>
         </div>
+
+        <ServerErrorBanner errors={errors} />
 
         {/* Actions */}
         <div className="flex items-center justify-end gap-3 pt-1">

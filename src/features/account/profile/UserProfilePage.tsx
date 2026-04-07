@@ -8,7 +8,9 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { ACCOUNT_QUERY_KEYS, getAccountAccess, getProfile, getSessions, updateProfile } from '@/features/account/api'
 import { TENANT } from '@/shared/api/client'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
+import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
+import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
 import { IconDashboard, IconUser, IconShield, IconClock, IconCheckmark } from '@/shared/ui/icons'
 import {
@@ -176,7 +178,10 @@ export default function UserProfilePage() {
         notifyMutationTimeout('actualizacion de perfil')
         return
       }
-      toast.error(getAppApiError(mutationError).clientMessage)
+      const appError = getAppApiError(mutationError)
+      if (!applyFieldErrors(appError, form.setError).hasErrors) {
+        toast.error(getUserMessage(appError))
+      }
     },
   })
 
@@ -389,6 +394,8 @@ export default function UserProfilePage() {
                   ) : null}
                 </div>
               </fieldset>
+
+              <ServerErrorBanner errors={form.formState.errors} />
 
               <div className="mt-6 flex justify-end">
                 <button

@@ -94,6 +94,7 @@
       "userNotFound": "Usuario no encontrado.",
       "sessionExpired": "Tu sesión de inicio expiró. Por favor, vuelve a intentarlo.",
       "networkAfterLogin": "Error de conexión al procesar el acceso. Por favor, intenta de nuevo.",
+      "missingIdToken": "El servidor no devolvió el token de identidad. Contacta al administrador.",
       "reconnecting": "Intentando reconectar...",
       "connectionRestored": "Conexión restablecida",
       "connectionRetryIn5": "Sin conexión. Reintentando en 5 s...",
@@ -587,6 +588,12 @@
     "activity": "Actividad",
     "dashboard": "Dashboard",
     "tenantResolutionError": "No se pudo resolver el tenant activo desde tu sesión. Vuelve a iniciar sesión para continuar.",
+    "noTenantAssigned": "Aún no tienes una organización asignada. Si acabas de registrarte, tu cuenta será configurada en breve.",
+    "tenantAdmin": {
+      "title": "Panel de administración",
+      "noTenantsTitle": "Tu organización está siendo configurada",
+      "noTenantsDescription": "Aún no tienes una organización activa. Si acabas de completar tu registro, la configuración puede tardar unos momentos. Recarga la página para verificar el estado."
+    },
     "platformUsers": "Usuarios de plataforma",
     "billing": "Facturación",
     "platformBilling": "Facturación plataforma"

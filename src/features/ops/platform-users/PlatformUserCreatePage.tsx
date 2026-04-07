@@ -6,6 +6,9 @@ import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { createPlatformUser, PLATFORM_USER_QUERY_KEYS } from '@/features/ops/platform-users/api'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
+import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
+import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
 import { IconChevronLeft, IconUsers, IconX, IconPlus } from '@/shared/ui/icons'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
@@ -66,6 +69,7 @@ export default function PlatformUserCreatePage() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -91,7 +95,12 @@ export default function PlatformUserCreatePage() {
     },
     onError: (err) => {
       if (isRequestTimeout(err)) notifyMutationTimeout('creación del usuario')
-      else toast.error(err.message)
+      else {
+        const appError = getAppApiError(err)
+        if (!applyFieldErrors(appError, setError).hasErrors) {
+          toast.error(getUserMessage(appError))
+        }
+      }
     },
   })
 
@@ -197,6 +206,8 @@ export default function PlatformUserCreatePage() {
               />
             </Field>
           </div>
+
+          <ServerErrorBanner errors={errors} />
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-2">

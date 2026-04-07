@@ -14,8 +14,10 @@ import { TENANT } from '@/shared/api/client'
 import { changePassword } from '@/features/account/api'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
 import { IconShield } from '@/shared/ui/icons'
+import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
+import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
 
 function buildSchema(t: ReturnType<typeof useTranslation>['t']) {
@@ -25,13 +27,13 @@ function buildSchema(t: ReturnType<typeof useTranslation>['t']) {
       new_password: z
         .string()
         .min(8, t('accountSecurity.errors.newPasswordMin')),
-      confirm_password: z
+      confirm_new_password: z
         .string()
         .min(1, t('accountSecurity.errors.confirmPasswordRequired')),
     })
-    .refine((d) => d.new_password === d.confirm_password, {
+    .refine((d) => d.new_password === d.confirm_new_password, {
       message: t('accountSecurity.errors.passwordsMismatch'),
-      path: ['confirm_password'],
+      path: ['confirm_new_password'],
     })
     .refine((d) => d.new_password !== d.current_password, {
       message: t('accountSecurity.errors.newPasswordSameAsCurrent'),
@@ -42,7 +44,7 @@ function buildSchema(t: ReturnType<typeof useTranslation>['t']) {
 type FormValues = {
   current_password: string
   new_password: string
-  confirm_password: string
+  confirm_new_password: string
 }
 
 const inputCls = (hasError: boolean) =>
@@ -129,6 +131,7 @@ export function ChangePasswordForm() {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
@@ -136,7 +139,11 @@ export function ChangePasswordForm() {
     mutationFn: (values: FormValues) =>
       changePassword(
         tenantSlug,
-        { current_password: values.current_password, new_password: values.new_password },
+        {
+          current_password: values.current_password,
+          new_password: values.new_password,
+          confirm_new_password: values.confirm_new_password,
+        },
         { timeoutMs: NETWORK_REQUEST_TIMEOUT_MS },
       ),
     onSuccess: () => {
@@ -148,7 +155,11 @@ export function ChangePasswordForm() {
         notifyMutationTimeout('cambio de contrasena')
         return
       }
-      toast.error(getAppApiError(err).clientMessage)
+      const appError = getAppApiError(err)
+      toast.error(getUserMessage(appError))
+      applyFieldErrors(appError, setError, {
+        knownFields: ['current_password', 'new_password', 'confirm_new_password'],
+      })
     },
   })
 
@@ -198,15 +209,18 @@ export function ChangePasswordForm() {
           hideLabel={t('accountSecurity.hideNewPassword')}
         />
         <PasswordField
-          id="confirm_password"
+          id="confirm_new_password"
           label={t('accountSecurity.confirmPassword')}
-          registration={register('confirm_password')}
-          error={errors.confirm_password?.message}
+          registration={register('confirm_new_password')}
+          error={errors.confirm_new_password?.message}
           show={showConfirm}
           onToggle={() => setShowConfirm((v) => !v)}
           showLabel={t('accountSecurity.showConfirmPassword')}
           hideLabel={t('accountSecurity.hideConfirmPassword')}
         />
+
+        {/* Errores del servidor no mapeados a campos específicos */}
+        <ServerErrorBanner errors={errors} />
 
         <button
           type="submit"

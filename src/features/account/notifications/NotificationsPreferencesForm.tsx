@@ -17,7 +17,7 @@ import {
   NETWORK_REQUEST_TIMEOUT_MS,
   NETWORK_RETRY_DELAY_MS,
 } from '@/shared/lib/config/network'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import {
   isRequestTimeout,
   notifyMutationTimeout,
@@ -148,7 +148,7 @@ export function NotificationsPreferencesForm() {
         notifyMutationTimeout('actualizacion de preferencias de notificacion')
         return
       }
-      toast.error(getAppApiError(error).clientMessage)
+      toast.error(getUserMessage(getAppApiError(error)))
     },
   })
 

@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { SelectDropdown } from '@/shared/ui/SelectDropdown'
 import { BILLING_QUERY_KEYS, cancelSubscription, getActiveSubscription, listInvoices } from '@/features/console/billing/api'
 import { TENANT, CLIENT_ID } from '@/shared/api/client'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
 import type { SupportedLocale } from '@/shared/lib/i18n/constants'
 import { useLocale } from '@/shared/lib/i18n/useLocale'
@@ -122,7 +122,7 @@ export default function AccountSettingsPage() {
         notifyMutationTimeout('cancelacion de renovacion')
         return
       }
-      toast.error(getAppApiError(error).clientMessage)
+      toast.error(getUserMessage(getAppApiError(error)))
     },
   })
   const localeStatusLabel = isAutoDetected

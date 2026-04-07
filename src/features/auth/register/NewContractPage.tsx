@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import {
   getPlatformBillingCatalog,
   PLATFORM_BILLING_QUERY_KEYS,
@@ -553,7 +553,7 @@ export default function NewContractPage() {
       if (appError.code === 'RESOURCE_NOT_FOUND') {
         setResumeLookupError(t('subscribe.resume.errors.notFound'))
       } else {
-        setResumeLookupError(appError.clientMessage)
+        setResumeLookupError(getUserMessage(appError))
       }
     } finally {
       setIsResumingContract(false)
@@ -600,7 +600,7 @@ export default function NewContractPage() {
       if (appError.code === 'INVALID_INPUT') {
         setProcessError(t('subscribe.errors.invalidInput'))
       } else {
-        setProcessError(appError.clientMessage)
+        setProcessError(getUserMessage(appError))
       }
     } finally {
       setIsProcessing(false)
@@ -627,7 +627,7 @@ export default function NewContractPage() {
       if (appError.code === 'INVALID_INPUT') {
         setProcessError(t('subscribe.errors.invalidCode'))
       } else {
-        setProcessError(appError.clientMessage)
+        setProcessError(getUserMessage(appError))
       }
     } finally {
       setIsProcessing(false)
@@ -651,7 +651,7 @@ export default function NewContractPage() {
         return
       }
       const appError = getAppApiError(err)
-      toast.error(appError.clientMessage)
+      toast.error(getUserMessage(appError))
     } finally {
       setIsResending(false)
     }
@@ -682,7 +682,7 @@ export default function NewContractPage() {
         return
       }
       const appError = getAppApiError(err)
-      setProcessError(appError.clientMessage)
+      setProcessError(getUserMessage(appError))
     } finally {
       setIsProcessing(false)
     }

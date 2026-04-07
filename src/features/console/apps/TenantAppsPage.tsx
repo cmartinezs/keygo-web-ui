@@ -6,7 +6,9 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { listClientApps, createClientApp, rotateClientAppSecret, CLIENT_APP_QUERY_KEYS } from '@/features/console/apps/api'
 import type { GrantType, CreateClientAppRequest } from '@/shared/types/clientapp'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
+import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
+import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
 import { TENANT } from '@/shared/api/client'
 import { SelectDropdown } from '@/shared/ui/SelectDropdown'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
@@ -115,7 +117,10 @@ export default function TenantAppsPage() {
         notifyMutationTimeout('creacion de aplicacion')
         return
       }
-      toast.error(getAppApiError(mutationError).clientMessage)
+      const appError = getAppApiError(mutationError)
+      if (!applyFieldErrors(appError, createForm.setError).hasErrors) {
+        toast.error(getUserMessage(appError))
+      }
     },
   })
 
@@ -134,7 +139,7 @@ export default function TenantAppsPage() {
         notifyMutationTimeout('rotacion de secret')
         return
       }
-      toast.error(getAppApiError(mutationError).clientMessage)
+      toast.error(getUserMessage(getAppApiError(mutationError)))
     },
   })
 
@@ -349,6 +354,8 @@ export default function TenantAppsPage() {
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">{createForm.formState.errors.grants.message}</p>
                 )}
               </div>
+
+              <ServerErrorBanner errors={createForm.formState.errors} />
 
               <div className="flex justify-end gap-3 pt-4">
                 <button

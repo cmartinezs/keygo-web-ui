@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { registerUser } from '@/features/console/users/api'
 import { useHoneypot } from '@/shared/hooks/useHoneypot'
 import { HoneypotField } from '@/shared/ui/HoneypotField'
@@ -427,7 +427,7 @@ export default function UserRegisterPage() {
       ) {
         setSubmitError(t('register.errors.duplicateAccount'))
       } else {
-        setSubmitError(appError.clientMessage)
+        setSubmitError(getUserMessage(appError))
       }
     } finally {
       setIsSubmitting(false)

@@ -75,6 +75,7 @@ function toLocalDateTime(input: string): string {
 }
 
 function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
+  const { t } = useTranslation()
   const currentUser = useCurrentUser()
   const managedTenantSlug = useTokenStore((s) => s.managedTenantSlug)
   const setManagedTenantSlug = useTokenStore((s) => s.setManagedTenantSlug)
@@ -120,7 +121,7 @@ function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
     }
   }, [tenantsQuery.isSuccess, ownedTenants, managedTenantSlug, setManagedTenantSlug])
 
-  const shouldRunTenantQueries = !tenantsQuery.isLoading
+  const shouldRunTenantQueries = !tenantsQuery.isLoading && effectiveTenantSlug.length > 0
 
   const usersQuery = useQuery({
     queryKey: ['dashboard-home', 'tenant-users', effectiveTenantSlug],
@@ -269,6 +270,31 @@ function AdminTenantOverview({ tenantSlug }: { tenantSlug: string }) {
           </option>
         ))}
       </select>
+    )
+  }
+
+  // Tenant admin without any tenants — provisioning in progress
+  if (tenantsQuery.isSuccess && ownedTenants.length === 0) {
+    return (
+      <div className="max-w-screen-xl mx-auto space-y-8">
+        <header className="space-y-1">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {t('dashboard.tenantAdmin.title')}
+          </h1>
+        </header>
+        <section
+          className="rounded-xl border border-blue-200 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-950/20 p-6 space-y-2"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+            {t('dashboard.tenantAdmin.noTenantsTitle')}
+          </p>
+          <p className="text-sm text-blue-700 dark:text-blue-400">
+            {t('dashboard.tenantAdmin.noTenantsDescription')}
+          </p>
+        </section>
+      </div>
     )
   }
 
@@ -460,20 +486,21 @@ export default function DashboardHomePage() {
     return <AdminDashboardPage />
   }
 
+  // Tenant admins discover their tenants via API, not JWT claim
+  if (role === 'keygo_tenant_admin') {
+    return <AdminTenantOverview tenantSlug={tenantSlug ?? ''} />
+  }
+
   if (!tenantSlug) {
     return (
       <div className="max-w-screen-xl mx-auto">
-        <section className="rounded-xl border border-red-200 dark:border-red-500/40 bg-red-50 dark:bg-red-950/20 p-4" role="alert" aria-live="assertive">
-          <p className="text-sm text-red-800 dark:text-red-300">
-            {t('dashboard.tenantResolutionError')}
+        <section className="rounded-xl border border-blue-200 dark:border-blue-500/40 bg-blue-50 dark:bg-blue-950/20 p-4" role="status" aria-live="polite">
+          <p className="text-sm text-blue-800 dark:text-blue-300">
+            {t('dashboard.noTenantAssigned')}
           </p>
         </section>
       </div>
     )
-  }
-
-  if (role === 'keygo_tenant_admin') {
-    return <AdminTenantOverview tenantSlug={tenantSlug} />
   }
 
   return <UserTenantOverview tenantSlug={tenantSlug} />

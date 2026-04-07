@@ -16,7 +16,7 @@ import {
   NETWORK_REQUEST_TIMEOUT_MS,
   NETWORK_RETRY_DELAY_MS,
 } from '@/shared/lib/config/network'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import {
   isRequestTimeout,
   notifyMutationTimeout,
@@ -139,7 +139,7 @@ export function ConnectionsPanel() {
         notifyMutationTimeout('vinculacion de conexion externa')
         return
       }
-      toast.error(getAppApiError(error).clientMessage)
+      toast.error(getUserMessage(getAppApiError(error)))
     },
   })
 
@@ -155,7 +155,7 @@ export function ConnectionsPanel() {
         notifyMutationTimeout('desvinculacion de conexion externa')
         return
       }
-      toast.error(getAppApiError(error).clientMessage)
+      toast.error(getUserMessage(getAppApiError(error)))
     },
   })
 

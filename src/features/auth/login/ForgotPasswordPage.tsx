@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { platformForgotPassword } from '@/features/account/api'
 import { IconArrowRight, IconChevronLeft } from '@/shared/ui/icons/definitions'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { NETWORK_REQUEST_TIMEOUT_MS } from '@/shared/lib/config/network'
 import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
 
@@ -47,7 +47,7 @@ export default function ForgotPasswordPage() {
         return
       }
 
-      toast.error(getAppApiError(error).clientMessage)
+      toast.error(getUserMessage(getAppApiError(error)))
     },
   })
 

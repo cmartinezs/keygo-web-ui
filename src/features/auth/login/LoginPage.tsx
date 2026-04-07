@@ -5,10 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate, Link } from 'react-router-dom'
+import axios from 'axios'
 import { decodeJwt } from 'jose'
 import { useTranslation } from 'react-i18next'
 import { platformAuthorize, platformLogin, platformExchangeToken } from '@/features/auth/api'
-import { getAppApiError } from '@/shared/api/errorNormalizer'
+import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { generateCodeVerifier, generateCodeChallenge, generateState } from '@/shared/lib/auth/pkce'
 import { verifyPlatformIdToken, extractRoles } from '@/shared/lib/auth/jwksVerify'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
@@ -91,7 +92,7 @@ function extractAuthorizeError(error: unknown): { message: string; retryable: bo
   }
 
   return {
-    message: appError.clientMessage,
+    message: getUserMessage(appError),
     retryable: appError.retryable,
   }
 }
@@ -131,7 +132,7 @@ function extractLoginError(error: unknown): { message: string; sessionExpired: b
   if (appError.code === 'INVALID_INPUT') {
     if (appError.origin === 'CLIENT_REQUEST') {
       return {
-        message: appError.detail ?? appError.clientMessage,
+        message: getUserMessage(appError),
         sessionExpired: false,
       }
     }
@@ -141,7 +142,7 @@ function extractLoginError(error: unknown): { message: string; sessionExpired: b
     }
   }
 
-  return { message: appError.clientMessage, sessionExpired: false }
+  return { message: getUserMessage(appError), sessionExpired: false }
 }
 
 /**
@@ -597,6 +598,9 @@ export default function LoginPage() {
           idempotencyKey: `kg-token-exchange-platform-${loginResult.code}`,
         },
       )
+      if (!tokens.id_token) {
+        throw new Error(i18n.t('auth.errors.missingIdToken'))
+      }
       const claims = await verifyPlatformIdToken(tokens.id_token)
       const roles = extractRoles(claims)
       return { tokens, roles, message: loginResult.message }
@@ -631,13 +635,20 @@ export default function LoginPage() {
       }
 
       if (phase === 'post-login') {
-        const isNetwork = appError.httpStatus === undefined
+        // Only actual Axios network errors (no HTTP response) should trigger re-init.
+        // Local processing errors (JWT verification, missing id_token) have no httpStatus
+        // but re-triggering authorize won't help — the auth code is already consumed.
+        const isAxiosNetworkError = axios.isAxiosError(error) && !error.response
         toast.error(
-          isNetwork
+          isAxiosNetworkError
             ? t('auth.errors.networkAfterLogin')
-            : appError.clientMessage,
+            : error instanceof Error
+              ? error.message
+              : getUserMessage(appError),
         )
-        triggerInit(true)
+        if (isAxiosNetworkError) {
+          triggerInit(true)
+        }
         return
       }
 
