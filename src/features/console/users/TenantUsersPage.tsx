@@ -8,6 +8,7 @@ import { TENANT } from '@/shared/api/client'
 import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
 import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
+import { Paginator } from '@/shared/ui/Paginator'
 import {
   NETWORK_MAX_RETRIES,
   NETWORK_REQUEST_TIMEOUT_MS,
@@ -122,6 +123,7 @@ export default function TenantUsersPage() {
   const user = useCurrentUser()
   const tenantSlug = user?.tenantSlug ?? TENANT
   const queryClient = useQueryClient()
+  const [currentPage, setCurrentPage] = useState(0)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<UserData | null>(null)
   const [resetPasswordUser, setResetPasswordUser] = useState<UserData | null>(null)
@@ -136,7 +138,7 @@ export default function TenantUsersPage() {
       retryDelayMs: NETWORK_RETRY_DELAY_MS,
       maxRetries: NETWORK_MAX_RETRIES,
       query: () =>
-        listUsers(tenantSlug, {
+        listUsers(tenantSlug, currentPage, 20, {
           signal,
           timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
         }),
@@ -144,7 +146,7 @@ export default function TenantUsersPage() {
   }
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: USER_QUERY_KEYS.all(tenantSlug),
+    queryKey: USER_QUERY_KEYS.paginated(tenantSlug, currentPage, 20),
     queryFn: ({ signal }) => fetchUsersWithRecovery(signal),
     retry: false,
   })
@@ -368,7 +370,7 @@ export default function TenantUsersPage() {
               </tr>
             </thead>
             <tbody>
-              {data?.map((item) => (
+              {data?.content?.map((item) => (
                 <tr key={item.id} className="border-b border-slate-100 dark:border-white/5">
                   <td className="px-4 py-3 text-slate-800 dark:text-slate-100">{item.username}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{item.email}</td>
@@ -431,10 +433,21 @@ export default function TenantUsersPage() {
             </tbody>
           </table>
 
-          {data && data.length === 0 ? (
+          {data && data.content.length === 0 ? (
             <p className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">
               No hay usuarios registrados para este tenant.
             </p>
+          ) : null}
+
+          {data && data.total_pages > 1 ? (
+            <Paginator
+              currentPage={data.page}
+              totalPages={data.total_pages}
+              totalElements={data.total_elements}
+              pageSize={data.size}
+              onPageChange={setCurrentPage}
+              disabled={isLoading}
+            />
           ) : null}
         </section>
       ) : null}

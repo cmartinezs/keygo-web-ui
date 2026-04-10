@@ -5,7 +5,7 @@
 // Docs: docs/api-docs.json §Client Apps, §App Roles
 
 import { apiClient, tenantUrl } from '@/shared/api/client'
-import type { BaseResponse } from '@/shared/types/base'
+import type { BaseResponse, PagedData } from '@/shared/types/base'
 import { unwrapResponseData } from '@/shared/api/response'
 import type {
   ClientAppData,
@@ -22,10 +22,13 @@ import type { RequestOptions } from '@/shared/api/requestOptions'
 
 export const CLIENT_APP_QUERY_KEYS = {
   all: (tenantSlug: string) => ['client-apps', tenantSlug] as const,
+  paginated: (tenantSlug: string, page: number, size: number) => ['client-apps', tenantSlug, 'page', page, 'size', size] as const,
   detail: (tenantSlug: string, clientId: string) =>
     ['client-apps', tenantSlug, clientId] as const,
   roles: (tenantSlug: string, clientAppId: string) =>
     ['client-apps', tenantSlug, clientAppId, 'roles'] as const,
+  rolesPaginated: (tenantSlug: string, clientAppId: string, page: number, size: number) =>
+    ['client-apps', tenantSlug, clientAppId, 'roles', 'page', page, 'size', size] as const,
 } as const
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -35,12 +38,15 @@ const appUrl = (tenantSlug: string, clientId: string) => `${appsUrl(tenantSlug)}
 
 // ── Client Apps ───────────────────────────────────────────────────────────────
 
-/** GET /api/v1/tenants/{tenantSlug}/apps ✅ — lista todas las apps del tenant. */
+/** GET /api/v1/tenants/{tenantSlug}/apps ✅ — lista todas las apps del tenant (paginado). */
 export async function listClientApps(
   tenantSlug: string,
+  page = 0,
+  size = 20,
   options?: RequestOptions,
-): Promise<ClientAppData[]> {
-  const res = await apiClient.get<BaseResponse<ClientAppData[]>>(appsUrl(tenantSlug), {
+): Promise<PagedData<ClientAppData>> {
+  const res = await apiClient.get<BaseResponse<PagedData<ClientAppData>>>(appsUrl(tenantSlug), {
+    params: { page, size },
     signal: options?.signal,
     timeout: options?.timeoutMs,
   })
@@ -119,11 +125,14 @@ export async function rotateClientAppSecret(
 export async function listAppRoles(
   tenantSlug: string,
   clientAppId: string,
+  page = 0,
+  size = 20,
   options?: RequestOptions,
-): Promise<AppRoleData[]> {
-  const res = await apiClient.get<BaseResponse<AppRoleData[]>>(
+): Promise<PagedData<AppRoleData>> {
+  const res = await apiClient.get<BaseResponse<PagedData<AppRoleData>>>(
     `${appUrl(tenantSlug, clientAppId)}/roles`,
     {
+      params: { page, size },
       signal: options?.signal,
       timeout: options?.timeoutMs,
     },

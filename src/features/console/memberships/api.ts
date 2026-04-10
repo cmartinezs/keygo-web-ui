@@ -4,7 +4,7 @@
 // Docs: docs/api-docs.json §Memberships
 
 import { apiClient, tenantUrl } from '@/shared/api/client'
-import type { BaseResponse } from '@/shared/types/base'
+import type { BaseResponse, PagedData } from '@/shared/types/base'
 import type { MembershipData, CreateMembershipRequest } from '@/shared/types/membership'
 import { unwrapResponseData } from '@/shared/api/response'
 import type { RequestOptions } from '@/shared/api/requestOptions'
@@ -12,10 +12,10 @@ import type { RequestOptions } from '@/shared/api/requestOptions'
 // ── Query key constants ────────────────────────────────────────────────────────
 
 export const MEMBERSHIP_QUERY_KEYS = {
-  byApp: (tenantSlug: string, clientAppId: string) =>
-    ['memberships', tenantSlug, 'app', clientAppId] as const,
-  byUser: (tenantSlug: string, userId: string) =>
-    ['memberships', tenantSlug, 'user', userId] as const,
+  byApp: (tenantSlug: string, clientAppId: string, page: number = 0, size: number = 20) =>
+    ['memberships', tenantSlug, 'app', clientAppId, 'page', page, 'size', size] as const,
+  byUser: (tenantSlug: string, userId: string, page: number = 0, size: number = 20) =>
+    ['memberships', tenantSlug, 'user', userId, 'page', page, 'size', size] as const,
 } as const
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -26,15 +26,17 @@ const membershipsUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/members
 
 /**
  * GET /api/v1/tenants/{tenantSlug}/memberships?client_app_id={uuid} ✅
- * Lista todas las memberships de una app.
+ * Lista todas las memberships de una app (paginado).
  */
 export async function listMembershipsByApp(
   tenantSlug: string,
   clientAppId: string,
+  page = 0,
+  size = 20,
   options?: RequestOptions,
-): Promise<MembershipData[]> {
-  const res = await apiClient.get<BaseResponse<MembershipData[]>>(membershipsUrl(tenantSlug), {
-    params: { client_app_id: clientAppId },
+): Promise<PagedData<MembershipData>> {
+  const res = await apiClient.get<BaseResponse<PagedData<MembershipData>>>(membershipsUrl(tenantSlug), {
+    params: { client_app_id: clientAppId, page, size },
     signal: options?.signal,
     timeout: options?.timeoutMs,
   })
@@ -43,15 +45,17 @@ export async function listMembershipsByApp(
 
 /**
  * GET /api/v1/tenants/{tenantSlug}/memberships?user_id={uuid} ✅
- * Lista todas las memberships de un usuario.
+ * Lista todas las memberships de un usuario (paginado).
  */
 export async function listMembershipsByUser(
   tenantSlug: string,
   userId: string,
+  page = 0,
+  size = 20,
   options?: RequestOptions,
-): Promise<MembershipData[]> {
-  const res = await apiClient.get<BaseResponse<MembershipData[]>>(membershipsUrl(tenantSlug), {
-    params: { user_id: userId },
+): Promise<PagedData<MembershipData>> {
+  const res = await apiClient.get<BaseResponse<PagedData<MembershipData>>>(membershipsUrl(tenantSlug), {
+    params: { user_id: userId, page, size },
     signal: options?.signal,
     timeout: options?.timeoutMs,
   })

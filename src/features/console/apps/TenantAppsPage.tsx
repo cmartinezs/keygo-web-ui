@@ -9,6 +9,7 @@ import type { GrantType, CreateClientAppRequest } from '@/shared/types/clientapp
 import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
 import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
+import { Paginator } from '@/shared/ui/Paginator'
 import { TENANT } from '@/shared/api/client'
 import { SelectDropdown } from '@/shared/ui/SelectDropdown'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
@@ -65,6 +66,8 @@ export default function TenantAppsPage() {
   const tenantSlug = user?.tenantSlug ?? TENANT
   const queryClient = useQueryClient()
 
+  const [currentPage, setCurrentPage] = useState(0)
+  const PAGE_SIZE = 20
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [rotateSecretAppId, setRotateSecretAppId] = useState<string | null>(null)
   const [rotatedSecret, setRotatedSecret] = useState<string | null>(null)
@@ -77,7 +80,7 @@ export default function TenantAppsPage() {
       retryDelayMs: NETWORK_RETRY_DELAY_MS,
       maxRetries: NETWORK_MAX_RETRIES,
       query: () =>
-        listClientApps(tenantSlug, {
+        listClientApps(tenantSlug, currentPage, PAGE_SIZE, {
           signal,
           timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
         }),
@@ -85,7 +88,7 @@ export default function TenantAppsPage() {
   }
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: CLIENT_APP_QUERY_KEYS.all(tenantSlug),
+    queryKey: CLIENT_APP_QUERY_KEYS.paginated(tenantSlug, currentPage, PAGE_SIZE),
     queryFn: ({ signal }) => fetchAppsWithRecovery(signal),
     retry: false,
   })
@@ -188,7 +191,7 @@ export default function TenantAppsPage() {
               </tr>
             </thead>
             <tbody>
-              {data?.map((app) => (
+              {data?.content?.map((app) => (
                 <tr key={app.id} className="border-b border-slate-100 dark:border-white/5">
                   <td className="px-4 py-3 text-slate-800 dark:text-slate-100">{app.name}</td>
                   <td className="px-4 py-3 text-slate-600 dark:text-slate-300 font-mono text-xs">{app.client_id}</td>
@@ -209,8 +212,19 @@ export default function TenantAppsPage() {
             </tbody>
           </table>
 
-          {data && data.length === 0 && (
+          {data && data.content.length === 0 && (
             <p className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No hay aplicaciones registradas para este tenant.</p>
+          )}
+
+          {data && data.total_pages > 1 && (
+            <Paginator
+              currentPage={data.page}
+              totalPages={data.total_pages}
+              totalElements={data.total_elements}
+              pageSize={data.size}
+              onPageChange={setCurrentPage}
+              disabled={isLoading}
+            />
           )}
         </section>
       )}

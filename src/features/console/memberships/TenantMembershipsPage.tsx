@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { toast } from 'sonner'
 import { TENANT } from '@/shared/api/client'
 import { SelectDropdown } from '@/shared/ui/SelectDropdown'
+import { Paginator } from '@/shared/ui/Paginator'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
 import {
   IconPlus,
@@ -49,6 +50,8 @@ export default function TenantMembershipsPage() {
   const tenantSlug = user?.tenantSlug ?? TENANT
   const queryClient = useQueryClient()
   const [manualSelectedUserId, setManualSelectedUserId] = useState<string>('')
+  const [membershipsCurrentPage, setMembershipsCurrentPage] = useState(0)
+  const MEMBERSHIPS_PAGE_SIZE = 20
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [selectedAppForRoles, setSelectedAppForRoles] = useState<string>('')
   const [revokeConfirmId, setRevokeConfirmId] = useState<string | null>(null)
@@ -63,10 +66,10 @@ export default function TenantMembershipsPage() {
         retryDelayMs: NETWORK_RETRY_DELAY_MS,
         maxRetries: NETWORK_MAX_RETRIES,
         query: () =>
-        listUsers(tenantSlug, {
-          signal,
-          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
-        }),
+          listUsers(tenantSlug, 0, 20, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
       }),
     retry: false,
   })
@@ -81,18 +84,18 @@ export default function TenantMembershipsPage() {
         retryDelayMs: NETWORK_RETRY_DELAY_MS,
         maxRetries: NETWORK_MAX_RETRIES,
         query: () =>
-        listClientApps(tenantSlug, {
-          signal,
-          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
-        }),
+          listClientApps(tenantSlug, 0, 20, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
       }),
     retry: false,
   })
 
-  const selectedUserId = manualSelectedUserId || usersQuery.data?.[0]?.id || ''
+  const selectedUserId = manualSelectedUserId || usersQuery.data?.content?.[0]?.id || ''
 
   const membershipsQuery = useQuery({
-    queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, selectedUserId),
+    queryKey: MEMBERSHIP_QUERY_KEYS.byUser(tenantSlug, selectedUserId, membershipsCurrentPage, MEMBERSHIPS_PAGE_SIZE),
     queryFn: ({ signal }) =>
       runGetWithRecovery({
         signal,
@@ -101,10 +104,10 @@ export default function TenantMembershipsPage() {
         retryDelayMs: NETWORK_RETRY_DELAY_MS,
         maxRetries: NETWORK_MAX_RETRIES,
         query: () =>
-        listMembershipsByUser(tenantSlug, selectedUserId, {
-          signal,
-          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
-        }),
+          listMembershipsByUser(tenantSlug, selectedUserId, membershipsCurrentPage, MEMBERSHIPS_PAGE_SIZE, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
       }),
     enabled: selectedUserId.length > 0,
     retry: false,
@@ -121,17 +124,17 @@ export default function TenantMembershipsPage() {
             retryDelayMs: NETWORK_RETRY_DELAY_MS,
             maxRetries: NETWORK_MAX_RETRIES,
             query: () =>
-            listAppRoles(tenantSlug, selectedAppForRoles, {
-              signal,
-              timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
-            }),
+              listAppRoles(tenantSlug, selectedAppForRoles, 0, 20, {
+                signal,
+                timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+              }),
           })
-        : Promise.resolve([])),
+        : Promise.resolve({ content: [], page: 0, size: 20, total_elements: 0, total_pages: 0, last: true })),
     enabled: selectedAppForRoles.length > 0,
     retry: false,
   })
 
-  const appNameById = new Map((appsQuery.data ?? []).map((app) => [app.id, app.name]))
+  const appNameById = new Map((appsQuery.data?.content ?? []).map((app) => [app.id, app.name]))
 
   const createForm = useForm<CreateMembershipFormData>({
     resolver: zodResolver(CreateMembershipSchema),
@@ -215,14 +218,14 @@ export default function TenantMembershipsPage() {
           <SelectDropdown
             value={selectedUserId}
             onChange={setManualSelectedUserId}
-            options={(usersQuery.data ?? []).map((tenantUser) => ({
+            options={(usersQuery.data?.content ?? []).map((tenantUser) => ({
               value: tenantUser.id,
               label: `${tenantUser.username} (${tenantUser.email})`,
             }))}
             label="Selecciona un usuario"
             ariaLabel="Usuario a revisar"
             labelledBy="membership-user-label"
-            disabled={usersQuery.isLoading || (usersQuery.data?.length ?? 0) === 0}
+            disabled={usersQuery.isLoading || (usersQuery.data?.content?.length ?? 0) === 0}
             containerClassName="w-full max-w-lg"
             hideSelectedOption
             selectedValueClassName="text-indigo-600 dark:text-indigo-400"
@@ -234,7 +237,7 @@ export default function TenantMembershipsPage() {
             <p role="status" aria-live="polite" className="text-sm text-slate-500 dark:text-slate-400">Cargando usuarios...</p>
           )}
 
-          {!usersQuery.isLoading && (usersQuery.data?.length ?? 0) === 0 && (
+          {!usersQuery.isLoading && (usersQuery.data?.content?.length ?? 0) === 0 && (
             <p className="text-sm text-slate-500 dark:text-slate-400">No existen usuarios para consultar memberships.</p>
           )}
         </section>
@@ -263,7 +266,7 @@ export default function TenantMembershipsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(membershipsQuery.data ?? []).map((membership) => (
+                {(membershipsQuery.data?.content ?? []).map((membership) => (
                   <tr key={membership.id} className="border-b border-slate-100 dark:border-white/5">
                     <td className="px-4 py-3 text-slate-800 dark:text-slate-100">
                       {appNameById.get(membership.client_app_id) ?? membership.client_app_id}
@@ -292,8 +295,19 @@ export default function TenantMembershipsPage() {
             </table>
           )}
 
-          {!membershipsQuery.isLoading && (membershipsQuery.data?.length ?? 0) === 0 && (
+          {!membershipsQuery.isLoading && (membershipsQuery.data?.content?.length ?? 0) === 0 && (
             <p className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No hay memberships para el usuario seleccionado.</p>
+          )}
+
+          {membershipsQuery.data && membershipsQuery.data.total_pages > 1 && (
+            <Paginator
+              currentPage={membershipsQuery.data.page}
+              totalPages={membershipsQuery.data.total_pages}
+              totalElements={membershipsQuery.data.total_elements}
+              pageSize={membershipsQuery.data.size}
+              onPageChange={setMembershipsCurrentPage}
+              disabled={membershipsQuery.isLoading}
+            />
           )}
         </section>
       )}
@@ -342,7 +356,7 @@ export default function TenantMembershipsPage() {
                       onChange={field.onChange}
                       options={[
                         { value: '', label: '-- Selecciona un usuario --' },
-                        ...((usersQuery.data ?? []).map((u) => ({
+                        ...((usersQuery.data?.content ?? []).map((u) => ({
                           value: u.id,
                           label: `${u.username} (${u.email})`,
                         }))),
@@ -379,7 +393,7 @@ export default function TenantMembershipsPage() {
                       }}
                       options={[
                         { value: '', label: '-- Selecciona una aplicación --' },
-                        ...((appsQuery.data ?? []).map((app) => ({
+                        ...((appsQuery.data?.content ?? []).map((app) => ({
                           value: app.id,
                           label: app.name,
                         }))),
@@ -406,11 +420,11 @@ export default function TenantMembershipsPage() {
                 </label>
                 {appRolesQuery.isLoading && <p className="text-xs text-slate-500">Cargando roles...</p>}
                 {appRolesQuery.isError && <p className="text-xs text-red-600">Error al cargar roles</p>}
-                {appRolesQuery.data && appRolesQuery.data.length === 0 && (
+                {appRolesQuery.data && appRolesQuery.data.content.length === 0 && (
                   <p className="text-xs text-slate-500">La aplicación no tiene roles definidos</p>
                 )}
                 <div className="space-y-2">
-                  {(appRolesQuery.data ?? []).map((role) => (
+                  {(appRolesQuery.data?.content ?? []).map((role) => (
                     <label key={role.id} className="flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"

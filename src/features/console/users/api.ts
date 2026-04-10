@@ -4,7 +4,7 @@
 // Docs: docs/api-docs.json §Users
 
 import { apiClient, API_V1, tenantUrl } from '@/shared/api/client'
-import type { BaseResponse } from '@/shared/types/base'
+import type { BaseResponse, PagedData } from '@/shared/types/base'
 import { unwrapResponseData } from '@/shared/api/response'
 import type {
   UserData,
@@ -22,6 +22,7 @@ import type { RequestOptions } from '@/shared/api/requestOptions'
 
 export const USER_QUERY_KEYS = {
   all: (tenantSlug: string) => ['users', tenantSlug] as const,
+  paginated: (tenantSlug: string, page: number, size: number) => ['users', tenantSlug, 'page', page, 'size', size] as const,
   detail: (tenantSlug: string, userId: string) => ['users', tenantSlug, userId] as const,
   sessions: (tenantSlug: string, userId: string) => ['users', tenantSlug, userId, 'sessions'] as const,
 } as const
@@ -33,12 +34,15 @@ const userUrl = (tenantSlug: string, userId: string) => `${usersUrl(tenantSlug)}
 
 // ── Tenant user management (ADMIN / ADMIN_TENANT) ─────────────────────────────
 
-/** GET /api/v1/tenants/{tenantSlug}/users ✅ — lista usuarios del tenant. */
+/** GET /api/v1/tenants/{tenantSlug}/users ✅ — lista usuarios del tenant (con paginación). */
 export async function listUsers(
   tenantSlug: string,
+  page = 0,
+  size = 20,
   options?: RequestOptions,
-): Promise<UserData[]> {
-  const res = await apiClient.get<BaseResponse<UserData[]>>(usersUrl(tenantSlug), {
+): Promise<PagedData<UserData>> {
+  const res = await apiClient.get<BaseResponse<PagedData<UserData>>>(usersUrl(tenantSlug), {
+    params: { page, size },
     signal: options?.signal,
     timeout: options?.timeoutMs,
   })
