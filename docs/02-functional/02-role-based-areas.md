@@ -11,6 +11,7 @@ Resumen funcional de lo que cada rol puede hacer dentro de KeyGo UI.
 - Consultar información global del servicio.
 - Revisar en el detalle de usuario la identidad priorizando nombre completo y correo, con foto de perfil cuando exista `picture_url`.
 - Revisar en el detalle de usuario los roles asignados con nombre, código, descripción, alcance, fecha e identificadores de asignación.
+- Asignar nuevos roles de plataforma desde el catálogo vigente entregado por backend, evitando ofrecer roles ya asignados al usuario.
 
 ## Administrador de tenant
 

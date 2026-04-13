@@ -7,12 +7,13 @@ import {
   suspendPlatformUser,
   activatePlatformUser,
   listPlatformUserRoles,
+  listPlatformRolesCatalog,
   assignPlatformRole,
   revokePlatformRole,
   PLATFORM_USER_QUERY_KEYS,
+  PLATFORM_ROLE_QUERY_KEYS,
 } from '@/features/ops/platform-users/api';
 import {
-  IconUsers,
   IconShield,
   IconXCircle,
   IconCheckCircle,
@@ -30,8 +31,12 @@ import {
   isRequestTimeout,
   notifyMutationTimeout,
 } from '@/shared/lib/network/recovery';
-import type { PlatformUserData, PlatformUserStatus } from '@/shared/types/platform';
-import { PLATFORM_ROLES, PLATFORM_ROLE_LABELS } from '@/shared/types/roles';
+import type {
+  PlatformRoleCatalogData,
+  PlatformUserData,
+  PlatformUserStatus,
+} from '@/shared/types/platform';
+import { PLATFORM_ROLE_LABELS } from '@/shared/types/roles';
 import type { PlatformRole } from '@/shared/types/roles';
 import { useState } from 'react';
 
@@ -65,6 +70,14 @@ function getPlatformUserInitials(name: string) {
   );
 }
 
+function getFallbackRoleLabel(roleCode: string) {
+  return PLATFORM_ROLE_LABELS[roleCode as PlatformRole] ?? roleCode;
+}
+
+function getCatalogRoleLabel(role: PlatformRoleCatalogData) {
+  return role.name?.trim() || getFallbackRoleLabel(role.code);
+}
+
 // ── Detail skeleton ───────────────────────────────────────────────────────────
 
 function DetailSkeleton() {
@@ -96,7 +109,7 @@ export default function PlatformUserDetailPage() {
   const queryClient = useQueryClient();
   const timeoutMs = NETWORK_REQUEST_TIMEOUT_MS;
 
-  const [roleToAssign, setRoleToAssign] = useState<PlatformRole | ''>('');
+  const [roleToAssign, setRoleToAssign] = useState('');
 
   // ── User detail query ───────────────────────────────────────────────
   const {
@@ -131,6 +144,24 @@ export default function PlatformUserDetailPage() {
         query: () => listPlatformUserRoles(userId!, { signal, timeoutMs }),
       }),
     enabled: !!userId,
+    retry: false,
+  });
+
+  const {
+    data: platformRoleCatalog = [],
+    isLoading: isRoleCatalogLoading,
+    isError: isRoleCatalogError,
+  } = useQuery({
+    queryKey: PLATFORM_ROLE_QUERY_KEYS.catalog,
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'catálogo de roles de plataforma',
+        timeoutMs,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () => listPlatformRolesCatalog({ signal, timeoutMs }),
+      }),
     retry: false,
   });
 
@@ -210,7 +241,7 @@ export default function PlatformUserDetailPage() {
   }
 
   const assignedRoleCodes = userRoles.map((r) => r.role_code);
-  const availableRoles = PLATFORM_ROLES.filter((r) => !assignedRoleCodes.includes(r));
+  const availableRoles = platformRoleCatalog.filter((role) => !assignedRoleCodes.includes(role.code));
   const displayName = getPlatformUserDisplayName(user);
   const displayInitials = getPlatformUserInitials(displayName);
 
@@ -328,9 +359,7 @@ export default function PlatformUserDetailPage() {
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                      {role.role_name ||
-                        PLATFORM_ROLE_LABELS[role.role_code as PlatformRole] ||
-                        role.role_code}
+                      {role.role_name || getFallbackRoleLabel(role.role_code)}
                     </span>
                     <span className="rounded bg-slate-200 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 dark:bg-slate-700 dark:text-slate-300">
                       {role.role_code}
@@ -398,32 +427,59 @@ export default function PlatformUserDetailPage() {
         )}
 
         {/* Assign new role */}
-        {availableRoles.length > 0 && (
-          <div className="mt-4 flex items-center gap-2">
-            <select
-              value={roleToAssign}
-              onChange={(e) => setRoleToAssign(e.target.value as PlatformRole)}
-              className="flex-1 text-sm rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              aria-label={t('platformUserDetail.selectRole')}
+        <div className="mt-4">
+          {isRoleCatalogLoading ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex items-center gap-3 rounded-md bg-slate-50 px-3 py-3 text-sm text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
             >
-              <option value="">{t('platformUserDetail.selectRolePlaceholder')}</option>
-              {availableRoles.map((r) => (
-                <option key={r} value={r}>
-                  {PLATFORM_ROLE_LABELS[r]}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => roleToAssign && assignRoleMutation.mutate(roleToAssign)}
-              disabled={!roleToAssign || assignRoleMutation.isPending}
-              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-              aria-label={t('platformUserDetail.assignRole')}
+              <span
+                className="h-4 w-4 shrink-0 rounded-full border-2 border-slate-300 border-t-indigo-500 animate-spin dark:border-slate-600 dark:border-t-indigo-400"
+                aria-hidden="true"
+              />
+              <span>{t('platformUserDetail.loadingRoleCatalog')}</span>
+            </div>
+          ) : isRoleCatalogError ? (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="flex items-center gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/20 dark:text-red-300"
             >
-              <IconPlus className="w-3.5 h-3.5" aria-hidden="true" />
-              {t('platformUserDetail.assignRoleButton')}
-            </button>
-          </div>
-        )}
+              <IconXCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{t('platformUserDetail.roleCatalogError')}</span>
+            </div>
+          ) : availableRoles.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <select
+                value={roleToAssign}
+                onChange={(e) => setRoleToAssign(e.target.value)}
+                className="flex-1 text-sm rounded-md border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                aria-label={t('platformUserDetail.selectRole')}
+              >
+                <option value="">{t('platformUserDetail.selectRolePlaceholder')}</option>
+                {availableRoles.map((role) => (
+                  <option key={role.id} value={role.code}>
+                    {`${getCatalogRoleLabel(role)} (${role.code})`}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => roleToAssign && assignRoleMutation.mutate(roleToAssign)}
+                disabled={!roleToAssign || assignRoleMutation.isPending}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                aria-label={t('platformUserDetail.assignRole')}
+              >
+                <IconPlus className="w-3.5 h-3.5" aria-hidden="true" />
+                {t('platformUserDetail.assignRoleButton')}
+              </button>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-400 dark:text-slate-500">
+              {t('platformUserDetail.noAssignableRoles')}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Actions */}

@@ -9,6 +9,7 @@ Gaps e inconsistencias detectados por el equipo de UI al consumir la API.
 | [UI-001-missing-platform-users-list-endpoint.md](UI-001-missing-platform-users-list-endpoint.md) | 🟢 Resuelto | La UI reportó que `GET /platform/users` no estaba implementado; backend lo habilitó con paginación. |
 | [UI-002-missing-platform-user-roles-endpoint.md](UI-002-missing-platform-user-roles-endpoint.md) | 🟢 Resuelto | La UI reportó que no existía `GET /platform/users/{userId}/platform-roles`; backend lo habilitó con metadata de rol, assignment y contractor resumido. |
 | [UI-003-platform-billing-catalog-empty.md](UI-003-platform-billing-catalog-empty.md) | 🟢 Resuelto | La UI reportó que `GET /platform/billing/catalog` respondía `200` con `data: []`; backend alineó Flyway y seed del catálogo público de plataforma. |
+| [UI-004-platform-roles-catalog-endpoint.md](UI-004-platform-roles-catalog-endpoint.md) | 🟢 Resuelto | La UI ya consume `GET /platform/roles` para poblar el selector de roles asignables desde el catálogo vigente del backend. |
 
 ## Cómo agregar una entrada
 

@@ -37,6 +37,14 @@ export interface AssignPlatformRoleRequest {
   role: string;
 }
 
+/** Respuesta de GET /platform/roles */
+export interface PlatformRoleCatalogData {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+}
+
 /** Respuesta de GET /platform/users/{userId}/platform-roles */
 export interface PlatformRoleContractorData {
   id?: string | null;

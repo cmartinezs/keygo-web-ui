@@ -1,7 +1,7 @@
 # BE-006 — `GET /platform/roles` disponible para la UI
 
 **Fecha:** 2026-04-13  
-**Estado:** 🔴 Abierto  
+**Estado:** 🟢 Confirmado  
 **Plan:** T-146
 
 ## Cambio
@@ -34,4 +34,8 @@ Código de éxito esperado:
 
 ## Confirmación
 
-_Pendiente._
+La UI ya quedó adaptada para consumir `GET /api/v1/platform/roles` en el detalle de usuario
+de plataforma, poblando el selector de roles disponibles desde backend y filtrando los ya
+asignados al usuario.
+
+**Feedback IN asociado:** [UI-004-platform-roles-catalog-endpoint.md](../in/UI-004-platform-roles-catalog-endpoint.md)

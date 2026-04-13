@@ -4,6 +4,7 @@ import type {
   CreatePlatformUserRequest,
   UpdatePlatformUserRequest,
   AssignPlatformRoleRequest,
+  PlatformRoleCatalogData,
   PlatformUserRoleData,
   ListPlatformUsersParams,
 } from '@/shared/types/platform';
@@ -18,6 +19,11 @@ export const PLATFORM_USER_QUERY_KEYS = {
   list: (params: ListPlatformUsersParams) => ['platform-users', 'list', params] as const,
   detail: (userId: string) => ['platform-users', userId] as const,
   roles: (userId: string) => ['platform-users', userId, 'roles'] as const,
+};
+
+export const PLATFORM_ROLE_QUERY_KEYS = {
+  all: ['platform-roles'] as const,
+  catalog: ['platform-roles', 'catalog'] as const,
 };
 
 // ── API functions ─────────────────────────────────────────────────────────────
@@ -141,4 +147,15 @@ export async function listPlatformUserRoles(
     { signal: options?.signal, timeout: options?.timeoutMs },
   );
   return unwrapResponseData(res.data, 'Error al listar roles del usuario');
+}
+
+/** GET /api/v1/platform/roles ✅ */
+export async function listPlatformRolesCatalog(
+  options?: RequestOptions,
+): Promise<PlatformRoleCatalogData[]> {
+  const res = await apiClient.get<BaseResponse<PlatformRoleCatalogData[]>>(
+    `${API_V1}/platform/roles`,
+    { signal: options?.signal, timeout: options?.timeoutMs },
+  );
+  return unwrapResponseData(res.data, 'Error al listar catálogo de roles de plataforma');
 }
