@@ -15,6 +15,7 @@ vi.mock('@/shared/api/client', () => ({
 import {
   PLATFORM_ROLE_QUERY_KEYS,
   PLATFORM_USER_QUERY_KEYS,
+  assignPlatformRole,
   listPlatformRolesCatalog,
 } from './api';
 
@@ -70,5 +71,29 @@ describe('platform users api wrappers', () => {
         description: 'Tenant administration across managed organizations',
       },
     ]);
+  });
+
+  it('sends role assignment payload with snake_case role_code', async () => {
+    apiClientMock.post.mockResolvedValueOnce({
+      data: {
+        date: '2026-04-13T12:05:00Z',
+      },
+    });
+
+    await assignPlatformRole(
+      '11000000-0000-0000-0000-000000000001',
+      { role_code: 'keygo_admin' },
+      { timeoutMs: 10_000, idempotencyKey: 'idem-role-1' },
+    );
+
+    expect(apiClientMock.post).toHaveBeenCalledWith(
+      '/api/v1/platform/users/11000000-0000-0000-0000-000000000001/platform-roles',
+      { role_code: 'keygo_admin' },
+      {
+        signal: undefined,
+        timeout: 10_000,
+        headers: { 'X-Idempotency-Key': 'idem-role-1' },
+      },
+    );
   });
 });

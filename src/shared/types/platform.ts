@@ -34,7 +34,7 @@ export interface UpdatePlatformUserRequest {
 
 /** Request de POST /platform/users/{userId}/platform-roles */
 export interface AssignPlatformRoleRequest {
-  role: string;
+  role_code: string;
 }
 
 /** Respuesta de GET /platform/roles */

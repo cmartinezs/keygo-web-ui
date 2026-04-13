@@ -46,6 +46,24 @@ export async function platformLogin(params: {
   return unwrapResponseData(response.data, 'Login failed')
 }
 
+export async function platformDirectLogin(params: {
+  emailOrUsername: string
+  password: string
+}, options?: RequestOptions): Promise<unknown> {
+  const url = `${PLATFORM_URL}/account/direct-login`
+  const response = await authClient.post<BaseResponse<unknown>>(url, {
+    email_or_username: params.emailOrUsername,
+    password: params.password,
+  }, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
+  return unwrapResponseData(response.data, 'Direct login failed')
+}
+
 export async function platformExchangeToken(params: {
   code: string
   codeVerifier: string

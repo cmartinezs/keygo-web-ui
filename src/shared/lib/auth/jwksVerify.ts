@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose'
 import type { KeyGoJwtClaims } from '@/shared/types/auth'
-import { PLATFORM_ROLES } from '@/shared/types/roles'
+import { normalizePlatformRoleCode } from '@/shared/types/roles'
 import type { PlatformRole } from '@/shared/types/roles'
 import { API_V1, PLATFORM_URL } from '@/shared/api/client'
 
@@ -46,7 +46,5 @@ export async function verifyIdToken(
 export function extractRoles(claims: KeyGoJwtClaims): PlatformRole[] {
   if (!Array.isArray(claims.roles) || claims.roles.length === 0) return []
 
-  return [...new Set(claims.roles.map((r) => r.toLowerCase()))]
-    .map((r) => r as PlatformRole)
-    .filter((r): r is PlatformRole => PLATFORM_ROLES.includes(r))
+  return [...new Set(claims.roles.map((role) => normalizePlatformRoleCode(role)).filter(Boolean))]
 }

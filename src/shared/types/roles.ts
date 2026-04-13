@@ -3,6 +3,14 @@ export type PlatformRole = (typeof PLATFORM_ROLES)[number]
 
 const ROLE_PRIORITY: PlatformRole[] = ['keygo_admin', 'keygo_tenant_admin', 'keygo_user']
 
+export function normalizePlatformRoleCode(role: string | null | undefined): PlatformRole | null {
+	if (typeof role !== 'string') return null
+	const normalizedRole = role.trim().toLowerCase()
+	return PLATFORM_ROLES.includes(normalizedRole as PlatformRole)
+		? (normalizedRole as PlatformRole)
+		: null
+}
+
 export function resolvePrimaryRole(roles: PlatformRole[]): PlatformRole | null {
 	return ROLE_PRIORITY.find((role) => roles.includes(role)) ?? null
 }
