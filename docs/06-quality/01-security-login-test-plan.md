@@ -10,6 +10,7 @@
 Validar que el flujo de login no permita autenticación indebida solo por conocer `tenantSlug`, y que resista intentos comunes de robo de credenciales o abuso de sesión.
 
 Este plan cubre, como mínimo:
+
 - Inicio de autorización (`/oauth2/authorize`).
 - Captura de credenciales (`/account/login`).
 - Intercambio de código y emisión de tokens (`/oauth2/token`).
@@ -51,6 +52,7 @@ PASS_OK="P@ssw0rdSeguro!"
 ## 4. Criterios de aprobación global
 
 Se considera aprobado el flujo si:
+
 - Ninguna prueba crítica permite obtener tokens sin credenciales válidas + contexto OAuth2 válido + PKCE válido.
 - No hay filtración de credenciales/tokens en `localStorage`, logs frontend o parámetros inseguros.
 - Las respuestas de error no facilitan enumeración de usuarios ni exposición de internals.
@@ -62,6 +64,7 @@ Se considera aprobado el flujo si:
 ## 5.1. Tenant/client/redirect (evitar autenticación solo por slug)
 
 ### T01 — Slug válido sin parámetros OAuth2 completos
+
 - Riesgo: asumir que conocer `tenantSlug` basta para autenticarse.
 - Pasos:
   1. Llamar `/oauth2/authorize` con `tenantSlug` pero sin `client_id` o sin `redirect_uri`.
@@ -69,6 +72,7 @@ Se considera aprobado el flujo si:
   1. Respuesta de error (4xx o `failure`), sin crear contexto utilizable.
 
 ### T02 — `client_id` inválido para el tenant
+
 - Riesgo: uso de app no registrada.
 - Pasos:
   1. Llamar `/oauth2/authorize` con `tenantSlug` válido y `client_id` inexistente.
@@ -76,6 +80,7 @@ Se considera aprobado el flujo si:
   1. Rechazo de autorización.
 
 ### T03 — `redirect_uri` no registrada
+
 - Riesgo: open redirect / code leakage.
 - Pasos:
   1. Llamar `/oauth2/authorize` con `redirect_uri` distinta a la registrada.
@@ -83,6 +88,7 @@ Se considera aprobado el flujo si:
   1. Rechazo de autorización.
 
 ### T04 — Cruce de tenant y client
+
 - Riesgo: usar `client_id` de otro tenant con slug actual.
 - Pasos:
   1. Usar `tenantSlug=A` y `client_id` perteneciente a `tenant=B`.
@@ -94,6 +100,7 @@ Se considera aprobado el flujo si:
 ## 5.2. Sesión intermedia authorize -> login
 
 ### T05 — Login sin authorize previo
+
 - Riesgo: saltarse contexto OAuth2.
 - Pasos:
   1. Invocar `POST /account/login` directamente.
@@ -101,6 +108,7 @@ Se considera aprobado el flujo si:
   1. Rechazo por sesión/contexto faltante.
 
 ### T06 — Login con cookie distinta a la sesión que inició authorize
+
 - Riesgo: session fixation o secuestro de contexto.
 - Pasos:
   1. Ejecutar authorize guardando cookie en `jar-A`.
@@ -127,6 +135,7 @@ curl -i -b jar-B.txt -X POST \
 ## 5.3. Credenciales y membership
 
 ### T07 — Usuario válido sin membership activa en la app
+
 - Riesgo: autenticación fuera de alcance.
 - Pasos:
   1. Login con usuario existente pero sin membership activa para esa ClientApp.
@@ -134,6 +143,7 @@ curl -i -b jar-B.txt -X POST \
   1. Rechazo de login.
 
 ### T08 — Enumeración de usuarios
+
 - Riesgo: detectar qué usuarios existen por diferencias en mensajes.
 - Pasos:
   1. Probar usuario inexistente.
@@ -142,6 +152,7 @@ curl -i -b jar-B.txt -X POST \
   1. Mensaje equivalente para ambos casos (sin revelar existencia del usuario).
 
 ### T09 — Fuerza bruta / rate limiting
+
 - Riesgo: intento masivo de credenciales.
 - Pasos:
   1. Realizar múltiples intentos fallidos consecutivos.
@@ -153,6 +164,7 @@ curl -i -b jar-B.txt -X POST \
 ## 5.4. PKCE, state y authorization code
 
 ### T10 — Reuso de authorization code
+
 - Riesgo: replay.
 - Pasos:
   1. Completar login y obtener `code`.
@@ -162,6 +174,7 @@ curl -i -b jar-B.txt -X POST \
   1. Segundo canje rechazado.
 
 ### T11 — `code_verifier` incorrecto
+
 - Riesgo: bypass PKCE.
 - Pasos:
   1. Obtener `code` válido.
@@ -170,6 +183,7 @@ curl -i -b jar-B.txt -X POST \
   1. Rechazo del token.
 
 ### T12 — `redirect_uri` distinta en token
+
 - Riesgo: sustitución de callback.
 - Pasos:
   1. Hacer authorize/login con `redirect_uri` A.
@@ -178,6 +192,7 @@ curl -i -b jar-B.txt -X POST \
   1. Rechazo del token.
 
 ### T13 — `state` alterado en callback
+
 - Riesgo: CSRF/login injection.
 - Pasos:
   1. Simular callback con `state` distinto al almacenado por cliente.
@@ -189,6 +204,7 @@ curl -i -b jar-B.txt -X POST \
 ## 5.5. Intentos de robo de credenciales y tokens
 
 ### T14 — Verificar almacenamiento inseguro en navegador
+
 - Riesgo: exfiltración por XSS o extensión maliciosa.
 - Pasos:
   1. Login exitoso.
@@ -198,6 +214,7 @@ curl -i -b jar-B.txt -X POST \
   2. `refresh_token` solo donde el diseño lo permita.
 
 ### T15 — Exposición en logs frontend
+
 - Riesgo: credenciales/tokens visibles en consola.
 - Pasos:
   1. Ejecutar flujo completo con DevTools abierto.
@@ -205,6 +222,7 @@ curl -i -b jar-B.txt -X POST \
   1. No se imprime `password`, `access_token`, `id_token`, `refresh_token`, `code_verifier` en logs.
 
 ### T16 — Autocompletado y gestión de contraseña
+
 - Riesgo: UX insegura o bloqueo de gestor de contraseñas.
 - Pasos:
   1. Revisar input de password con password manager.
@@ -212,6 +230,7 @@ curl -i -b jar-B.txt -X POST \
   1. Campo usa `autocomplete="current-password"` en login.
 
 ### T17 — Transporte seguro
+
 - Riesgo: interceptación en tránsito.
 - Pasos:
   1. Revisar entorno de despliegue.
@@ -224,6 +243,7 @@ curl -i -b jar-B.txt -X POST \
 ## 5.6. CORS, CSRF y origen
 
 ### T18 — CORS restrictivo en endpoints sensibles
+
 - Riesgo: abuso cross-origin.
 - Pasos:
   1. Probar origen no permitido contra endpoints OAuth.
@@ -231,6 +251,7 @@ curl -i -b jar-B.txt -X POST \
   1. Origen rechazado por política CORS.
 
 ### T19 — Solicitud de login desde origen tercero
+
 - Riesgo: CSRF/login CSRF.
 - Pasos:
   1. Intentar request `POST /account/login` desde un sitio no confiable.
@@ -241,12 +262,12 @@ curl -i -b jar-B.txt -X POST \
 
 ## 6. Matriz de severidad
 
-| Severidad | Criterio |
-|---|---|
-| Crítica | Permite emitir tokens sin credenciales válidas o sin PKCE válido |
-| Alta | Permite robo de credenciales/tokens o secuestro de sesión |
-| Media | Facilita enumeración de usuarios o debilita defensas de abuso |
-| Baja | Inconsistencia menor de hardening sin impacto directo inmediato |
+| Severidad | Criterio                                                         |
+| --------- | ---------------------------------------------------------------- |
+| Crítica   | Permite emitir tokens sin credenciales válidas o sin PKCE válido |
+| Alta      | Permite robo de credenciales/tokens o secuestro de sesión        |
+| Media     | Facilita enumeración de usuarios o debilita defensas de abuso    |
+| Baja      | Inconsistencia menor de hardening sin impacto directo inmediato  |
 
 ---
 
@@ -256,6 +277,7 @@ Usar esta plantilla por caso:
 
 ```md
 ### Resultado TXX - <nombre>
+
 - Fecha/hora:
 - Ambiente:
 - Request:

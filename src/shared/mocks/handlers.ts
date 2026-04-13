@@ -3,47 +3,154 @@
 // Todos los handlers marcados con ⏳ deben eliminarse cuando el backend publique
 // el contrato real y se migre la UI al endpoint definitivo.
 
-import { http, HttpResponse, passthrough } from 'msw'
+import { http, HttpResponse, passthrough } from 'msw';
 
-const API_V1_GLOB = '*/api/v1'
+const API_V1_GLOB = '*/api/v1';
 
 // ── Datos semilla: platform users ⏳ pendiente backend ─────────────────────────
 
 const mockPlatformUsers = [
-  { id: 'pu-001', email: 'admin@keygo.dev', username: 'admin.platform', first_name: 'Admin', last_name: 'KeyGo', status: 'ACTIVE' },
-  { id: 'pu-002', email: 'ana.mora@keygo.dev', username: 'ana.mora', first_name: 'Ana', last_name: 'Mora', status: 'ACTIVE' },
-  { id: 'pu-003', email: 'diego.paz@keygo.dev', username: 'diego.paz', first_name: 'Diego', last_name: 'Paz', status: 'SUSPENDED' },
-  { id: 'pu-004', email: 'carla.soto@keygo.dev', username: 'carla.soto', first_name: 'Carla', last_name: 'Soto', status: 'PENDING' },
-  { id: 'pu-005', email: 'pablo.rios@keygo.dev', username: 'pablo.rios', first_name: 'Pablo', last_name: 'Rios', status: 'ACTIVE' },
-]
+  {
+    id: 'pu-001',
+    email: 'admin@keygo.dev',
+    username: 'admin.platform',
+    first_name: 'Admin',
+    last_name: 'KeyGo',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'pu-002',
+    email: 'ana.mora@keygo.dev',
+    username: 'ana.mora',
+    first_name: 'Ana',
+    last_name: 'Mora',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'pu-003',
+    email: 'diego.paz@keygo.dev',
+    username: 'diego.paz',
+    first_name: 'Diego',
+    last_name: 'Paz',
+    status: 'SUSPENDED',
+  },
+  {
+    id: 'pu-004',
+    email: 'carla.soto@keygo.dev',
+    username: 'carla.soto',
+    first_name: 'Carla',
+    last_name: 'Soto',
+    status: 'PENDING',
+  },
+  {
+    id: 'pu-005',
+    email: 'pablo.rios@keygo.dev',
+    username: 'pablo.rios',
+    first_name: 'Pablo',
+    last_name: 'Rios',
+    status: 'ACTIVE',
+  },
+];
 
-const mockPlatformUserRoles: Record<string, Array<{ role_code: string; assigned_at: string }>> = {
+const mockPlatformUserRoles: Record<
+  string,
+  Array<{
+    assignment_id: string;
+    role_id: string;
+    role_code: string;
+    role_name: string;
+    description: string;
+    scope_type: string;
+    contractor_id?: string;
+    tenant_id?: string;
+    contractor?: {
+      id: string;
+      display_name: string;
+      billing_email: string;
+    };
+    assigned_at: string;
+  }>
+> = {
   'pu-001': [
-    { role_code: 'keygo_admin', assigned_at: '2025-01-10T00:00:00Z' },
+    {
+      assignment_id: '14000000-0000-0000-0000-000000000001',
+      role_id: '10000000-0000-0000-0000-000000000001',
+      role_code: 'keygo_admin',
+      role_name: 'KeyGo Admin',
+      description: 'Global platform administration',
+      scope_type: 'GLOBAL',
+      assigned_at: '2025-01-10T00:00:00Z',
+    },
   ],
   'pu-002': [
-    { role_code: 'keygo_tenant_admin', assigned_at: '2025-03-15T00:00:00Z' },
+    {
+      assignment_id: '14000000-0000-0000-0000-000000000002',
+      role_id: '10000000-0000-0000-0000-000000000002',
+      role_code: 'keygo_tenant_admin',
+      role_name: 'KeyGo Tenant Admin',
+      description: 'Tenant administration across managed organizations',
+      scope_type: 'CONTRACTOR',
+      contractor_id: '12000000-0000-0000-0000-000000000001',
+      tenant_id: '13000000-0000-0000-0000-000000000001',
+      contractor: {
+        id: '12000000-0000-0000-0000-000000000001',
+        display_name: 'Acme SpA',
+        billing_email: 'billing@acme.cl',
+      },
+      assigned_at: '2025-03-15T00:00:00Z',
+    },
   ],
   'pu-003': [
-    { role_code: 'keygo_user', assigned_at: '2025-06-01T00:00:00Z' },
+    {
+      assignment_id: '14000000-0000-0000-0000-000000000003',
+      role_id: '10000000-0000-0000-0000-000000000003',
+      role_code: 'keygo_user',
+      role_name: 'KeyGo User',
+      description: 'Standard platform access',
+      scope_type: 'GLOBAL',
+      assigned_at: '2025-06-01T00:00:00Z',
+    },
   ],
   'pu-004': [],
   'pu-005': [
-    { role_code: 'keygo_tenant_admin', assigned_at: '2025-08-20T00:00:00Z' },
-    { role_code: 'keygo_user', assigned_at: '2025-08-20T00:00:00Z' },
+    {
+      assignment_id: '14000000-0000-0000-0000-000000000004',
+      role_id: '10000000-0000-0000-0000-000000000002',
+      role_code: 'keygo_tenant_admin',
+      role_name: 'KeyGo Tenant Admin',
+      description: 'Tenant administration across managed organizations',
+      scope_type: 'CONTRACTOR',
+      contractor_id: '12000000-0000-0000-0000-000000000002',
+      tenant_id: '13000000-0000-0000-0000-000000000002',
+      contractor: {
+        id: '12000000-0000-0000-0000-000000000002',
+        display_name: 'Orion Ltda',
+        billing_email: 'billing@orion.cl',
+      },
+      assigned_at: '2025-08-20T00:00:00Z',
+    },
+    {
+      assignment_id: '14000000-0000-0000-0000-000000000005',
+      role_id: '10000000-0000-0000-0000-000000000003',
+      role_code: 'keygo_user',
+      role_name: 'KeyGo User',
+      description: 'Standard platform access',
+      scope_type: 'GLOBAL',
+      assigned_at: '2025-08-20T00:00:00Z',
+    },
   ],
-}
+};
 
 // ── Datos semilla (mock state en memoria para la sesión del worker) ────────────
 
 interface MockPendingFeatureSnapshot {
-  feature_id: string
-  title: string
-  summary: string
-  columns: string[]
-  rows: Record<string, string>[]
-  kpis: Array<{ key: string; label: string; value: string }>
-  actions?: Array<{ id: string; label: string; tone?: 'default' | 'danger' }>
+  feature_id: string;
+  title: string;
+  summary: string;
+  columns: string[];
+  rows: Record<string, string>[];
+  kpis: Array<{ key: string; label: string; value: string }>;
+  actions?: Array<{ id: string; label: string; tone?: 'default' | 'danger' }>;
 }
 
 const mockPendingFeatures: Record<string, MockPendingFeatureSnapshot> = {
@@ -105,7 +212,12 @@ const mockPendingFeatures: Record<string, MockPendingFeatureSnapshot> = {
     columns: ['id', 'evento', 'actor', 'fecha'],
     rows: [
       { id: 'evt-301', evento: 'LOGIN_SUCCESS', actor: 'ana.mora', fecha: '2026-04-03 10:22' },
-      { id: 'evt-302', evento: 'TENANT_SUSPENDED', actor: 'admin.platform', fecha: '2026-04-03 09:14' },
+      {
+        id: 'evt-302',
+        evento: 'TENANT_SUSPENDED',
+        actor: 'admin.platform',
+        fecha: '2026-04-03 09:14',
+      },
       { id: 'evt-303', evento: 'ROLE_UPDATED', actor: 'diego.paz', fecha: '2026-04-02 18:50' },
     ],
     kpis: [
@@ -221,9 +333,24 @@ const mockPendingFeatures: Record<string, MockPendingFeatureSnapshot> = {
     summary: 'Actividad reciente de la cuenta.',
     columns: ['id', 'evento', 'origen', 'fecha'],
     rows: [
-      { id: 'act-901', evento: 'Inicio de sesion', origen: 'Chrome / CL', fecha: '2026-04-03 10:22' },
-      { id: 'act-902', evento: 'Cambio de password', origen: 'Firefox / CL', fecha: '2026-04-02 19:01' },
-      { id: 'act-903', evento: 'Actualizacion de perfil', origen: 'Chrome / CL', fecha: '2026-04-01 11:45' },
+      {
+        id: 'act-901',
+        evento: 'Inicio de sesion',
+        origen: 'Chrome / CL',
+        fecha: '2026-04-03 10:22',
+      },
+      {
+        id: 'act-902',
+        evento: 'Cambio de password',
+        origen: 'Firefox / CL',
+        fecha: '2026-04-02 19:01',
+      },
+      {
+        id: 'act-903',
+        evento: 'Actualizacion de perfil',
+        origen: 'Chrome / CL',
+        fecha: '2026-04-01 11:45',
+      },
     ],
     kpis: [
       { key: 'activity_week', label: 'Eventos semana', value: '14' },
@@ -232,7 +359,7 @@ const mockPendingFeatures: Record<string, MockPendingFeatureSnapshot> = {
     ],
     actions: [{ id: 'download-activity', label: 'Descargar actividad' }],
   },
-}
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -241,7 +368,7 @@ function successResponse<T>(data: T, code = 'ACCOUNT_CONNECTIONS_RETRIEVED') {
     date: new Date().toISOString(),
     success: { code, message: 'OK' },
     data,
-  })
+  });
 }
 
 function errorResponse(code: string, message: string, status: number) {
@@ -251,7 +378,7 @@ function errorResponse(code: string, message: string, status: number) {
       failure: { code, message },
     },
     { status },
-  )
+  );
 }
 
 // ── Handlers ⏳ pendiente backend (F-042) ─────────────────────────────────────
@@ -262,23 +389,24 @@ export const handlers = [
    * Listado paginado de usuarios de plataforma con filtros opcionales.
    */
   http.get(`${API_V1_GLOB}/platform/users`, ({ request }) => {
-    const url = new URL(request.url)
+    const url = new URL(request.url);
     // Si tiene userId en la URL, hacer passthrough al handler real
-    const pathParts = url.pathname.split('/').filter(Boolean)
-    const usersIdx = pathParts.indexOf('users')
-    if (usersIdx >= 0 && usersIdx < pathParts.length - 1) return passthrough()
+    const pathParts = url.pathname.split('/').filter(Boolean);
+    const usersIdx = pathParts.indexOf('users');
+    if (usersIdx >= 0 && usersIdx < pathParts.length - 1) return passthrough();
 
-    const statusFilter = url.searchParams.get('status')
-    const emailFilter = url.searchParams.get('email_like')
-    const page = parseInt(url.searchParams.get('page') ?? '0', 10)
-    const size = parseInt(url.searchParams.get('size') ?? '20', 10)
+    const statusFilter = url.searchParams.get('status');
+    const emailFilter = url.searchParams.get('email_like');
+    const page = parseInt(url.searchParams.get('page') ?? '0', 10);
+    const size = parseInt(url.searchParams.get('size') ?? '20', 10);
 
-    let filtered = [...mockPlatformUsers]
-    if (statusFilter) filtered = filtered.filter((u) => u.status === statusFilter)
-    if (emailFilter) filtered = filtered.filter((u) => u.email.toLowerCase().includes(emailFilter.toLowerCase()))
+    let filtered = [...mockPlatformUsers];
+    if (statusFilter) filtered = filtered.filter((u) => u.status === statusFilter);
+    if (emailFilter)
+      filtered = filtered.filter((u) => u.email.toLowerCase().includes(emailFilter.toLowerCase()));
 
-    const start = page * size
-    const content = filtered.slice(start, start + size)
+    const start = page * size;
+    const content = filtered.slice(start, start + size);
 
     return successResponse(
       {
@@ -290,7 +418,7 @@ export const handlers = [
         last: start + size >= filtered.length,
       },
       'PLATFORM_USERS_RETRIEVED',
-    )
+    );
   }),
 
   /**
@@ -298,13 +426,13 @@ export const handlers = [
    * Actualización de datos del usuario de plataforma.
    */
   http.put(`${API_V1_GLOB}/platform/users/:userId`, async ({ params, request }) => {
-    const userId = params.userId as string
-    const user = mockPlatformUsers.find((u) => u.id === userId)
-    if (!user) return errorResponse('USER_NOT_FOUND', 'Usuario no encontrado', 404)
+    const userId = params.userId as string;
+    const user = mockPlatformUsers.find((u) => u.id === userId);
+    if (!user) return errorResponse('USER_NOT_FOUND', 'Usuario no encontrado', 404);
 
-    const body = (await request.json()) as Record<string, string>
-    const updated = { ...user, ...body }
-    return successResponse(updated, 'PLATFORM_USER_UPDATED')
+    const body = (await request.json()) as Record<string, string>;
+    const updated = { ...user, ...body };
+    return successResponse(updated, 'PLATFORM_USER_UPDATED');
   }),
 
   /**
@@ -312,9 +440,9 @@ export const handlers = [
    * Roles de plataforma asignados al usuario.
    */
   http.get(`${API_V1_GLOB}/platform/users/:userId/platform-roles`, ({ params }) => {
-    const userId = params.userId as string
-    const roles = mockPlatformUserRoles[userId] ?? []
-    return successResponse(roles, 'PLATFORM_USER_ROLES_RETRIEVED')
+    const userId = params.userId as string;
+    const roles = mockPlatformUserRoles[userId] ?? [];
+    return successResponse(roles, 'PLATFORM_USER_ROLES_RETRIEVED');
   }),
 
   /**
@@ -322,9 +450,9 @@ export const handlers = [
    * Solo intercepta peticiones con owner_email; las demás hacen passthrough al backend real.
    */
   http.get(`${API_V1_GLOB}/tenants`, ({ request }) => {
-    const url = new URL(request.url)
-    const ownerEmail = url.searchParams.get('owner_email')
-    if (!ownerEmail) return passthrough()
+    const url = new URL(request.url);
+    const ownerEmail = url.searchParams.get('owner_email');
+    if (!ownerEmail) return passthrough();
     return successResponse(
       {
         content: [
@@ -352,7 +480,7 @@ export const handlers = [
         last: true,
       },
       'TENANT_LIST_RETRIEVED',
-    )
+    );
   }),
 
   /**
@@ -360,43 +488,45 @@ export const handlers = [
    * ⏳ pendiente backend — temporal MSW para modulos placeholder del dashboard.
    */
   http.get(`${API_V1_GLOB}/platform/pending-features/:featureId`, ({ params }) => {
-    const featureId = params.featureId as string
-    const snapshot = mockPendingFeatures[featureId]
+    const featureId = params.featureId as string;
+    const snapshot = mockPendingFeatures[featureId];
 
     if (!snapshot) {
-      return errorResponse('RESOURCE_NOT_FOUND', 'Modulo no encontrado', 404)
+      return errorResponse('RESOURCE_NOT_FOUND', 'Modulo no encontrado', 404);
     }
 
-    return successResponse(snapshot, 'PENDING_FEATURE_SNAPSHOT_RETRIEVED')
+    return successResponse(snapshot, 'PENDING_FEATURE_SNAPSHOT_RETRIEVED');
   }),
 
   /**
    * POST /api/v1/platform/pending-features/:featureId/actions
    * ⏳ pendiente backend — temporal MSW para acciones simuladas de modulos placeholder.
    */
-  http.post(`${API_V1_GLOB}/platform/pending-features/:featureId/actions`, async ({ params, request }) => {
-    const featureId = params.featureId as string
-    const snapshot = mockPendingFeatures[featureId]
+  http.post(
+    `${API_V1_GLOB}/platform/pending-features/:featureId/actions`,
+    async ({ params, request }) => {
+      const featureId = params.featureId as string;
+      const snapshot = mockPendingFeatures[featureId];
 
-    if (!snapshot) {
-      return errorResponse('RESOURCE_NOT_FOUND', 'Modulo no encontrado', 404)
-    }
+      if (!snapshot) {
+        return errorResponse('RESOURCE_NOT_FOUND', 'Modulo no encontrado', 404);
+      }
 
-    const body = (await request.json()) as {
-      action?: string
-      item_id?: string
-    }
-    const action = body.action ?? 'unknown'
+      const body = (await request.json()) as {
+        action?: string;
+        item_id?: string;
+      };
+      const action = body.action ?? 'unknown';
 
-    return successResponse(
-      {
-        action,
-        item_id: body.item_id,
-        ok: true,
-        message: `Accion '${action}' ejecutada en modo mock para ${featureId}.`,
-      },
-      'PENDING_FEATURE_ACTION_EXECUTED',
-    )
-  }),
-
-]
+      return successResponse(
+        {
+          action,
+          item_id: body.item_id,
+          ok: true,
+          message: `Accion '${action}' ejecutada en modo mock para ${featureId}.`,
+        },
+        'PENDING_FEATURE_ACTION_EXECUTED',
+      );
+    },
+  ),
+];

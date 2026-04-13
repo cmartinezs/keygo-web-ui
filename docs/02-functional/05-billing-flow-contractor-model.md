@@ -31,17 +31,17 @@
 
 ## Resumen de cambios respecto al modelo anterior
 
-| Aspecto | Modelo anterior (v1) | Modelo actual (v2) |
-|---|---|---|
-| Suscriptor B2C | `TenantUser` creado sin `tenant_id` ❌ | `Contractor` con `TenantUser` en el tenant proveedor ✅ |
-| Suscriptor B2B | Tenant + TenantUser auto-creados al activar | Contractor crea sus propios tenants después ✅ |
-| Creación de tenants | Automática al activar contrato | Manual: el contratante los crea dentro del límite del plan |
-| `company_slug` | Necesario para crear el tenant B2B | Eliminado: ya no hay auto-creación de tenant |
-| Contrato vigente | Sin control de "uno vigente por persona" | Constraint: solo 1 contrato en estado `ACTIVE` por contratante |
-| Upgrade de plan | No modelado | Nuevo contrato → cierra el anterior (`SUPERSEDED`) |
-| `subscriber_type` en contrato | `TENANT` (B2B) o `TENANT_USER` (B2C) | Eliminado del contrato; se conserva en el plan para compatibilidad |
-| Relación suscripción ↔ suscriptor | `subscriber_tenant_id` / `subscriber_tenant_user_id` | `contractor_id` en `app_subscriptions` |
-| Tenants creados por contratante | Sin FK al contratante | `tenants.contractor_id` → `contractors.id` |
+| Aspecto                           | Modelo anterior (v1)                                 | Modelo actual (v2)                                                 |
+| --------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------ |
+| Suscriptor B2C                    | `TenantUser` creado sin `tenant_id` ❌               | `Contractor` con `TenantUser` en el tenant proveedor ✅            |
+| Suscriptor B2B                    | Tenant + TenantUser auto-creados al activar          | Contractor crea sus propios tenants después ✅                     |
+| Creación de tenants               | Automática al activar contrato                       | Manual: el contratante los crea dentro del límite del plan         |
+| `company_slug`                    | Necesario para crear el tenant B2B                   | Eliminado: ya no hay auto-creación de tenant                       |
+| Contrato vigente                  | Sin control de "uno vigente por persona"             | Constraint: solo 1 contrato en estado `ACTIVE` por contratante     |
+| Upgrade de plan                   | No modelado                                          | Nuevo contrato → cierra el anterior (`SUPERSEDED`)                 |
+| `subscriber_type` en contrato     | `TENANT` (B2B) o `TENANT_USER` (B2C)                 | Eliminado del contrato; se conserva en el plan para compatibilidad |
+| Relación suscripción ↔ suscriptor | `subscriber_tenant_id` / `subscriber_tenant_user_id` | `contractor_id` en `app_subscriptions`                             |
+| Tenants creados por contratante   | Sin FK al contratante                                | `tenants.contractor_id` → `contractors.id`                         |
 
 ---
 
@@ -107,16 +107,16 @@ Contractor (entidad de billing)
 AppContract → AppSubscription → Invoice
 ```
 
-| Propiedad | Descripción |
-|---|---|
-| Identidad global | Tiene un registro `PlatformUser` en `platform_users` (identidad global KeyGo). |
+| Propiedad                     | Descripción                                                                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Identidad global              | Tiene un registro `PlatformUser` en `platform_users` (identidad global KeyGo).                                                              |
 | Identidad en tenant proveedor | Tiene una cuenta (`TenantUser`) **en el tenant del proveedor** (p. ej. tenant `keygo`), vinculada al `PlatformUser` via `platform_user_id`. |
-| Relación 1:1 | `contractors.tenant_user_id` tiene constraint `UNIQUE` — un contratante, una cuenta. |
-| Historial de contratos | Puede tener muchos contratos a lo largo del tiempo. |
-| Contrato vigente | **Solo uno puede estar `ACTIVE`** en cualquier momento. |
-| Tenants propios | Crea sus propios tenants **después** de contratar, dentro del límite `MAX_TENANTS` del plan. |
-| Upgrade | Nuevo contrato → el anterior pasa a `SUPERSEDED`. |
-| Roles de plataforma | Al activar su primer contrato recibe automáticamente el rol `KEYGO_TENANT_ADMIN` en `platform_user_roles`. |
+| Relación 1:1                  | `contractors.tenant_user_id` tiene constraint `UNIQUE` — un contratante, una cuenta.                                                        |
+| Historial de contratos        | Puede tener muchos contratos a lo largo del tiempo.                                                                                         |
+| Contrato vigente              | **Solo uno puede estar `ACTIVE`** en cualquier momento.                                                                                     |
+| Tenants propios               | Crea sus propios tenants **después** de contratar, dentro del límite `MAX_TENANTS` del plan.                                                |
+| Upgrade                       | Nuevo contrato → el anterior pasa a `SUPERSEDED`.                                                                                           |
+| Roles de plataforma           | Al activar su primer contrato recibe automáticamente el rol `KEYGO_TENANT_ADMIN` en `platform_user_roles`.                                  |
 
 ### Relación con el tenant proveedor
 
@@ -154,10 +154,10 @@ El modelo v2 elimina la distinción B2B/B2C a nivel de contrato. **El suscriptor
 
 La distinción `subscriber_type` se conserva **solo en los planes** (`app_plans.subscriber_type`) para validar compatibilidad plan-contrato:
 
-| `subscriber_type` en el plan | Interpretación |
-|---|---|
-| `TENANT` | Plan orientado a quien gestiona múltiples organizaciones/tenants (dev, agencias). Mayor límite `MAX_TENANTS`. |
-| `TENANT_USER` | Plan orientado a usuarios finales con uso personal. Menor límite `MAX_TENANTS`. |
+| `subscriber_type` en el plan | Interpretación                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `TENANT`                     | Plan orientado a quien gestiona múltiples organizaciones/tenants (dev, agencias). Mayor límite `MAX_TENANTS`. |
+| `TENANT_USER`                | Plan orientado a usuarios finales con uso personal. Menor límite `MAX_TENANTS`.                               |
 
 ---
 
@@ -189,17 +189,17 @@ stateDiagram-v2
     FAILED --> [*]
 ```
 
-| Estado | Significado | Terminal |
-|---|---|---|
-| `PENDING_EMAIL_VERIFICATION` | Estado inicial; esperando verificación de email | No |
-| `PENDING_PAYMENT` | Email verificado; esperando pago | No |
-| `READY_TO_ACTIVATE` | Pago aprobado; listo para activar | No |
-| `ACTIVE` | Contrato vigente; suscripción activa | No (puede pasar a SUPERSEDED/FINALIZED) |
-| `SUPERSEDED` | Reemplazado por un nuevo contrato (upgrade/downgrade) | Sí |
-| `FINALIZED` | Terminado al fin del período sin renovación | Sí |
-| `EXPIRED` | TTL superado antes de activar | Sí |
-| `CANCELLED` | Cancelado manualmente | Sí |
-| `FAILED` | Error irrecuperable en activación | Sí |
+| Estado                       | Significado                                           | Terminal                                |
+| ---------------------------- | ----------------------------------------------------- | --------------------------------------- |
+| `PENDING_EMAIL_VERIFICATION` | Estado inicial; esperando verificación de email       | No                                      |
+| `PENDING_PAYMENT`            | Email verificado; esperando pago                      | No                                      |
+| `READY_TO_ACTIVATE`          | Pago aprobado; listo para activar                     | No                                      |
+| `ACTIVE`                     | Contrato vigente; suscripción activa                  | No (puede pasar a SUPERSEDED/FINALIZED) |
+| `SUPERSEDED`                 | Reemplazado por un nuevo contrato (upgrade/downgrade) | Sí                                      |
+| `FINALIZED`                  | Terminado al fin del período sin renovación           | Sí                                      |
+| `EXPIRED`                    | TTL superado antes de activar                         | Sí                                      |
+| `CANCELLED`                  | Cancelado manualmente                                 | Sí                                      |
+| `FAILED`                     | Error irrecuperable en activación                     | Sí                                      |
 
 ---
 
@@ -207,12 +207,13 @@ stateDiagram-v2
 
 Un `Contractor` **puede tener máximo 1 contrato en estado `ACTIVE`** en cualquier momento.
 
-| Nivel | Mecanismo |
-|---|---|
-| Aplicación | El use case de activación verifica inexistencia de contrato `ACTIVE` para ese `contractor_id`. |
-| Base de datos | Índice único parcial: `UNIQUE(contractor_id) WHERE status = 'ACTIVE'` en `app_contracts`. |
+| Nivel         | Mecanismo                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------- |
+| Aplicación    | El use case de activación verifica inexistencia de contrato `ACTIVE` para ese `contractor_id`. |
+| Base de datos | Índice único parcial: `UNIQUE(contractor_id) WHERE status = 'ACTIVE'` en `app_contracts`.      |
 
 Al hacer un upgrade:
+
 1. Se crea un nuevo contrato `PENDING_EMAIL_VERIFICATION`.
 2. Al activar el nuevo contrato, el use case mueve el anterior `ACTIVE` → `SUPERSEDED`.
 3. La suscripción anterior se marca `cancel_at_period_end = true`.
@@ -222,19 +223,19 @@ Al hacer un upgrade:
 
 ## Seguridad de endpoints
 
-| Endpoint | Auth requerida |
-|---|---|
-| `GET /billing/catalog` | **Público** |
-| `GET /billing/catalog/{planCode}` | **Público** |
-| `POST /billing/contracts` | **Público** — autoservicio |
-| `GET /billing/contracts/{contractId}` | **Público** — por UUID |
-| `POST /billing/contracts/{contractId}/verify-email` | **Público** |
-| `POST /billing/contracts/{contractId}/mock-approve-payment` | **Público (solo DEV)** — `keygo.billing.mock-payment-enabled=true` |
-| `POST /billing/contracts/{contractId}/activate` | **Público** — contrato en `READY_TO_ACTIVATE` |
-| `GET /billing/subscription` | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT` |
-| `POST /billing/subscription/cancel` | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT` |
-| `GET /billing/invoices` | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT` |
-| `POST /billing/plans` | **Bearer plataforma** — rol `KEYGO_ADMIN` o `ADMIN_TENANT` del proveedor |
+| Endpoint                                                    | Auth requerida                                                           |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `GET /billing/catalog`                                      | **Público**                                                              |
+| `GET /billing/catalog/{planCode}`                           | **Público**                                                              |
+| `POST /billing/contracts`                                   | **Público** — autoservicio                                               |
+| `GET /billing/contracts/{contractId}`                       | **Público** — por UUID                                                   |
+| `POST /billing/contracts/{contractId}/verify-email`         | **Público**                                                              |
+| `POST /billing/contracts/{contractId}/mock-approve-payment` | **Público (solo DEV)** — `keygo.billing.mock-payment-enabled=true`       |
+| `POST /billing/contracts/{contractId}/activate`             | **Público** — contrato en `READY_TO_ACTIVATE`                            |
+| `GET /billing/subscription`                                 | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT`        |
+| `POST /billing/subscription/cancel`                         | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT`        |
+| `GET /billing/invoices`                                     | **Bearer plataforma** — rol `KEYGO_TENANT_ADMIN` o `ADMIN_TENANT`        |
+| `POST /billing/plans`                                       | **Bearer plataforma** — rol `KEYGO_ADMIN` o `ADMIN_TENANT` del proveedor |
 
 > Los sufijos `/billing/catalog` y `/billing/contracts` están declarados como públicos en `KeyGoBootstrapProperties`.
 
@@ -272,30 +273,30 @@ sequenceDiagram
 
 El JWT emitido por `POST /api/v1/platform/account/login` contiene:
 
-| Claim | Valor | Descripción |
-|---|---|---|
-| `sub` | UUID del `PlatformUser` | Identifica al usuario de plataforma |
-| `email` | Email del `PlatformUser` | Email global del contratante |
-| `roles` | `["keygo_tenant_admin", "keygo_user"]` | Roles de plataforma asignados |
-| `type` | `"platform"` | Distingue de tokens OAuth2 multi-tenant |
+| Claim   | Valor                                  | Descripción                             |
+| ------- | -------------------------------------- | --------------------------------------- |
+| `sub`   | UUID del `PlatformUser`                | Identifica al usuario de plataforma     |
+| `email` | Email del `PlatformUser`               | Email global del contratante            |
+| `roles` | `["keygo_tenant_admin", "keygo_user"]` | Roles de plataforma asignados           |
+| `type`  | `"platform"`                           | Distingue de tokens OAuth2 multi-tenant |
 
 ### Diferencia con OAuth2 multi-tenant
 
-| Aspecto | Auth plataforma (billing) | OAuth2 multi-tenant (apps) |
-|---|---|---|
-| Endpoint de login | `POST /api/v1/platform/account/login` | `POST /api/v1/tenants/{slug}/account/login` |
-| Identidad | `PlatformUser` (global) | `TenantUser` (scoped a un tenant) |
-| Roles en JWT | Roles de plataforma: `keygo_user`, `keygo_tenant_admin`, `keygo_admin` | Roles de app: `admin_tenant`, `user_tenant`, etc. |
-| Sesión | `sessions.platform_user_id` = UUID, `client_app_id` = null | `sessions.tenant_user_id` = UUID, `client_app_id` = UUID |
-| Uso principal | Gestión de billing, contratos, suscripciones | Acceso a aplicaciones multi-tenant |
+| Aspecto           | Auth plataforma (billing)                                              | OAuth2 multi-tenant (apps)                               |
+| ----------------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| Endpoint de login | `POST /api/v1/platform/account/login`                                  | `POST /api/v1/tenants/{slug}/account/login`              |
+| Identidad         | `PlatformUser` (global)                                                | `TenantUser` (scoped a un tenant)                        |
+| Roles en JWT      | Roles de plataforma: `keygo_user`, `keygo_tenant_admin`, `keygo_admin` | Roles de app: `admin_tenant`, `user_tenant`, etc.        |
+| Sesión            | `sessions.platform_user_id` = UUID, `client_app_id` = null             | `sessions.tenant_user_id` = UUID, `client_app_id` = UUID |
+| Uso principal     | Gestión de billing, contratos, suscripciones                           | Acceso a aplicaciones multi-tenant                       |
 
 ### Roles de plataforma relevantes para billing
 
-| Rol | Asignación | Permisos de billing |
-|---|---|---|
-| `KEYGO_USER` | Automático al crear `PlatformUser` | Consultar catálogo (público), iniciar contrato |
+| Rol                  | Asignación                            | Permisos de billing                                                  |
+| -------------------- | ------------------------------------- | -------------------------------------------------------------------- |
+| `KEYGO_USER`         | Automático al crear `PlatformUser`    | Consultar catálogo (público), iniciar contrato                       |
 | `KEYGO_TENANT_ADMIN` | Automático al activar primer contrato | Gestionar suscripción, facturas, crear tenants, cancelar suscripción |
-| `KEYGO_ADMIN` | Solo asignación manual | Gestión completa de catálogo, planes, dashboard admin |
+| `KEYGO_ADMIN`        | Solo asignación manual                | Gestión completa de catálogo, planes, dashboard admin                |
 
 > **⚠️ Importante:** El contratante **no** usa el flujo OAuth2 de un tenant (`/tenants/{slug}/oauth2/authorize`)
 > para acceder a funcionalidades de billing. Usa exclusivamente el flujo de plataforma.
@@ -361,14 +362,14 @@ sequenceDiagram
 
 ### Qué crea la activación (onboarding inicial)
 
-| Entidad | Descripción |
-|---|---|
-| `PlatformUser` | Identidad global del contratante en KeyGo. Si no existía, se crea con `status → ACTIVE`. Si ya existía (upgrade), se reutiliza. |
-| `platform_user_roles` | Asignación del rol `KEYGO_TENANT_ADMIN` al `PlatformUser` (además del `KEYGO_USER` base). |
-| `TenantUser` (tenant proveedor) | Cuenta del contratante. `status → ACTIVE`. Se vincula al `PlatformUser` via `platform_user_id`. |
-| `Contractor` | Entidad de billing 1:1 con el `TenantUser`. `status → ACTIVE`. |
-| `AppSubscription` | Suscripción activa vinculada a `contractor_id`. |
-| `Invoice` | Primera factura del período. |
+| Entidad                         | Descripción                                                                                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `PlatformUser`                  | Identidad global del contratante en KeyGo. Si no existía, se crea con `status → ACTIVE`. Si ya existía (upgrade), se reutiliza. |
+| `platform_user_roles`           | Asignación del rol `KEYGO_TENANT_ADMIN` al `PlatformUser` (además del `KEYGO_USER` base).                                       |
+| `TenantUser` (tenant proveedor) | Cuenta del contratante. `status → ACTIVE`. Se vincula al `PlatformUser` via `platform_user_id`.                                 |
+| `Contractor`                    | Entidad de billing 1:1 con el `TenantUser`. `status → ACTIVE`.                                                                  |
+| `AppSubscription`               | Suscripción activa vinculada a `contractor_id`.                                                                                 |
+| `Invoice`                       | Primera factura del período.                                                                                                    |
 
 > ⚠️ **Lo que ya NO ocurre al activar:** no se crea ningún `Tenant` propio del contratante.
 > Los tenants los crea el contratante mismo posteriormente, dentro del límite `MAX_TENANTS` del plan.
@@ -441,13 +442,13 @@ sequenceDiagram
     end
 ```
 
-| Regla | Descripción |
-|---|---|
-| Entitlement | `MAX_TENANTS` en `app_plan_entitlements` define el límite numérico. |
-| Conteo | `COUNT(*) FROM tenants WHERE contractor_id = :contractorId AND status != 'DELETED'` |
-| Sin contrato activo | Si el contratante no tiene contrato `ACTIVE`, la operación se rechaza. |
-| Enforcement `HARD` | Rechaza la operación con `400 TENANT_LIMIT_REACHED`. |
-| Enforcement `SOFT` | Permite pero emite alerta (log + notificación). |
+| Regla               | Descripción                                                                         |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| Entitlement         | `MAX_TENANTS` en `app_plan_entitlements` define el límite numérico.                 |
+| Conteo              | `COUNT(*) FROM tenants WHERE contractor_id = :contractorId AND status != 'DELETED'` |
+| Sin contrato activo | Si el contratante no tiene contrato `ACTIVE`, la operación se rechaza.              |
+| Enforcement `HARD`  | Rechaza la operación con `400 TENANT_LIMIT_REACHED`.                                |
+| Enforcement `SOFT`  | Permite pero emite alerta (log + notificación).                                     |
 
 ---
 
@@ -496,19 +497,19 @@ sequenceDiagram
 
 > En todos los endpoints, `{slug}` y `{clientId}` referencian el **tenant y app del PROVEEDOR**.
 
-| Método | Endpoint (sin context-path) | Auth | ResponseCode OK | Descripción |
-|---|---|---|---|---|
-| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/catalog` | Público | `APP_PLAN_CATALOG_RETRIEVED` | Catálogo público de planes |
-| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/catalog/{planCode}` | Público | `APP_PLAN_RETRIEVED` | Detalle de un plan |
-| POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/plans` | Bearer ADMIN_TENANT (proveedor) | `APP_PLAN_CREATED` | Crear plan + versión + entitlements |
-| POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts` | Público | `APP_CONTRACT_CREATED` | Iniciar contrato |
-| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}` | Público | `APP_CONTRACT_RETRIEVED` | Estado del contrato |
-| POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/verify-email` | Público | `APP_CONTRACT_EMAIL_VERIFIED` | Verificar código → crea TenantUser + Contractor si es nuevo |
-| POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/mock-approve-payment` | Público (DEV) | `APP_CONTRACT_PAYMENT_APPROVED` | Simular pago |
-| POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/activate` | Público | `APP_CONTRACT_ACTIVATED` | Activar → suscripción + factura; supercede contrato anterior si lo hay |
-| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/subscription` | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_SUBSCRIPTION_RETRIEVED` | Suscripción activa del contratante |
-| POST | `/api/v1/tenants/{slug}/apps/{clientId}/billing/subscription/cancel` | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_SUBSCRIPTION_CANCELLED` | Cancelar al fin del período |
-| GET | `/api/v1/tenants/{slug}/apps/{clientId}/billing/invoices` | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_INVOICE_LIST_RETRIEVED` | Lista de facturas |
+| Método | Endpoint (sin context-path)                                                                  | Auth                                     | ResponseCode OK                 | Descripción                                                            |
+| ------ | -------------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
+| GET    | `/api/v1/tenants/{slug}/apps/{clientId}/billing/catalog`                                     | Público                                  | `APP_PLAN_CATALOG_RETRIEVED`    | Catálogo público de planes                                             |
+| GET    | `/api/v1/tenants/{slug}/apps/{clientId}/billing/catalog/{planCode}`                          | Público                                  | `APP_PLAN_RETRIEVED`            | Detalle de un plan                                                     |
+| POST   | `/api/v1/tenants/{slug}/apps/{clientId}/billing/plans`                                       | Bearer ADMIN_TENANT (proveedor)          | `APP_PLAN_CREATED`              | Crear plan + versión + entitlements                                    |
+| POST   | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts`                                   | Público                                  | `APP_CONTRACT_CREATED`          | Iniciar contrato                                                       |
+| GET    | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}`                      | Público                                  | `APP_CONTRACT_RETRIEVED`        | Estado del contrato                                                    |
+| POST   | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/verify-email`         | Público                                  | `APP_CONTRACT_EMAIL_VERIFIED`   | Verificar código → crea TenantUser + Contractor si es nuevo            |
+| POST   | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/mock-approve-payment` | Público (DEV)                            | `APP_CONTRACT_PAYMENT_APPROVED` | Simular pago                                                           |
+| POST   | `/api/v1/tenants/{slug}/apps/{clientId}/billing/contracts/{contractId}/activate`             | Público                                  | `APP_CONTRACT_ACTIVATED`        | Activar → suscripción + factura; supercede contrato anterior si lo hay |
+| GET    | `/api/v1/tenants/{slug}/apps/{clientId}/billing/subscription`                                | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_SUBSCRIPTION_RETRIEVED`    | Suscripción activa del contratante                                     |
+| POST   | `/api/v1/tenants/{slug}/apps/{clientId}/billing/subscription/cancel`                         | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_SUBSCRIPTION_CANCELLED`    | Cancelar al fin del período                                            |
+| GET    | `/api/v1/tenants/{slug}/apps/{clientId}/billing/invoices`                                    | Bearer plataforma (`KEYGO_TENANT_ADMIN`) | `APP_INVOICE_LIST_RETRIEVED`    | Lista de facturas                                                      |
 
 ---
 
@@ -629,9 +630,9 @@ sequenceDiagram
       "periodStart": "2026-03-30",
       "periodEnd": "2026-04-30",
       "currency": "MXN",
-      "subtotal": 299.00,
-      "taxAmount": 0.00,
-      "total": 299.00,
+      "subtotal": 299.0,
+      "taxAmount": 0.0,
+      "total": 299.0,
       "billingNameSnapshot": "Carlos Martínez",
       "planVersionSnapshot": "1.0",
       "pdfUrl": null,
@@ -645,21 +646,21 @@ sequenceDiagram
 
 ## Manejo de errores
 
-| `failure.code` | HTTP | Causa típica |
-|---|---|---|
-| `APP_PLAN_NOT_FOUND` | 404 | Plan no existe o no es público |
-| `APP_PLAN_VERSION_NOT_FOUND` | 404 | `planVersionId` inválido o deprecado |
-| `APP_CONTRACT_NOT_FOUND` | 404 | `contractId` no existe |
-| `APP_CONTRACT_NOT_READY` | 400 | Contrato no está en `READY_TO_ACTIVATE` |
-| `APP_CONTRACT_ALREADY_ACTIVE` | 409 | El contratante ya tiene un contrato `ACTIVE`; debe hacer upgrade |
-| `APP_SUBSCRIPTION_NOT_FOUND` | 404 | Sin suscripción activa para ese contratante + app |
-| `APP_INVOICE_NOT_FOUND` | 404 | Factura no encontrada |
-| `TENANT_LIMIT_REACHED` | 400 | `MAX_TENANTS` alcanzado según entitlement del plan activo |
-| `INVALID_INPUT` | 400 | Datos inválidos (email, planVersionId, etc.) |
-| `RESOURCE_NOT_FOUND` | 404 | Tenant proveedor o ClientApp no existe |
-| `AUTHENTICATION_REQUIRED` | 401 | Bearer token faltante o inválido |
-| `INSUFFICIENT_PERMISSIONS` | 403 | Rol insuficiente |
-| `OPERATION_FAILED` | 500 | Error interno en activación |
+| `failure.code`                | HTTP | Causa típica                                                     |
+| ----------------------------- | ---- | ---------------------------------------------------------------- |
+| `APP_PLAN_NOT_FOUND`          | 404  | Plan no existe o no es público                                   |
+| `APP_PLAN_VERSION_NOT_FOUND`  | 404  | `planVersionId` inválido o deprecado                             |
+| `APP_CONTRACT_NOT_FOUND`      | 404  | `contractId` no existe                                           |
+| `APP_CONTRACT_NOT_READY`      | 400  | Contrato no está en `READY_TO_ACTIVATE`                          |
+| `APP_CONTRACT_ALREADY_ACTIVE` | 409  | El contratante ya tiene un contrato `ACTIVE`; debe hacer upgrade |
+| `APP_SUBSCRIPTION_NOT_FOUND`  | 404  | Sin suscripción activa para ese contratante + app                |
+| `APP_INVOICE_NOT_FOUND`       | 404  | Factura no encontrada                                            |
+| `TENANT_LIMIT_REACHED`        | 400  | `MAX_TENANTS` alcanzado según entitlement del plan activo        |
+| `INVALID_INPUT`               | 400  | Datos inválidos (email, planVersionId, etc.)                     |
+| `RESOURCE_NOT_FOUND`          | 404  | Tenant proveedor o ClientApp no existe                           |
+| `AUTHENTICATION_REQUIRED`     | 401  | Bearer token faltante o inválido                                 |
+| `INSUFFICIENT_PERMISSIONS`    | 403  | Rol insuficiente                                                 |
+| `OPERATION_FAILED`            | 500  | Error interno en activación                                      |
 
 ---
 
@@ -690,30 +691,30 @@ flowchart TD
 
 Al crear el contrato (`POST /billing/contracts`), se auto-creará un `PlatformUser` si no existe uno con el email proporcionado:
 
-| Paso | Acción | Condición |
-|---|---|---|
-| 1 | Buscar `PlatformUser` por `contractorEmail` | Siempre |
-| 2 | Crear `PlatformUser` con `status=PENDING` | Solo si no existe |
-| 3 | Asignar rol `KEYGO_USER` | Solo si se creó nuevo |
-| 4 | Continuar flujo normal de contrato | Siempre |
+| Paso | Acción                                      | Condición             |
+| ---- | ------------------------------------------- | --------------------- |
+| 1    | Buscar `PlatformUser` por `contractorEmail` | Siempre               |
+| 2    | Crear `PlatformUser` con `status=PENDING`   | Solo si no existe     |
+| 3    | Asignar rol `KEYGO_USER`                    | Solo si se creó nuevo |
+| 4    | Continuar flujo normal de contrato          | Siempre               |
 
 ### Modelo de sesión para billing
 
 Las sesiones de plataforma (billing) se distinguen de las sesiones OAuth2 multi-tenant:
 
 | Campo en `sessions` | Sesión de plataforma (billing) | Sesión OAuth2 (multi-tenant) |
-|---|---|---|
-| `platform_user_id` | UUID del `PlatformUser` | `null` |
-| `tenant_user_id` | `null` | UUID del `TenantUser` |
-| `client_app_id` | `null` (contexto global) | UUID de la `ClientApp` |
-| `tenant_id` | `null` o tenant proveedor | UUID del tenant |
+| ------------------- | ------------------------------ | ---------------------------- |
+| `platform_user_id`  | UUID del `PlatformUser`        | `null`                       |
+| `tenant_user_id`    | `null`                         | UUID del `TenantUser`        |
+| `client_app_id`     | `null` (contexto global)       | UUID de la `ClientApp`       |
+| `tenant_id`         | `null` o tenant proveedor      | UUID del tenant              |
 
 ### Puertos nuevos requeridos
 
-| Puerto | Módulo | Descripción |
-|---|---|---|
-| `FindPlatformUserPort` | `keygo-app` | Buscar `PlatformUser` por email o ID |
-| `SavePlatformUserPort` | `keygo-app` | Crear/actualizar `PlatformUser` |
+| Puerto                   | Módulo      | Descripción                                   |
+| ------------------------ | ----------- | --------------------------------------------- |
+| `FindPlatformUserPort`   | `keygo-app` | Buscar `PlatformUser` por email o ID          |
+| `SavePlatformUserPort`   | `keygo-app` | Crear/actualizar `PlatformUser`               |
 | `AssignPlatformRolePort` | `keygo-app` | Asignar rol de plataforma a un `PlatformUser` |
 
 ### Compatibilidad hacia atrás
@@ -726,14 +727,12 @@ Las sesiones de plataforma (billing) se distinguen de las sesiones OAuth2 multi-
 
 ## Referencias cruzadas
 
-| Documento | Ruta | Relevancia |
-|---|---|---|
-| Flujo de Autenticación | `docs/api/AUTH_FLOW.md` | Prerequisito para endpoints con Bearer |
-| Identidad de Plataforma | RFC `restructure-multitenant` | Modelo `platform_users` + `platform_roles` + flujo de auth de plataforma |
-| Guía Frontend | `docs/keygo-ui/FRONTEND_DEVELOPER_GUIDE.md` | Sección §14.3 — inventario de endpoints de billing |
-| Modelo de datos | `docs/data/DATA_MODEL.md` | Diccionario de `contractors`, `app_contracts`, `app_subscriptions`, `platform_users` |
-| Relaciones E/R | `docs/data/ENTITY_RELATIONSHIPS.md` | Contexto 9 — diagrama de billing |
-| Migraciones | `docs/data/MIGRATIONS.md` | V19+ — schema de billing v2 |
-| Colección Postman | `docs/postman/KeyGo-Server.postman_collection.json` | Requests con scripts de test |
-
-
+| Documento               | Ruta                                                     | Relevancia                                                                           |
+| ----------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Flujo de Autenticación  | `docs/02-functional/04-auth-flow-platform-and-tenant.md` | Prerequisito para endpoints con Bearer                                               |
+| Identidad de Plataforma | RFC `restructure-multitenant`                            | Modelo `platform_users` + `platform_roles` + flujo de auth de plataforma             |
+| Guía Frontend           | `docs/FRONTEND_DEVELOPER_GUIDE.md`                       | Portal de entrada para arquitectura, referencia y operación frontend                 |
+| Modelo de datos         | `docs/data/DATA_MODEL.md`                                | Diccionario de `contractors`, `app_contracts`, `app_subscriptions`, `platform_users` |
+| Relaciones E/R          | `docs/data/ENTITY_RELATIONSHIPS.md`                      | Contexto 9 — diagrama de billing                                                     |
+| Migraciones             | `docs/data/MIGRATIONS.md`                                | V19+ — schema de billing v2                                                          |
+| Colección Postman       | `docs/postman/KeyGo-Server.postman_collection.json`      | Requests con scripts de test                                                         |

@@ -4,80 +4,95 @@
 
 // ── Platform users ────────────────────────────────────────────────────────────
 
-export type PlatformUserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING'
+export type PlatformUserStatus = 'ACTIVE' | 'SUSPENDED' | 'PENDING';
 
 /** Respuesta de GET/POST /platform/users y /platform/users/{userId} */
 export interface PlatformUserData {
-  id: string
-  email: string
-  username: string
-  first_name: string
-  last_name: string
-  status: PlatformUserStatus
+  id: string;
+  email: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  picture_url?: string | null;
+  status: PlatformUserStatus;
 }
 
 /** Request de POST /platform/users */
 export interface CreatePlatformUserRequest {
-  email: string
-  username: string
-  password: string
-  first_name?: string
-  last_name?: string
+  email: string;
+  username: string;
+  password: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 /** Request de PUT /platform/users/{userId} ⏳ pendiente backend */
 export interface UpdatePlatformUserRequest {
-  first_name?: string
-  last_name?: string
+  first_name?: string;
+  last_name?: string;
 }
 
 /** Request de POST /platform/users/{userId}/platform-roles */
 export interface AssignPlatformRoleRequest {
-  role: string
+  role: string;
 }
 
-/** Respuesta de GET /platform/users/{userId}/platform-roles ⏳ pendiente backend */
+/** Respuesta de GET /platform/users/{userId}/platform-roles */
+export interface PlatformRoleContractorData {
+  id?: string | null;
+  display_name?: string | null;
+  billing_email?: string | null;
+}
+
 export interface PlatformUserRoleData {
-  role_code: string
-  assigned_at: string
+  assignment_id: string;
+  role_id: string;
+  role_code: string;
+  role_name: string;
+  description: string;
+  scope_type: string;
+  contractor_id?: string | null;
+  tenant_id?: string | null;
+  contractor?: PlatformRoleContractorData | null;
+  assigned_at: string;
 }
 
 /** Parámetros de filtrado para GET /platform/users ⏳ pendiente backend */
 export interface ListPlatformUsersParams {
-  status?: PlatformUserStatus
-  email_like?: string
-  page?: number
-  size?: number
+  status?: PlatformUserStatus;
+  email_like?: string;
+  page?: number;
+  size?: number;
 }
 
 // ── Platform stats ────────────────────────────────────────────────────────────
 
 export interface TenantStats {
-  total: number
-  active: number
-  suspended: number
-  pending: number
+  total: number;
+  active: number;
+  suspended: number;
+  pending: number;
 }
 
 export interface UserStats {
-  total: number
-  active: number
-  pending: number
-  suspended: number
+  total: number;
+  active: number;
+  pending: number;
+  suspended: number;
 }
 
 export interface AppStats {
-  total: number
+  total: number;
 }
 
 export interface SigningKeyStats {
-  active: number
+  active: number;
 }
 
 /** Respuesta de GET /platform/stats */
 export interface PlatformStatsData {
-  tenants: TenantStats
-  users: UserStats
-  apps: AppStats
-  signing_keys: SigningKeyStats
+  tenants: TenantStats;
+  users: UserStats;
+  apps: AppStats;
+  signing_keys: SigningKeyStats;
 }

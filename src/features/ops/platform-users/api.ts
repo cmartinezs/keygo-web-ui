@@ -1,4 +1,4 @@
-import type { BaseResponse, PagedData } from '@/shared/types/base'
+import type { BaseResponse, PagedData } from '@/shared/types/base';
 import type {
   PlatformUserData,
   CreatePlatformUserRequest,
@@ -6,10 +6,10 @@ import type {
   AssignPlatformRoleRequest,
   PlatformUserRoleData,
   ListPlatformUsersParams,
-} from '@/shared/types/platform'
-import { apiClient, API_V1 } from '@/shared/api/client'
-import { unwrapResponseData } from '@/shared/api/response'
-import type { RequestOptions } from '@/shared/api/requestOptions'
+} from '@/shared/types/platform';
+import { apiClient, API_V1 } from '@/shared/api/client';
+import { unwrapResponseData } from '@/shared/api/response';
+import type { RequestOptions } from '@/shared/api/requestOptions';
 
 // ── Query key constants ────────────────────────────────────────────────────────
 
@@ -18,7 +18,7 @@ export const PLATFORM_USER_QUERY_KEYS = {
   list: (params: ListPlatformUsersParams) => ['platform-users', 'list', params] as const,
   detail: (userId: string) => ['platform-users', userId] as const,
   roles: (userId: string) => ['platform-users', userId, 'roles'] as const,
-}
+};
 
 // ── API functions ─────────────────────────────────────────────────────────────
 
@@ -30,8 +30,8 @@ export async function listPlatformUsers(
   const res = await apiClient.get<BaseResponse<PagedData<PlatformUserData>>>(
     `${API_V1}/platform/users`,
     { params, signal: options?.signal, timeout: options?.timeoutMs },
-  )
-  return unwrapResponseData(res.data, 'Error al listar usuarios de plataforma')
+  );
+  return unwrapResponseData(res.data, 'Error al listar usuarios de plataforma');
 }
 
 /** GET /api/v1/platform/users/{userId} ✅ */
@@ -42,8 +42,8 @@ export async function getPlatformUser(
   const res = await apiClient.get<BaseResponse<PlatformUserData>>(
     `${API_V1}/platform/users/${userId}`,
     { signal: options?.signal, timeout: options?.timeoutMs },
-  )
-  return unwrapResponseData(res.data, 'Error al obtener usuario de plataforma')
+  );
+  return unwrapResponseData(res.data, 'Error al obtener usuario de plataforma');
 }
 
 /** POST /api/v1/platform/users ✅ */
@@ -61,22 +61,17 @@ export async function createPlatformUser(
         ? { 'X-Idempotency-Key': options.idempotencyKey }
         : undefined,
     },
-  )
-  return unwrapResponseData(res.data, 'Error al crear usuario de plataforma')
+  );
+  return unwrapResponseData(res.data, 'Error al crear usuario de plataforma');
 }
 
 /** PUT /api/v1/platform/users/{userId}/suspend ✅ */
-export async function suspendPlatformUser(
-  userId: string,
-  options?: RequestOptions,
-): Promise<void> {
+export async function suspendPlatformUser(userId: string, options?: RequestOptions): Promise<void> {
   await apiClient.put(`${API_V1}/platform/users/${userId}/suspend`, undefined, {
     signal: options?.signal,
     timeout: options?.timeoutMs,
-    headers: options?.idempotencyKey
-      ? { 'X-Idempotency-Key': options.idempotencyKey }
-      : undefined,
-  })
+    headers: options?.idempotencyKey ? { 'X-Idempotency-Key': options.idempotencyKey } : undefined,
+  });
 }
 
 /** PUT /api/v1/platform/users/{userId}/activate ✅ */
@@ -87,10 +82,8 @@ export async function activatePlatformUser(
   await apiClient.put(`${API_V1}/platform/users/${userId}/activate`, undefined, {
     signal: options?.signal,
     timeout: options?.timeoutMs,
-    headers: options?.idempotencyKey
-      ? { 'X-Idempotency-Key': options.idempotencyKey }
-      : undefined,
-  })
+    headers: options?.idempotencyKey ? { 'X-Idempotency-Key': options.idempotencyKey } : undefined,
+  });
 }
 
 /** POST /api/v1/platform/users/{userId}/platform-roles ✅ */
@@ -102,10 +95,8 @@ export async function assignPlatformRole(
   await apiClient.post(`${API_V1}/platform/users/${userId}/platform-roles`, data, {
     signal: options?.signal,
     timeout: options?.timeoutMs,
-    headers: options?.idempotencyKey
-      ? { 'X-Idempotency-Key': options.idempotencyKey }
-      : undefined,
-  })
+    headers: options?.idempotencyKey ? { 'X-Idempotency-Key': options.idempotencyKey } : undefined,
+  });
 }
 
 /** DELETE /api/v1/platform/users/{userId}/platform-roles/{roleCode} ✅ */
@@ -114,13 +105,10 @@ export async function revokePlatformRole(
   roleCode: string,
   options?: RequestOptions,
 ): Promise<void> {
-  await apiClient.delete(
-    `${API_V1}/platform/users/${userId}/platform-roles/${roleCode}`,
-    {
-      signal: options?.signal,
-      timeout: options?.timeoutMs,
-    },
-  )
+  await apiClient.delete(`${API_V1}/platform/users/${userId}/platform-roles/${roleCode}`, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  });
 }
 
 /** PUT /api/v1/platform/users/{userId} ⏳ pendiente backend — usa mock MSW */
@@ -139,11 +127,11 @@ export async function updatePlatformUser(
         ? { 'X-Idempotency-Key': options.idempotencyKey }
         : undefined,
     },
-  )
-  return unwrapResponseData(res.data, 'Error al actualizar usuario de plataforma')
+  );
+  return unwrapResponseData(res.data, 'Error al actualizar usuario de plataforma');
 }
 
-/** GET /api/v1/platform/users/{userId}/platform-roles ⏳ pendiente backend — usa mock MSW */
+/** GET /api/v1/platform/users/{userId}/platform-roles ✅ */
 export async function listPlatformUserRoles(
   userId: string,
   options?: RequestOptions,
@@ -151,6 +139,6 @@ export async function listPlatformUserRoles(
   const res = await apiClient.get<BaseResponse<PlatformUserRoleData[]>>(
     `${API_V1}/platform/users/${userId}/platform-roles`,
     { signal: options?.signal, timeout: options?.timeoutMs },
-  )
-  return unwrapResponseData(res.data, 'Error al listar roles del usuario')
+  );
+  return unwrapResponseData(res.data, 'Error al listar roles del usuario');
 }

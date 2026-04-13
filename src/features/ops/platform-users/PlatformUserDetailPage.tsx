@@ -1,7 +1,7 @@
-import { useParams } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useTranslation } from 'react-i18next'
-import { toast } from 'sonner'
+import { useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import {
   getPlatformUser,
   suspendPlatformUser,
@@ -10,18 +10,30 @@ import {
   assignPlatformRole,
   revokePlatformRole,
   PLATFORM_USER_QUERY_KEYS,
-} from '@/features/ops/platform-users/api'
-import { IconUsers, IconShield, IconXCircle, IconCheckCircle, IconAlertTriangle, IconPlus, IconTrash } from '@/shared/ui/icons'
+} from '@/features/ops/platform-users/api';
+import {
+  IconUsers,
+  IconShield,
+  IconXCircle,
+  IconCheckCircle,
+  IconAlertTriangle,
+  IconPlus,
+  IconTrash,
+} from '@/shared/ui/icons';
 import {
   NETWORK_REQUEST_TIMEOUT_MS,
   NETWORK_MAX_RETRIES,
   NETWORK_RETRY_DELAY_MS,
-} from '@/shared/lib/config/network'
-import { runGetWithRecovery, isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/recovery'
-import type { PlatformUserStatus } from '@/shared/types/platform'
-import { PLATFORM_ROLES, PLATFORM_ROLE_LABELS } from '@/shared/types/roles'
-import type { PlatformRole } from '@/shared/types/roles'
-import { useState } from 'react'
+} from '@/shared/lib/config/network';
+import {
+  runGetWithRecovery,
+  isRequestTimeout,
+  notifyMutationTimeout,
+} from '@/shared/lib/network/recovery';
+import type { PlatformUserData, PlatformUserStatus } from '@/shared/types/platform';
+import { PLATFORM_ROLES, PLATFORM_ROLE_LABELS } from '@/shared/types/roles';
+import type { PlatformRole } from '@/shared/types/roles';
+import { useState } from 'react';
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
@@ -29,19 +41,39 @@ const STATUS_STYLES: Record<PlatformUserStatus, string> = {
   ACTIVE: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
   SUSPENDED: 'bg-red-500/10 text-red-600 dark:text-red-400',
   PENDING: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-}
+};
 
 const STATUS_ICONS: Record<PlatformUserStatus, React.ReactNode> = {
   ACTIVE: <IconCheckCircle className="w-4 h-4 text-emerald-500" aria-hidden="true" />,
   SUSPENDED: <IconXCircle className="w-4 h-4 text-red-500" aria-hidden="true" />,
   PENDING: <IconAlertTriangle className="w-4 h-4 text-amber-500" aria-hidden="true" />,
+};
+
+function getPlatformUserDisplayName(user: PlatformUserData) {
+  const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
+  return fullName || user.username || user.email || user.id;
+}
+
+function getPlatformUserInitials(name: string) {
+  return (
+    name
+      .split(/[\s@._-]/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || 'KG'
+  );
 }
 
 // ── Detail skeleton ───────────────────────────────────────────────────────────
 
 function DetailSkeleton() {
   return (
-    <div className="p-6 max-w-2xl space-y-6 animate-pulse" role="status" aria-label="Cargando detalle">
+    <div
+      className="p-6 max-w-2xl space-y-6 animate-pulse"
+      role="status"
+      aria-label="Cargando detalle"
+    >
       <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-48" />
       <div className="h-4 bg-slate-100 dark:bg-slate-800 rounded w-64" />
       <div className="grid grid-cols-2 gap-4 mt-6">
@@ -53,21 +85,25 @@ function DetailSkeleton() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function PlatformUserDetailPage() {
-  const { userId } = useParams<{ userId: string }>()
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const timeoutMs = NETWORK_REQUEST_TIMEOUT_MS
+  const { userId } = useParams<{ userId: string }>();
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const timeoutMs = NETWORK_REQUEST_TIMEOUT_MS;
 
-  const [roleToAssign, setRoleToAssign] = useState<PlatformRole | ''>('')
+  const [roleToAssign, setRoleToAssign] = useState<PlatformRole | ''>('');
 
   // ── User detail query ───────────────────────────────────────────────
-  const { data: user, isLoading, isError } = useQuery({
+  const {
+    data: user,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: PLATFORM_USER_QUERY_KEYS.detail(userId!),
     queryFn: ({ signal }) =>
       runGetWithRecovery({
@@ -80,10 +116,10 @@ export default function PlatformUserDetailPage() {
       }),
     enabled: !!userId,
     retry: false,
-  })
+  });
 
   // ── Roles query ─────────────────────────────────────────────────────
-  const { data: userRoles = [] } = useQuery({
+  const { data: userRoles = [], isLoading: isRolesLoading } = useQuery({
     queryKey: PLATFORM_USER_QUERY_KEYS.roles(userId!),
     queryFn: ({ signal }) =>
       runGetWithRecovery({
@@ -96,66 +132,66 @@ export default function PlatformUserDetailPage() {
       }),
     enabled: !!userId,
     retry: false,
-  })
+  });
 
   // ── Mutations ───────────────────────────────────────────────────────
   const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: PLATFORM_USER_QUERY_KEYS.all })
-    queryClient.invalidateQueries({ queryKey: PLATFORM_USER_QUERY_KEYS.detail(userId!) })
-    queryClient.invalidateQueries({ queryKey: PLATFORM_USER_QUERY_KEYS.roles(userId!) })
-  }
+    queryClient.invalidateQueries({ queryKey: PLATFORM_USER_QUERY_KEYS.all });
+    queryClient.invalidateQueries({ queryKey: PLATFORM_USER_QUERY_KEYS.detail(userId!) });
+    queryClient.invalidateQueries({ queryKey: PLATFORM_USER_QUERY_KEYS.roles(userId!) });
+  };
 
   const suspendMutation = useMutation({
     mutationFn: () => suspendPlatformUser(userId!, { timeoutMs }),
     onSuccess: () => {
-      toast.success(t('platformUserDetail.suspendSuccess'))
-      invalidateAll()
+      toast.success(t('platformUserDetail.suspendSuccess'));
+      invalidateAll();
     },
     onError: (err) => {
-      if (isRequestTimeout(err)) notifyMutationTimeout('suspensión del usuario')
-      else toast.error(t('platformUserDetail.suspendError'))
+      if (isRequestTimeout(err)) notifyMutationTimeout('suspensión del usuario');
+      else toast.error(t('platformUserDetail.suspendError'));
     },
-  })
+  });
 
   const activateMutation = useMutation({
     mutationFn: () => activatePlatformUser(userId!, { timeoutMs }),
     onSuccess: () => {
-      toast.success(t('platformUserDetail.activateSuccess'))
-      invalidateAll()
+      toast.success(t('platformUserDetail.activateSuccess'));
+      invalidateAll();
     },
     onError: (err) => {
-      if (isRequestTimeout(err)) notifyMutationTimeout('activación del usuario')
-      else toast.error(t('platformUserDetail.activateError'))
+      if (isRequestTimeout(err)) notifyMutationTimeout('activación del usuario');
+      else toast.error(t('platformUserDetail.activateError'));
     },
-  })
+  });
 
   const assignRoleMutation = useMutation({
     mutationFn: (role: string) => assignPlatformRole(userId!, { role }, { timeoutMs }),
     onSuccess: () => {
-      toast.success(t('platformUserDetail.roleAssigned'))
-      setRoleToAssign('')
-      invalidateAll()
+      toast.success(t('platformUserDetail.roleAssigned'));
+      setRoleToAssign('');
+      invalidateAll();
     },
     onError: (err) => {
-      if (isRequestTimeout(err)) notifyMutationTimeout('asignación de rol')
-      else toast.error(t('platformUserDetail.roleAssignError'))
+      if (isRequestTimeout(err)) notifyMutationTimeout('asignación de rol');
+      else toast.error(t('platformUserDetail.roleAssignError'));
     },
-  })
+  });
 
   const revokeRoleMutation = useMutation({
     mutationFn: (roleCode: string) => revokePlatformRole(userId!, roleCode, { timeoutMs }),
     onSuccess: () => {
-      toast.success(t('platformUserDetail.roleRevoked'))
-      invalidateAll()
+      toast.success(t('platformUserDetail.roleRevoked'));
+      invalidateAll();
     },
     onError: (err) => {
-      if (isRequestTimeout(err)) notifyMutationTimeout('revocación de rol')
-      else toast.error(t('platformUserDetail.roleRevokeError'))
+      if (isRequestTimeout(err)) notifyMutationTimeout('revocación de rol');
+      else toast.error(t('platformUserDetail.roleRevokeError'));
     },
-  })
+  });
 
   // ── Loading / Error states ──────────────────────────────────────────
-  if (isLoading) return <DetailSkeleton />
+  if (isLoading) return <DetailSkeleton />;
 
   if (isError || !user) {
     return (
@@ -170,25 +206,36 @@ export default function PlatformUserDetailPage() {
           </p>
         </div>
       </div>
-    )
+    );
   }
 
-  const assignedRoleCodes = userRoles.map((r) => r.role_code)
-  const availableRoles = PLATFORM_ROLES.filter((r) => !assignedRoleCodes.includes(r))
+  const assignedRoleCodes = userRoles.map((r) => r.role_code);
+  const availableRoles = PLATFORM_ROLES.filter((r) => !assignedRoleCodes.includes(r));
+  const displayName = getPlatformUserDisplayName(user);
+  const displayInitials = getPlatformUserInitials(displayName);
 
   return (
     <div className="p-6 max-w-2xl space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-            <IconUsers className="w-6 h-6 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+          <div className="w-12 h-12 overflow-hidden rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+            {user.picture_url ? (
+              <img
+                src={user.picture_url}
+                alt={t('platformUserDetail.profilePictureAlt', { name: displayName })}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+                {displayInitials}
+              </span>
+            )}
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              {user.first_name} {user.last_name}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">@{user.username}</p>
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{displayName}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">@{user.username}</p>
           </div>
         </div>
         <span
@@ -204,22 +251,46 @@ export default function PlatformUserDetailPage() {
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
           {t('platformUserDetail.infoTitle')}
         </h3>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
-          <div>
-            <dt className="text-slate-400 dark:text-slate-500">{t('platformUserDetail.id')}</dt>
-            <dd className="mt-0.5 font-mono text-xs text-slate-600 dark:text-slate-300 break-all">{user.id}</dd>
+        <dl className="space-y-4 text-sm">
+          <div className="rounded-md bg-slate-50 px-4 py-3 dark:bg-slate-800/50">
+            <dt className="text-slate-400 dark:text-slate-500">
+              {t('platformUserDetail.fullName')}
+            </dt>
+            <dd className="mt-1 text-base font-semibold text-slate-700 dark:text-slate-200">
+              {displayName}
+            </dd>
+            <dd className="mt-1 text-sm text-slate-500 dark:text-slate-400">{user.email}</dd>
           </div>
-          <div>
-            <dt className="text-slate-400 dark:text-slate-500">{t('platformUserDetail.email')}</dt>
-            <dd className="mt-0.5 text-slate-600 dark:text-slate-300">{user.email}</dd>
-          </div>
-          <div>
-            <dt className="text-slate-400 dark:text-slate-500">{t('platformUserDetail.username')}</dt>
-            <dd className="mt-0.5 text-slate-600 dark:text-slate-300">{user.username}</dd>
-          </div>
-          <div>
-            <dt className="text-slate-400 dark:text-slate-500">{t('platformUserDetail.fullName')}</dt>
-            <dd className="mt-0.5 text-slate-600 dark:text-slate-300">{user.first_name} {user.last_name}</dd>
+          <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+            <div>
+              <dt className="text-slate-400 dark:text-slate-500">
+                {t('platformUserDetail.username')}
+              </dt>
+              <dd className="mt-0.5 text-slate-600 dark:text-slate-300">{user.username}</dd>
+            </div>
+            {user.picture_url && (
+              <div>
+                <dt className="text-slate-400 dark:text-slate-500">
+                  {t('platformUserDetail.profilePictureUrl')}
+                </dt>
+                <dd className="mt-0.5 break-all">
+                  <a
+                    href={user.picture_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-indigo-600 hover:underline dark:text-indigo-400"
+                  >
+                    {user.picture_url}
+                  </a>
+                </dd>
+              </div>
+            )}
+            <div className={user.picture_url ? '' : 'md:col-span-2'}>
+              <dt className="text-slate-400 dark:text-slate-500">{t('platformUserDetail.id')}</dt>
+              <dd className="mt-0.5 font-mono text-xs text-slate-600 dark:text-slate-300 break-all">
+                {user.id}
+              </dd>
+            </div>
           </div>
         </dl>
       </div>
@@ -233,19 +304,85 @@ export default function PlatformUserDetailPage() {
           </h3>
         </div>
 
-        {userRoles.length === 0 ? (
+        {isRolesLoading ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-3 rounded-md bg-slate-50 px-3 py-3 text-sm text-slate-500 dark:bg-slate-800/50 dark:text-slate-400"
+          >
+            <span
+              className="h-4 w-4 shrink-0 rounded-full border-2 border-slate-300 border-t-indigo-500 animate-spin dark:border-slate-600 dark:border-t-indigo-400"
+              aria-hidden="true"
+            />
+            <span>{t('platformUserDetail.loadingRoles')}</span>
+          </div>
+        ) : userRoles.length === 0 ? (
           <p className="text-sm text-slate-400">{t('platformUserDetail.noRoles')}</p>
         ) : (
           <ul className="space-y-2">
             {userRoles.map((role) => (
-              <li key={role.role_code} className="flex items-center justify-between px-3 py-2 rounded-md bg-slate-50 dark:bg-slate-800/50">
-                <div>
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    {PLATFORM_ROLE_LABELS[role.role_code as PlatformRole] ?? role.role_code}
-                  </span>
-                  <span className="ml-2 text-xs text-slate-400">
-                    {new Date(role.assigned_at).toLocaleDateString()}
-                  </span>
+              <li
+                key={role.assignment_id}
+                className="flex items-start justify-between gap-3 rounded-md bg-slate-50 px-3 py-3 dark:bg-slate-800/50"
+              >
+                <div className="min-w-0 space-y-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {role.role_name ||
+                        PLATFORM_ROLE_LABELS[role.role_code as PlatformRole] ||
+                        role.role_code}
+                    </span>
+                    <span className="rounded bg-slate-200 px-1.5 py-0.5 font-mono text-[11px] text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                      {role.role_code}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{role.description}</p>
+                  {(role.contractor || role.contractor_id || role.tenant_id) && (
+                    <div className="space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                      {role.contractor?.display_name && (
+                        <>
+                          <p>
+                            {t('platformUserDetail.contractorName', {
+                              value: role.contractor.display_name,
+                            })}
+                          </p>
+                        </>
+                      )}
+                      {role.contractor?.billing_email && (
+                        <>
+                          <p>
+                            {t('platformUserDetail.contractorBillingEmail', {
+                              value: role.contractor.billing_email,
+                            })}
+                          </p>
+                        </>
+                      )}
+                      {role.contractor_id && (
+                        <p className="font-mono">
+                          {t('platformUserDetail.contractorId', { id: role.contractor_id })}
+                        </p>
+                      )}
+                      {role.tenant_id && (
+                        <p className="font-mono">
+                          {t('platformUserDetail.tenantId', { id: role.tenant_id })}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 dark:text-slate-500">
+                    <span>
+                      {t('platformUserDetail.roleAssignedAt', {
+                        date: new Date(role.assigned_at).toLocaleDateString(),
+                      })}
+                    </span>
+                    <span>{t('platformUserDetail.roleScope', { scope: role.scope_type })}</span>
+                    <span className="font-mono">
+                      {t('platformUserDetail.roleId', { id: role.role_id })}
+                    </span>
+                    <span className="font-mono">
+                      {t('platformUserDetail.assignmentId', { id: role.assignment_id })}
+                    </span>
+                  </div>
                 </div>
                 <button
                   onClick={() => revokeRoleMutation.mutate(role.role_code)}
@@ -313,5 +450,5 @@ export default function PlatformUserDetailPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

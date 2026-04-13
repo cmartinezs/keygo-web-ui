@@ -24,7 +24,7 @@
     "noMoreOptions": "Sin más opciones",
     "admin": "Admin",
     "allRightsReserved": "Todos los derechos reservados",
-    "allSystemsOperational": "Todos los sistemas operativos"
+    "allSystemsOperational": "Todos los sistemas operan con normalidad"
   },
   "policyModal": {
     "close": "Cerrar",
@@ -33,7 +33,7 @@
   },
   "errors": {
     "unknownMessage": "No pudimos completar la solicitud en este momento. Vuelve a intentarlo en unos segundos.",
-    "networkMessage": "No pudimos completar la comunicacion con el servidor. Reintentaremos automaticamente; si persiste, vuelve a intentarlo en unos segundos."
+    "networkMessage": "No pudimos completar la comunicación con el servidor. Reintentaremos automáticamente; si persiste, vuelve a intentarlo en unos segundos."
   },
   "appErrorBoundary": {
     "title": "Ocurrió un error inesperado",
@@ -181,7 +181,7 @@
   "landing": {
     "nav": {
       "backToTopAria": "Volver al inicio de la página",
-      "primaryAria": "Navegacion principal",
+      "primaryAria": "Navegación principal",
       "features": "Características",
       "howItWorks": "Cómo funciona",
       "roles": "Para tu equipo",
@@ -246,14 +246,14 @@
         },
         "api": {
           "title": "API REST documentada",
-          "description": "Documentacion OpenAPI v3 completa. Integra KeyGo en tu stack en minutos con contratos claros y respuestas consistentes."
+          "description": "Documentación OpenAPI v3 completa. Integra KeyGo en tu stack en minutos con contratos claros y respuestas consistentes."
         }
       }
     },
     "howItWorks": {
       "eyebrow": "Cómo funciona",
       "title": "Seguridad sin fricciones en tres pasos",
-      "description": "KeyGo gestiona toda la complejidad de la seguridad en segundo plano. Tus usuarios solo experimentan acceso rapido y fluido.",
+      "description": "KeyGo gestiona toda la complejidad de la seguridad en segundo plano. Tus usuarios solo experimentan acceso rápido y fluido.",
       "steps": {
         "step1": {
           "title": "El usuario inicia sesión",
@@ -313,7 +313,7 @@
       "eyebrow": "Planes y precios",
       "title": "Escoge el plan que mejor se adapta",
       "description": "Cloud gestionado o despliegue en tus propios servidores - KeyGo se adapta a las necesidades de cada organización, sin letra pequeña.",
-      "footerPrefix": "Tu organización tiene requisitos específicos de cumplimiento o soberanía de datos?",
+      "footerPrefix": "¿Tu organización tiene requisitos específicos de cumplimiento o soberanía de datos?",
       "footerLink": "Habla con nuestro equipo",
       "footerSuffix": "y diseñamos juntos la solución ideal."
     },
@@ -324,14 +324,14 @@
       "inProgress": "En desarrollo",
       "resources": {
         "docs": {
-          "title": "Documentacion tecnica",
-          "description": "Guia publica para integrar KeyGo con login propio o reutilizando el login hospedado de keygo-ui.",
-          "cta": "Abrir guia"
+          "title": "Documentación técnica",
+          "description": "Guía pública para integrar KeyGo con login propio o reutilizando el login hospedado de keygo-ui.",
+          "cta": "Abrir guía"
         },
         "sdk": {
           "title": "SDKs e integraciones",
-          "description": "Librerias oficiales y ejemplos listos para usar en los frameworks y lenguajes mas populares.",
-          "cta": "Proximamente"
+          "description": "Librerías oficiales y ejemplos listos para usar en los frameworks y lenguajes más populares.",
+          "cta": "Próximamente"
         },
         "api": {
           "title": "API REST completa",
@@ -340,14 +340,14 @@
         }
       },
       "banner": {
-        "title": "Guia de integracion disponible",
-        "description": "Revisa el flujo recomendado para login propio y el patron de login central con keygo-ui, junto con el contrato minimo de endpoints que debes implementar.",
-        "cta": "Leer documentacion"
+        "title": "Guía de integración disponible",
+        "description": "Revisa el flujo recomendado para login propio y el patrón de login central con keygo-ui, junto con el contrato mínimo de endpoints que debes implementar.",
+        "cta": "Leer documentación"
       }
     },
     "cta": {
-      "title": "Listo para empezar?",
-      "description": "Accede a tu panel de KeyGo y toma el control de la identidad digital de tu organizacion hoy mismo.",
+      "title": "¿Listo para empezar?",
+      "description": "Accede a tu panel de KeyGo y toma el control de la identidad digital de tu organización hoy mismo.",
       "login": "Iniciar sesión",
       "subscribe": "Contratar",
       "joinTeam": "Súmate a tu equipo"
@@ -357,7 +357,7 @@
     "stepLabels": {
       "plan": "Plan",
       "contractor": "Tus datos",
-      "terms": "Revision",
+      "terms": "Revisión",
       "email": "Email",
       "payment": "Pago"
     },
@@ -387,7 +387,7 @@
     },
     "header": {
       "backHomeAria": "Volver al inicio",
-      "alreadyHaveAccount": "Ya tienes cuenta?",
+      "alreadyHaveAccount": "¿Ya tienes cuenta?",
       "login": "Iniciar sesión"
     },
     "resume": {
@@ -405,9 +405,16 @@
       "errors": {
         "planNotAvailable": "No pudimos asociar este contrato a un plan vigente del catálogo. Inicia una nueva contratación.",
         "alreadyProcessed": "Este contrato ya está procesado. Puedes iniciar sesión con tu cuenta activa.",
-        "unrecoverable": "Este contrato no se puede retomar porque esta expirado, cancelado o fallido.",
-        "notFound": "No encontramos un contrato con ese ID. Verifica el dato e intentalo de nuevo."
+        "unrecoverable": "Este contrato no se puede retomar porque está expirado, cancelado o fallido.",
+        "notFound": "No encontramos un contrato con ese ID. Verifica el dato e inténtalo de nuevo."
       }
+    },
+    "catalog": {
+      "loading": "Cargando planes...",
+      "errorTitle": "No se pudo cargar el catálogo de planes.",
+      "errorDescription": "Verifica tu conexión y vuelve a intentarlo.",
+      "retry": "Reintentar",
+      "empty": "No hay planes disponibles en este momento."
     },
     "recovery": {
       "catalogLabel": "catálogo de planes",
@@ -419,9 +426,9 @@
       "verifyCodeAction": "verificación del código",
       "resendCodeAction": "reenvío del código",
       "retryHintShort": "Intenta nuevamente en unos momentos.",
-      "approvalActivationAction": "aprobacion/activacion",
+      "approvalActivationAction": "aprobación/activación",
       "approvalActivationHint": "Revisa el estado del contrato y vuelve a intentar si corresponde.",
-      "paymentOrActivationAction": "pago o activacion"
+      "paymentOrActivationAction": "pago o activación"
     },
     "errors": {
       "invalidInput": "Los datos introducidos no son válidos. Por favor, revísalos e inténtalo de nuevo.",
@@ -429,7 +436,7 @@
     },
     "messages": {
       "codeResent": "Código reenviado. Revisa tu bandeja de entrada.",
-      "accountActivated": "Cuenta activada exitosamente!",
+      "accountActivated": "¡Cuenta activada exitosamente!",
       "resendFailed": "No se pudo reenviar el código. Inténtalo de nuevo más tarde.",
       "activationFailed": "No se pudo completar la activación. Por favor, inténtalo de nuevo."
     },
@@ -437,8 +444,8 @@
       "monthly": "Mensual",
       "yearly": "Anual",
       "monthlySuffix": "/mes",
-      "yearlySuffix": "/ano",
-      "oneTimeSuffix": " pago unico"
+      "yearlySuffix": "/año",
+      "oneTimeSuffix": " pago único"
     },
     "customPricing": "A medida · contactar",
     "free": "Gratis",
@@ -449,7 +456,7 @@
       },
       "contractor": {
         "title": "Tus datos",
-        "description": "Informacion del titular de la cuenta y, si aplica, de la empresa.",
+        "description": "Información del titular de la cuenta y, si aplica, de la empresa.",
         "companySection": "Datos de la empresa",
         "fields": {
           "firstName": "Nombre",
@@ -461,7 +468,7 @@
         },
         "placeholders": {
           "firstName": "Carlos",
-          "lastName": "Garcia Lopez",
+          "lastName": "García López",
           "email": "tu@email.com",
           "companyName": "Acme Corp S.A.",
           "companyTaxId": "RFC123456XYZ",
@@ -482,17 +489,17 @@
           "plan": "Plan",
           "price": "Precio",
           "trialPeriod": "Periodo de prueba",
-          "trialDays": "{{days}} dias gratis",
+          "trialDays": "{{days}} días gratis",
           "contractOwner": "Responsable del contrato",
           "company": "Empresa"
         },
-        "acceptanceTitle": "Aceptacion de condiciones",
+        "acceptanceTitle": "Aceptación de condiciones",
         "acceptanceTooltip": "Haz clic en el enlace, lee el documento completo y pulsa «Acepto» para marcar cada casilla.",
-        "acceptTermsPrefix": "He leido y acepto los",
-        "termsLink": "Terminos de Uso y Servicio",
+        "acceptTermsPrefix": "He leído y acepto los",
+        "termsLink": "Términos de Uso y Servicio",
         "acceptTermsSuffix": "de KeyGo.",
-        "acceptPrivacyPrefix": "He leido y acepto la",
-        "privacyLink": "Politica de Privacidad",
+        "acceptPrivacyPrefix": "He leído y acepto la",
+        "privacyLink": "Política de Privacidad",
         "acceptPrivacySuffix": ", incluyendo el tratamiento de mis datos personales.",
         "termsModalTitle": "Terms of Use and Service",
         "privacyModalTitle": "Privacy Policy",
@@ -524,7 +531,7 @@
         "gatewayPending": "La pasarela de pago estará disponible próximamente. Nuestro equipo se pondrá en contacto contigo."
       },
       "success": {
-        "title": "Cuenta activada!",
+        "title": "¡Cuenta activada!",
         "descriptionPrefix": "Tu suscripción al plan",
         "descriptionSuffix": "ha sido activada exitosamente.",
         "accessEmailLabel": "Correo de acceso",
@@ -537,21 +544,21 @@
       "title": "Continuar contratación",
       "description": "Si iniciaste el proceso de contratación y no lo completaste, ingresa tu ID de contrato para retomarlo.",
       "contractIdLabel": "ID de contrato",
-      "contractIdHint": "Puedes encontrarlo en el correo de confirmacion que recibiste al iniciar el proceso.",
+      "contractIdHint": "Puedes encontrarlo en el correo de confirmación que recibiste al iniciar el proceso.",
       "searching": "Buscando...",
       "continue": "Continuar",
-      "noContractYet": "Aun no tienes un contrato?",
+      "noContractYet": "¿Aún no tienes un contrato?",
       "startContract": "Iniciar contratación"
     },
     "resumePayment": {
       "title": "Confirma el pago",
       "description": "Tu correo fue verificado. Completa el pago para activar tu cuenta.",
       "devMode": "Modo desarrollo - pago simulado",
-      "simulatePayment": "Simular aprobacion de pago (DEV)",
-      "gatewayPending": "La integracion de pagos estara disponible proximamente. Contacta con soporte si necesitas activar tu cuenta."
+      "simulatePayment": "Simular aprobación de pago (DEV)",
+      "gatewayPending": "La integración de pagos estará disponible próximamente. Contacta con soporte si necesitas activar tu cuenta."
     },
     "resumeDone": {
-      "title": "Cuenta activada!",
+      "title": "¡Cuenta activada!",
       "description": "Tu suscripción ha sido activada exitosamente.",
       "accessEmailLabel": "Correo de acceso",
       "helpText": "Recibirás un correo con tus credenciales en breve.",
@@ -606,10 +613,10 @@
     "security": "Seguridad",
     "notifications": "Notificaciones",
     "connections": "Conexiones",
-    "billing": "Facturacion",
+    "billing": "Facturación",
     "languageTitle": "Idioma de la interfaz",
     "languageDescription": "Por defecto se usa el idioma del dispositivo. Si lo cambias manualmente, se mantiene en este navegador.",
-    "languageAutoHelper": "El modo automatico usa el idioma reportado por tu navegador (navigator.languages).",
+    "languageAutoHelper": "El modo automático usa el idioma reportado por tu navegador (navigator.languages).",
     "languageAuto": "Modo automático (dispositivo)",
     "languageManual": "Selección manual activa",
     "saveLocalOnly": "Preferencia guardada localmente en este navegador.",
@@ -656,19 +663,19 @@
   },
   "systemFaq": {
     "title": "FAQs del sistema",
-    "subtitle": "Guia rapida del sistema KeyGo, organizada por menu del sidebar.",
-    "orderNote": "Dentro de cada pestana, las preguntas estan ordenadas desde lo mas simple a lo mas avanzado.",
-    "growthNote": "Este centro de ayuda se actualiza de forma organica a medida que el sistema incorpora nuevas funcionalidades.",
-    "sectionTitle": "Preguntas por modulo",
-    "tabsAria": "Pestanas de FAQs por menu del sistema",
+    "subtitle": "Guía rápida del sistema KeyGo, organizada por menú del sidebar.",
+    "orderNote": "Dentro de cada pestaña, las preguntas están ordenadas desde lo más simple a lo más avanzado.",
+    "growthNote": "Este centro de ayuda se actualiza de forma orgánica a medida que el sistema incorpora nuevas funcionalidades.",
+    "sectionTitle": "Preguntas por módulo",
+    "tabsAria": "Pestañas de FAQs por menú del sistema",
     "searchLabel": "Buscar en preguntas frecuentes",
     "searchPlaceholder": "Buscar por palabra clave...",
-    "searchHelp": "Filtra por texto en preguntas y respuestas dentro de cada pestana.",
-    "noResults": "No encontramos resultados para esta busqueda en esta pestana.",
-    "backToSettings": "Volver a configuracion de cuenta",
+    "searchHelp": "Filtra por texto en preguntas y respuestas dentro de cada pestaña.",
+    "noResults": "No encontramos resultados para esta búsqueda en esta pestaña.",
+    "backToSettings": "Volver a configuración de cuenta",
     "items": {
       "platformOverview": {
-        "question": "Para que sirve la seccion Plataforma?",
+        "question": "¿Para qué sirve la sección Plataforma?",
         "answer": "Centraliza la vista global de tenants, aplicaciones y usuarios para administración general."
       },
       "platformTenants": {
@@ -680,51 +687,51 @@
         "answer": "Apps y Usuarios representan catálogo y actores del sistema. Las relaciones efectivas se gestionan por accesos/memberships según rol."
       },
       "accessAuditOverview": {
-        "question": "Que incluye Accesos y registro?",
+        "question": "¿Qué incluye Accesos y registro?",
         "answer": "Incluye vistas para control de accesos y trazabilidad de eventos relevantes del sistema."
       },
       "accessAuditDifference": {
-        "question": "Cual es la diferencia entre Accesos y Registro?",
-        "answer": "Accesos muestra estado operativo de permisos; Registro se enfoca en auditoria historica y seguimiento de acciones."
+        "question": "¿Cuál es la diferencia entre Accesos y Registro?",
+        "answer": "Accesos muestra estado operativo de permisos; Registro se enfoca en auditoría histórica y seguimiento de acciones."
       },
       "securitySessions": {
-        "question": "Que veo en Seguridad > Sesiones?",
-        "answer": "Resumen de sesiones activas/expiradas para monitorear actividad de autenticacion."
+        "question": "¿Qué veo en Seguridad > Sesiones?",
+        "answer": "Resumen de sesiones activas/expiradas para monitorear actividad de autenticación."
       },
       "securityTokens": {
-        "question": "Cuando debo revisar Tokens o Claves de firma?",
-        "answer": "Cuando necesitas validar estado criptografico y ciclo de vida de credenciales de seguridad del sistema."
+        "question": "¿Cuándo debo revisar Tokens o Claves de firma?",
+        "answer": "Cuando necesitas validar estado criptográfico y ciclo de vida de credenciales de seguridad del sistema."
       },
       "systemApi": {
-        "question": "Para que sirve Sistema > API?",
-        "answer": "Entrega informacion operativa del backend y estado general de servicios relacionados."
+        "question": "¿Para qué sirve Sistema > API?",
+        "answer": "Entrega información operativa del backend y estado general de servicios relacionados."
       },
       "systemSlowLoading": {
-        "question": "Que pasa si una vista tarda en cargar?",
-        "answer": "El sistema aplica timeout y recuperacion controlada para mantener continuidad de UI y mostrar mensajes de estado."
+        "question": "¿Qué pasa si una vista tarda en cargar?",
+        "answer": "El sistema aplica timeout y recuperación controlada para mantener continuidad de UI y mostrar mensajes de estado."
       },
       "organizationOverview": {
-        "question": "Que puedo hacer en Mi organizacion?",
+        "question": "¿Qué puedo hacer en Mi organización?",
         "answer": "Administrar usuarios y aplicaciones de tu tenant desde una vista central orientada al rol keygo_tenant_admin."
       },
       "organizationUsersApps": {
-        "question": "En que orden conviene configurar Usuarios y Apps?",
+        "question": "¿En qué orden conviene configurar Usuarios y Apps?",
         "answer": "Primero define aplicaciones y luego asigna usuarios/memberships para asegurar permisos consistentes desde el inicio."
       },
       "accessMemberships": {
-        "question": "Que son los Memberships?",
+        "question": "¿Qué son los Memberships?",
         "answer": "Son asignaciones de acceso entre usuario, tenant y aplicación que determinan permisos efectivos."
       },
       "accessSessions": {
-        "question": "Para que sirve revisar Sesiones en Accesos?",
-        "answer": "Permite verificar actividad de autenticacion y detectar comportamientos anormales a tiempo."
+        "question": "¿Para qué sirve revisar Sesiones en Accesos?",
+        "answer": "Permite verificar actividad de autenticación y detectar comportamientos anormales a tiempo."
       },
       "homeOverview": {
-        "question": "Que encuentro en Inicio para usuario tenant?",
-        "answer": "Un resumen rapido de tus vistas habilitadas y acceso directo a Mi acceso y Actividad."
+        "question": "¿Qué encuentro en Inicio para usuario tenant?",
+        "answer": "Un resumen rápido de tus vistas habilitadas y acceso directo a Mi acceso y Actividad."
       },
       "homeMyAccess": {
-        "question": "Como reviso mis permisos actuales?",
+        "question": "¿Cómo reviso mis permisos actuales?",
         "answer": "En Mi acceso puedes ver aplicaciones y roles asignados a tu cuenta dentro del tenant."
       },
       "accountWhereChangeLanguage": {
@@ -743,32 +750,32 @@
   },
   "accountFaq": {
     "title": "FAQs de cuenta",
-    "subtitle": "Respuestas cortas para ayudarte a usar mejor la configuracion de tu cuenta.",
-    "orderNote": "Las preguntas estan ordenadas de lo mas simple a lo mas avanzado.",
+    "subtitle": "Respuestas cortas para ayudarte a usar mejor la configuración de tu cuenta.",
+    "orderNote": "Las preguntas están ordenadas de lo más simple a lo más avanzado.",
     "growthNote": "Esta página se irá actualizando de forma orgánica a medida que agreguemos nuevas funcionalidades.",
     "sectionTitle": "Preguntas disponibles",
     "listAria": "Lista de preguntas frecuentes de cuenta",
-    "backToSettings": "Volver a configuracion de cuenta",
+    "backToSettings": "Volver a configuración de cuenta",
     "categories": {
-      "languageBasics": "Idioma: conceptos basicos",
+      "languageBasics": "Idioma: conceptos básicos",
       "languageAdvanced": "Idioma: casos avanzados"
     },
     "items": {
       "whereChangeLanguage": {
-        "question": "Donde cambio el idioma de la interfaz?",
-        "answer": "Puedes cambiarlo desde Configuracion de cuenta o desde el selector de idioma en la barra superior del dashboard."
+        "question": "¿Dónde cambio el idioma de la interfaz?",
+        "answer": "Puedes cambiarlo desde Configuración de cuenta o desde el selector de idioma en la barra superior del dashboard."
       },
       "autoDetection": {
-        "question": "Como se elige el idioma cuando no hago cambios manuales?",
-        "answer": "Se usa el primer idioma disponible en navigator.languages. Si coincide con espanol, se aplica es-CL; si coincide con ingles, se aplica en-US."
+        "question": "¿Cómo se elige el idioma cuando no hago cambios manuales?",
+        "answer": "Se usa el primer idioma disponible en navigator.languages. Si coincide con español, se aplica es-CL; si coincide con inglés, se aplica en-US."
       },
       "manualOverride": {
-        "question": "Que pasa si selecciono un idioma manualmente?",
-        "answer": "La preferencia queda guardada en este navegador y tiene prioridad hasta que pulses 'Modo automatico (dispositivo)'."
+        "question": "¿Qué pasa si selecciono un idioma manualmente?",
+        "answer": "La preferencia queda guardada en este navegador y tiene prioridad hasta que pulses 'Modo automático (dispositivo)'."
       },
       "browserConfig": {
-        "question": "Por que veo espanol si mi sistema operativo esta en ingles?",
-        "answer": "El modo automatico usa la configuracion de idiomas web del navegador, que puede ser distinta al idioma de la interfaz del navegador o del sistema operativo."
+        "question": "¿Por qué veo español si mi sistema operativo está en inglés?",
+        "answer": "El modo automático usa la configuración de idiomas web del navegador, que puede ser distinta al idioma de la interfaz del navegador o del sistema operativo."
       }
     }
   },
@@ -778,8 +785,8 @@
     "searchPlaceholder": "Buscar por nombre...",
     "searchAria": "Buscar tenant por nombre",
     "errorLoad": "Error al cargar tenants.",
-    "noSearchResults": "Sin resultados para la busqueda.",
-    "noCategory": "No hay tenants en esta categoria.",
+    "noSearchResults": "Sin resultados para la búsqueda.",
+    "noCategory": "No hay tenants en esta categoría.",
     "emptyTitle": "Selecciona un tenant",
     "emptyBody": "Elige un tenant de la lista para ver su detalle, o crea uno nuevo para comenzar.",
     "newTenant": "Nuevo tenant",
@@ -805,7 +812,7 @@
     "suspendError": "No se pudo suspender el tenant. Intenta de nuevo.",
     "activateSuccess": "Tenant activado correctamente.",
     "activateError": "No se pudo activar el tenant.",
-    "confirmSuspend": "Suspender el tenant \"{{name}}\"? Los usuarios no podran autenticarse.",
+    "confirmSuspend": "¿Suspender el tenant \"{{name}}\"? Los usuarios no podrán autenticarse.",
     "loadError": "No se pudo cargar el tenant.",
     "backToList": "Volver a la lista",
     "ownerEmailLabel": "Email del propietario",
@@ -828,17 +835,17 @@
     "nameRequired": "El nombre es requerido.",
     "nameMax": "El nombre no puede superar 255 caracteres.",
     "ownerEmailRequired": "El email del propietario es requerido.",
-    "ownerEmailInvalid": "Ingresa un email valido.",
+    "ownerEmailInvalid": "Ingresa un email válido.",
     "createdSuccess": "Tenant \"{{name}}\" creado correctamente.",
     "createError": "Error al crear el tenant. Intenta de nuevo.",
     "backAria": "Volver a la lista",
     "title": "Nuevo Tenant",
-    "subtitle": "Crea una nueva organizacion en la plataforma KeyGo.",
-    "orgNameLabel": "Nombre de la organizacion",
-    "orgNameHint": "El slug del tenant se genera automaticamente a partir del nombre.",
+    "subtitle": "Crea una nueva organización en la plataforma KeyGo.",
+    "orgNameLabel": "Nombre de la organización",
+    "orgNameHint": "El slug del tenant se genera automáticamente a partir del nombre.",
     "orgNamePlaceholder": "Ej: Acme Corporation",
     "ownerEmailLabel": "Email del propietario",
-    "ownerEmailHint": "Se usara como contacto principal y para el primer acceso.",
+    "ownerEmailHint": "Se usará como contacto principal y para el primer acceso.",
     "ownerEmailPlaceholder": "propietario@empresa.com",
     "infoNote": "El slug del tenant (usado en URLs y APIs) se derivará automáticamente del nombre. Podrás configurar usuarios y aplicaciones una vez creado.",
     "cancel": "Cancelar",
@@ -851,25 +858,25 @@
     "refreshedToast": "Panel actualizado",
     "refreshAria": "Actualizar dashboard",
     "refresh": "Actualizar",
-    "quickActions": "Acciones rapidas",
-    "loadError": "No se pudo cargar el panel de control. Verifica tu conexion e intenta de nuevo.",
+    "quickActions": "Acciones rápidas",
+    "loadError": "No se pudo cargar el panel de control. Verifica tu conexión e intenta de nuevo.",
     "range": {
       "today": "Hoy",
-      "sevenDays": "7 dias",
-      "thirtyDays": "30 dias"
+      "sevenDays": "7 días",
+      "thirtyDays": "30 días"
     },
     "sections": {
       "serviceStatus": "Estado operativo",
-      "iamCore": "Nucleo IAM",
+      "iamCore": "Núcleo IAM",
       "security": "Seguridad",
-      "managementAndActivity": "Gestion y actividad",
+      "managementAndActivity": "Gestión y actividad",
       "rankings": "Rankings",
       "onboardingHealth": "Salud de onboarding"
     },
     "serviceRow": {
       "service": "Servicio",
       "environment": "Entorno",
-      "version": "Version",
+      "version": "Versión",
       "activeSigningKey": "Clave activa",
       "keyMeta": "{{algorithm}} · {{days}}d"
     },
@@ -892,10 +899,10 @@
       "authCodes": "Auth Codes",
       "used": "Usados",
       "alerts": "Alertas",
-      "critical": "Criticas"
+      "critical": "Críticas"
     },
     "pendingActivity": {
-      "pendingManagement": "Pendientes de gestion",
+      "pendingManagement": "Pendientes de gestión",
       "recentActivity": "Actividad reciente",
       "noPending": "Sin pendientes",
       "noRecentActivity": "Sin actividad reciente"
@@ -908,7 +915,7 @@
       "membersLabel": "miembros"
     },
     "onboarding": {
-      "pendingVerification": "Pendientes de verificacion",
+      "pendingVerification": "Pendientes de verificación",
       "expiredVerifications": "Verificaciones expiradas",
       "recentRegistrations": "Registros recientes",
       "recentVerifications": "Verificaciones recientes"
@@ -937,7 +944,7 @@
       },
       "keys": {
         "label": "Claves activas",
-        "description": "Llaves de firma habilitadas para emision de tokens."
+        "description": "Llaves de firma habilitadas para emisión de tokens."
       }
     }
   },
@@ -968,7 +975,7 @@
   },
   "userDashboardProfile": {
     "title": "Mi cuenta",
-    "subtitle": "Revisa tus datos de identidad y administra la informacion de tu perfil personal.",
+    "subtitle": "Revisa tus datos de identidad y administra la información de tu perfil personal.",
     "sectionsAria": "Secciones de mi cuenta",
     "tabsAria": "Tabs de mi cuenta",
     "tabs": {
@@ -991,7 +998,7 @@
     "form": {
       "firstName": "Nombre",
       "lastName": "Apellido",
-      "phone": "Telefono",
+      "phone": "Teléfono",
       "locale": "Locale",
       "zoneinfo": "Zona horaria",
       "birthdate": "Fecha de nacimiento",
@@ -1027,7 +1034,7 @@
       },
       "columns": {
         "ipAddress": "IP",
-        "lastAccess": "Ultimo acceso",
+        "lastAccess": "Último acceso",
         "expiresAt": "Expira"
       }
     },
@@ -1035,7 +1042,7 @@
       "updated": "Perfil actualizado correctamente"
     },
     "validation": {
-      "invalidProfileUrl": "URL valida"
+      "invalidProfileUrl": "URL válida"
     },
     "recovery": {
       "profileLabel": "perfil",
@@ -1045,7 +1052,7 @@
   },
   "accountNotifications": {
     "title": "Preferencias de notificaciones",
-    "subtitle": "Define que alertas deseas recibir y por que canal.",
+    "subtitle": "Define qué alertas deseas recibir y por qué canal.",
     "loading": "Cargando preferencias de notificaciones...",
     "loadError": "No fue posible cargar las preferencias de notificaciones.",
     "save": "Guardar preferencias",
@@ -1064,9 +1071,9 @@
   },
   "accountConnections": {
     "title": "Conexiones externas",
-    "subtitle": "Gestiona proveedores vinculados para autenticacion externa.",
+    "subtitle": "Gestiona proveedores vinculados para autenticación externa.",
     "temporaryBadge": "Temporal MSW",
-    "temporaryHint": "Este modulo usa mocks temporales mientras backend publica el contrato oficial (F-042).",
+    "temporaryHint": "Este módulo usa mocks temporales mientras backend publica el contrato oficial (F-042).",
     "providerToLink": "Proveedor a vincular",
     "noProviderAvailable": "Sin proveedores disponibles",
     "link": "Vincular",
@@ -1080,9 +1087,9 @@
     "status": "Estado",
     "providerUserId": "ID de usuario en proveedor",
     "linkedAt": "Vinculada",
-    "lastUsedAt": "Ultimo uso",
-    "linkSuccess": "Conexion vinculada correctamente.",
-    "unlinkSuccess": "Conexion desvinculada correctamente."
+    "lastUsedAt": "Último uso",
+    "linkSuccess": "Conexión vinculada correctamente.",
+    "unlinkSuccess": "Conexión desvinculada correctamente."
   },
   "accountSecurity": {
     "changePasswordTitle": "Cambiar contraseña",
@@ -1116,7 +1123,7 @@
   },
   "userDashboardSessions": {
     "title": "Sesiones",
-    "subtitle": "Informacion de la sesion activa para {{userName}}.",
+    "subtitle": "Información de la sesión activa para {{userName}}.",
     "defaultUser": "usuario",
     "accessToken": "Access token",
     "idToken": "ID token",
@@ -1227,8 +1234,19 @@
     "email": "Correo electrónico",
     "username": "Nombre de usuario",
     "fullName": "Nombre completo",
+    "profilePictureUrl": "URL de foto de perfil",
+    "profilePictureAlt": "Foto de perfil de {{name}}",
     "rolesTitle": "Roles de plataforma",
+    "loadingRoles": "Cargando roles...",
     "noRoles": "Este usuario no tiene roles asignados.",
+    "roleAssignedAt": "Asignado: {{date}}",
+    "roleScope": "Alcance: {{scope}}",
+    "roleId": "Rol: {{id}}",
+    "assignmentId": "Asignación: {{id}}",
+    "contractorName": "Contratista: {{value}}",
+    "contractorBillingEmail": "Correo de facturación: {{value}}",
+    "contractorId": "Contratista: {{id}}",
+    "tenantId": "Tenant: {{id}}",
     "selectRole": "Seleccionar rol",
     "selectRolePlaceholder": "Seleccionar rol...",
     "assignRole": "Asignar rol",

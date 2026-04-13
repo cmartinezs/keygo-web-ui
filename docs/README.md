@@ -1,89 +1,47 @@
 # KeyGo UI — Documentación
 
-Índice de toda la documentación técnica y de negocio del proyecto `keygo-ui`.
+Índice maestro de la documentación del proyecto. La documentación viva se organiza por secciones; el material histórico y las decisiones ya cerradas viven en `99-archive/`.
 
----
+## Cómo navegar
 
-## Documentos disponibles
+| Sección           | Propósito                                                        | Punto de entrada                                       |
+| ----------------- | ---------------------------------------------------------------- | ------------------------------------------------------ |
+| `01-product`      | Visión del producto, alcance y capacidades por rol.              | [01-product/README.md](01-product/README.md)           |
+| `02-functional`   | Flujos funcionales, áreas de la UI y recorridos del usuario.     | [02-functional/README.md](02-functional/README.md)     |
+| `03-architecture` | Arquitectura frontend, módulos, autenticación e integración API. | [03-architecture/README.md](03-architecture/README.md) |
+| `04-decisions`    | ADRs vigentes y registro de decisiones relevantes.               | [04-decisions/README.md](04-decisions/README.md)       |
+| `05-delivery`     | Backlog vivo y seguimiento de trabajo.                           | [05-delivery/README.md](05-delivery/README.md)         |
+| `06-quality`      | Accesibilidad, planes de prueba y runbooks de calidad.           | [06-quality/README.md](06-quality/README.md)           |
+| `07-operations`   | Setup local, variables de entorno y operación del proyecto.      | [07-operations/README.md](07-operations/README.md)     |
+| `08-reference`    | Matrices, referencias cruzadas y fuentes técnicas de verdad.     | [08-reference/README.md](08-reference/README.md)       |
+| `09-ai`           | Convenciones para agentes y gobierno documental.                 | [09-ai/README.md](09-ai/README.md)                     |
+| `99-archive`      | Documentación histórica, análisis y propuestas supersedidas.     | [99-archive/README.md](99-archive/README.md)           |
 
-### [`FRONTEND_DEVELOPER_GUIDE.md`](FRONTEND_DEVELOPER_GUIDE.md)
-**Audiencia:** Desarrolladores frontend.
+## Entradas estables
 
-Guía completa de desarrollo: stack tecnológico, estructura del proyecto, flujo OAuth2/PKCE detallado, gestión de roles y routing condicional, manejo seguro de tokens, interceptores HTTP, convenciones de error, inventario de endpoints (disponibles vs. pendientes), guía de mocking con MSW y checklist de seguridad.
+Estas rutas se mantienen en la raíz de `docs/` como puntos de entrada estables y de compatibilidad:
 
-> Consultar **siempre** antes de implementar o modificar una llamada al backend.
+| Documento                                                            | Uso                                               |
+| -------------------------------------------------------------------- | ------------------------------------------------- |
+| [FRONTEND_DEVELOPER_GUIDE.md](FRONTEND_DEVELOPER_GUIDE.md)           | Portal para desarrollo frontend.                  |
+| [TECHNICAL_GUIDE.md](TECHNICAL_GUIDE.md)                             | Portal de arquitectura y operación.               |
+| [FUNCTIONAL_GUIDE.md](FUNCTIONAL_GUIDE.md)                           | Portal funcional para producto y UX.              |
+| [BACKLOG.md](BACKLOG.md)                                             | Portal al backlog vivo.                           |
+| [ACCESSIBILITY-CHILE.md](ACCESSIBILITY-CHILE.md)                     | Portal a la política de accesibilidad.            |
+| [api-docs.json](api-docs.json)                                       | Especificación OpenAPI del backend.               |
+| [00-documentation-instructions.md](00-documentation-instructions.md) | Regla de organización y mantenimiento documental. |
 
----
+## Fuentes de verdad
 
-### [`AUTH_FLOW.md`](AUTH_FLOW.md)
-**Audiencia:** Desarrolladores frontend y backend, arquitectos de seguridad.
+- Contrato backend: [api-docs.json](api-docs.json)
+- Flujos funcionales principales: [02-functional/README.md](02-functional/README.md)
+- Arquitectura frontend: [03-architecture/README.md](03-architecture/README.md)
+- Política de accesibilidad: [06-quality/03-accessibility-chile.md](06-quality/03-accessibility-chile.md)
+- Backlog vivo: [05-delivery/01-backlog-live.md](05-delivery/01-backlog-live.md)
 
-Referencia del flujo OAuth 2.0 Authorization Code + PKCE implementado en KeyGo Server. Incluye:
-- Prerrequisitos del sistema (tenant, ClientApp, JSESSIONID)
-- Diagrama y descripción paso a paso del flujo
-- Escenario de login central multi-tenant
-- Grants soportados (`authorization_code`, `refresh_token`, `client_credentials`)
-- Tablas de errores por endpoint con `clientMessage` específico por excepción
-- Comportamiento adaptativo en dev/local vs. producción
-- Checklist para clientes SPA
+## Reglas de ubicación
 
----
-
-### [`SECURITY_LOGIN_TEST_PLAN.md`](SECURITY_LOGIN_TEST_PLAN.md)
-**Audiencia:** Frontend, backend, QA y seguridad.
-
-Plan operativo de pruebas de seguridad para login OAuth2/PKCE, centrado en:
-- validación de `tenantSlug` + `client_id` + `redirect_uri`;
-- acoplamiento de sesión entre authorize y login;
-- abuso de `authorization_code`, PKCE y `state`;
-- intentos de robo de credenciales/tokens (storage, logs, transporte, CORS/CSRF).
-
-Incluye casos negativos priorizados, ejemplos con `curl`, criterios de severidad y formato de evidencia reproducible.
-
----
-
-### [`SECURITY_LOGIN_RUNBOOK.md`](SECURITY_LOGIN_RUNBOOK.md)
-**Audiencia:** QA, seguridad y desarrolladores en ejecución de pruebas.
-
-Runbook paso a paso con comandos listos para validar los casos críticos del plan de seguridad de login.
-Incluye:
-- setup de variables por ambiente;
-- comandos `curl` por caso prioritario;
-- checklist `PASS/FAIL`;
-- plantilla de reporte y criterios de escalamiento.
-
----
-
-### [`api-docs.json`](api-docs.json)
-**Audiencia:** Desarrolladores frontend y herramientas de generación de código.
-
-Especificación **OpenAPI v3** del backend KeyGo Server. Es la **fuente técnica de verdad** para paths, métodos HTTP, schemas de request/response, parámetros y esquemas de autenticación requerida.
-
-> Si hay discrepancia entre este JSON y cualquier otro documento, prevalece este archivo.
-
----
-
-### [`BACKLOG.md`](BACKLOG.md)
-**Audiencia:** Equipo de desarrollo y producto.
-
-Registro vivo de features pendientes, mejoras planificadas, deuda técnica detectada y endpoints de backend aún no disponibles. Organizado por prioridad:
-
-| Sección | Descripción |
-|---|---|
-| 🚧 En desarrollo | Ítems activos en la iteración actual |
-| 🔴 Features críticas | Bloqueantes para uso en producción |
-| 🟡 Features planificadas | Próximas iteraciones |
-| 🔵 Mejoras y refactorizaciones | Calidad y mantenibilidad |
-| 🟠 Deuda técnica | Compromisos técnicos pendientes de resolver |
-| ⏳ Endpoints pendientes | Endpoints de backend aún no implementados |
-| ✅ Completados | Historial de lo entregado |
-
-> **No implementar sin validación del equipo.** Este documento lo actualiza el agente automáticamente al final de cada implementación.
-
----
-
-## Convenciones de actualización
-
-- `FRONTEND_DEVELOPER_GUIDE.md` y `AUTH_FLOW.md` son **documentos vivos** — se actualizan cada vez que el backend introduce cambios.
-- `api-docs.json` se reemplaza por el equipo de backend al publicar nuevas versiones.
-- `BACKLOG.md` lo actualiza el agente al detectar mejoras, bugs o features fuera de scope durante la implementación.
+- La documentación viva se edita en las carpetas numeradas, no en `99-archive/`.
+- Los documentos históricos se archivan; no se dejan mezclados con las guías activas.
+- Si una guía cubre varios temas, se divide y el archivo raíz pasa a ser un índice o portal.
+- `api-docs.json` permanece en la raíz de `docs/` por compatibilidad con tooling e instrucciones del proyecto.

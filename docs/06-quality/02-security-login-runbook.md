@@ -1,7 +1,7 @@
 # Runbook Ejecutable — Pruebas de Seguridad de Login
 
 > Fecha: 2026-03-31  
-> Basado en: `docs/SECURITY_LOGIN_TEST_PLAN.md`
+> Basado en: `docs/06-quality/01-security-login-test-plan.md`
 
 ---
 
@@ -23,6 +23,7 @@ Este repositorio incluye scripts para ejecutar los casos automatizables desde un
 ```
 
 Flujo del menú:
+
 1. Seleccionar archivo de entorno (`.env.development`, `.env.staging`, `.env.production`, `.env.local` o personalizado).
 2. Cargar credenciales de prueba (`USER_OK`, `PASS_OK`) por prompt o variables de entorno.
 3. Ejecutar todos los casos o bloques específicos.
@@ -238,18 +239,21 @@ Esperado: rechazo del token.
 ## 4.1 T14 - Storage
 
 En DevTools > Application:
+
 - Revisar `localStorage`, `sessionStorage`, `IndexedDB` y cookies.
 - Esperado: no exponer `access_token` ni `id_token` en `localStorage`.
 
 ## 4.2 T15 - Logs sensibles
 
 En DevTools > Console:
+
 - Ejecutar login completo.
 - Esperado: no imprimir password, tokens o PKCE verifier.
 
 ## 4.3 T16 - Campo password
 
 En formulario login:
+
 - Confirmar atributo `autocomplete="current-password"`.
 - Validar compatibilidad con gestor de contraseñas.
 
@@ -257,20 +261,20 @@ En formulario login:
 
 ## 5. Registro PASS/FAIL
 
-| Caso | Estado | Evidencia (archivo o link interno) | Observación |
-|---|---|---|---|
-| T01 | PENDIENTE | | |
-| T02 | PENDIENTE | | |
-| T03 | PENDIENTE | | |
-| T05 | PENDIENTE | | |
-| T06 | PENDIENTE | | |
-| T08 | PENDIENTE | | |
-| T10 | PENDIENTE | | |
-| T11 | PENDIENTE | | |
-| T12 | PENDIENTE | | |
-| T14 | PENDIENTE | | |
-| T15 | PENDIENTE | | |
-| T16 | PENDIENTE | | |
+| Caso | Estado    | Evidencia (archivo o link interno) | Observación |
+| ---- | --------- | ---------------------------------- | ----------- |
+| T01  | PENDIENTE |                                    |             |
+| T02  | PENDIENTE |                                    |             |
+| T03  | PENDIENTE |                                    |             |
+| T05  | PENDIENTE |                                    |             |
+| T06  | PENDIENTE |                                    |             |
+| T08  | PENDIENTE |                                    |             |
+| T10  | PENDIENTE |                                    |             |
+| T11  | PENDIENTE |                                    |             |
+| T12  | PENDIENTE |                                    |             |
+| T14  | PENDIENTE |                                    |             |
+| T15  | PENDIENTE |                                    |             |
+| T16  | PENDIENTE |                                    |             |
 
 ---
 
@@ -278,6 +282,7 @@ En formulario login:
 
 ```md
 ### Resultado <ID-CASO>
+
 - Fecha/hora:
 - Ambiente:
 - Comando ejecutado:
@@ -294,6 +299,7 @@ En formulario login:
 ## 7. Criterio de escalamiento
 
 Escalar inmediatamente a backend + seguridad cuando:
+
 - Se emiten tokens sin PKCE válido o sin credenciales válidas.
 - Se acepta canje repetido del mismo authorization code.
 - Se detecta filtración de credenciales/tokens en logs o storage no permitido.

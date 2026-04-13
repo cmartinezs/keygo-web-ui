@@ -409,6 +409,13 @@
         "notFound": "We could not find a contract with that ID. Please verify and try again."
       }
     },
+    "catalog": {
+      "loading": "Loading plans...",
+      "errorTitle": "Could not load the plan catalog.",
+      "errorDescription": "Check your connection and try again.",
+      "retry": "Retry",
+      "empty": "No plans are available at this time."
+    },
     "recovery": {
       "catalogLabel": "plan catalog",
       "contractLabel": "contract",
@@ -1238,8 +1245,19 @@
     "email": "Email",
     "username": "Username",
     "fullName": "Full Name",
+    "profilePictureUrl": "Profile picture URL",
+    "profilePictureAlt": "Profile picture for {{name}}",
     "rolesTitle": "Platform Roles",
+    "loadingRoles": "Loading roles...",
     "noRoles": "This user has no assigned roles.",
+    "roleAssignedAt": "Assigned: {{date}}",
+    "roleScope": "Scope: {{scope}}",
+    "roleId": "Role: {{id}}",
+    "assignmentId": "Assignment: {{id}}",
+    "contractorName": "Contractor: {{value}}",
+    "contractorBillingEmail": "Billing email: {{value}}",
+    "contractorId": "Contractor: {{id}}",
+    "tenantId": "Tenant: {{id}}",
     "selectRole": "Select role",
     "selectRolePlaceholder": "Select role...",
     "assignRole": "Assign role",
