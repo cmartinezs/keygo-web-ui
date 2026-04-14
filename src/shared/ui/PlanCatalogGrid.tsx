@@ -8,7 +8,7 @@ import type {
 } from '@/shared/types/billing';
 import { PlanCard } from './PlanCard';
 import { PlanCardSelect } from './PlanCardSelect';
-import { computePlanInfoForPeriod } from './plans';
+import { computePlanInfoForPeriod, planDeclaresPeriod, planSupportsPeriod } from './plans';
 import { IconRefresh, IconChevronLeft, IconChevronRight } from '@/shared/ui/icons';
 
 type DisplayMode = {
@@ -36,13 +36,8 @@ type PlanCatalogGridProps = {
 } & (DisplayMode | SelectMode);
 
 function hasMultiplePeriods(plans: AppPlan[]): boolean {
-  return plans.some((p) => {
-    const opts = p.versions?.[0]?.billing_options ?? [];
-    return (
-      opts.some((o) => o.billing_period === 'MONTHLY') &&
-      opts.some((o) => o.billing_period === 'YEARLY')
-    );
-  });
+  return plans.some((plan) => planDeclaresPeriod(plan, 'MONTHLY'))
+    && plans.some((plan) => planDeclaresPeriod(plan, 'YEARLY'));
 }
 
 export function PlanCatalogGrid(props: PlanCatalogGridProps) {
@@ -52,6 +47,9 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
   const activePeriod = props.mode === 'select' ? props.activePeriod : displayPeriod;
   const setActivePeriod = props.mode === 'select' ? props.onPeriodChange : setDisplayPeriod;
   const showPeriodToggle = hasMultiplePeriods(plans);
+  const visiblePlans = showPeriodToggle
+    ? plans.filter((plan) => planSupportsPeriod(plan, activePeriod))
+    : plans;
 
   if (isLoading) {
     return (
@@ -114,6 +112,10 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
     return <p className="text-center text-slate-500 py-12">{t('subscribe.catalog.empty')}</p>;
   }
 
+  if (visiblePlans.length === 0) {
+    return <p className="text-center text-slate-500 py-12">{t('subscribe.catalog.emptyForPeriod')}</p>;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {showPeriodToggle && (
@@ -145,7 +147,7 @@ export function PlanCatalogGrid(props: PlanCatalogGridProps) {
         </div>
       )}
 
-      <PlanCarousel plans={plans} activePeriod={activePeriod} mode={props} />
+      <PlanCarousel plans={visiblePlans} activePeriod={activePeriod} mode={props} />
     </div>
   );
 }
@@ -159,6 +161,7 @@ interface PlanCarouselProps {
 }
 
 function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
+  const { t } = useTranslation();
   const total = plans.length;
   const [index, setIndex] = useState(0);
   const [visibleCount, setVisibleCount] = useState(3);
@@ -222,7 +225,7 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
           className="flex transition-transform duration-500 ease-in-out items-stretch gap-0"
           style={{ transform: `translateX(-${index * cardPct}%)` }}
           role={mode.mode === 'select' ? 'radiogroup' : undefined}
-          aria-label={mode.mode === 'select' ? 'Planes disponibles' : undefined}
+          aria-label={mode.mode === 'select' ? t('subscribe.catalog.availablePlansAria') : undefined}
         >
           {plans.map((plan, i) => (
             <div
@@ -259,21 +262,21 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
             type="button"
             onClick={prev}
             disabled={index === 0}
-            aria-label="Plan anterior"
+            aria-label={t('subscribe.catalog.previousPlanAria')}
             className="w-9 h-9 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
           >
             <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
           </button>
 
           {/* Dots — one per "position" */}
-          <div className="flex gap-2" role="tablist" aria-label="Selección de plan">
+          <div className="flex gap-2" role="tablist" aria-label={t('subscribe.catalog.planSelectorAria')}>
             {Array.from({ length: maxIndex + 1 }).map((_, i) => (
               <button
                 key={i}
                 type="button"
                 role="tab"
                 aria-selected={i === index}
-                aria-label={`Posición ${i + 1}`}
+                aria-label={t('subscribe.catalog.planPositionAria', { index: i + 1 })}
                 onClick={() => setIndex(i)}
                 className={`rounded-full transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none ${
                   i === index
@@ -288,7 +291,7 @@ function PlanCarousel({ plans, activePeriod, mode }: PlanCarouselProps) {
             type="button"
             onClick={next}
             disabled={index === maxIndex}
-            aria-label="Plan siguiente"
+            aria-label={t('subscribe.catalog.nextPlanAria')}
             className="w-9 h-9 rounded-full border border-slate-200 bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 hover:border-indigo-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none"
           >
             <IconChevronRight className="h-4 w-4 shrink-0" aria-hidden="true" />

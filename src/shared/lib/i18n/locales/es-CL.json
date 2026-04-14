@@ -414,7 +414,113 @@
       "errorTitle": "No se pudo cargar el catálogo de planes.",
       "errorDescription": "Verifica tu conexión y vuelve a intentarlo.",
       "retry": "Reintentar",
-      "empty": "No hay planes disponibles en este momento."
+      "empty": "No hay planes disponibles en este momento.",
+      "emptyForPeriod": "No hay planes disponibles para la periodicidad seleccionada.",
+      "badgePopular": "Más popular",
+      "includes": "Incluye",
+      "availablePlansAria": "Planes disponibles",
+      "previousPlanAria": "Plan anterior",
+      "nextPlanAria": "Plan siguiente",
+      "planSelectorAria": "Selección de plan",
+      "planPositionAria": "Posición {{index}}",
+      "customPrice": "A medida",
+      "priceNote": {
+        "custom": "Pago por uso · contactar",
+        "forever": "Para siempre",
+        "perMonth": "por mes",
+        "perYearBilled": "por año · facturación anual"
+      },
+      "annualSavings": {
+        "withSavings": "Pagas {{yearlyTotal}}/año · ahorras {{saving}} vs mensual",
+        "billedYearly": "Facturado {{yearlyTotal}} al año"
+      },
+      "cta": {
+        "free": "Empezar gratis",
+        "trial": "Iniciar prueba de {{days}} días",
+        "startAt": "Empezar por {{price}}",
+        "FLEX": "Ver tarifas Flex",
+        "ENTERPRISE": "Hablar con ventas",
+        "ON_PREMISE": "Solicitar demo",
+        "default": "Comenzar"
+      },
+      "entitlements": {
+        "maxTenants": {
+          "upTo": "Hasta {{count}} tenants",
+          "unlimited": "Tenants ilimitados"
+        },
+        "maxTenantUsers": {
+          "upTo": "Hasta {{count}} identidades",
+          "unlimited": "Identidades ilimitadas"
+        },
+        "maxClientApps": {
+          "upTo": "Hasta {{count}} aplicaciones",
+          "unlimited": "Aplicaciones ilimitadas"
+        },
+        "maxAdmins": {
+          "upTo": "Hasta {{count}} administradores",
+          "unlimited": "Administradores ilimitados"
+        },
+        "maxMonthlyTokens": {
+          "upTo": "{{count}} tokens/mes",
+          "unlimited": "Tokens ilimitados"
+        },
+        "auditLogDays": {
+          "upTo": "Logs de auditoría {{count}} días",
+          "unlimited": "Logs de auditoría sin límite"
+        },
+        "socialLogin": {
+          "enabled": "Social Login incluido"
+        },
+        "customDomain": {
+          "enabled": "Dominio personalizado"
+        },
+        "slaUptimePct": {
+          "value": "SLA {{value}}% uptime"
+        },
+        "prioritySupport": {
+          "enabled": "Soporte prioritario"
+        },
+        "customSla": {
+          "enabled": "SLA personalizado"
+        },
+        "dedicatedSuccessMgr": {
+          "enabled": "Success Manager dedicado"
+        }
+      },
+      "plans": {
+        "FREE": {
+          "name": "Gratis",
+          "description": "Lo esencial para comenzar con gestión de identidad centralizada."
+        },
+        "PERSONAL": {
+          "name": "Personal",
+          "description": "Para profesionales y proyectos pequeños que necesitan una base segura."
+        },
+        "TEAM": {
+          "name": "Team",
+          "description": "Para equipos en crecimiento que requieren colaboración y mayor capacidad."
+        },
+        "BUSINESS": {
+          "name": "Business",
+          "description": "Para organizaciones que necesitan escalar con control, trazabilidad y soporte."
+        },
+        "FLEX": {
+          "name": "Flex",
+          "description": "Modelo flexible para crecer según consumo y necesidades operativas."
+        },
+        "ENTERPRISE": {
+          "name": "Enterprise",
+          "description": "Cobertura avanzada para entornos complejos con acompañamiento especializado."
+        },
+        "STARTER": {
+          "name": "Starter",
+          "description": "Entrada rápida para validar el producto con una configuración simple."
+        },
+        "ON_PREMISE": {
+          "name": "On-premise",
+          "description": "Despliegue dedicado en infraestructura propia con requisitos corporativos."
+        }
+      }
     },
     "recovery": {
       "catalogLabel": "catálogo de planes",

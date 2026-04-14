@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { PlanInfo } from './plans'
 
 type DisplayMode = { mode: 'display'; ctaTo: string }
@@ -22,6 +23,7 @@ function CheckIcon({ className }: { className: string }) {
 }
 
 export function PlanCard(props: PlanCardProps) {
+  const { t } = useTranslation()
   const { plan } = props
   const isSelectMode = props.mode === 'select'
   const isSelected = props.mode === 'select' && props.selected
@@ -85,7 +87,7 @@ export function PlanCard(props: PlanCardProps) {
           }`}
         >
           <p className={`text-xs font-semibold uppercase tracking-wide mb-3 ${highlighted ? 'text-indigo-200' : 'text-slate-400'}`}>
-            Incluye
+            {t('subscribe.catalog.includes')}
           </p>
           <ul className="space-y-2 overflow-y-auto max-h-64">
             {plan.features.map((feat) => (
@@ -138,7 +140,7 @@ export function PlanCard(props: PlanCardProps) {
           {inner}
           {isDisabled && (
             <span className="absolute bottom-4 left-0 right-0 text-center text-xs text-slate-400 font-medium">
-              Próximamente
+              {t('common.comingSoon')}
             </span>
           )}
         </button>

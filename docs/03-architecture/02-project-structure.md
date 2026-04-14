@@ -113,7 +113,7 @@ src/features/ops/
 | `src/shared/lib/`   | Infraestructura transversal: auth, config, i18n, network, trace IDs y dev console.               |
 | `src/shared/mocks/` | MSW worker y handlers para escenarios temporales o features pendientes.                          |
 | `src/shared/types/` | Tipos y DTOs compartidos del proyecto.                                                           |
-| `src/shared/ui/`    | Componentes reutilizables globales como overlays, dropdowns, paginator, cards, banners e iconos. |
+| `src/shared/ui/`    | Componentes reutilizables globales como overlays, dropdowns, paginator, cards, banners e iconos. El catálogo de planes concentra su traducción dinámica, la compatibilidad por periodicidad y la resolución dinámica del CTA/precio en `PlanCatalogGrid.tsx`, `PlanCard.tsx` y `plans.ts`, evitando textos hardcodeados fuera de `src/shared/lib/i18n/locales/`. |
 
 ### Submódulos visibles hoy
 

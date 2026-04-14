@@ -414,7 +414,113 @@
       "errorTitle": "Could not load the plan catalog.",
       "errorDescription": "Check your connection and try again.",
       "retry": "Retry",
-      "empty": "No plans are available at this time."
+      "empty": "No plans are available at this time.",
+      "emptyForPeriod": "No plans are available for the selected billing period.",
+      "badgePopular": "Most popular",
+      "includes": "Includes",
+      "availablePlansAria": "Available plans",
+      "previousPlanAria": "Previous plan",
+      "nextPlanAria": "Next plan",
+      "planSelectorAria": "Plan selection",
+      "planPositionAria": "Position {{index}}",
+      "customPrice": "Custom",
+      "priceNote": {
+        "custom": "Usage-based · contact us",
+        "forever": "Forever",
+        "perMonth": "per month",
+        "perYearBilled": "per year · billed yearly"
+      },
+      "annualSavings": {
+        "withSavings": "You pay {{yearlyTotal}}/year · save {{saving}} vs monthly",
+        "billedYearly": "Billed {{yearlyTotal}} yearly"
+      },
+      "cta": {
+        "free": "Start free",
+        "trial": "Start {{days}}-day trial",
+        "startAt": "Start at {{price}}",
+        "FLEX": "See Flex pricing",
+        "ENTERPRISE": "Talk to sales",
+        "ON_PREMISE": "Request a demo",
+        "default": "Get started"
+      },
+      "entitlements": {
+        "maxTenants": {
+          "upTo": "Up to {{count}} tenants",
+          "unlimited": "Unlimited tenants"
+        },
+        "maxTenantUsers": {
+          "upTo": "Up to {{count}} identities",
+          "unlimited": "Unlimited identities"
+        },
+        "maxClientApps": {
+          "upTo": "Up to {{count}} apps",
+          "unlimited": "Unlimited apps"
+        },
+        "maxAdmins": {
+          "upTo": "Up to {{count}} admins",
+          "unlimited": "Unlimited admins"
+        },
+        "maxMonthlyTokens": {
+          "upTo": "{{count}} tokens/month",
+          "unlimited": "Unlimited tokens"
+        },
+        "auditLogDays": {
+          "upTo": "{{count}}-day audit logs",
+          "unlimited": "Unlimited audit logs"
+        },
+        "socialLogin": {
+          "enabled": "Social Login included"
+        },
+        "customDomain": {
+          "enabled": "Custom domain"
+        },
+        "slaUptimePct": {
+          "value": "{{value}}% uptime SLA"
+        },
+        "prioritySupport": {
+          "enabled": "Priority support"
+        },
+        "customSla": {
+          "enabled": "Custom SLA"
+        },
+        "dedicatedSuccessMgr": {
+          "enabled": "Dedicated Success Manager"
+        }
+      },
+      "plans": {
+        "FREE": {
+          "name": "Free",
+          "description": "The essentials to get started with centralized identity management."
+        },
+        "PERSONAL": {
+          "name": "Personal",
+          "description": "For professionals and small projects that need a secure foundation."
+        },
+        "TEAM": {
+          "name": "Team",
+          "description": "For growing teams that need collaboration and more capacity."
+        },
+        "BUSINESS": {
+          "name": "Business",
+          "description": "For organizations that need to scale with control, traceability, and support."
+        },
+        "FLEX": {
+          "name": "Flex",
+          "description": "Flexible model to scale according to usage and operational needs."
+        },
+        "ENTERPRISE": {
+          "name": "Enterprise",
+          "description": "Advanced coverage for complex environments with specialized guidance."
+        },
+        "STARTER": {
+          "name": "Starter",
+          "description": "Fast entry point to validate the product with simple setup."
+        },
+        "ON_PREMISE": {
+          "name": "On-premise",
+          "description": "Dedicated deployment in your own infrastructure for corporate requirements."
+        }
+      }
     },
     "recovery": {
       "catalogLabel": "plan catalog",

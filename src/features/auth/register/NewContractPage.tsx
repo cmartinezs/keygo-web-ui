@@ -40,6 +40,7 @@ import {
   runGetWithRecovery,
 } from '@/shared/lib/network/recovery'
 import { normalizeLocale } from '@/shared/lib/i18n/localeUtils'
+import { planSupportsPeriod } from '@/shared/ui/plans'
 import { IconSearch, IconArrowRight } from '@/shared/ui/icons/definitions'
 
 // ── Step definitions ──────────────────────────────────────────────────────────
@@ -432,6 +433,15 @@ export default function NewContractPage() {
       null
     handlePlanSelect(match, version, billingOption)
   }, [plans, planParam]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!selectedPlan || !selectedVersion) return
+    if (planSupportsPeriod(selectedPlan, activePeriod)) return
+
+    setSelectedPlan(null)
+    setSelectedVersion(null)
+    setSelectedBillingOption(null)
+  }, [activePeriod, selectedPlan, selectedVersion])
 
   useEffect(() => {
     if (resumeParam !== '1') return
