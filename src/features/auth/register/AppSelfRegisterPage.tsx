@@ -355,14 +355,14 @@ export default function AppSelfRegisterPage() {
                 </div>
               ) : (
                 <>
-                  {step === 0 && (
+                  {step === 0 && !done && (
                     <AppSelfRegisterSelectAppStep
                       onNext={handleSelectApp}
                       initialTenantSlug={context?.tenantSlug}
                       initialClientId={context?.clientId}
                     />
                   )}
-                  {step === 1 && context && (
+                  {step === 1 && context && !done && (
                     <AppSelfRegisterFormStep
                       tenantName={context.tenantName}
                       appName={context.appName}
@@ -382,6 +382,13 @@ export default function AppSelfRegisterPage() {
                       onSubmit={handleVerifyCode}
                       onResend={handleResendVerificationCode}
                       isResending={isResendingCode}
+                    />
+                  )}
+                  {done && context && (
+                    <AppSelfRegisterSuccessStep
+                      tenantName={context.tenantName}
+                      appName={context.appName}
+                      email={context.email}
                     />
                   )}
                 </>

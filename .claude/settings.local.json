@@ -6,7 +6,8 @@
       "Bash(npx eslint *)",
       "WebFetch(domain:api.anthropic.com)",
       "Read(//c/Users/cmartinezs/.claude/projects/C--Users-cmartinezs-IdeaProjects-keygo-web-ui/db7eee97-bf09-41c2-9c71-2eebed917baf/tool-results/**)",
-      "Bash(gunzip -c webfetch-1776532525395-ta7o2n.bin)"
+      "Bash(gunzip -c webfetch-1776532525395-ta7o2n.bin)",
+      "Bash(tar -xv)"
     ]
   }
 }
