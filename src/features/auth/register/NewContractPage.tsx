@@ -4,10 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
+import { generateCodeChallenge, generateCodeVerifier, generateState } from '@/shared/lib/auth/pkce'
 import {
   getPlatformBillingCatalog,
   PLATFORM_BILLING_QUERY_KEYS,
 } from '@/features/ops/billing/api'
+import { platformAuthorize, platformCheckEmail } from '@/features/auth/api'
 import {
   getBillingContract,
   createBillingContract,
@@ -41,7 +43,7 @@ import {
 } from '@/shared/lib/network/recovery'
 import { normalizeLocale } from '@/shared/lib/i18n/localeUtils'
 import { planSupportsPeriod } from '@/shared/ui/plans'
-import { IconSearch, IconArrowRight } from '@/shared/ui/icons/definitions'
+import { IconSearch } from '@/shared/ui/icons/definitions'
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 
@@ -88,7 +90,7 @@ interface ResumeLookupStepProps {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
   isLoading: boolean
   error: string | null
-  onExit: () => void
+  isInputLocked?: boolean
 }
 
 function StepIndicator({ current, done }: StepIndicatorProps) {
@@ -266,7 +268,7 @@ function ResumeLookupStep({
   onSubmit,
   isLoading,
   error,
-  onExit: _onExit,
+  isInputLocked = false,
 }: ResumeLookupStepProps) {
   const { t } = useTranslation()
   return (
@@ -289,11 +291,13 @@ function ResumeLookupStep({
           placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
           value={inputId}
           onChange={(event) => onInputChange(event.target.value)}
+          readOnly={isInputLocked}
           className={`w-full rounded-lg border px-3 py-2.5 text-sm font-mono text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-            error ? 'border-red-400 bg-red-50' : 'border-slate-300 bg-white'
+            error ? 'border-red-400 bg-red-50' : isInputLocked ? 'border-slate-300 bg-slate-50 text-slate-600' : 'border-slate-300 bg-white'
           }`}
           aria-describedby={error ? 'resume-contract-error' : 'resume-contract-hint'}
           aria-invalid={error ? true : undefined}
+          aria-readonly={isInputLocked || undefined}
         />
         {error ? (
           <p id="resume-contract-error" className="text-xs text-red-600" role="alert">{error}</p>
@@ -364,12 +368,16 @@ export default function NewContractPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [processError, setProcessError] = useState<string | null>(null)
   const [isResending, setIsResending] = useState(false)
+  const [isCheckingContractorEmail, setIsCheckingContractorEmail] = useState(false)
+  const [contractorStepError, setContractorStepError] = useState<string | null>(null)
+  const [contractorEmailError, setContractorEmailError] = useState<string | null>(null)
 
   const honeypot = useHoneypot()
   const [searchParams] = useSearchParams()
   const planParam = searchParams.get('plan')?.toUpperCase() ?? null
   const periodParam = searchParams.get('period')?.toUpperCase() as BillingPeriod | null
   const resumeParam = searchParams.get('resume')
+  const contractIdParam = searchParams.get('contract_id')?.trim() ?? ''
 
   async function fetchCatalogWithRecovery(signal: AbortSignal): Promise<AppPlan[]> {
     return runGetWithRecovery({
@@ -447,8 +455,11 @@ export default function NewContractPage() {
     if (resumeParam !== '1') return
     setIsResumeMode(true)
     setResumePhase('lookup')
+    if (contractIdParam) {
+      setResumeInputId(contractIdParam)
+    }
     setStep(3)
-  }, [resumeParam])
+  }, [resumeParam, contractIdParam])
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -458,9 +469,86 @@ export default function NewContractPage() {
     setSelectedBillingOption(billingOption)
   }
 
-  function handleContractorNext(data: ContractorFormValues) {
-    setContractor(data)
-    setStep(2)
+  function handleContractorEmailChange() {
+    if (!contractorEmailError) return
+    setContractorEmailError(null)
+  }
+
+  async function bootstrapPlatformAuthorizationSession() {
+    const verifier = generateCodeVerifier()
+    const challenge = await generateCodeChallenge(verifier)
+    const state = generateState()
+
+    await platformAuthorize(
+      { codeChallenge: challenge, state },
+      { timeoutMs: WRITE_OPERATION_TIMEOUT_MS },
+    )
+  }
+
+  async function ensureNewPlatformUser(email: string) {
+    const checkEmailOptions = {
+      timeoutMs: WRITE_OPERATION_TIMEOUT_MS,
+      idempotencyKey: `kg-platform-check-email-${normalizeKeySegment(email)}`,
+    }
+
+    try {
+      const status = await platformCheckEmail({ email }, checkEmailOptions)
+      return status === 'not_found'
+    } catch (error) {
+      const appError = getAppApiError(error)
+
+      if (appError.code !== 'AUTHENTICATION_REQUIRED' && appError.httpStatus !== 401) {
+        throw error
+      }
+
+      const toastId = toast.loading(t('subscribe.messages.restoringSession'))
+
+      try {
+        await bootstrapPlatformAuthorizationSession()
+        toast.success(t('subscribe.messages.sessionRestored'), { id: toastId })
+      } catch (sessionError) {
+        toast.error(t('subscribe.messages.sessionRestoreFailed'), { id: toastId })
+        throw sessionError
+      }
+
+      const status = await platformCheckEmail({ email }, checkEmailOptions)
+      return status === 'not_found'
+    }
+  }
+
+  async function handleContractorNext(data: ContractorFormValues) {
+    setIsCheckingContractorEmail(true)
+    setContractorStepError(null)
+    setContractorEmailError(null)
+
+    try {
+      const isNewPlatformUser = await ensureNewPlatformUser(data.email)
+
+      if (!isNewPlatformUser) {
+        setContractorEmailError(t('subscribe.errors.emailAlreadyExists'))
+        return
+      }
+
+      setContractor(data)
+      setStep(2)
+    } catch (err: unknown) {
+      if (isRequestTimeout(err)) {
+        setContractorStepError(buildTimeoutStateMessage(t('subscribe.recovery.checkEmailAction'), {
+          retryHint: t('subscribe.recovery.connectionHint'),
+        }))
+        notifyMutationTimeout(t('subscribe.recovery.checkEmailAction'))
+        return
+      }
+
+      const appError = getAppApiError(err)
+      if (appError.code === 'AUTHENTICATION_REQUIRED' || appError.httpStatus === 401) {
+        setContractorStepError(t('subscribe.errors.sessionExpired'))
+      } else {
+        setContractorStepError(getUserMessage(appError))
+      }
+    } finally {
+      setIsCheckingContractorEmail(false)
+    }
   }
 
   function syncPlanSelectionFromContract(contract: AppContract): boolean {
@@ -765,6 +853,10 @@ export default function NewContractPage() {
                         defaultValues={contractor ?? {}}
                         onBack={() => setStep(0)}
                         onNext={handleContractorNext}
+                        onEmailChange={handleContractorEmailChange}
+                        isSubmitting={isCheckingContractorEmail}
+                        error={contractorStepError}
+                        emailError={contractorEmailError}
                       />
                     )}
 
@@ -792,7 +884,7 @@ export default function NewContractPage() {
                         onSubmit={handleResumeLookup}
                         isLoading={isResumingContract}
                         error={resumeLookupError}
-                        onExit={stopResumeMode}
+                        isInputLocked={Boolean(contractIdParam)}
                       />
                     )}
 

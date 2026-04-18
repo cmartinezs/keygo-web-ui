@@ -32,6 +32,8 @@ Todos los endpoints de perfil, contraseña, sesiones y preferencias del usuario 
 | ------------------------------------- | ------ | ------- | ------------------------------------- | --- | ------------- | --------------------------------------- |
 | `account/profile`                     | GET    | ✅      | ✅ getProfile                         | ❌  | ✅ Productivo | Devuelve claims OIDC extendidos         |
 | `account/profile`                     | PATCH  | ✅      | ✅ updateProfile                      | ❌  | ✅ Productivo | Semántica PATCH — solo no-null          |
+| `platform/account/profile`            | GET    | ✅*     | ✅ getPlatformProfile                 | ❌  | ✅ Productivo | Perfil self-service de platform user (`tenant_id = null`) |
+| `platform/account/profile`            | PATCH  | ✅*     | ✅ updatePlatformProfile              | ❌  | ✅ Productivo | Solo `first_name`, `last_name`, `phone_number`, `locale`, `zoneinfo`, `profile_picture_url` |
 | `account/change-password`             | POST   | ✅      | ✅ changePassword                     | ❌  | ✅ Productivo | Requiere contraseña actual              |
 | `account/forgot-password`             | POST   | ✅      | ✅ forgotPassword                     | ❌  | ✅ Productivo | Anti-enumeración: siempre 200           |
 | `account/recover-password`            | POST   | ✅      | ✅ recoverPassword                    | ❌  | ✅ Productivo | Usa token one-time de email             |
@@ -45,7 +47,9 @@ Todos los endpoints de perfil, contraseña, sesiones y preferencias del usuario 
 | `account/connections/{provider}/link` | POST   | ✅      | ✅ linkAccountConnection              | ❌  | ✅ Productivo | Integrado en `ConnectionsPanel.tsx`     |
 | `account/connections/{connectionId}`  | DELETE | ✅      | ✅ unlinkAccountConnection            | ❌  | ✅ Productivo | Integrado en `ConnectionsPanel.tsx`     |
 
-**Resumen:** 14 endpoints. **14 productivos ✅**
+**Resumen:** 16 endpoints. **16 productivos ✅**
+
+\* `platform/account/profile` fue confirmado por backend en `docs/02-functional/feedback/out/BE-007-platform-account-profile.md` mientras `docs/api-docs.json` local se sincroniza al siguiente snapshot.
 
 ---
 

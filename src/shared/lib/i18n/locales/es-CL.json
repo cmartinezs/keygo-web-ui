@@ -8,6 +8,9 @@
     "language": "Idioma",
     "theme": "Tema",
     "search": "Buscar",
+    "clear": "Limpiar",
+    "noResults": "Sin resultados",
+    "scrollForMore": "Desplázate para más",
     "notifications": "Notificaciones",
     "userMenu": "Menú de usuario",
     "myAccount": "Mi cuenta",
@@ -24,7 +27,8 @@
     "noMoreOptions": "Sin más opciones",
     "admin": "Admin",
     "allRightsReserved": "Todos los derechos reservados",
-    "allSystemsOperational": "Todos los sistemas operan con normalidad"
+    "allSystemsOperational": "Todos los sistemas operan con normalidad",
+    "accessDeniedTitle": "Acceso denegado"
   },
   "policyModal": {
     "close": "Cerrar",
@@ -62,8 +66,8 @@
     "activeRole": "Rol activo",
     "role": "Rol",
     "adminGlobal": "Administrador Global",
-    "adminTenant": "Administrador Tenant",
-    "userTenant": "Usuario Tenant"
+    "adminTenant": "Administrador de Cuenta",
+    "userTenant": "Usuario KeyGo"
   },
   "auth": {
     "title": "Iniciar sesión",
@@ -112,6 +116,7 @@
     "emailLabel": "Correo electrónico",
     "newPasswordLabel": "Nueva contraseña",
     "confirmPasswordLabel": "Confirmar nueva contraseña",
+    "passwordsMatch": "Las contraseñas coinciden.",
     "show": "Mostrar",
     "hide": "Ocultar",
     "errors": {
@@ -288,8 +293,8 @@
           ]
         },
         "tenantAdmin": {
-          "title": "Administrador de Tenant",
-          "description": "Gestión autónoma dentro de su organización. Administra usuarios, permisos y configuraciones sin depender del equipo técnico central.",
+          "title": "Administrador de Cuenta",
+          "description": "Gestión autónoma de la cuenta y la organización. Administra usuarios, permisos y configuraciones sin depender del equipo técnico central.",
           "capabilities": [
             "Gestionar usuarios del tenant",
             "Asignar y revocar roles",
@@ -526,6 +531,7 @@
       "catalogLabel": "catálogo de planes",
       "contractLabel": "contrato",
       "contractLookupAction": "consulta del contrato",
+      "checkEmailAction": "validación del correo",
       "retryHint": "Intenta nuevamente en unos minutos.",
       "createContractAction": "creación del contrato",
       "connectionHint": "Verifica tu conexión y vuelve a intentarlo.",
@@ -538,13 +544,18 @@
     },
     "errors": {
       "invalidInput": "Los datos introducidos no son válidos. Por favor, revísalos e inténtalo de nuevo.",
-      "invalidCode": "El código es incorrecto o ha expirado. Revisa tu correo e inténtalo de nuevo."
+      "invalidCode": "El código es incorrecto o ha expirado. Revisa tu correo e inténtalo de nuevo.",
+      "sessionExpired": "No pudimos validar tu sesión de contratación. Vuelve a intentarlo en unos segundos.",
+      "emailAlreadyExists": "Ese correo ya existe. Usa otro correo para continuar."
     },
     "messages": {
       "codeResent": "Código reenviado. Revisa tu bandeja de entrada.",
       "accountActivated": "¡Cuenta activada exitosamente!",
       "resendFailed": "No se pudo reenviar el código. Inténtalo de nuevo más tarde.",
-      "activationFailed": "No se pudo completar la activación. Por favor, inténtalo de nuevo."
+      "activationFailed": "No se pudo completar la activación. Por favor, inténtalo de nuevo.",
+      "restoringSession": "Recuperando la sesión de contratación…",
+      "sessionRestored": "Sesión de contratación recuperada.",
+      "sessionRestoreFailed": "No pudimos recuperar la sesión de contratación."
     },
     "period": {
       "monthly": "Mensual",
@@ -585,7 +596,8 @@
           "lastNameRequired": "Los apellidos son requeridos",
           "emailInvalid": "Introduce un correo electrónico válido",
           "companyNameRequired": "El nombre de la empresa es requerido (min. 2 caracteres)"
-        }
+        },
+        "checkingEmail": "Validando correo…"
       },
       "terms": {
         "title": "Resumen y condiciones",
@@ -818,7 +830,7 @@
       },
       "organizationOverview": {
         "question": "¿Qué puedo hacer en Mi organización?",
-        "answer": "Administrar usuarios y aplicaciones de tu tenant desde una vista central orientada al rol keygo_tenant_admin."
+        "answer": "Administrar usuarios y aplicaciones de tu organización desde una vista central orientada al rol keygo_account_admin."
       },
       "organizationUsersApps": {
         "question": "¿En qué orden conviene configurar Usuarios y Apps?",
@@ -891,10 +903,24 @@
     "searchPlaceholder": "Buscar por nombre...",
     "searchAria": "Buscar tenant por nombre",
     "errorLoad": "Error al cargar tenants.",
+    "accessDeniedTitle": "No tienes acceso a este recurso",
+    "accessContextMissingMessage": "No pudimos validar tus tenants asociados porque la sesion actual no expone un correo de cuenta utilizable para esta consulta.",
+    "accessDeniedBody": "La ruta existe y tu rol puede verla en la UI, pero el backend todavia no habilita esta operacion para tu cuenta o para el tenant seleccionado.",
+    "accessDeniedAction": "Volver al dashboard",
+    "reportAction": "Reportar posible error",
+    "reportCancel": "Cancelar reporte",
+    "reportCommentLabel": "Cuentanos por que crees que esto es un error",
+    "reportCommentPlaceholder": "Ejemplo: soy administrador de cuenta, este contrato ya esta activo y deberia poder ver los tenants asociados.",
+    "reportCommentRequired": "Debes indicar por que crees que esto es un error.",
+    "reportHelpText": "Se enviaran tu comentario, el contexto funcional de la pantalla y los datos tecnicos del error para que KeyGo lo revise o lo derive como incidente.",
+    "reportSubmit": "Enviar reporte",
+    "reportSubmitting": "Enviando reporte...",
+    "reportSuccess": "Reporte enviado correctamente. El equipo de KeyGo lo revisara.",
     "noSearchResults": "Sin resultados para la búsqueda.",
     "noCategory": "No hay tenants en esta categoría.",
     "emptyTitle": "Selecciona un tenant",
     "emptyBody": "Elige un tenant de la lista para ver su detalle, o crea uno nuevo para comenzar.",
+    "emptyAssociatedBody": "Elige uno de tus tenants asociados para revisar su detalle y continuar su gestión.",
     "newTenant": "Nuevo tenant",
     "pagination": "{{total}} tenants - p. {{page}}/{{totalPages}}",
     "pagePrevious": "Página anterior",
@@ -1512,6 +1538,154 @@
       "ISSUED": "Emitida",
       "OVERDUE": "Vencida",
       "VOID": "Anulada"
+    }
+  },
+  "appSelfRegister": {
+    "title": "Registrate en {{appName}}",
+    "layout": {
+      "summaryTitle": "Resumen",
+      "summaryTenant": "Organización",
+      "summaryApp": "Aplicación",
+      "summaryEmail": "Correo",
+      "summaryCompleted": "Registro completado",
+      "currentStep": "Paso actual",
+      "completed": "Completado"
+    },
+    "stepIndicator": {
+      "selectApp": "Seleccionar",
+      "register": "Registrarse",
+      "verifyEmail": "Verificar",
+      "confirmCode": "Confirmar",
+      "success": "Listo"
+    },
+    "steps": {
+      "selectApp": {
+        "title": "Elige Tu Plataforma",
+        "description": "Selecciona la organización y aplicación a la que quieres acceder",
+        "loading": "Cargando organizaciones...",
+        "errorTitle": "No se pudo conectar con el servidor",
+        "errorDescription": "Verifica tu conexión e intenta nuevamente.",
+        "tenantLabel": "Organización",
+        "tenantPlaceholder": "Selecciona una organización...",
+        "tenantError": "La organización es requerida",
+        "tenantsLoadError": "No se pudieron cargar las organizaciones. Recarga la página e intenta de nuevo.",
+        "appLabel": "Aplicación",
+        "appPlaceholder": "Selecciona una aplicación...",
+        "appError": "La aplicación es requerida",
+        "appsLoadError": "No se pudieron cargar las aplicaciones. Intenta seleccionar otra organización.",
+        "noTenants": "No hay organizaciones disponibles",
+        "noApps": "No hay aplicaciones disponibles para esta organización",
+        "noAppsAvailable": "No hay aplicaciones disponibles con auto-registro habilitado. Contacta a tu administrador."
+      },
+      "form": {
+        "title": "Crea Tu Cuenta",
+        "description": "Completa tu información para comenzar",
+        "firstNameLabel": "Nombre",
+        "firstNamePlaceholder": "Juan",
+        "firstNameError": "El nombre es requerido",
+        "lastNameLabel": "Apellido",
+        "lastNamePlaceholder": "Pérez",
+        "lastNameError": "El apellido es requerido",
+        "emailLabel": "Correo Electrónico",
+        "emailPlaceholder": "tu.correo@ejemplo.com",
+        "emailError": "Correo válido es requerido",
+        "emailExists": "Este correo ya está registrado",
+        "usernameLabel": "Nombre de Usuario",
+        "usernamePlaceholder": "elige_un_usuario",
+        "usernameError": "El nombre de usuario debe tener 4-20 caracteres",
+        "usernameExists": "Este nombre de usuario ya está en uso",
+        "passwordLabel": "Contraseña",
+        "passwordPlaceholder": "Crea una contraseña fuerte",
+        "passwordError": "La contraseña debe tener al menos 8 caracteres",
+        "confirmPasswordLabel": "Confirma Tu Contraseña",
+        "confirmPasswordPlaceholder": "Confirma tu contraseña",
+        "confirmPasswordError": "Las contraseñas no coinciden",
+        "agreeTerms": "Acepto los Términos de Servicio y la Política de Privacidad",
+        "agreeTermsError": "Debes aceptar los términos"
+      },
+      "form": {
+        "title": "Crea Tu Cuenta",
+        "description": "Completa tu información para registrarte en {{appName}} de {{tenantName}}",
+        "firstName": "Nombre",
+        "firstNamePlaceholder": "Juan",
+        "lastName": "Apellido",
+        "lastNamePlaceholder": "Pérez",
+        "email": "Correo Electrónico",
+        "emailPlaceholder": "tu.correo@ejemplo.com",
+        "username": "Nombre de Usuario",
+        "usernamePlaceholder": "elige_tu_usuario",
+        "password": "Contraseña",
+        "confirmPassword": "Confirmar Contraseña",
+        "registerError": "No se pudo crear la cuenta. Intenta nuevamente.",
+        "validation": {
+          "nameRequired": "El nombre es requerido",
+          "lastNameRequired": "El apellido es requerido",
+          "emailInvalid": "Correo válido requerido",
+          "emailAlreadyExists": "Ese correo ya existe. Usa otro correo para continuar.",
+          "usernameMinLength": "El nombre de usuario debe tener al menos 3 caracteres",
+          "usernameInvalid": "El nombre de usuario solo puede contener letras, números, puntos, guiones y guiones bajos",
+          "passwordMinLength": "La contraseña debe tener al menos 12 caracteres",
+          "passwordUppercase": "La contraseña debe contener al menos una letra mayúscula",
+          "passwordLowercase": "La contraseña debe contener al menos una letra minúscula",
+          "passwordNumber": "La contraseña debe contener al menos un número",
+          "passwordSpecial": "La contraseña debe contener al menos un carácter especial (!@#$%^&*)",
+          "confirmPasswordRequired": "Confirma tu contraseña",
+          "passwordsMatch": "Las contraseñas coinciden",
+          "passwordsMismatch": "Las contraseñas no coinciden"
+        }
+      },
+      "verifyEmail": {
+        "title": "Verifica Tu Correo",
+        "description": "Enviamos un código de verificación a {{email}}",
+        "sentTo": "Enviamos un código de verificación a",
+        "checkSpam": "Si no ves el correo, revisa tu carpeta de spam",
+        "resendCode": "Reenviar código",
+        "resendSuccess": "Código de verificación reenviado exitosamente",
+        "resendError": "No se pudo reenviar el código. Intenta nuevamente.",
+        "timeRemaining": "Vence en {{minutes}}m {{seconds}}s",
+        "expired": "Código de verificación expirado",
+        "ready": "¿Listo para verificar?"
+      },
+      "confirmCode": {
+        "title": "Ingresa el Código de Verificación",
+        "description": "Revisa tu correo e ingresa el código de 6 dígitos",
+        "codeLabel": "Código de Verificación",
+        "codePlaceholder": "000000",
+        "invalidCode": "Código inválido u expirado",
+        "error": "No se pudo verificar el código"
+      },
+      "success": {
+        "title": "¡Bienvenido!",
+        "description": "Tu cuenta en {{appName}} de {{tenantName}} está lista"
+      }
+    },
+    "messages": {
+      "restoringSession": "Recuperando sesión...",
+      "sessionRestored": "Sesión recuperada",
+      "sessionRestoreFailed": "No se pudo recuperar la sesión"
+    },
+    "actions": {
+      "back": "Atrás",
+      "next": "Siguiente",
+      "continue": "Continuar a Código",
+      "register": "Crear Cuenta",
+      "registering": "Creando cuenta...",
+      "verify": "Verificar",
+      "verifying": "Verificando...",
+      "goToLogin": "Ir a Iniciar Sesión"
+    },
+    "errors": {
+      "networkError": "Error de conexión. Verifica tu internet e intenta nuevamente.",
+      "serverError": "Error del servidor. Intenta más tarde.",
+      "unexpectedError": "Ocurrió un error inesperado",
+      "sessionInitFailed": "No se pudo inicializar la sesión",
+      "sessionLoadFailed": "No se pudo cargar la sesión de registro",
+      "loadingSession": "Cargando sesión de registro...",
+      "resendFailed": "No se pudo reenviar el código. Intenta nuevamente.",
+      "codeResent": "Código de verificación reenviado exitosamente",
+      "emailAlreadyExists": "Ya existe una cuenta con ese correo.",
+      "emailAlreadyExistsHint": "¿Ya tienes cuenta?",
+      "sessionExpired": "Tu sesión expiró. Recarga la página e intenta nuevamente."
     }
   }
 }

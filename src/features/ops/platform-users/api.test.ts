@@ -43,9 +43,9 @@ describe('platform users api wrappers', () => {
           },
           {
             id: '10000000-0000-0000-0000-000000000002',
-            code: 'keygo_tenant_admin',
-            name: 'KeyGo Tenant Admin',
-            description: 'Tenant administration across managed organizations',
+            code: 'keygo_account_admin',
+            name: 'KeyGo Account Admin',
+            description: 'Account administration across managed organizations',
           },
         ],
       },
@@ -66,9 +66,9 @@ describe('platform users api wrappers', () => {
       },
       {
         id: '10000000-0000-0000-0000-000000000002',
-        code: 'keygo_tenant_admin',
-        name: 'KeyGo Tenant Admin',
-        description: 'Tenant administration across managed organizations',
+        code: 'keygo_account_admin',
+        name: 'KeyGo Account Admin',
+        description: 'Account administration across managed organizations',
       },
     ]);
   });

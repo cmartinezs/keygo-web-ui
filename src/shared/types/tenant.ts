@@ -9,6 +9,14 @@ export interface TenantData {
   created_at: string
 }
 
+/** Respuesta de GET /api/v1/tenants/public — descubrimiento público sin auth */
+export interface TenantPublicData {
+  id: string
+  slug: string
+  name: string
+  description?: string
+}
+
 export interface CreateTenantRequest {
   name: string
   owner_email: string

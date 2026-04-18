@@ -44,9 +44,12 @@ export const ACCOUNT_QUERY_KEYS = {
   connections: (tenantSlug: string) => ['account', 'connections', tenantSlug] as const,
 } as const
 
+export const PLATFORM_ACCOUNT_SCOPE = 'platform' as const
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const profileUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/profile`
+const platformProfileUrl = () => `${PLATFORM_URL}/account/profile`
 const changePasswordUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/change-password`
 const forgotPasswordUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/forgot-password`
 const recoverPasswordUrl = (tenantSlug: string) => `${tenantUrl(tenantSlug)}/account/recover-password`
@@ -109,6 +112,18 @@ export async function getProfile(
 }
 
 /**
+ * GET /api/v1/platform/account/profile ✅
+ * Devuelve el perfil self-service del platform user autenticado.
+ */
+export async function getPlatformProfile(options?: RequestOptions): Promise<UserProfileData> {
+  const res = await apiClient.get<BaseResponse<UserProfileData>>(platformProfileUrl(), {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+  })
+  return unwrapResponseData(res.data, 'Error al obtener el perfil de plataforma')
+}
+
+/**
  * PATCH /api/v1/tenants/{tenantSlug}/account/profile ✅
  * Actualiza parcialmente el perfil del usuario autenticado.
  * Solo los campos no-null son modificados (PATCH semántica).
@@ -127,6 +142,24 @@ export async function updateProfile(
       : undefined,
   })
   return unwrapResponseData(res.data, 'Error al actualizar el perfil')
+}
+
+/**
+ * PATCH /api/v1/platform/account/profile ✅
+ * Actualiza parcialmente el perfil self-service del platform user autenticado.
+ */
+export async function updatePlatformProfile(
+  data: UpdateUserProfileRequest,
+  options?: RequestOptions,
+): Promise<UserProfileData> {
+  const res = await apiClient.patch<BaseResponse<UserProfileData>>(platformProfileUrl(), data, {
+    signal: options?.signal,
+    timeout: options?.timeoutMs,
+    headers: options?.idempotencyKey
+      ? { 'X-Idempotency-Key': options.idempotencyKey }
+      : undefined,
+  })
+  return unwrapResponseData(res.data, 'Error al actualizar el perfil de plataforma')
 }
 
 /**

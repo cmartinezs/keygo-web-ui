@@ -55,7 +55,7 @@ export default function AccountSettingsPage() {
   const [searchParams] = useSearchParams()
   const tenantSlug = user?.tenantSlug ?? TENANT
   const activeRole = user?.activeRole ?? null
-  const canViewBilling = activeRole === 'keygo_tenant_admin'
+  const canViewBilling = activeRole === 'keygo_account_admin'
   const settingsTabs: SettingsTabOption[] = useMemo(() => [
     { key: 'security', label: t('accountSettings.security'), icon: <IconShield /> },
     { key: 'notifications', label: t('accountSettings.notifications'), icon: <IconBell /> },

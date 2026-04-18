@@ -18,7 +18,7 @@ const roles: RoleCard[] = [
   },
   {
     key: 'tenantAdmin',
-    tag: 'keygo_tenant_admin',
+    tag: 'keygo_account_admin',
     tagColor: 'bg-amber-100 text-amber-700',
     accentText: 'text-amber-600',
     borderColor: 'border-amber-100 hover:border-amber-300',

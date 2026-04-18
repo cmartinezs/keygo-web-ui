@@ -14,6 +14,23 @@ export interface CurrentUser {
   activeRole: PlatformRole | null
 }
 
+function isLikelyEmail(value: string): boolean {
+  const candidate = value.trim()
+  return candidate.includes('@') && candidate.includes('.')
+}
+
+function readEmailFromClaims(claims: Record<string, unknown>): string | undefined {
+  if (typeof claims.email === 'string' && claims.email.trim().length > 0) {
+    return claims.email.trim()
+  }
+
+  if (typeof claims.preferred_username === 'string' && isLikelyEmail(claims.preferred_username)) {
+    return claims.preferred_username.trim()
+  }
+
+  return undefined
+}
+
 function readTenantSlugFromClaims(claims: Record<string, unknown>): string | undefined {
   if (typeof claims.tenant_slug === 'string' && claims.tenant_slug.trim().length > 0) {
     return claims.tenant_slug
@@ -53,7 +70,7 @@ export function useCurrentUser(): CurrentUser | null {
       ? (decodeJwt(accessToken) as Record<string, unknown>)
       : undefined
 
-    const email = typeof idClaims.email === 'string' ? idClaims.email : undefined
+    const email = readEmailFromClaims(idClaims) ?? (accessClaims ? readEmailFromClaims(accessClaims) : undefined)
     const username =
       typeof idClaims.preferred_username === 'string' ? idClaims.preferred_username : undefined
     const firstName =

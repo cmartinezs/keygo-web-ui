@@ -43,7 +43,7 @@ const FAQ_TABS_BY_ROLE: Record<PlatformRole, FaqTab[]> = {
       items: [{ key: 'accountWhereChangeLanguage' }, { key: 'accountLanguageAutoDetection' }, { key: 'accountLanguageBrowserConfig' }],
     },
   ],
-  keygo_tenant_admin: [
+  keygo_account_admin: [
     {
       key: 'myOrganization',
       labelKey: 'dashboard.myOrganization',

@@ -3,6 +3,8 @@ import { i18n } from '@/shared/lib/i18n/config'
 import {
   getAppApiError,
   getUserMessage,
+  isForbiddenError,
+  isInsufficientPermissionsError,
   isAppApiError,
   normalizeApiError,
   type AppApiError,
@@ -111,6 +113,46 @@ describe('errorNormalizer', () => {
 
     const resolved = getAppApiError(error)
     expect(resolved).toBe(attached)
+  })
+
+  it('detects forbidden insufficient permissions errors', () => {
+    const error = createAxiosLikeError({
+      status: 403,
+      data: {
+        date: '2026-04-14T11:08:57.9233973',
+        failure: { code: 'INSUFFICIENT_PERMISSIONS', message: 'Insufficient permissions for this operation' },
+        data: {
+          code: 'INSUFFICIENT_PERMISSIONS',
+          client_message: "You don't have permission to perform this action.",
+          detail: 'Access Denied',
+          exception: 'AuthorizationDeniedException',
+          origin: 'BUSINESS_RULE',
+          trace_id: '0fa43e27-1c68-435d-a75f-c75a72660a02',
+        } as unknown as ErrorResponse['data'],
+      },
+    })
+
+    expect(isForbiddenError(error)).toBe(true)
+    expect(isInsufficientPermissionsError(error)).toBe(true)
+  })
+
+  it('does not treat other business rule errors as insufficient permissions', () => {
+    const error = createAxiosLikeError({
+      status: 422,
+      data: {
+        date: '2026-04-07T15:43:36Z',
+        failure: { code: 'BUSINESS_RULE_VIOLATION', message: 'Business rule validation failed' },
+        data: {
+          client_message: "This operation can't be completed in the current state.",
+          code: 'BUSINESS_RULE_VIOLATION',
+          detail: 'Current password is incorrect',
+          origin: 'BUSINESS_RULE',
+        } as unknown as ErrorResponse['data'],
+      },
+    })
+
+    expect(isForbiddenError(error)).toBe(false)
+    expect(isInsufficientPermissionsError(error)).toBe(false)
   })
 
   it('isAppApiError identifies normalized errors', () => {

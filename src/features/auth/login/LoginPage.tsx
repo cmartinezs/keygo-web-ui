@@ -58,7 +58,7 @@ type LoginFormValues = {
 
 function resolveRedirectPath(roles: PlatformRole[]): string {
   if (roles.includes('keygo_admin')) return '/dashboard'
-  if (roles.includes('keygo_tenant_admin')) return '/dashboard'
+  if (roles.includes('keygo_account_admin')) return '/dashboard'
   if (roles.includes('keygo_user')) return '/dashboard'
   return '/dashboard'
 }

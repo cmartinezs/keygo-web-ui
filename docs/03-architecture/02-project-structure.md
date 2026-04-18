@@ -46,7 +46,7 @@ src/
 | Ruta                              | Responsabilidad                                                 |
 | --------------------------------- | --------------------------------------------------------------- |
 | `src/app/guards/roleGuard.tsx`    | `AuthGuard` y `RoleGuard` para proteger rutas por sesión y rol. |
-| `src/app/layouts/AdminLayout.tsx` | Layout principal del dashboard autenticado.                     |
+| `src/app/layouts/AdminLayout.tsx` | Layout principal del dashboard autenticado; resuelve la identidad visible del usuario combinando claims del token con `getProfile()` para evitar degradar a IDs técnicos tras restaurar sesión. |
 | `src/app/layouts/SidebarMenu.tsx` | Navegación lateral y composición del shell principal.           |
 
 ## `src/features/`
@@ -57,7 +57,7 @@ Los módulos de `features/` agrupan el comportamiento por contexto funcional:
 | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `src/features/public/`  | Superficies públicas: landing y documentación pública para developers.                                      |
 | `src/features/auth/`    | Login, recuperación de acceso, logout, registro y contratación.                                             |
-| `src/features/account/` | Áreas de cuenta del usuario: perfil, settings, sesiones, seguridad, actividad, conexiones y notificaciones. |
+| `src/features/account/` | Áreas de cuenta del usuario: perfil, settings, sesiones, seguridad, actividad, conexiones y notificaciones; el módulo de perfil conmuta entre endpoints tenant-scoped y platform-scoped según la sesión activa. |
 | `src/features/console/` | Operación autenticada del tenant: dashboard, apps, users, memberships y billing del tenant.                 |
 | `src/features/ops/`     | Operación global de plataforma: tenants, platform users, stats, billing y dashboard administrativo.         |
 

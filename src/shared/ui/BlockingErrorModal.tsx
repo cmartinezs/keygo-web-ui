@@ -8,8 +8,13 @@ import {
   type NoRoleError,
 } from '@/shared/lib/auth/blockingErrorStore'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
-import { getProfile, ACCOUNT_QUERY_KEYS } from '@/features/account/api'
-import { TENANT } from '@/shared/api/client'
+import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
+import {
+  ACCOUNT_QUERY_KEYS,
+  PLATFORM_ACCOUNT_SCOPE,
+  getPlatformProfile,
+  getProfile,
+} from '@/features/account/api'
 import { env } from '@/shared/lib/config/env'
 import { IconClipboard } from '@/shared/ui/icons'
 
@@ -51,10 +56,14 @@ interface NoRoleContentProps {
 
 function NoRoleContent({ error, actions, onAction }: NoRoleContentProps) {
   const [isCopying, setIsCopying] = useState(false)
+  const currentUser = useCurrentUser()
+  const profileTenantSlug = currentUser?.tenantSlug
+  const profileScopeKey = profileTenantSlug ?? PLATFORM_ACCOUNT_SCOPE
+  const isPlatformProfile = !profileTenantSlug
 
   const { data: profile } = useQuery({
-    queryKey: ACCOUNT_QUERY_KEYS.profile(TENANT),
-    queryFn: () => getProfile(TENANT),
+    queryKey: ACCOUNT_QUERY_KEYS.profile(profileScopeKey),
+    queryFn: () => (isPlatformProfile ? getPlatformProfile() : getProfile(profileTenantSlug ?? env.TENANT_SLUG)),
     retry: 1,
   })
 

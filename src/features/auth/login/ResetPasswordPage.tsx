@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useForm, useController } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -14,6 +14,7 @@ import { isRequestTimeout, notifyMutationTimeout } from '@/shared/lib/network/re
 import { IconShield, IconArrowRight, IconChevronLeft } from '@/shared/ui/icons/definitions'
 import { LocaleSwitcher } from '@/shared/ui/LocaleSwitcher'
 import { ServerErrorBanner } from '@/shared/ui/ServerErrorBanner'
+import { ResetPasswordFields } from './ResetPasswordFields'
 
 // ── OTP input ─────────────────────────────────────────────────────────────────
 
@@ -131,7 +132,6 @@ type ResetTemporaryPasswordForm = {
 
 export default function ResetPasswordPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
   const state = (location.state ?? {}) as ResetPasswordLocationState
@@ -140,8 +140,6 @@ export default function ResetPasswordPage() {
 
   const [isReset, setIsReset] = useState(false)
   const [showTemporaryPassword, setShowTemporaryPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const schema = useMemo(() => buildSchema(t), [t])
 
@@ -163,15 +161,6 @@ export default function ResetPasswordPage() {
 
   const newPassword = watch('new_password') ?? ''
   const confirmPassword = watch('confirm_new_password') ?? ''
-
-  const passwordCriteria = [
-    { key: 'min',     ok: newPassword.length >= 12,       label: t('authRecovery.errors.passwordMin') },
-    { key: 'upper',   ok: /[A-Z]/.test(newPassword),      label: t('authRecovery.errors.passwordUppercase') },
-    { key: 'lower',   ok: /[a-z]/.test(newPassword),      label: t('authRecovery.errors.passwordLowercase') },
-    { key: 'digit',   ok: /\d/.test(newPassword),         label: t('authRecovery.errors.passwordDigit') },
-    { key: 'special', ok: /[^A-Za-z0-9]/.test(newPassword), label: t('authRecovery.errors.passwordSpecial') },
-  ]
-  const passwordsMatch = confirmPassword.length > 0 && newPassword === confirmPassword
 
   const mutation = useMutation({
     mutationFn: (values: ResetTemporaryPasswordForm) =>
@@ -383,121 +372,15 @@ export default function ResetPasswordPage() {
               )}
             </div>
 
-            {/* New password */}
-            <div>
-              <label htmlFor="new-password" className="mb-1 block text-sm font-medium text-slate-200">
-                {t('authRecovery.newPasswordLabel')}
-              </label>
-              <div className="relative">
-                <input
-                  id="new-password"
-                  type={showNewPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2.5 pr-12 text-sm text-white placeholder-slate-500 outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500"
-                  aria-invalid={Boolean(errors.new_password)}
-                  aria-describedby={errors.new_password ? 'new-password-error' : 'new-password-hint'}
-                  {...register('new_password')}
-                />
-                <button
-                  type="button"
-                  aria-label={showNewPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-                  aria-pressed={showNewPassword}
-                  onClick={() => setShowNewPassword((current) => !current)}
-                  className="absolute inset-y-0 right-0 z-10 flex w-11 items-center justify-center rounded-r-lg border-l border-white/10 bg-slate-900/60 text-slate-300 transition-colors hover:bg-slate-800/80 hover:text-white focus-visible:ring-2 focus-visible:ring-indigo-400"
-                >
-                  {showNewPassword ? (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.584 10.587A2 2 0 0012 14a2 2 0 001.414-.586M9.88 5.094A9.76 9.76 0 0112 4.8c4.12 0 7.66 2.55 9.12 6.2a9.58 9.58 0 01-3.62 4.5M6.72 6.72A9.56 9.56 0 002.88 11c.8 2 2.24 3.72 4.02 4.94A9.72 9.72 0 0012 17.2c1.12 0 2.2-.18 3.22-.5" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.88 11c1.46-3.65 5-6.2 9.12-6.2s7.66 2.55 9.12 6.2c-1.46 3.65-5 6.2-9.12 6.2S4.34 14.65 2.88 11z" />
-                      <circle cx="12" cy="11" r="3" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {errors.new_password ? (
-                <p id="new-password-error" role="alert" className="mt-1 text-xs text-red-400">
-                  {errors.new_password.message}
-                </p>
-              ) : null}
-              {newPassword.length > 0 && (
-                <ul className="mt-2 grid grid-cols-1 gap-1" aria-label="Requisitos de la contraseña">
-                  {passwordCriteria.map(({ key, ok, label }) => (
-                    <li key={key} className={`flex items-center gap-1.5 text-xs ${ ok ? 'text-emerald-400' : 'text-slate-400' }`}>
-                      {ok ? (
-                        <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                      {label}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Confirm new password */}
-            <div>
-              <label htmlFor="confirm-password" className="mb-1 block text-sm font-medium text-slate-200">
-                {t('authRecovery.confirmPasswordLabel')}
-              </label>
-              <div className="relative">
-                <input
-                  id="confirm-password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  className="w-full rounded-lg border border-white/15 bg-slate-900/70 px-4 py-2.5 pr-12 text-sm text-white placeholder-slate-500 outline-none transition focus-visible:ring-2 focus-visible:ring-indigo-500"
-                  aria-invalid={Boolean(errors.confirm_new_password)}
-                  aria-describedby={errors.confirm_new_password ? 'confirm-password-error' : undefined}
-                  {...register('confirm_new_password')}
-                />
-                <button
-                  type="button"
-                  aria-label={showConfirmPassword ? t('auth.hidePassword') : t('auth.showPassword')}
-                  aria-pressed={showConfirmPassword}
-                  onClick={() => setShowConfirmPassword((current) => !current)}
-                  className="absolute inset-y-0 right-0 z-10 flex w-11 items-center justify-center rounded-r-lg border-l border-white/10 bg-slate-900/60 text-slate-300 transition-colors hover:bg-slate-800/80 hover:text-white focus-visible:ring-2 focus-visible:ring-indigo-400"
-                >
-                  {showConfirmPassword ? (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.584 10.587A2 2 0 0012 14a2 2 0 001.414-.586M9.88 5.094A9.76 9.76 0 0112 4.8c4.12 0 7.66 2.55 9.12 6.2a9.58 9.58 0 01-3.62 4.5M6.72 6.72A9.56 9.56 0 002.88 11c.8 2 2.24 3.72 4.02 4.94A9.72 9.72 0 0012 17.2c1.12 0 2.2-.18 3.22-.5" />
-                    </svg>
-                  ) : (
-                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.88 11c1.46-3.65 5-6.2 9.12-6.2s7.66 2.55 9.12 6.2c-1.46 3.65-5 6.2-9.12 6.2S4.34 14.65 2.88 11z" />
-                      <circle cx="12" cy="11" r="3" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {errors.confirm_new_password && (
-                <p id="confirm-password-error" role="alert" className="mt-1 text-xs text-red-400">
-                  {errors.confirm_new_password.message}
-                </p>
-              )}
-              {confirmPassword.length > 0 && !errors.confirm_new_password && (
-                <p className={`mt-1 flex items-center gap-1.5 text-xs ${ passwordsMatch ? 'text-emerald-400' : 'text-slate-400' }`}>
-                  {passwordsMatch ? (
-                    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  ) : (
-                    <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                  {t('authRecovery.errors.passwordsMismatch')}
-                </p>
-              )}
-            </div>
+            <ResetPasswordFields
+              passwordRegister={register('new_password')}
+              confirmRegister={register('confirm_new_password')}
+              passwordValue={newPassword}
+              confirmValue={confirmPassword}
+              passwordError={errors.new_password?.message}
+              confirmError={errors.confirm_new_password?.message}
+              disabled={mutation.isPending}
+            />
 
             {/* Errores del servidor no mapeados a campos específicos */}
             <ServerErrorBanner errors={errors} className="dark:border-red-500/20 dark:bg-red-950/40" />

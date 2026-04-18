@@ -266,7 +266,7 @@ sequenceDiagram
     K->>DB: Obtener roles de plataforma\n(platform_user_roles → platform_roles)
     K->>DB: Crear Session\n(platform_user_id, client_app_id = null)
     K-->>C: 200 JWT (access_token + refresh_token)
-    Note left of K: Claims del JWT:\n- sub: platform_user_id\n- roles: [keygo_tenant_admin, keygo_user]\n- type: platform
+    Note left of K: Claims del JWT:\n- sub: platform_user_id\n- roles: [keygo_account_admin, keygo_user]\n- type: platform
 ```
 
 ### JWT del contratante
@@ -277,7 +277,7 @@ El JWT emitido por `POST /api/v1/platform/account/login` contiene:
 | ------- | -------------------------------------- | --------------------------------------- |
 | `sub`   | UUID del `PlatformUser`                | Identifica al usuario de plataforma     |
 | `email` | Email del `PlatformUser`               | Email global del contratante            |
-| `roles` | `["keygo_tenant_admin", "keygo_user"]` | Roles de plataforma asignados           |
+| `roles` | `["keygo_account_admin", "keygo_user"]` | Roles de plataforma asignados          |
 | `type`  | `"platform"`                           | Distingue de tokens OAuth2 multi-tenant |
 
 ### Diferencia con OAuth2 multi-tenant
@@ -286,7 +286,7 @@ El JWT emitido por `POST /api/v1/platform/account/login` contiene:
 | ----------------- | ---------------------------------------------------------------------- | -------------------------------------------------------- |
 | Endpoint de login | `POST /api/v1/platform/account/login`                                  | `POST /api/v1/tenants/{slug}/account/login`              |
 | Identidad         | `PlatformUser` (global)                                                | `TenantUser` (scoped a un tenant)                        |
-| Roles en JWT      | Roles de plataforma: `keygo_user`, `keygo_tenant_admin`, `keygo_admin` | Roles de app: `admin_tenant`, `user_tenant`, etc.        |
+| Roles en JWT      | Roles de plataforma: `keygo_user`, `keygo_account_admin`, `keygo_admin` | Roles de app: `admin_tenant`, `user_tenant`, etc.       |
 | Sesión            | `sessions.platform_user_id` = UUID, `client_app_id` = null             | `sessions.tenant_user_id` = UUID, `client_app_id` = UUID |
 | Uso principal     | Gestión de billing, contratos, suscripciones                           | Acceso a aplicaciones multi-tenant                       |
 

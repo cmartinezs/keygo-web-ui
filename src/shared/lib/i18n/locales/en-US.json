@@ -8,6 +8,9 @@
     "language": "Language",
     "theme": "Theme",
     "search": "Search",
+    "clear": "Clear",
+    "noResults": "No results found",
+    "scrollForMore": "Scroll for more",
     "notifications": "Notifications",
     "userMenu": "User menu",
     "myAccount": "My account",
@@ -24,7 +27,8 @@
     "noMoreOptions": "No more options",
     "admin": "Admin",
     "allRightsReserved": "All Rights Reserved",
-    "allSystemsOperational": "All systems operational"
+    "allSystemsOperational": "All systems operational",
+    "accessDeniedTitle": "Access denied"
   },
   "policyModal": {
     "close": "Close",
@@ -62,8 +66,8 @@
     "activeRole": "Active role",
     "role": "Role",
     "adminGlobal": "Global Administrator",
-    "adminTenant": "Tenant Administrator",
-    "userTenant": "Tenant User"
+    "adminTenant": "Account Administrator",
+    "userTenant": "KeyGo User"
   },
   "auth": {
     "title": "Sign in",
@@ -112,6 +116,7 @@
     "emailLabel": "Email",
     "newPasswordLabel": "New password",
     "confirmPasswordLabel": "Confirm new password",
+    "passwordsMatch": "Passwords match.",
     "show": "Show",
     "hide": "Hide",
     "errors": {
@@ -288,8 +293,8 @@
           ]
         },
         "tenantAdmin": {
-          "title": "Tenant Administrator",
-          "description": "Autonomous management inside your organization. Manage users, permissions, and configuration without depending on the central tech team.",
+          "title": "Account Administrator",
+          "description": "Autonomous account and organization management. Manage users, permissions, and configuration without depending on the central tech team.",
           "capabilities": [
             "Manage tenant users",
             "Assign and revoke roles",
@@ -526,6 +531,7 @@
       "catalogLabel": "plan catalog",
       "contractLabel": "contract",
       "contractLookupAction": "contract lookup",
+      "checkEmailAction": "email validation",
       "retryHint": "Please try again in a few minutes.",
       "createContractAction": "contract creation",
       "connectionHint": "Check your connection and try again.",
@@ -538,13 +544,18 @@
     },
     "errors": {
       "invalidInput": "The entered data is invalid. Please review it and try again.",
-      "invalidCode": "The code is invalid or expired. Check your email and try again."
+      "invalidCode": "The code is invalid or expired. Check your email and try again.",
+      "sessionExpired": "We could not validate your subscription session. Please try again in a few seconds.",
+      "emailAlreadyExists": "That email already exists. Use a different email to continue."
     },
     "messages": {
       "codeResent": "Code resent. Check your inbox.",
       "accountActivated": "Account successfully activated!",
       "resendFailed": "Could not resend the code. Please try again later.",
-      "activationFailed": "Could not complete activation. Please try again."
+      "activationFailed": "Could not complete activation. Please try again.",
+      "restoringSession": "Restoring your subscription session…",
+      "sessionRestored": "Subscription session restored.",
+      "sessionRestoreFailed": "We could not restore the subscription session."
     },
     "period": {
       "monthly": "Monthly",
@@ -585,7 +596,8 @@
           "lastNameRequired": "Last name is required",
           "emailInvalid": "Enter a valid email",
           "companyNameRequired": "Company name is required (min. 2 characters)"
-        }
+        },
+        "checkingEmail": "Validating email..."
       },
       "terms": {
         "title": "Summary and terms",
@@ -818,7 +830,7 @@
       },
       "organizationOverview": {
         "question": "What can I do in My organization?",
-        "answer": "Manage users and applications for your tenant from a central view designed for the keygo_tenant_admin role."
+        "answer": "Manage users and applications for your organization from a central view designed for the keygo_account_admin role."
       },
       "organizationUsersApps": {
         "question": "In what order should I configure Users and Apps?",
@@ -891,10 +903,24 @@
     "searchPlaceholder": "Search by name...",
     "searchAria": "Search tenant by name",
     "errorLoad": "Error loading tenants.",
+    "accessDeniedTitle": "You do not have access to this resource",
+    "accessContextMissingMessage": "We could not validate your associated tenants because the current session does not expose an account email usable for this query.",
+    "accessDeniedBody": "The route exists and your role can see it in the UI, but the backend does not yet allow this operation for your account or the selected tenant.",
+    "accessDeniedAction": "Back to dashboard",
+    "reportAction": "Report possible error",
+    "reportCancel": "Cancel report",
+    "reportCommentLabel": "Tell us why you believe this is an error",
+    "reportCommentPlaceholder": "Example: I am an account administrator, this contract is already active and I should be able to see the associated tenants.",
+    "reportCommentRequired": "You must explain why you believe this is an error.",
+    "reportHelpText": "Your comment, the functional screen context, and the technical error details will be sent so KeyGo can review it or escalate it as an incident.",
+    "reportSubmit": "Send report",
+    "reportSubmitting": "Sending report...",
+    "reportSuccess": "Report sent successfully. The KeyGo team will review it.",
     "noSearchResults": "No results for this search.",
     "noCategory": "There are no tenants in this category.",
     "emptyTitle": "Select a tenant",
     "emptyBody": "Choose a tenant from the list to view details, or create a new one to get started.",
+    "emptyAssociatedBody": "Choose one of your associated tenants to review its details and continue managing it.",
     "newTenant": "New tenant",
     "pagination": "{{total}} tenants - p. {{page}}/{{totalPages}}",
     "pagePrevious": "Previous page",
@@ -1523,6 +1549,151 @@
       "ISSUED": "Issued",
       "OVERDUE": "Overdue",
       "VOID": "Void"
+    }
+  },
+  "appSelfRegister": {
+    "title": "Register for {{appName}}",
+    "layout": {
+      "summaryTitle": "Summary",
+      "summaryTenant": "Organization",
+      "summaryApp": "Application",
+      "summaryEmail": "Email",
+      "summaryCompleted": "Registration completed",
+      "currentStep": "Current step",
+      "completed": "Completed"
+    },
+    "stepIndicator": {
+      "selectApp": "Select",
+      "register": "Register",
+      "verifyEmail": "Verify",
+      "confirmCode": "Confirm",
+      "success": "Done"
+    },
+    "steps": {
+      "selectApp": {
+        "title": "Choose Your Platform",
+        "description": "Select the organization and application you want to join",
+        "loading": "Loading organizations...",
+        "errorTitle": "Could not connect to server",
+        "errorDescription": "Check your connection and try again.",
+        "tenantLabel": "Organization",
+        "tenantPlaceholder": "Select an organization...",
+        "tenantError": "Organization is required",
+        "tenantsLoadError": "Could not load organizations. Please refresh the page and try again.",
+        "appLabel": "Application",
+        "appPlaceholder": "Select an application...",
+        "appError": "Application is required",
+        "appsLoadError": "Could not load applications. Please try selecting another organization.",
+        "noTenants": "No organizations available",
+        "noApps": "No applications available for this organization",
+        "noAppsAvailable": "No applications available with self-registration enabled. Please contact your administrator."
+      },
+      "form": {
+        "title": "Create Your Account",
+        "description": "Fill in your information to get started",
+        "firstNameLabel": "First Name",
+        "firstNamePlaceholder": "John",
+        "firstNameError": "First name is required",
+        "lastNameLabel": "Last Name",
+        "lastNamePlaceholder": "Doe",
+        "lastNameError": "Last name is required",
+        "emailLabel": "Email",
+        "emailPlaceholder": "your.email@example.com",
+        "emailError": "Valid email is required",
+        "emailExists": "This email is already registered",
+        "usernameLabel": "Username",
+        "usernamePlaceholder": "choose_a_username",
+        "usernameError": "Username must be 4-20 characters",
+        "usernameExists": "This username is already taken",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "Create a strong password",
+        "passwordError": "Password must be at least 8 characters",
+        "confirmPasswordLabel": "Confirm Password",
+        "confirmPasswordPlaceholder": "Confirm your password",
+        "confirmPasswordError": "Passwords do not match",
+        "agreeTerms": "I agree to the Terms of Service and Privacy Policy",
+        "agreeTermsError": "You must agree to the terms"
+      },
+      "form": {
+        "title": "Create Your Account",
+        "description": "Fill in your information to register for {{appName}} at {{tenantName}}",
+        "firstName": "First Name",
+        "firstNamePlaceholder": "John",
+        "lastName": "Last Name",
+        "lastNamePlaceholder": "Doe",
+        "email": "Email",
+        "emailPlaceholder": "your.email@example.com",
+        "username": "Username",
+        "usernamePlaceholder": "choose_a_username",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "registerError": "Could not create account. Please try again.",
+        "validation": {
+          "nameRequired": "First name is required",
+          "lastNameRequired": "Last name is required",
+          "emailInvalid": "Valid email is required",
+          "emailAlreadyExists": "That email already exists. Use a different email to continue.",
+          "usernameMinLength": "Username must be at least 3 characters",
+          "usernameInvalid": "Username can only contain letters, numbers, dots, hyphens and underscores",
+          "passwordMinLength": "Password must be at least 12 characters",
+          "passwordUppercase": "Password must contain at least one uppercase letter",
+          "passwordLowercase": "Password must contain at least one lowercase letter",
+          "passwordNumber": "Password must contain at least one number",
+          "passwordSpecial": "Password must contain at least one special character (!@#$%^&*)",
+          "confirmPasswordRequired": "Please confirm your password",
+          "passwordsMatch": "Passwords match",
+          "passwordsMismatch": "Passwords do not match"
+        }
+      },
+      "verifyEmail": {
+        "title": "Verify Your Email",
+        "description": "We sent a verification code to {{email}}",
+        "sentTo": "We sent a verification code to",
+        "checkSpam": "If you don't see the email, please check your spam folder",
+        "resendCode": "Resend code",
+        "resendSuccess": "Verification code resent successfully",
+        "resendError": "Could not resend verification code. Please try again.",
+        "timeRemaining": "Expires in {{minutes}}m {{seconds}}s",
+        "expired": "Verification code expired",
+        "ready": "Ready to verify?"
+      },
+      "confirmCode": {
+        "title": "Enter Verification Code",
+        "description": "Check your email and enter the 6-digit code",
+        "codeLabel": "Verification Code",
+        "codePlaceholder": "000000",
+        "invalidCode": "Invalid or expired code",
+        "error": "Could not verify code"
+      },
+      "success": {
+        "title": "Welcome!",
+        "description": "Your account for {{appName}} at {{tenantName}} is ready"
+      }
+    },
+    "messages": {
+      "restoringSession": "Restoring session...",
+      "sessionRestored": "Session restored",
+      "sessionRestoreFailed": "Failed to restore session"
+    },
+    "actions": {
+      "back": "Back",
+      "next": "Next",
+      "continue": "Continue to Code",
+      "register": "Create Account",
+      "registering": "Creating account...",
+      "verify": "Verify",
+      "verifying": "Verifying...",
+      "goToLogin": "Go to Login"
+    },
+    "errors": {
+      "networkError": "Connection error. Please check your internet and try again.",
+      "serverError": "Server error. Please try again later.",
+      "unexpectedError": "An unexpected error occurred",
+      "sessionInitFailed": "Could not initialize session",
+      "sessionLoadFailed": "Could not load registration session",
+      "loadingSession": "Loading registration session...",
+      "resendFailed": "Could not resend code. Please try again.",
+      "codeResent": "Verification code resent successfully"
     }
   }
 }

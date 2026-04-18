@@ -6,7 +6,16 @@ import { useForm } from 'react-hook-form'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { z } from 'zod'
-import { ACCOUNT_QUERY_KEYS, getAccountAccess, getProfile, getSessions, updateProfile } from '@/features/account/api'
+import {
+  ACCOUNT_QUERY_KEYS,
+  PLATFORM_ACCOUNT_SCOPE,
+  getAccountAccess,
+  getPlatformProfile,
+  getProfile,
+  getSessions,
+  updatePlatformProfile,
+  updateProfile,
+} from '@/features/account/api'
 import { TENANT } from '@/shared/api/client'
 import { getAppApiError, getUserMessage } from '@/shared/api/errorNormalizer'
 import { applyFieldErrors } from '@/shared/hooks/useFieldErrors'
@@ -57,10 +66,27 @@ function formatDateTime(value: string, locale: string): string {
   return parsed.toLocaleString(locale)
 }
 
+function buildProfilePayload(values: ProfileFormData, isPlatformProfile: boolean): UpdateUserProfileRequest {
+  if (isPlatformProfile) {
+    return {
+      first_name: values.first_name,
+      last_name: values.last_name,
+      phone_number: values.phone_number,
+      locale: values.locale,
+      zoneinfo: values.zoneinfo,
+      profile_picture_url: values.profile_picture_url,
+    }
+  }
+
+  return values
+}
+
 export default function UserProfilePage() {
   const { t } = useTranslation()
   const currentUser = useCurrentUser()
   const tenantSlug = currentUser?.tenantSlug ?? TENANT
+  const isPlatformProfile = !currentUser?.tenantSlug
+  const profileScopeKey = isPlatformProfile ? PLATFORM_ACCOUNT_SCOPE : tenantSlug
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<AccountTab>('summary')
   const profileSchema = createProfileSchema()
@@ -79,10 +105,15 @@ export default function UserProfilePage() {
       retryDelayMs: NETWORK_RETRY_DELAY_MS,
       maxRetries: NETWORK_MAX_RETRIES,
       query: () =>
-        getProfile(tenantSlug, {
-          signal,
-          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
-        }),
+        isPlatformProfile
+          ? getPlatformProfile({
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          })
+          : getProfile(tenantSlug, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          }),
     })
   }
 
@@ -117,7 +148,7 @@ export default function UserProfilePage() {
   }
 
   const profileQuery = useQuery({
-    queryKey: ACCOUNT_QUERY_KEYS.profile(tenantSlug),
+    queryKey: ACCOUNT_QUERY_KEYS.profile(profileScopeKey),
     queryFn: ({ signal }) => fetchProfileWithRecovery(signal),
     retry: false,
   })
@@ -165,12 +196,17 @@ export default function UserProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: (payload: UpdateUserProfileRequest) =>
-      updateProfile(tenantSlug, payload, {
-        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
-        idempotencyKey: `kg-user-profile-update-${tenantSlug}-${currentUser?.sub ?? 'anonymous'}`,
-      }),
+      isPlatformProfile
+        ? updatePlatformProfile(payload, {
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          idempotencyKey: `kg-user-profile-update-${profileScopeKey}-${currentUser?.sub ?? 'anonymous'}`,
+        })
+        : updateProfile(tenantSlug, payload, {
+          timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          idempotencyKey: `kg-user-profile-update-${tenantSlug}-${currentUser?.sub ?? 'anonymous'}`,
+        }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEYS.profile(tenantSlug) })
+      queryClient.invalidateQueries({ queryKey: ACCOUNT_QUERY_KEYS.profile(profileScopeKey) })
       toast.success(t('userDashboardProfile.toasts.updated'))
     },
     onError: (mutationError) => {
@@ -271,7 +307,9 @@ export default function UserProfilePage() {
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardProfile.summary.tenant')}</dt>
-                <dd className="text-sm font-medium text-slate-900 dark:text-white">{tenantSlug}</dd>
+                <dd className="text-sm font-medium text-slate-900 dark:text-white">
+                  {isPlatformProfile ? t('common.platform') : tenantSlug}
+                </dd>
               </div>
               <div>
                 <dt className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{t('userDashboardProfile.summary.activeRole')}</dt>
@@ -287,7 +325,7 @@ export default function UserProfilePage() {
             hidden={activeTab !== 'profile'}
           >
             <form
-              onSubmit={form.handleSubmit((values) => updateMutation.mutate(values))}
+              onSubmit={form.handleSubmit((values) => updateMutation.mutate(buildProfilePayload(values, isPlatformProfile)))}
               className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-slate-900"
             >
               <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2" disabled={updateMutation.isPending}>
@@ -351,29 +389,33 @@ export default function UserProfilePage() {
                   />
                 </div>
 
-                <div>
-                  <label htmlFor="birthdate" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {t('userDashboardProfile.form.birthdate')}
-                  </label>
-                  <input
-                    id="birthdate"
-                    type="date"
-                    {...form.register('birthdate')}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-slate-800 dark:text-white"
-                  />
-                </div>
+                {!isPlatformProfile ? (
+                  <>
+                    <div>
+                      <label htmlFor="birthdate" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t('userDashboardProfile.form.birthdate')}
+                      </label>
+                      <input
+                        id="birthdate"
+                        type="date"
+                        {...form.register('birthdate')}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-slate-800 dark:text-white"
+                      />
+                    </div>
 
-                <div className="sm:col-span-2">
-                  <label htmlFor="website" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-                    {t('userDashboardProfile.form.website')}
-                  </label>
-                  <input
-                    id="website"
-                    type="text"
-                    {...form.register('website')}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-slate-800 dark:text-white"
-                  />
-                </div>
+                    <div className="sm:col-span-2">
+                      <label htmlFor="website" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {t('userDashboardProfile.form.website')}
+                      </label>
+                      <input
+                        id="website"
+                        type="text"
+                        {...form.register('website')}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-slate-800 dark:text-white"
+                      />
+                    </div>
+                  </>
+                ) : null}
 
                 <div className="sm:col-span-2">
                   <label htmlFor="profile_picture_url" className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">

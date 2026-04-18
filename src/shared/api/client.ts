@@ -67,7 +67,11 @@ function onRejectedWithNormalizedError(error: unknown): Promise<never> {
 
   // Push structured diagnostics to the DevConsole output for server-side errors so
   // operators can inspect detail / exception / layer / trace_id without opening DevTools.
-  if (appApiError.origin === 'SERVER_PROCESSING' || (appApiError.httpStatus !== undefined && appApiError.httpStatus >= 500)) {
+  if (
+    appApiError.origin === 'SERVER_PROCESSING'
+    || appApiError.httpStatus === 403
+    || (appApiError.httpStatus !== undefined && appApiError.httpStatus >= 500)
+  ) {
     const store = useDevConsoleStore.getState()
     store.push({ type: 'error', text: `[API ${appApiError.httpStatus ?? '5xx'}] ${appApiError.code ?? 'ERROR'} — ${appApiError.clientMessage}` })
     if (appApiError.traceId)   store.push({ type: 'output', text: `  trace_id  ${appApiError.traceId}` })

@@ -449,7 +449,7 @@ function RoleOverviewLayout({
   role: NonAdminRole
 }) {
   const nextModuleMessage =
-    role === 'keygo_tenant_admin'
+    role === 'keygo_account_admin'
       ? 'Este dashboard ya consume datos reales del tenant y seguira ampliandose con nuevos indicadores de administracion.'
       : 'Este dashboard ya consume datos reales de tu cuenta y seguira ampliandose con indicadores de actividad y seguridad.'
 
@@ -487,7 +487,7 @@ export default function DashboardHomePage() {
   }
 
   // Tenant admins discover their tenants via API, not JWT claim
-  if (role === 'keygo_tenant_admin') {
+  if (role === 'keygo_account_admin') {
     return <AdminTenantOverview tenantSlug={tenantSlug ?? ''} />
   }
 

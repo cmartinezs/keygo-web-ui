@@ -9,6 +9,7 @@ const apiClientMock = vi.hoisted(() => ({
 
 vi.mock('@/shared/api/client', () => ({
   apiClient: apiClientMock,
+  PLATFORM_URL: '/api/v1/platform',
   tenantUrl: (slug: string) => `/api/v1/tenants/${slug}`,
 }))
 
@@ -18,6 +19,7 @@ import {
   forgotPassword,
   getAccountAccess,
   getNotificationPreferences,
+  getPlatformProfile,
   getSessions,
   linkAccountConnection,
   recoverPassword,
@@ -25,6 +27,7 @@ import {
   resetPasswordWithTemporaryPassword,
   unlinkAccountConnection,
   updateNotificationPreferences,
+  updatePlatformProfile,
 } from './api'
 
 describe('account api wrappers', () => {
@@ -42,6 +45,72 @@ describe('account api wrappers', () => {
     ])
     expect(ACCOUNT_QUERY_KEYS.access('acme')).toEqual(['account', 'access', 'acme'])
     expect(ACCOUNT_QUERY_KEYS.connections('acme')).toEqual(['account', 'connections', 'acme'])
+  })
+
+  it('gets platform profile from the platform account endpoint', async () => {
+    apiClientMock.get.mockResolvedValueOnce({
+      data: {
+        date: '2026-04-14T18:00:00Z',
+        data: {
+          id: 'user-1',
+          tenant_id: null,
+          username: 'john@example.com',
+          email: 'john@example.com',
+          first_name: 'John',
+          last_name: 'Doe',
+          status: 'ACTIVE',
+        },
+      },
+    })
+
+    const result = await getPlatformProfile({ timeoutMs: 10_000 })
+
+    expect(apiClientMock.get).toHaveBeenCalledWith('/api/v1/platform/account/profile', {
+      signal: undefined,
+      timeout: 10_000,
+    })
+    expect(result.email).toBe('john@example.com')
+  })
+
+  it('updates platform profile through the platform account endpoint', async () => {
+    apiClientMock.patch.mockResolvedValueOnce({
+      data: {
+        date: '2026-04-14T18:00:00Z',
+        data: {
+          id: 'user-1',
+          tenant_id: null,
+          username: 'john@example.com',
+          email: 'john@example.com',
+          first_name: 'Jane',
+          last_name: 'Doe',
+          status: 'ACTIVE',
+        },
+      },
+    })
+
+    const result = await updatePlatformProfile(
+      {
+        first_name: 'Jane',
+        last_name: 'Doe',
+        phone_number: '+56911111111',
+      },
+      { timeoutMs: 10_000, idempotencyKey: 'idem-platform-profile' },
+    )
+
+    expect(apiClientMock.patch).toHaveBeenCalledWith(
+      '/api/v1/platform/account/profile',
+      {
+        first_name: 'Jane',
+        last_name: 'Doe',
+        phone_number: '+56911111111',
+      },
+      {
+        signal: undefined,
+        timeout: 10_000,
+        headers: { 'X-Idempotency-Key': 'idem-platform-profile' },
+      },
+    )
+    expect(result.first_name).toBe('Jane')
   })
 
   it('sends change-password request with correct snake_case payload', async () => {

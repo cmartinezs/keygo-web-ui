@@ -161,6 +161,19 @@ export function isAppApiError(error: unknown): error is AppApiError {
   return isRecord(error) && error['name'] === 'AppApiError' && error['kind'] === 'APP_API_ERROR'
 }
 
+export function hasHttpStatus(error: unknown, status: number): boolean {
+  return getAppApiError(error).httpStatus === status
+}
+
+export function isForbiddenError(error: unknown): boolean {
+  return hasHttpStatus(error, 403)
+}
+
+export function isInsufficientPermissionsError(error: unknown): boolean {
+  const appError = getAppApiError(error)
+  return appError.httpStatus === 403 && appError.code === 'INSUFFICIENT_PERMISSIONS'
+}
+
 export function getAppApiError(error: unknown): AppApiError {
   if (isAppApiError(error)) return error
   if (axios.isAxiosError(error)) {

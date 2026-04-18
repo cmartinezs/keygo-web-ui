@@ -70,11 +70,23 @@ interface ContractorStepProps {
   defaultValues: Partial<ContractorFormValues>
   onBack: () => void
   onNext: (data: ContractorFormValues) => void
+  onEmailChange?: () => void
+  isSubmitting?: boolean
+  error?: string | null
+  emailError?: string | null
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStepProps) {
+export function ContractorStep({
+  defaultValues,
+  onBack,
+  onNext,
+  onEmailChange,
+  isSubmitting = false,
+  error = null,
+  emailError = null,
+}: ContractorStepProps) {
   const { t } = useTranslation()
   const schema = useMemo(() => createBusinessSchema(t), [t])
 
@@ -85,6 +97,12 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
   } = useForm<ContractorFormValues>({
     resolver: zodResolver(schema),
     defaultValues,
+  })
+
+  const emailField = register('email', {
+    onChange: () => {
+      onEmailChange?.()
+    },
   })
 
   return (
@@ -122,14 +140,18 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
           </Field>
         </div>
 
-        <Field id="email" label={t('subscribe.steps.contractor.fields.email')} error={errors.email?.message}>
+        <Field
+          id="email"
+          label={t('subscribe.steps.contractor.fields.email')}
+          error={errors.email?.message ?? emailError ?? undefined}
+        >
           <input
             id="email"
             type="email"
             autoComplete="email"
             placeholder={t('subscribe.steps.contractor.placeholders.email')}
-            className={inputCls(!!errors.email)}
-            {...register('email')}
+            className={inputCls(!!errors.email || !!emailError)}
+            {...emailField}
           />
         </Field>
 
@@ -176,12 +198,25 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
               </Field>
             </div>
           </>
+
+        {error && (
+          <div
+            className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            role="alert"
+          >
+            <svg className="mt-0.5 h-5 w-5 shrink-0 text-red-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fillRule="evenodd" d="M18 10A8 8 0 112 10a8 8 0 0116 0zm-7-4a1 1 0 10-2 0v4a1 1 0 102 0V6zm-1 8a1.25 1.25 0 100-2.5A1.25 1.25 0 0010 14z" clipRule="evenodd" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between gap-3 pt-2">
         <button
           type="button"
           onClick={onBack}
+          disabled={isSubmitting}
           className="flex items-center justify-center gap-2 border border-slate-300 text-slate-600 font-semibold px-6 py-3 rounded-xl hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
           <IconChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -189,10 +224,23 @@ export function ContractorStep({ defaultValues, onBack, onNext }: ContractorStep
         </button>
         <button
           type="submit"
+          disabled={isSubmitting}
           className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-8 py-3 rounded-xl transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
         >
-          {t('subscribe.actions.continue')}
-          <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+          {isSubmitting ? (
+            <>
+              <svg className="h-4 w-4 animate-spin shrink-0" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              {t('subscribe.steps.contractor.checkingEmail')}
+            </>
+          ) : (
+            <>
+              {t('subscribe.actions.continue')}
+              <IconArrowRight className="h-4 w-4 shrink-0" aria-hidden="true" />
+            </>
+          )}
         </button>
       </div>
     </form>

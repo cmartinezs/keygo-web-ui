@@ -254,6 +254,13 @@ Actualizado automáticamente por el agente al final de cada implementación.
 - **Prioridad:** 🔵 Media
 - **Fecha detección:** 2026-04-05
 
+### [MEJORA] Extender `AccessDeniedState` a módulos restantes con `useQuery`
+
+- **Detectado en:** `src/features/ops/tenants/TenantsPage.tsx`, `src/features/console/dashboard/FeaturePlaceholderPage.tsx`, listados administrativos con estados `isError`
+- **Descripción:** El patrón robusto para `403 FORBIDDEN` quedó implementado como piloto en tenants, con helpers en `errorNormalizer.ts` y estado visual reusable `AccessDeniedState.tsx`. Falta converger el resto de pantallas de consulta para que distingan acceso denegado vs. error técnico genérico.
+- **Prioridad:** 🔵 Media
+- **Fecha detección:** 2026-04-14
+
 ### [MEJORA] Telemetría de crashes desde AppErrorBoundary
 
 - **Detectado en:** `src/components/AppErrorBoundary.tsx`, `src/App.tsx`

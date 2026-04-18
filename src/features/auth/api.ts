@@ -1,3 +1,4 @@
+import axios from 'axios'
 import type { BaseResponse } from '@/shared/types/base'
 import type { AuthorizeData, LoginData, TokenData } from '@/shared/types/auth'
 import { authClient, API_V1, PLATFORM_URL, CLIENT_ID, REDIRECT_URI } from '@/shared/api/client'
@@ -62,6 +63,38 @@ export async function platformDirectLogin(params: {
       : undefined,
   })
   return unwrapResponseData(response.data, 'Direct login failed')
+}
+
+export type PlatformCheckEmailResult = 'found' | 'not_found'
+
+export async function platformCheckEmail(params: {
+  email: string
+}, options?: RequestOptions): Promise<PlatformCheckEmailResult> {
+  const url = `${PLATFORM_URL}/account/check-email`
+
+  try {
+    const response = await authClient.post<BaseResponse<null>>(url, {
+      email: params.email,
+    }, {
+      signal: options?.signal,
+      timeout: options?.timeoutMs,
+      headers: options?.idempotencyKey
+        ? { 'X-Idempotency-Key': options.idempotencyKey }
+        : undefined,
+    })
+
+    if (response.status === 200) {
+      return 'found'
+    }
+
+    return 'not_found'
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      return 'not_found'
+    }
+
+    throw error
+  }
 }
 
 export async function platformExchangeToken(params: {

@@ -8,6 +8,8 @@ export type GrantType =
 
 export type ClientAppStatus = 'ACTIVE' | 'INACTIVE'
 
+export type RegistrationPolicy = 'OPEN_AUTO_ACTIVE' | 'OPEN_AUTO_PENDING' | 'OPEN_NO_MEMBERSHIP' | 'INVITE_ONLY'
+
 // ── Response DTOs ─────────────────────────────────────────────────────────────
 
 /** Respuesta de GET /tenants/{slug}/apps y GET /tenants/{slug}/apps/{clientId} */
@@ -23,6 +25,17 @@ export interface ClientAppData {
   status: ClientAppStatus
   created_at: string
   updated_at?: string
+}
+
+/** Respuesta de GET /api/v1/tenants/{slug}/apps/public — descubrimiento público sin auth */
+export interface ClientAppPublicData {
+  id: string
+  client_id: string
+  name: string
+  description?: string
+  type: ClientAppType
+  registration_policy: RegistrationPolicy
+  active: boolean
 }
 
 /** Respuesta de POST /tenants/{slug}/apps — incluye el secret solo en creación */

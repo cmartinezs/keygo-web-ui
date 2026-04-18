@@ -93,7 +93,7 @@ graph LR
 | Recurso                | Tabla / Config        | Campo clave                                                        |
 | ---------------------- | --------------------- | ------------------------------------------------------------------ |
 | PlatformUser           | `platform_users`      | `email` (unico global), `username` (unico global), `status=ACTIVE` |
-| PlatformRole           | `platform_roles`      | `code`: `keygo_admin`, `keygo_tenant_admin`, `keygo_user`          |
+| PlatformRole           | `platform_roles`      | `code`: `keygo_admin`, `keygo_account_admin`, `keygo_user`         |
 | PlatformUserRole       | `platform_user_roles` | N:N `platform_users` ↔ `platform_roles`                            |
 | Redirect URI allowlist | `application.yml`     | `keygo.platform.allowed-redirect-uris`                             |
 
@@ -164,7 +164,7 @@ Con el filtro `BootstrapAdminKeyFilter` actual:
 | **Proposito**                  | Administradores del sistema KeyGo (admin UI)                                  | Usuarios finales de aplicaciones por tenant                                                              |
 | **Tabla de identidad**         | `platform_users` (global, sin tenant)                                         | `tenant_users` (acotada a un tenant)                                                                     |
 | **Vinculacion**                | —                                                                             | `tenant_users.platform_user_id` → `platform_users(id)` (FK nullable)                                     |
-| **Tabla de roles**             | `platform_roles` (`keygo_admin`, `keygo_tenant_admin`, `keygo_user`)          | `app_roles` (por `client_app`, via `memberships`)                                                        |
+| **Tabla de roles**             | `platform_roles` (`keygo_admin`, `keygo_account_admin`, `keygo_user`)         | `app_roles` (por `client_app`, via `memberships`)                                                       |
 | **Mecanismo principal**        | OAuth 2.0 Authorization Code + PKCE (4 pasos)                                 | OAuth 2.0 Authorization Code + PKCE (3 pasos)                                                            |
 | **Alternativa sin PKCE**       | `POST /platform/account/direct-login` (API/CLI)                               | No disponible                                                                                            |
 | **Requiere PKCE**              | Si (flujo principal). No (direct-login)                                       | Si (obligatorio para clientes publicos)                                                                  |
@@ -177,7 +177,7 @@ Con el filtro `BootstrapAdminKeyFilter` actual:
 | **Endpoint de tokens**         | `POST /api/v1/platform/oauth2/token` (`authorization_code`, `refresh_token`)  | `POST /api/v1/tenants/{slug}/oauth2/token` (`authorization_code`, `refresh_token`, `client_credentials`) |
 | **Endpoint de revocacion**     | `POST /api/v1/platform/oauth2/revoke`                                         | `POST /api/v1/tenants/{slug}/oauth2/revoke`                                                              |
 | **Endpoint direct-login**      | `POST /api/v1/platform/account/direct-login` (API/CLI)                        | No disponible                                                                                            |
-| **Claim `roles` en JWT**       | Roles de plataforma: `keygo_admin`, `keygo_tenant_admin`, `keygo_user`        | Roles de app: segun `memberships` → `app_roles`                                                          |
+| **Claim `roles` en JWT**       | Roles de plataforma: `keygo_admin`, `keygo_account_admin`, `keygo_user`       | Roles de app: segun `memberships` → `app_roles`                                                         |
 | **Claim `iss` en JWT**         | Derivado del contexto de plataforma (sin tenant slug)                         | Derivado del tenant: `{base}/tenants/{slug}`                                                             |
 | **Modelo de sesion**           | `sessions.platform_user_id` (not null), `sessions.client_app_id` (null)       | `sessions.platform_user_id` (via linkage, nullable), `sessions.client_app_id` (not null)                 |
 | **Modelo de refresh token**    | `refresh_tokens.tenant_user_id` (null), `refresh_tokens.client_app_id` (null) | `refresh_tokens.tenant_user_id` (not null), `refresh_tokens.client_app_id` (not null)                    |
@@ -486,7 +486,7 @@ El `access_token` emitido contiene los siguientes claims:
 | `sub`      | UUID del `platform_user`                                                        |
 | `iss`      | Issuer derivado del contexto de plataforma (sin tenant slug)                    |
 | `aud`      | Audiencia fija: `keygo-platform`                                                |
-| `roles`    | Array de roles de plataforma: `keygo_admin`, `keygo_tenant_admin`, `keygo_user` |
+| `roles`    | Array de roles de plataforma: `keygo_admin`, `keygo_account_admin`, `keygo_user` |
 | `email`    | Email del usuario de plataforma                                                 |
 | `username` | Username del usuario de plataforma                                              |
 | `type`     | Tipo de token: `access_token` o `id_token`                                      |

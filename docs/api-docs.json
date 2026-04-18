@@ -21,6 +21,10 @@
   ],
   "tags": [
     {
+      "name": "Platform OIDC",
+      "description": "Public OIDC discovery and JWKS for platform authentication — no auth required."
+    },
+    {
       "name": "OIDC Discovery",
       "description": "Public OIDC discovery and JWKS endpoints — no authentication required. Returns raw JSON (not BaseResponse) for compatibility with third-party OAuth2/OIDC libraries."
     },
@@ -31,6 +35,10 @@
     {
       "name": "Billing — Subscription",
       "description": "Subscription & invoice management — requires Bearer JWT with ADMIN_TENANT role"
+    },
+    {
+      "name": "Platform Roles",
+      "description": "Platform role catalog — requires KEYGO_ADMIN or KEYGO_ACCOUNT_ADMIN"
     },
     {
       "name": "Registration",
@@ -45,6 +53,10 @@
       "description": "Public platform endpoints — no authentication required"
     },
     {
+      "name": "Platform Account",
+      "description": "Platform account self-service endpoints — profile management, forgot/recover/reset password and token revocation"
+    },
+    {
       "name": "Admin",
       "description": "Administrative endpoints — requires ADMIN Bearer JWT"
     },
@@ -57,12 +69,20 @@
       "description": "User access to applications — requires Bearer JWT"
     },
     {
+      "name": "Account Profile",
+      "description": "Self-service profile management — requires Bearer token"
+    },
+    {
       "name": "Platform Billing",
       "description": "Platform-level billing: catalog, subscription, invoices"
     },
     {
       "name": "Billing — Contracts",
       "description": "Self-service contracting flow — no auth required (email & payment verification built into the flow)"
+    },
+    {
+      "name": "Public Discovery",
+      "description": "Unauthenticated endpoints for tenant and app discovery prior to self-registration"
     },
     {
       "name": "Client Apps",
@@ -83,10 +103,6 @@
     {
       "name": "Account Settings",
       "description": "Self-service account security and settings — requires Bearer token (no X-KEYGO-ADMIN)"
-    },
-    {
-      "name": "Account Profile",
-      "description": "Self-service profile management — requires Bearer token (no X-KEYGO-ADMIN)"
     },
     {
       "name": "Users",
@@ -1230,7 +1246,7 @@
           "Tenants"
         ],
         "summary": "Create a new tenant",
-        "description": "Creates a new tenant with the given name and owner email. A URL-friendly slug is automatically generated from the name.",
+        "description": "Creates a new tenant with the given name. A URL-friendly slug is automatically generated from the name.",
         "operationId": "createTenant",
         "requestBody": {
           "content": {
@@ -1338,10 +1354,12 @@
             "schema": {
               "type": "string",
               "enum": [
+                "INVITED",
                 "ACTIVE",
                 "SUSPENDED",
                 "PENDING",
-                "RESET_PASSWORD"
+                "RESET_PASSWORD",
+                "DELETED"
               ]
             }
           },
@@ -2484,7 +2502,7 @@
           "Registration"
         ],
         "summary": "Verify email address",
-        "description": "Validates the 6-digit code received by email. If valid, the user is activated (status → ACTIVE). If expired, a new code must be requested.",
+        "description": "Validates the 6-digit code received by email. If valid, the user is activated (status → ACTIVE) and automatic membership is created based on the app's registration policy. If expired, a new code must be requested.",
         "operationId": "verifyEmail",
         "parameters": [
           {
@@ -2713,7 +2731,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/BaseResponseVoid"
+                  "$ref": "#/components/schemas/BaseResponseNotificationSentData"
                 }
               }
             }
@@ -4036,6 +4054,151 @@
       }
     },
     "/api/v1/platform/users": {
+      "get": {
+        "tags": [
+          "Platform Users"
+        ],
+        "summary": "List platform users",
+        "description": "Returns a paginated list of global platform users. Supports filtering by status and partial username or email match, plus sorting. Requires KEYGO_ADMIN role.",
+        "operationId": "listPlatformUsers",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by platform user status (ACTIVE, SUSPENDED, PENDING, RESET_PASSWORD)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INVITED",
+                "ACTIVE",
+                "SUSPENDED",
+                "PENDING",
+                "RESET_PASSWORD",
+                "DELETED"
+              ]
+            }
+          },
+          {
+            "name": "username_like",
+            "in": "query",
+            "description": "Partial match on username (case-insensitive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "email_like",
+            "in": "query",
+            "description": "Partial match on email (case-insensitive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (1–200)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            },
+            "example": 20
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (username, email, status, createdAt, firstName, lastName)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (ASC, DESC)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platform user list retrieved successfully (code: PLATFORM_USER_LIST_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePagedDataPlatformUserData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (code: INVALID_INPUT). data.field_errors lists each invalid field.",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
       "post": {
         "tags": [
           "Platform Users"
@@ -4123,6 +4286,84 @@
       }
     },
     "/api/v1/platform/users/{userId}/platform-roles": {
+      "get": {
+        "tags": [
+          "Platform Users"
+        ],
+        "summary": "List platform roles for a user",
+        "description": "Retrieves the platform roles currently assigned to a global user. Requires KEYGO_ADMIN role.",
+        "operationId": "listPlatformUserRoles",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "UUID of the platform user",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platform role list retrieved successfully (code: PLATFORM_ROLE_LIST_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListPlatformUserRoleData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform user not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      },
       "post": {
         "tags": [
           "Platform Users"
@@ -4294,6 +4535,68 @@
         }
       }
     },
+    "/api/v1/platform/oauth2/revoke": {
+      "post": {
+        "tags": [
+          "Platform Account"
+        ],
+        "summary": "Revoke a platform token (RFC 7009)",
+        "description": "Revokes a refresh token per RFC 7009. Idempotent — returns 200 even if the token does not exist or has already been revoked.",
+        "operationId": "revoke_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformRevokeTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Token revoked — or silently ignored if unknown (code: TOKEN_REVOKED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseVoid"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request body validation failed (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/platform/billing/subscription/cancel": {
       "post": {
         "tags": [
@@ -4371,6 +4674,180 @@
         ]
       }
     },
+    "/api/v1/platform/account/reset-password": {
+      "post": {
+        "tags": [
+          "Platform Account"
+        ],
+        "summary": "Reset platform password with temporary password",
+        "description": "Allows a platform user in RESET_PASSWORD status to set their permanent password using the temporary password, request_id and verification code.",
+        "operationId": "resetPassword_2",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successfully (code: ACCOUNT_PASSWORD_RESET)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseResetPasswordResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Temporary password incorrect or user not in RESET_PASSWORD status",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Reset request not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Verification code expired (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/account/recover-password": {
+      "post": {
+        "tags": [
+          "Platform Account"
+        ],
+        "summary": "Recover platform password with recovery token",
+        "description": "Sets a new password using the one-time recovery token received by email. The token is invalidated after use.",
+        "operationId": "recoverPassword_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Password recovered successfully (code: ACCOUNT_PASSWORD_RECOVERED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseRecoverPasswordResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "New password violates policy or passwords don't match (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recovery token not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Token expired or already used (code: BUSINESS_RULE_VIOLATION)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/platform/account/login": {
       "post": {
         "tags": [
@@ -4443,6 +4920,58 @@
         }
       }
     },
+    "/api/v1/platform/account/forgot-password": {
+      "post": {
+        "tags": [
+          "Platform Account"
+        ],
+        "summary": "Request platform password recovery token",
+        "description": "Sends a one-time password recovery token to the platform user's email. Always returns 200 regardless of whether the email exists (anti-enumeration).",
+        "operationId": "forgotPassword_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Recovery email sent (or email not found — not revealed) (code: ACCOUNT_PASSWORD_RECOVERY_SENT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseForgotPasswordResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/platform/account/direct-login": {
       "post": {
         "tags": [
@@ -4478,6 +5007,78 @@
               "*/*": {
                 "schema": {
                   "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/account/check-email": {
+      "post": {
+        "tags": [
+          "Platform Auth"
+        ],
+        "summary": "Verificar si un email de plataforma existe",
+        "description": "Valida si un email ya está registrado como platform_user. Requiere una sesión HTTP iniciada por GET /oauth2/authorize.",
+        "operationId": "checkEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckPlatformUserEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Platform user email found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseVoid"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No authorization session found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseVoid"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform user email not found",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseVoid"
                 }
               }
             }
@@ -4583,7 +5184,7 @@
           "Billing — Contracts"
         ],
         "summary": "Verify contract email",
-        "description": "Validates the 6-digit code sent to the contractor's email. Advances contract status from PENDING_EMAIL_VERIFICATION → PENDING_PAYMENT.",
+        "description": "Validates the 6-digit code sent to the contractor's email. Advances contract status from PENDING_EMAIL_VERIFICATION → PENDING_PAYMENT without creating the platform account yet.",
         "operationId": "verifyEmail_1",
         "parameters": [
           {
@@ -4751,7 +5352,7 @@
           "Billing — Contracts"
         ],
         "summary": "[DEV] Mock approve payment",
-        "description": "Simulates a successful payment for a contract in PENDING_PAYMENT status. Only available when `keygo.billing.mock-payment-enabled=true`.",
+        "description": "Simulates a successful payment for a contract in PENDING_PAYMENT status. After payment approval the backend provisions the contractor/platform account if needed and sends the temporary password email. Only available when `keygo.billing.mock-payment-enabled=true`.",
         "operationId": "mockApprovePayment",
         "parameters": [
           {
@@ -4911,14 +5512,6 @@
               "type": "string"
             },
             "example": "my-company"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -4991,14 +5584,6 @@
               "type": "string"
             },
             "example": "my-company"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "requestBody": {
@@ -5196,6 +5781,138 @@
           },
           "401": {
             "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/account/profile": {
+      "get": {
+        "tags": [
+          "Platform Account"
+        ],
+        "summary": "Get own platform profile",
+        "description": "Returns the complete profile of the authenticated platform user. Requires Authorization: Bearer \u003Caccess_token\u003E.",
+        "operationId": "getProfile_1",
+        "responses": {
+          "200": {
+            "description": "Profile retrieved successfully (code: USER_PROFILE_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserProfileData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform user not found (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Platform Account"
+        ],
+        "summary": "Update own platform profile",
+        "description": "Partially updates the profile of the authenticated platform user. Only non-null fields are updated (PATCH semantics). Requires Authorization: Bearer \u003Caccess_token\u003E.",
+        "operationId": "updateProfile_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully (code: USER_PROFILE_UPDATED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseUserProfileData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Platform user not found (code: RESOURCE_NOT_FOUND)",
             "content": {
               "*/*": {
                 "schema": {
@@ -5781,6 +6498,123 @@
         }
       }
     },
+    "/api/v1/tenants/{tenantSlug}/apps/public": {
+      "get": {
+        "tags": [
+          "Public Discovery"
+        ],
+        "summary": "List public client apps for a tenant",
+        "description": "Returns a paginated list of PUBLIC-type, active client applications under the specified tenant that allow open self-registration (registration_policy != INVITE_ONLY). No authentication required.",
+        "operationId": "listPublicClientApps",
+        "parameters": [
+          {
+            "name": "tenantSlug",
+            "in": "path",
+            "description": "Tenant slug",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "my-company"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (1–200)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            },
+            "example": 50
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (name, status, createdAt)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (ASC, DESC)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client app list retrieved successfully (code: CLIENT_APP_LIST_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePagedDataClientAppPublicData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tenant not found or not active (code: RESOURCE_NOT_FOUND)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tenants/{tenantSlug}/account/sessions": {
       "get": {
         "tags": [
@@ -6134,6 +6968,112 @@
         ]
       }
     },
+    "/api/v1/tenants/public": {
+      "get": {
+        "tags": [
+          "Public Discovery"
+        ],
+        "summary": "List public tenants",
+        "description": "Returns a paginated list of active tenants available for self-registration. No authentication required. Supports optional name search and sorting.",
+        "operationId": "listPublicTenants",
+        "parameters": [
+          {
+            "name": "name_like",
+            "in": "query",
+            "description": "Partial match on tenant name (case-insensitive)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page number",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            },
+            "example": 0
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "Page size (1–200)",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            },
+            "example": 50
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sort field (name, status, createdAt)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "description": "Sort order (ASC, DESC)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ASC"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tenant list retrieved successfully (code: TENANT_LIST_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponsePagedDataTenantPublicData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid pagination parameters (code: INVALID_INPUT)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/service/info": {
       "get": {
         "tags": [
@@ -6329,6 +7269,73 @@
           },
           "403": {
             "description": "Insufficient permissions — ADMIN role required (code: INSUFFICIENT_PERMISSIONS)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v1/platform/roles": {
+      "get": {
+        "tags": [
+          "Platform Roles"
+        ],
+        "summary": "List platform role catalog",
+        "description": "Returns the platform roles available for assignment in the admin UI. Requires KEYGO_ADMIN or KEYGO_ACCOUNT_ADMIN role.",
+        "operationId": "getPlatformRoles",
+        "responses": {
+          "200": {
+            "description": "Platform role list retrieved successfully (code: PLATFORM_ROLE_LIST_RETRIEVED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BaseResponseListPlatformRoleData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid Bearer token (code: AUTHENTICATION_REQUIRED)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient role for platform role catalog access (code: FORBIDDEN)",
             "content": {
               "*/*": {
                 "schema": {
@@ -6671,6 +7678,46 @@
                 "schema": {
                   "$ref": "#/components/schemas/ErrorResponse"
                 }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error — code: OPERATION_FAILED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "External service unavailable — code: EXTERNAL_SERVICE_ERROR",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/.well-known/jwks.json": {
+      "get": {
+        "tags": [
+          "Platform OIDC"
+        ],
+        "summary": "Get platform JWK Set",
+        "description": "Returns the JSON Web Key Set (RFC 7517) containing the global RSA public keys used to sign platform JWT tokens. Used by the UI to verify id_token signatures.",
+        "operationId": "getJwks_1",
+        "responses": {
+          "200": {
+            "description": "JWK Set — raw JSON `{\"keys\": [...]}`",
+            "content": {
+              "application/json": {
+
               }
             }
           },
@@ -7395,11 +8442,11 @@
             "type": "string",
             "format": "uuid"
           },
-          "userId": {
+          "user_id": {
             "type": "string",
             "format": "uuid"
           },
-          "clientAppId": {
+          "client_app_id": {
             "type": "string",
             "format": "uuid"
           },
@@ -7411,7 +8458,7 @@
               "PENDING"
             ]
           },
-          "roleIds": {
+          "role_ids": {
             "type": "array",
             "items": {
               "type": "string",
@@ -7419,9 +8466,12 @@
             },
             "uniqueItems": true
           },
-          "createdAt": {
+          "created_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "notification_email": {
+            "type": "string"
           }
         }
       },
@@ -7578,9 +8628,6 @@
           "slug": {
             "type": "string"
           },
-          "ownerEmail": {
-            "type": "string"
-          },
           "status": {
             "type": "string"
           }
@@ -7640,16 +8687,10 @@
             "type": "string",
             "maxLength": 255,
             "minLength": 0
-          },
-          "ownerEmail": {
-            "type": "string",
-            "format": "email",
-            "minLength": 1
           }
         },
         "required": [
-          "name",
-          "ownerEmail"
+          "name"
         ]
       },
       "CreateUserRequest": {
@@ -7986,6 +9027,38 @@
           "email"
         ]
       },
+      "BaseResponseNotificationSentData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/NotificationSentData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "NotificationSentData": {
+        "type": "object",
+        "properties": {
+          "notification_email": {
+            "type": "string"
+          }
+        }
+      },
       "RegisterRequest": {
         "type": "object",
         "properties": {
@@ -8050,16 +9123,18 @@
           "username": {
             "type": "string"
           },
-          "email": {
+          "notification_email": {
             "type": "string"
           },
           "status": {
             "type": "string",
             "enum": [
+              "INVITED",
               "ACTIVE",
               "SUSPENDED",
               "PENDING",
-              "RESET_PASSWORD"
+              "RESET_PASSWORD",
+              "DELETED"
             ]
           }
         }
@@ -8233,8 +9308,7 @@
             ]
           },
           "limitValue": {
-            "type": "integer",
-            "format": "int64"
+            "type": "number"
           },
           "periodType": {
             "type": "string",
@@ -8340,8 +9414,7 @@
             ]
           },
           "limitValue": {
-            "type": "integer",
-            "format": "int64"
+            "type": "number"
           },
           "periodType": {
             "type": "string",
@@ -8686,6 +9759,9 @@
           },
           "reset_code_id": {
             "type": "string"
+          },
+          "notification_email": {
+            "type": "string"
           }
         }
       },
@@ -8731,6 +9807,9 @@
         "properties": {
           "sent": {
             "type": "boolean"
+          },
+          "notificationEmail": {
+            "type": "string"
           }
         }
       },
@@ -8879,6 +9958,9 @@
           "access_token": {
             "type": "string"
           },
+          "id_token": {
+            "type": "string"
+          },
           "refresh_token": {
             "type": "string"
           },
@@ -8890,6 +9972,21 @@
             "format": "int64"
           }
         }
+      },
+      "PlatformRevokeTokenRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tokenTypeHint": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ]
       },
       "PlatformLoginRequest": {
         "type": "object",
@@ -8946,15 +10043,30 @@
           },
           "reset_code_id": {
             "type": "string"
+          },
+          "notification_email": {
+            "type": "string"
           }
         }
+      },
+      "CheckPlatformUserEmailRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email"
+        ]
       },
       "CreateAppContractRequest": {
         "type": "object",
         "properties": {
           "clientAppId": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "planVersionId": {
             "type": "string",
@@ -8993,7 +10105,6 @@
         },
         "required": [
           "billingPeriod",
-          "clientAppId",
           "contractorEmail",
           "contractorFirstName",
           "contractorLastName",
@@ -9007,47 +10118,47 @@
             "type": "string",
             "format": "uuid"
           },
-          "clientAppId": {
+          "client_app_id": {
             "type": "string",
             "format": "uuid"
           },
-          "selectedPlanVersionId": {
+          "selected_plan_version_id": {
             "type": "string",
             "format": "uuid"
           },
-          "billingPeriod": {
+          "billing_period": {
             "type": "string"
           },
           "status": {
             "type": "string"
           },
-          "contractorEmail": {
+          "notification_email": {
             "type": "string"
           },
-          "contractorFirstName": {
+          "contractor_first_name": {
             "type": "string"
           },
-          "contractorLastName": {
+          "contractor_last_name": {
             "type": "string"
           },
-          "companyName": {
+          "company_name": {
             "type": "string"
           },
-          "contractorId": {
+          "contractor_id": {
             "type": "string",
             "format": "uuid"
           },
-          "emailVerified": {
+          "email_verified": {
             "type": "boolean"
           },
-          "paymentVerified": {
+          "payment_verified": {
             "type": "boolean"
           },
-          "expiresAt": {
+          "expires_at": {
             "type": "string",
             "format": "date-time"
           },
-          "createdAt": {
+          "created_at": {
             "type": "string",
             "format": "date-time"
           }
@@ -9737,6 +10848,86 @@
           }
         }
       },
+      "BaseResponsePagedDataClientAppPublicData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PagedDataClientAppPublicData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "ClientAppPublicData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "registrationPolicy": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PagedDataClientAppPublicData": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientAppPublicData"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          }
+        }
+      },
       "AccountSessionData": {
         "type": "object",
         "properties": {
@@ -9855,6 +11046,74 @@
           }
         }
       },
+      "BaseResponsePagedDataTenantPublicData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PagedDataTenantPublicData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "PagedDataTenantPublicData": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantPublicData"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TenantPublicData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
       "BaseResponseServiceInfoData": {
         "type": "object",
         "properties": {
@@ -9950,6 +11209,136 @@
             "type": "string"
           },
           "type": {
+            "type": "string"
+          }
+        }
+      },
+      "BaseResponsePagedDataPlatformUserData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PagedDataPlatformUserData"
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "PagedDataPlatformUserData": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformUserData"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "last": {
+            "type": "boolean"
+          }
+        }
+      },
+      "BaseResponseListPlatformUserRoleData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformUserRoleData"
+            }
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "PlatformRoleContractorData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "billingEmail": {
+            "type": "string"
+          }
+        }
+      },
+      "PlatformUserRoleData": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string"
+          },
+          "roleId": {
+            "type": "string"
+          },
+          "roleCode": {
+            "type": "string"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "scopeType": {
+            "type": "string"
+          },
+          "contractorId": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "contractor": {
+            "$ref": "#/components/schemas/PlatformRoleContractorData"
+          },
+          "assignedAt": {
             "type": "string"
           }
         }
@@ -10052,6 +11441,50 @@
           "suspended": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "BaseResponseListPlatformRoleData": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "success": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "failure": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlatformRoleData"
+            }
+          },
+          "debug": {
+            "$ref": "#/components/schemas/MessageResponse"
+          },
+          "throwable": {
+            "type": "string"
+          }
+        }
+      },
+      "PlatformRoleData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
           }
         }
       },

@@ -20,11 +20,11 @@ describe('extractRoles', () => {
   it('accepts hierarchical roles as an array', () => {
     const roles = extractRoles(
       claimsWith({
-        roles: ['keygo_admin', 'keygo_tenant_admin', 'keygo_user'],
+        roles: ['keygo_admin', 'keygo_account_admin', 'keygo_user'],
       }),
     )
 
-    expect(roles).toEqual(['keygo_admin', 'keygo_tenant_admin', 'keygo_user'])
+    expect(roles).toEqual(['keygo_admin', 'keygo_account_admin', 'keygo_user'])
   })
 
   it('normalizes lowercase roles and removes duplicates', () => {
@@ -38,7 +38,7 @@ describe('extractRoles', () => {
   })
 
   it('returns empty when roles claim is not a list', () => {
-    const roles = extractRoles(claimsWith({ roles: 'keygo_tenant_admin' as unknown as string[] }))
+    const roles = extractRoles(claimsWith({ roles: 'keygo_account_admin' as unknown as string[] }))
 
     expect(roles).toEqual([])
   })

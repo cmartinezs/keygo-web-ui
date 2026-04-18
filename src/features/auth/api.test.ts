@@ -13,7 +13,7 @@ vi.mock('@/shared/api/client', () => ({
   REDIRECT_URI: 'http://localhost:5173/callback',
 }))
 
-import { platformDirectLogin } from './api'
+import { platformCheckEmail, platformDirectLogin } from './api'
 
 describe('auth api wrappers', () => {
   beforeEach(() => {
@@ -51,5 +51,58 @@ describe('auth api wrappers', () => {
       },
     )
     expect(result).toEqual({ access_token: 'token-ok' })
+  })
+
+  it('returns found when check-email reports an existing platform user', async () => {
+    authClientMock.post.mockResolvedValueOnce({
+      status: 200,
+      data: {
+        date: '2026-04-14T09:00:00Z',
+        success: {
+          code: 'PLATFORM_USER_EMAIL_FOUND',
+        },
+        data: null,
+      },
+    })
+
+    const result = await platformCheckEmail(
+      { email: 'existing@keygo.dev' },
+      { timeoutMs: 10_000, idempotencyKey: 'idem-check-email-1' },
+    )
+
+    expect(authClientMock.post).toHaveBeenCalledWith(
+      '/api/v1/platform/account/check-email',
+      { email: 'existing@keygo.dev' },
+      {
+        signal: undefined,
+        timeout: 10_000,
+        headers: { 'X-Idempotency-Key': 'idem-check-email-1' },
+      },
+    )
+    expect(result).toBe('found')
+  })
+
+  it('returns not_found when check-email receives the backend 404 contract', async () => {
+    authClientMock.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 404,
+        data: {
+          date: '2026-04-14T09:00:00Z',
+          failure: {
+            code: 'PLATFORM_USER_EMAIL_NOT_FOUND',
+            message: 'Platform user email not found',
+          },
+          data: null,
+        },
+      },
+    })
+
+    const result = await platformCheckEmail(
+      { email: 'new@keygo.dev' },
+      { timeoutMs: 10_000, idempotencyKey: 'idem-check-email-2' },
+    )
+
+    expect(result).toBe('not_found')
   })
 })

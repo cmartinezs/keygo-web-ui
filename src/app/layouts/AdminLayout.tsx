@@ -1,12 +1,25 @@
 import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  ACCOUNT_QUERY_KEYS,
+  PLATFORM_ACCOUNT_SCOPE,
+  getPlatformProfile,
+  getProfile,
+} from '@/features/account/api'
 import { useTokenStore } from '@/shared/lib/auth/tokenStore'
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser'
 import { useTheme } from '@/shared/hooks/useTheme'
 import type { ThemePreference } from '@/shared/hooks/useTheme'
 import type { SupportedLocale } from '@/shared/lib/i18n/constants'
 import { useLocale } from '@/shared/lib/i18n/useLocale'
+import {
+  NETWORK_MAX_RETRIES,
+  NETWORK_REQUEST_TIMEOUT_MS,
+  NETWORK_RETRY_DELAY_MS,
+} from '@/shared/lib/config/network'
+import { runGetWithRecovery } from '@/shared/lib/network/recovery'
 import { Dropdown } from '@/shared/ui/Dropdown'
 import { SelectDropdown } from '@/shared/ui/SelectDropdown'
 import { SidebarMenu } from '@/app/layouts/SidebarMenu'
@@ -85,7 +98,7 @@ const THEME_LABEL_KEYS: Record<ThemePreference, string> = {
 
 const ROLE_LABEL_KEYS: Record<PlatformRole, string> = {
   keygo_admin: 'roles.adminGlobal',
-  keygo_tenant_admin: 'roles.adminTenant',
+  keygo_account_admin: 'roles.adminTenant',
   keygo_user: 'roles.userTenant',
 }
 
@@ -134,7 +147,7 @@ interface RoleSwitcherProps {
 // Mapeo de iconos para cada rol
 const ROLE_ICONS: Record<PlatformRole, React.ReactNode> = {
   keygo_admin: <IconShield />,
-  keygo_tenant_admin: <IconBuilding />,
+  keygo_account_admin: <IconBuilding />,
   keygo_user: <IconUser />,
 }
 
@@ -262,11 +275,12 @@ function createSidebarByRole(t: (key: string) => string): Record<PlatformRole, S
       ],
     },
   ],
-    keygo_tenant_admin: [
+    keygo_account_admin: [
     {
       label: t('dashboard.myOrganization'),
       items: [
         { to: '/dashboard', exact: true, icon: <IconDashboard />, label: t('dashboard.dashboard') },
+        { to: '/dashboard/tenants', icon: <IconBuilding />, label: t('dashboard.tenants') },
         { to: '/dashboard/tenant/users', icon: <IconUsers />, label: t('dashboard.users') },
         { to: '/dashboard/tenant/apps', icon: <IconApps />, label: t('dashboard.apps') },
         { to: '/dashboard/tenant/billing', icon: <IconCreditCard />, label: t('dashboard.billing') },
@@ -358,13 +372,49 @@ export default function AdminLayout() {
     void setLocale(nextLocale)
   }
 
-  const displayName = user?.displayName ?? t('common.admin')
-  const userMenuFullName = [user?.firstName?.trim(), user?.lastName?.trim()]
+  const accountTenantSlug = user?.tenantSlug
+  const profileScopeKey = accountTenantSlug ?? PLATFORM_ACCOUNT_SCOPE
+  const isPlatformProfile = !accountTenantSlug
+
+  const profileQuery = useQuery({
+    queryKey: ACCOUNT_QUERY_KEYS.profile(profileScopeKey),
+    queryFn: ({ signal }) =>
+      runGetWithRecovery({
+        signal,
+        label: 'perfil de cuenta',
+        timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+        retryDelayMs: NETWORK_RETRY_DELAY_MS,
+        maxRetries: NETWORK_MAX_RETRIES,
+        query: () => {
+          if (isPlatformProfile || !accountTenantSlug) {
+            return getPlatformProfile({
+              signal,
+              timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+            })
+          }
+
+          return getProfile(accountTenantSlug, {
+            signal,
+            timeoutMs: NETWORK_REQUEST_TIMEOUT_MS,
+          })
+        },
+      }),
+    retry: false,
+    enabled: true,
+  })
+
+  const resolvedFirstName = profileQuery.data?.first_name?.trim() || user?.firstName?.trim()
+  const resolvedLastName = profileQuery.data?.last_name?.trim() || user?.lastName?.trim()
+  const resolvedEmail = profileQuery.data?.email?.trim() || user?.email?.trim()
+  const resolvedUsername = profileQuery.data?.username?.trim() || user?.username?.trim()
+  const resolvedFullName = [resolvedFirstName, resolvedLastName]
     .filter(Boolean)
     .join(' ')
-  const userMenuDisplayName = userMenuFullName || user?.username || displayName
   const sidebarRole = activeRole ?? resolvePrimaryRole(roles) ?? 'keygo_user'
   const roleLabel = t(ROLE_LABEL_KEYS[sidebarRole])
+  const displayName = resolvedFullName || resolvedUsername || resolvedEmail || user?.displayName || t('common.admin')
+  const userMenuDisplayName = displayName
+  const userMenuSecondary = resolvedEmail || resolvedUsername || user?.sub || roleLabel
   const sidebarSections = createSidebarByRole(t)[sidebarRole]
 
   return (
@@ -422,7 +472,7 @@ export default function AdminLayout() {
             {!collapsed && (
               <div className="min-w-0">
                 <p className="text-sm font-medium text-white truncate">{displayName}</p>
-                <p className="text-xs text-indigo-400 truncate">{roleLabel}</p>
+                <p className="text-xs text-slate-400 truncate">{userMenuSecondary}</p>
               </div>
             )}
           </div>
@@ -487,6 +537,7 @@ export default function AdminLayout() {
                 <UserAvatar name={userMenuDisplayName} />
                 <div className="text-left hidden min-[550px]:block">
                   <p className="text-sm font-semibold text-slate-800 dark:text-white leading-tight">{userMenuDisplayName}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">{userMenuSecondary}</p>
                 </div>
                 <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 hidden min-[550px]:block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />

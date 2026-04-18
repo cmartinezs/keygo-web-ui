@@ -33,10 +33,10 @@ describe('tokenStore role context', () => {
       accessToken: 'at',
       idToken: 'it',
       refreshToken: 'rt',
-      roles: ['keygo_tenant_admin', 'keygo_user'],
+      roles: ['keygo_account_admin', 'keygo_user'],
     })
 
-    expect(useTokenStore.getState().activeRole).toBe('keygo_tenant_admin')
+    expect(useTokenStore.getState().activeRole).toBe('keygo_account_admin')
   })
 
   it('allows switching active role only to owned roles', () => {
@@ -44,7 +44,7 @@ describe('tokenStore role context', () => {
       accessToken: 'at',
       idToken: 'it',
       refreshToken: 'rt',
-      roles: ['keygo_admin', 'keygo_tenant_admin', 'keygo_user'],
+      roles: ['keygo_admin', 'keygo_account_admin', 'keygo_user'],
     })
 
     useTokenStore.getState().setActiveRole('keygo_user')

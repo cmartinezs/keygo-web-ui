@@ -86,9 +86,9 @@ const mockPlatformUserRoles: Record<
     {
       assignment_id: '14000000-0000-0000-0000-000000000002',
       role_id: '10000000-0000-0000-0000-000000000002',
-      role_code: 'keygo_tenant_admin',
-      role_name: 'KeyGo Tenant Admin',
-      description: 'Tenant administration across managed organizations',
+      role_code: 'keygo_account_admin',
+      role_name: 'KeyGo Account Admin',
+      description: 'Account administration across managed organizations',
       scope_type: 'CONTRACTOR',
       contractor_id: '12000000-0000-0000-0000-000000000001',
       tenant_id: '13000000-0000-0000-0000-000000000001',
@@ -116,9 +116,9 @@ const mockPlatformUserRoles: Record<
     {
       assignment_id: '14000000-0000-0000-0000-000000000004',
       role_id: '10000000-0000-0000-0000-000000000002',
-      role_code: 'keygo_tenant_admin',
-      role_name: 'KeyGo Tenant Admin',
-      description: 'Tenant administration across managed organizations',
+      role_code: 'keygo_account_admin',
+      role_name: 'KeyGo Account Admin',
+      description: 'Account administration across managed organizations',
       scope_type: 'CONTRACTOR',
       contractor_id: '12000000-0000-0000-0000-000000000002',
       tenant_id: '13000000-0000-0000-0000-000000000002',
@@ -151,6 +151,12 @@ interface MockPendingFeatureSnapshot {
   rows: Record<string, string>[];
   kpis: Array<{ key: string; label: string; value: string }>;
   actions?: Array<{ id: string; label: string; tone?: 'default' | 'danger' }>;
+}
+
+interface MockAccessIncidentReport {
+  incident_id: string;
+  received_at: string;
+  payload: Record<string, unknown>;
 }
 
 const mockPendingFeatures: Record<string, MockPendingFeatureSnapshot> = {
@@ -361,6 +367,8 @@ const mockPendingFeatures: Record<string, MockPendingFeatureSnapshot> = {
   },
 };
 
+const mockAccessIncidentReports: MockAccessIncidentReport[] = [];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function successResponse<T>(data: T, code = 'ACCOUNT_CONNECTIONS_RETRIEVED') {
@@ -446,7 +454,7 @@ export const handlers = [
   }),
 
   /**
-   * GET /api/v1/tenants?owner_email=... ⏳ pendiente — filtro owner_email + acceso keygo_tenant_admin
+   * GET /api/v1/tenants?owner_email=... ⏳ pendiente — filtro owner_email + acceso keygo_account_admin
    * Solo intercepta peticiones con owner_email; las demás hacen passthrough al backend real.
    */
   http.get(`${API_V1_GLOB}/tenants`, ({ request }) => {
@@ -481,6 +489,54 @@ export const handlers = [
       },
       'TENANT_LIST_RETRIEVED',
     );
+  }),
+
+  /**
+   * POST /api/v1/platform/support/access-incidents ⏳ pendiente backend
+   * Recibe reportes de acceso denegado generados desde la UI.
+   */
+  http.post(`${API_V1_GLOB}/platform/support/access-incidents`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    const userComment = typeof body.user_comment === 'string' ? body.user_comment.trim() : '';
+    if (!userComment) {
+      return HttpResponse.json(
+        {
+          date: new Date().toISOString(),
+          failure: {
+            code: 'INVALID_INPUT',
+            message: 'Invalid input data provided',
+          },
+          data: {
+            code: 'INVALID_INPUT',
+            origin: 'CLIENT_REQUEST',
+            client_message: 'Debes indicar por que consideras que esto es un error.',
+            client_request_cause: 'USER_INPUT',
+            field_errors: [
+              {
+                field: 'user_comment',
+                message: 'must not be blank',
+                rejected_value: '',
+              },
+            ],
+          },
+        },
+        { status: 400 },
+      );
+    }
+
+    const receipt = {
+      incident_id: `incident-${mockAccessIncidentReports.length + 1}`,
+      received_at: new Date().toISOString(),
+      status: 'RECEIVED' as const,
+    };
+
+    mockAccessIncidentReports.push({
+      incident_id: receipt.incident_id,
+      received_at: receipt.received_at,
+      payload: body,
+    });
+
+    return successResponse(receipt, 'ACCESS_INCIDENT_REPORTED');
   }),
 
   /**

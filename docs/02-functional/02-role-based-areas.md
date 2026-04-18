@@ -19,6 +19,10 @@ Resumen funcional de lo que cada rol puede hacer dentro de KeyGo UI.
 
 ## Administrador de tenant
 
+- Acceder al menú de tenants asociados y ver solo las organizaciones vinculadas a su cuenta.
+- Seleccionar uno de sus tenants asociados para fijarlo como contexto de gestión y continuar hacia usuarios, aplicaciones, memberships y billing.
+- Si el backend todavía niega un recurso asociado con `403`, la UI debe mantener al usuario en contexto y mostrar un estado explícito de acceso denegado, sin expulsarlo a login ni disfrazarlo como falla técnica.
+- Desde ese estado, el usuario puede reportar que considera el rechazo un posible error y enviar comentario + contexto técnico/funcional al circuito de soporte/incidentes.
 - Gestionar aplicaciones cliente.
 - Gestionar usuarios del tenant.
 - Gestionar memberships y roles de app.
@@ -28,11 +32,13 @@ Resumen funcional de lo que cada rol puede hacer dentro de KeyGo UI.
 
 - Consultar su acceso.
 - Gestionar perfil y configuración de cuenta.
+- En "Mi cuenta", si la sesión es de plataforma, la UI usa `GET/PATCH /api/v1/platform/account/profile` para leer y editar el perfil personal sin depender del tenant `keygo`; en ese contexto solo permite editar nombre, teléfono, locale, zona horaria y foto.
 - Revisar sesiones y actividad propia.
 
 ## Compartido
 
 - Perfil de usuario.
 - Cambio de contraseña.
+- En el shell autenticado, el bloque de identidad del encabezado/sidebar debe recuperar nombre y correo desde el perfil de cuenta cuando el token restaurado tras `F5` no trae claims amigables, evitando mostrar UUIDs o identificadores técnicos.
 - Preferencias y sesiones.
 - Selector de idioma y comportamiento adaptado al rol.
